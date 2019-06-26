@@ -15,7 +15,7 @@ def on_click(event):
     elif len(line) >=  2:
         # starting point has been defined
         line.extend([event.x, event.y])
-        canvas.create_line(*line)
+        canvas.create_line(*line,fill="red",width=2)
     
 def clear_canvas(event):
     global line
@@ -24,9 +24,11 @@ def clear_canvas(event):
 
 def remove_last(event):
     global line
-    del line[-2:]
-    canvas.delete('all')
-    canvas.create_line(*line)
+    if len(line) > 0:
+        del line[-2:]
+        canvas.delete('all')
+        if len(line) >= 4:
+            canvas.create_line(*line,fill="red",width=2)
 
 def close_window ():
     root.destroy()

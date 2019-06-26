@@ -45,8 +45,8 @@ class Root(tk.Tk):
         # self.minsize(800, 800)
         self.button()
         self.matplotCanvas(amp, dist, dt)
-        # self.bind("<Button-1>", self.on_click)
-        # self.bind("<Key-c>", self.clear_canvas)
+        self.bind("<Button-1>", self.on_click)
+        self.bind("<Key-c>", self.clear_canvas)
 
     def matplotCanvas(self, amp, dist, dt):
 
@@ -94,27 +94,29 @@ class Root(tk.Tk):
 
     #####################
     #  WORKING INDEPENDENTLY, but not yet incorporated
-    # def on_click(event):
-    #     global line
-    #     if len(line) == 0:
-    #         # define line starting point
-    #         line=[event.x, event.y]
+    def on_click(event):
+        global line
+        if len(line) == 0:
+            # define line starting point
+            line=[event.x, event.y]
 
-    #     elif len(line) >=  2:
-    #         # starting point has been defined
-    #         line.extend([event.x, event.y])
-    #         canvas.create_line(*line)
+        elif len(line) >=  2:
+            # starting point has been defined
+            line.extend([event.x, event.y])
+            canvas.create_line(*line,fill="red",width=2)
         
-    # def clear_canvas(event):
-    #     global line
-    #     canvas.delete('all')
-    #     line = []
+    def clear_canvas(event):
+        global line
+        canvas.delete('all')
+        line = []
 
-    # def remove_last(event):
-    #     global line
-    #     del line[-2:]
-    #     canvas.delete('all')
-    #     canvas.create_line(*line)
+    def remove_last(event):
+        global line
+        if len(line) > 0:
+            del line[-2:]
+            canvas.delete('all')
+            if len(line) >= 4:
+                canvas.create_line(*line,fill="red",width=2)
 
     #######################
 root = Root()
