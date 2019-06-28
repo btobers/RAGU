@@ -39,6 +39,7 @@ amp = np.transpose(amp)
 # run.rgram(amp, dist, dt, name)
 
 class Root(tk.Tk):
+
     def __init__(self):
         super(Root, self).__init__()
         self.title("NOSEpick")
@@ -46,7 +47,7 @@ class Root(tk.Tk):
         self.button()
         self.matplotCanvas(amp, dist, dt)
         self.bind("<Button-1>", self.on_click)
-        self.bind("<Key-c>", self.clear_canvas)
+        # self.bind("<Key-c>", self.clear_canvas)
 
     def matplotCanvas(self, amp, dist, dt):
 
@@ -78,6 +79,7 @@ class Root(tk.Tk):
         self.btn.pack(side="top")
     
     def mssgBox(self):
+
         # instructions button message box
         msg.showinfo("NOSEpick Instructions", "Nearly Optimal Subsurface Extractor:\n\nClick along reflector surface\n<spacebar> to remove the last pick\n<c> to remove all picks")
 
@@ -86,38 +88,34 @@ class Root(tk.Tk):
         # destroy canvas upon Exit button click
         self.destroy()
 
-    def clear_canvas(self,event):
-
-        # clear picks
-        canvas.delete('all')
-
-
     #####################
-    #  WORKING INDEPENDENTLY, but not yet incorporated
-    def on_click(event):
+    #  WORKING INDEPENDENTLY, but not yet incorporated properly
+    line = []
+    def on_click(self, event):
         global line
-        if len(line) == 0:
+        if len(self.line) == 0:
             # define line starting point
-            line=[event.x, event.y]
+            self.line=[event.x, event.y]
+            print(self.line)
 
-        elif len(line) >=  2:
+        elif len(self.line) >=  2:
             # starting point has been defined
-            line.extend([event.x, event.y])
-            canvas.create_line(*line,fill="red",width=2)
-        
-    def clear_canvas(event):
-        global line
-        canvas.delete('all')
-        line = []
+            self.line.extend([event.x, event.y])
+            print(self.line)
+            self.canvas.create_line(*self.line,fill="red",width=2)
 
-    def remove_last(event):
+    def remove_last(self, event):
         global line
-        if len(line) > 0:
-            del line[-2:]
-            canvas.delete('all')
-            if len(line) >= 4:
-                canvas.create_line(*line,fill="red",width=2)
+        if len(self.line) > 0:
+            del self.line[-2:]
+            self.canvas.delete('all')
+            if len(self.line) >= 4:
+                self.canvas.create_line(*self.line,fill="red",width=2)
 
+    # def clear_canvas(self, event):
+    #     global line
+    #     self.canvas.delete('all')
+    #     self.line = []
     #######################
 root = Root()
 root.mainloop()
