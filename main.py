@@ -90,28 +90,28 @@ class Root(tk.Tk):
 
     #####################
     #  WORKING INDEPENDENTLY, but not yet incorporated properly
-    line = []
-    def on_click(self, event):
-        global line
-        if len(self.line) == 0:
-            # define line starting point
-            self.line=[event.x, event.y]
-            print(self.line)
+    # line = []
+    # def on_click(self, event):
+    #     global line
+    #     if len(self.line) == 0:
+    #         # define line starting point
+    #         self.line=[event.x, event.y]
+    #         print(self.line)
 
-        elif len(self.line) >=  2:
-            # starting point has been defined
-            self.line.extend([event.x, event.y])
-            print(self.line)
-            self.canvas.create_line(*self.line,fill="red",width=2)
+    #     elif len(self.line) >=  2:
+    #         # starting point has been defined
+    #         self.line.extend([event.x, event.y])
+    #         print(self.line)
+    #         self.canvas.create_line(*self.line,fill="red",width=2)
 
-    def remove_last(self, event):
-        global line
-        if len(self.line) > 0:
-            del self.line[-2:]
-            self.canvas.delete('all')
-            if len(self.line) >= 4:
-                self.canvas.create_line(*self.line,fill="red",width=2)
-
+    # def remove_last(self, event):
+    #     global line
+    #     if len(self.line) > 0:
+    #         del self.line[-2:]
+    #         self.canvas.delete('all')
+    #         if len(self.line) >= 4:
+    #             self.canvas.create_line(*self.line,fill="red",width=2)
+    
     # def clear_canvas(self, event):
     #     global line
     #     self.canvas.delete('all')
