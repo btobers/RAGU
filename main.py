@@ -24,48 +24,51 @@ in_path = '/home/anomalocaris/Desktop/tmp/20180819-215243.mat'
 ### CODE ###
 name = in_path.split('/')[-1].rstrip('.mat')
 
-class NosepickGUI(tk.Tk):
+class NOSEpickGUI(tk.Tk):
     def __init__(self, master):
         self.master = master
         master.title("NOSEpick")
         self.setup()
 
     def setup(self):
-        # Frames for data display and UI
+        # frames for data display and UI
         self.controls = Frame(self.master)
         self.controls.pack(side="top")
         self.display = Frame(self.master)
         self.display.pack(side="bottom", fill="both", expand=1)
-        # Blank data canvas
+        # blank data canvas
         self.fig = mpl.figure.Figure()
         self.ax = self.fig.add_subplot(111)
         self.dataCanvas = FigureCanvasTkAgg(self.fig, self.master)
         # self.dataCanvas.get_tk_widget().pack(in_=self.display, side="bottom", fill="both", expand=1)
         # self.dataCanvas.draw()
-        # Button for help message
+        # button for help message
         self.instButton = Button(self.master, text = "Instructions", command = self.insMsg)
         self.instButton.pack(in_=self.controls, side="left")
-        # Button for loading data
+        # button for loading data
         self.loadButton = Button(self.master, text = "Load", command = self.load)
         self.loadButton.pack(in_=self.controls, side="left")
-        # Button for exit
-        self.exitButton = Button(text = "Exit", fg = "red", command = self.close_window)
+        # button for saving
+        self.exitButton = Button(text = "Save", command = self.savePick)
         self.exitButton.pack(in_=self.controls, side="left")
+        # button for exit
+        self.exitButton = Button(text = "Exit", fg = "red", command = self.close_window)
+        self.exitButton.pack(in_=self.controls, side="left")        
         # call information messagebox
         self.insMsg()
-        # Empty fields for pick
+        # empty fields for pick
         self.xln = []
         self.yln = []
         self.pick, = self.ax.plot([],[],'r')  # empty line
-        # Register click and key events
+        # register click and key events
         self.keye = self.fig.canvas.mpl_connect('key_press_event', self.onkey)
         self.clicke = self.fig.canvas.mpl_connect('button_press_event', self.addseg)
 
     def load(self):
-        # Can be made fancier in the future
+        # can be made fancier in the future
         igst = ingester.ingester("h5py")
-        self.fname = filedialog.askopenfilename(initialdir = "./",title = "Select file",filetypes = (("mat files","*.mat"),("all files","*.*")))
-        self.data = igst.read(self.fname)
+        self.f_loadName = filedialog.askopenfilename(initialdir = "./",title = "Select file",filetypes = (("mat files","*.mat"),("all files","*.*")))
+        self.data = igst.read(self.f_loadName)
         self.matplotCanvas()
 
     def matplotCanvas(self):
@@ -117,11 +120,26 @@ class NosepickGUI(tk.Tk):
         \n\t\u2022<spacebar> to remove the last
         \n\t\u2022<c> to remove all""")
 
+    def savePick(self):
+        # save picks
+        self.pickList = []
+        for _i in range(len(self.xln)):
+            self.pickList.append(self.xln[_i])
+            self.pickList.append(self.yln[_i])
+        self.pickArray = np.asarray(self.pickList)
+        self.f_saveName = filedialog.asksaveasfilename(initialdir = "./",title = "Save As",filetypes = (("comma-separated values","*.csv"),))
+        np.savetxt(self.f_saveName, self.pickArray, delimiter=",", fmt="%.8f")
+
     def close_window(self):
         # destroy canvas upon Exit button click
         if messagebox.askokcancel("Warning", "Exit NOSEpick?", icon = "warning") == True:
             self.master.destroy()
 
+# initialize the tkinter window
 root = tk.Tk()
-gui = NosepickGUI(root)
+# get screen size - open root window half screen
+w, h = root.winfo_screenwidth(), root.winfo_screenheight()
+root.geometry("%dx%d+0+0" % (.5*w, .5*h))
+# call the NOSEpickGUI class
+gui = NOSEpickGUI(root)
 root.mainloop()
