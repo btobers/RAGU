@@ -40,8 +40,8 @@ class NosepickGUI(tk.Tk):
         self.fig = mpl.figure.Figure()
         self.ax = self.fig.add_subplot(111)
         self.dataCanvas = FigureCanvasTkAgg(self.fig, self.master)
-        self.dataCanvas.get_tk_widget().pack(in_=self.display, side="bottom", fill="both", expand=1)
-        self.dataCanvas.draw()
+        # self.dataCanvas.get_tk_widget().pack(in_=self.display, side="bottom", fill="both", expand=1)
+        # self.dataCanvas.draw()
         # Button for help message
         self.instButton = Button(self.master, text = "Instructions", command = self.insMsg)
         self.instButton.pack(in_=self.controls, side="left")
@@ -51,6 +51,8 @@ class NosepickGUI(tk.Tk):
         # Button for exit
         self.exitButton = Button(text = "Exit", fg = "red", command = self.close_window)
         self.exitButton.pack(in_=self.controls, side="left")
+        # call information messagebox
+        self.insMsg()
         # Empty fields for pick
         self.xln = []
         self.yln = []
@@ -68,6 +70,7 @@ class NosepickGUI(tk.Tk):
 
     def matplotCanvas(self):
         # create matplotlib figure and use imshow to display radargram
+        self.dataCanvas.get_tk_widget().pack(in_=self.display, side="bottom", fill="both", expand=1)
         self.ax.imshow(np.log(np.power(self.data['amp'],2)), cmap='gray', aspect='auto', extent=[self.data['dist'][0], self.data['dist'][-1], self.data['amp'].shape[0] * self.data['dt'] * 1e6, 0])
         self.ax.set_title(name)
         self.ax.set(xlabel = 'along-track distance [km]', ylabel = 'two-way travel time [microsec.]')
@@ -90,11 +93,12 @@ class NosepickGUI(tk.Tk):
         # on-key commands
         if event.key =='c':
             # clear the drawing of line segments
-            if len(self.xln) and len(self.yln) > 0:
-                del self.xln[:]
-                del self.yln[:]
-                self.pick.set_data(self.xln, self.yln)
-                self.fig.canvas.draw()
+            if messagebox.askokcancel("Warning", "Clear all picks?", icon = "warning") == True:
+                if len(self.xln) and len(self.yln) > 0:
+                    del self.xln[:]
+                    del self.yln[:]
+                    self.pick.set_data(self.xln, self.yln)
+                    self.fig.canvas.draw()
     
         elif event.key =='backspace':
             # remove last segment
@@ -108,14 +112,15 @@ class NosepickGUI(tk.Tk):
         # instructions button message box
         messagebox.showinfo("NOSEpick Instructions",
         """Nearly Optimal Subsurface Extractor:
-        \n\n\u2022Click along reflector surface
-        \n\u2022<spacebar> to remove the last pick
-        \n\u2022<c> to remove all picks""")
+        \n\n1. Load button to open radargram
+        \n\n2. Click along reflector surface to pick
+        \n\t\u2022<spacebar> to remove the last
+        \n\t\u2022<c> to remove all""")
 
     def close_window(self):
         # destroy canvas upon Exit button click
-        self.master.destroy()
-
+        if messagebox.askokcancel("Warning", "Exit NOSEpick?", icon = "warning") == True:
+            self.master.destroy()
 
 root = tk.Tk()
 gui = NosepickGUI(root)
