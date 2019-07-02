@@ -85,17 +85,17 @@ class NosepickGUI(tk.Tk):
 
   def onkey(self, event):
     if event.key =='c':
-      if len(self.xs) and len(self.ys) > 0:
-        del self.xs[:]
-        del self.ys[:]
-        self.pick.set_data(self.xs, self.ys)
+      if len(self.xln) and len(self.yln) > 0:
+        del self.xln[:]
+        del self.yln[:]
+        self.pick.set_data(self.xln, self.yln)
         self.fig.canvas.draw()
     
     elif event.key =='backspace':
-      if len(self.xs) and len(self.ys) > 0:
-        del self.xs[-1:]
-        del self.ys[-1:]
-        self.pick.set_data(self.xs, self.ys)
+      if len(self.xln) and len(self.yln) > 0:
+        del self.xln[-1:]
+        del self.yln[-1:]
+        self.pick.set_data(self.xln, self.yln)
         self.fig.canvas.draw()
     
   def insMsg(self):
