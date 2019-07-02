@@ -46,8 +46,6 @@ class Root(tk.Tk):
         # self.minsize(800, 800)
         self.button()
         self.matplotCanvas(amp, dist, dt)
-        self.bind("<Button-1>", self.on_click)
-        # self.bind("<Key-c>", self.clear_canvas)
 
     def matplotCanvas(self, amp, dist, dt):
 
@@ -81,45 +79,19 @@ class Root(tk.Tk):
     def mssgBox(self):
 
         # instructions button message box
-        msg.showinfo("NOSEpick Instructions", "Nearly Optimal Subsurface Extractor:\n\nClick along reflector surface\n<spacebar> to remove the last pick\n<c> to remove all picks")
+        msg.showinfo("NOSEpick Instructions", """Nearly Optimal Subsurface Extractor:
+        \n\n\u2022Click along reflector surface
+        \n\u2022<spacebar> to remove the last pick
+        \n\u2022<c> to remove all picks""")
 
     def close_window(self):
 
         # destroy canvas upon Exit button click
         self.destroy()
 
-    #####################
-    #  WORKING INDEPENDENTLY, but not yet incorporated properly
-    # line = []
-    # def on_click(self, event):
-    #     global line
-    #     if len(self.line) == 0:
-    #         # define line starting point
-    #         self.line=[event.x, event.y]
-    #         print(self.line)
 
-    #     elif len(self.line) >=  2:
-    #         # starting point has been defined
-    #         self.line.extend([event.x, event.y])
-    #         print(self.line)
-    #         self.canvas.create_line(*self.line,fill="red",width=2)
-
-    # def remove_last(self, event):
-    #     global line
-    #     if len(self.line) > 0:
-    #         del self.line[-2:]
-    #         self.canvas.delete('all')
-    #         if len(self.line) >= 4:
-    #             self.canvas.create_line(*self.line,fill="red",width=2)
-    
-    # def clear_canvas(self, event):
-    #     global line
-    #     self.canvas.delete('all')
-    #     self.line = []
-    #######################
 root = Root()
 root.mainloop()
-
 
 
 

@@ -38,5 +38,3 @@ ax.set_title('click to build line segments')
 line, = ax.plot([],[],'r')  # empty line
 linebuilder = LineBuilder(line)
 plt.show()
-
-
