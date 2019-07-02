@@ -34,6 +34,8 @@ class NOSEpickGUI(tk.Tk):
         # frames for data display and UI
         self.controls = Frame(self.master)
         self.controls.pack(side="top")
+        self.swithIm = Frame(self.master)
+        self.swithIm.pack(side="bottom")
         self.display = Frame(self.master)
         self.display.pack(side="bottom", fill="both", expand=1)
         # blank data canvas
@@ -53,7 +55,13 @@ class NOSEpickGUI(tk.Tk):
         self.exitButton.pack(in_=self.controls, side="left")
         # button for exit
         self.exitButton = Button(text = "Exit", fg = "red", command = self.close_window)
-        self.exitButton.pack(in_=self.controls, side="left")        
+        self.exitButton.pack(in_=self.controls, side="left")
+        # button to toggle on radargram
+        self.radarButton = Button(text = "radar", command = self.show_radar)
+        self.radarButton.pack(in_=self.swithIm, side="left")        
+        # button to toggle on clutter
+        self.clutterButton = Button(text = "clutter", command = self.show_clutter)
+        self.clutterButton.pack(in_=self.swithIm, side="left")        
         # call information messagebox
         self.insMsg()
         # empty fields for pick
@@ -129,6 +137,12 @@ class NOSEpickGUI(tk.Tk):
         self.pickArray = np.asarray(self.pickList)
         self.f_saveName = filedialog.asksaveasfilename(initialdir = "./",title = "Save As",filetypes = (("comma-separated values","*.csv"),))
         np.savetxt(self.f_saveName, self.pickArray, delimiter=",", fmt="%.8f")
+
+    def show_radar(self):
+        return
+
+    def show_clutter(self):
+        return
 
     def close_window(self):
         # destroy canvas upon Exit button click
