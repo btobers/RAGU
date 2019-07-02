@@ -76,6 +76,7 @@ class NosepickGUI(tk.Tk):
     self.dataCanvas.draw()
 
   def addseg(self, event):
+    # add line segments with user input
     if (event.inaxes != self.ax):
       return
     self.xln.append(event.xdata)
@@ -84,7 +85,9 @@ class NosepickGUI(tk.Tk):
     self.fig.canvas.draw()
 
   def onkey(self, event):
+    # on-key commands
     if event.key =='c':
+      # clear the drawing of line segments
       if len(self.xln) and len(self.yln) > 0:
         del self.xln[:]
         del self.yln[:]
@@ -92,6 +95,7 @@ class NosepickGUI(tk.Tk):
         self.fig.canvas.draw()
     
     elif event.key =='backspace':
+      # remove last segment
       if len(self.xln) and len(self.yln) > 0:
         del self.xln[-1:]
         del self.yln[-1:]

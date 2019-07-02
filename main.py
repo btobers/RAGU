@@ -1,35 +1,26 @@
-'''script to run NOSEpick - currently in development stages
-created by: Brandon S. Tober
-date:25JUN19
-
-dependencies: 
-python 3
-h5py
-numpy
-matplotlib
-pytables
+'''NOSEpick - currently in development stages
+created by: Brandon S. Tober and Michael S. Christoffersen
+date: 25JUN19
+dependencies in requirements.txt
 '''
 
-
-# import necessary libraries
-import sys
-import functions.run as run
-import scipy
+### IMPORTS ###
+import ingester
+import sys, scipy
 import numpy as np
-import matplotlib
-matplotlib.use("TkAgg")
+import matplotlib as mpl
+mpl.use("TkAgg")
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
-try:
-    import Tkinter as tk
-except:
-    import tkinter as tk
-from tkinter import ttk
-from tkinter import messagebox as msg
+import tkinter as tk
+from tkinter import Button, Frame, messagebox, Canvas, filedialog
 
+### USER SPECIFIED VARS ###
 in_path = '/home/anomalocaris/Desktop/tmp/20180819-215243.mat'
 
+
+### CODE ###
 name = in_path.split('/')[-1].rstrip('.mat')
 
 amp, dist, dt = run.ingest(in_path)
