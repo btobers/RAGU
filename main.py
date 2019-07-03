@@ -1,10 +1,10 @@
-'''
+"""
 NOSEpick - currently in development stages
 created by: Brandon S. Tober and Michael S. Christoffersen
 date: 25JUN19
 
 dependencies in requirements.txt
-'''
+"""
 
 ### IMPORTS ###
 import ingester
@@ -19,10 +19,10 @@ import tkinter as tk
 from tkinter import Button, Frame, messagebox, Canvas, filedialog
 
 ### USER SPECIFIED VARS ###
-in_path = '/home/anomalocaris/Desktop/tmp/20180819-215243.mat'
+in_path = "/home/anomalocaris/Desktop/tmp/20180819-215243.mat"
 
 ### CODE ###
-name = in_path.split('/')[-1].rstrip('.mat')
+name = in_path.split("/")[-1].rstrip(".mat")
 
 class NOSEpickGUI(tk.Tk):
     def __init__(self, master):
@@ -67,24 +67,26 @@ class NOSEpickGUI(tk.Tk):
         # empty fields for pick
         self.xln = []
         self.yln = []
-        self.pick, = self.ax.plot([],[],'r')  # empty line
+        self.pick, = self.ax.plot([],[],"r")  # empty line
         # register click and key events
-        self.keye = self.fig.canvas.mpl_connect('key_press_event', self.onkey)
-        self.clicke = self.fig.canvas.mpl_connect('button_press_event', self.addseg)
+        self.keye = self.fig.canvas.mpl_connect("key_press_event", self.onkey)
+        self.clicke = self.fig.canvas.mpl_connect("button_press_event", self.addseg)
 
     def load(self):
         # can be made fancier in the future
         igst = ingester.ingester("h5py")
         self.f_loadName = filedialog.askopenfilename(initialdir = "./",title = "Select file",filetypes = (("mat files","*.mat"),("all files","*.*")))
-        self.data = igst.read(self.f_loadName)
-        self.matplotCanvas()
+        if self.f_loadName:
+            print("Loading: ", self.f_loadName)
+            self.data = igst.read(self.f_loadName)
+            self.matplotCanvas()
 
     def matplotCanvas(self):
         # create matplotlib figure and use imshow to display radargram
         self.dataCanvas.get_tk_widget().pack(in_=self.display, side="bottom", fill="both", expand=1)
-        self.ax.imshow(np.log(np.power(self.data['amp'],2)), cmap='gray', aspect='auto', extent=[self.data['dist'][0], self.data['dist'][-1], self.data['amp'].shape[0] * self.data['dt'] * 1e6, 0])
+        self.ax.imshow(np.log(np.power(self.data["amp"],2)), cmap="gray", aspect="auto", extent=[self.data["dist"][0], self.data["dist"][-1], self.data["amp"].shape[0] * self.data["dt"] * 1e6, 0])
         self.ax.set_title(name)
-        self.ax.set(xlabel = 'along-track distance [km]', ylabel = 'two-way travel time [microsec.]')
+        self.ax.set(xlabel = "along-track distance [km]", ylabel = "two-way travel time [microsec.]")
         # add matplotlib figure nav toolbar
         toolbar = NavigationToolbar2Tk(self.dataCanvas, self.master)
         toolbar.update()
@@ -102,7 +104,7 @@ class NOSEpickGUI(tk.Tk):
 
     def onkey(self, event):
         # on-key commands
-        if event.key =='c':
+        if event.key =="c":
             # clear the drawing of line segments
             if messagebox.askokcancel("Warning", "Clear all picks?", icon = "warning") == True:
                 if len(self.xln) and len(self.yln) > 0:
@@ -111,7 +113,7 @@ class NOSEpickGUI(tk.Tk):
                     self.pick.set_data(self.xln, self.yln)
                     self.fig.canvas.draw()
     
-        elif event.key =='backspace':
+        elif event.key =="backspace":
             # remove last segment
             if len(self.xln) and len(self.yln) > 0:
                 del self.xln[-1:]
@@ -124,24 +126,31 @@ class NOSEpickGUI(tk.Tk):
         messagebox.showinfo("NOSEpick Instructions",
         """Nearly Optimal Subsurface Extractor:
         \n\n1. Load button to open radargram
-        \n\n2. Click along reflector surface to pick
+        \n2. Click along reflector surface to pick
         \n\t\u2022<spacebar> to remove the last
-        \n\t\u2022<c> to remove all""")
+        \n\t\u2022<c> to remove all
+        \n3. Radar and clutter buttons to toggle
+        \n4. Save button to export picks
+        \n5. Exit button to close application""")
 
     def savePick(self):
         # save picks
-        self.pickList = []
-        for _i in range(len(self.xln)):
-            self.pickList.append(self.xln[_i])
-            self.pickList.append(self.yln[_i])
-        self.pickArray = np.asarray(self.pickList)
         self.f_saveName = filedialog.asksaveasfilename(initialdir = "./",title = "Save As",filetypes = (("comma-separated values","*.csv"),))
-        np.savetxt(self.f_saveName, self.pickArray, delimiter=",", fmt="%.8f")
+        if self.f_saveName:
+            print("Exporting picks: ", self.f_saveName)
+            self.pickList = []
+            for _i in range(len(self.xln)):
+                self.pickList.append(self.xln[_i])
+                self.pickList.append(self.yln[_i])
+            self.pickArray = np.asarray(self.pickList)
+            np.savetxt(self.f_saveName, self.pickArray, delimiter=",", fmt="%.8f")
 
     def show_radar(self):
+        # toggle to radar data
         return
 
     def show_clutter(self):
+        # toggle to clutter sim
         return
 
     def close_window(self):
