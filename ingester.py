@@ -31,20 +31,24 @@ class ingester:
     def h5py_read(self, fpath):
         # read in HDF5 .mat radar block file
         f = h5py.File(fpath, 'r')
-
+    
         # parse data
         amp = np.array(f['block']['amp'])
         amp = np.transpose(amp)  
         ch0 = np.array(f['block']['ch0'])
+        clutter = np.array(f['block']['clutter'])
+        clutter = np.transpose(clutter)
         dist = np.array(f['block']['dist'])
         elev = np.array(f['block']['elev_air'])
         dt = f['block']['dt'][()]
-        # print(list(f['block']))
+        # print(list(f['block']["clutter"]))
+
+
 
         if 'chirp' in list(f['block'].keys()):    
             bw = f['block']['chirp']['bw'][()]   
             cf = f['block']['chirp']['cf'][()]    
             pLen = f['block']['chirp']['len'][()]
 
-        return {"amp": amp,"dist": dist,"dt": dt} # clutter? other fields?
+        return {"amp": amp,"clutter": clutter,"dist": dist,"dt": dt} # clutter? other fields?
 

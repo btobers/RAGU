@@ -19,7 +19,8 @@ import tkinter as tk
 from tkinter import Button, Frame, messagebox, Canvas, filedialog
 
 ### USER SPECIFIED VARS ###
-in_path = "/home/anomalocaris/Desktop/tmp/20180819-215243.mat"
+in_path = "/mnt/Swaps/MARS/targ/supl/UAF/"
+
 
 ### CODE ###
 name = in_path.split("/")[-1].rstrip(".mat")
@@ -75,7 +76,7 @@ class NOSEpickGUI(tk.Tk):
     def load(self):
         # can be made fancier in the future
         igst = ingester.ingester("h5py")
-        self.f_loadName = filedialog.askopenfilename(initialdir = "./",title = "Select file",filetypes = (("mat files","*.mat"),("all files","*.*")))
+        self.f_loadName = filedialog.askopenfilename(initialdir = in_path,title = "Select file",filetypes = (("mat files","*.mat"),("all files","*.*")))
         if self.f_loadName:
             print("Loading: ", self.f_loadName)
             self.data = igst.read(self.f_loadName)
@@ -85,6 +86,7 @@ class NOSEpickGUI(tk.Tk):
         # create matplotlib figure and use imshow to display radargram
         self.dataCanvas.get_tk_widget().pack(in_=self.display, side="bottom", fill="both", expand=1)
         self.ax.imshow(np.log(np.power(self.data["amp"],2)), cmap="gray", aspect="auto", extent=[self.data["dist"][0], self.data["dist"][-1], self.data["amp"].shape[0] * self.data["dt"] * 1e6, 0])
+        # self.ax.imshow(np.log(self.data["clutter"]), cmap="gray", aspect="auto", extent=[self.data["dist"][0], self.data["dist"][-1], self.data["amp"].shape[0] * self.data["dt"] * 1e6, 0])
         self.ax.set_title(name)
         self.ax.set(xlabel = "along-track distance [km]", ylabel = "two-way travel time [microsec.]")
         # add matplotlib figure nav toolbar
@@ -127,7 +129,7 @@ class NOSEpickGUI(tk.Tk):
         """Nearly Optimal Subsurface Extractor:
         \n\n1. Load button to open radargram
         \n2. Click along reflector surface to pick
-        \n\t\u2022<spacebar> to remove the last
+        \n\t\u2022<backspace> to remove the last
         \n\t\u2022<c> to remove all
         \n3. Radar and clutter buttons to toggle
         \n4. Save button to export picks
@@ -138,12 +140,13 @@ class NOSEpickGUI(tk.Tk):
         self.f_saveName = filedialog.asksaveasfilename(initialdir = "./",title = "Save As",filetypes = (("comma-separated values","*.csv"),))
         if self.f_saveName:
             print("Exporting picks: ", self.f_saveName)
-            self.pickList = []
+            self.x_pickList = []
+            self.y_pickList = []
             for _i in range(len(self.xln)):
-                self.pickList.append(self.xln[_i])
-                self.pickList.append(self.yln[_i])
-            self.pickArray = np.asarray(self.pickList)
-            np.savetxt(self.f_saveName, self.pickArray, delimiter=",", fmt="%.8f")
+                self.x_pickList.append(self.xln[_i])
+                self.y_pickList.append(self.yln[_i])
+            self.pickArray = np.column_stack(np.asarray(self.x_pickList), np.asarray(self.y_pickList))
+            np.savetxt(self.f_saveName, self.pickArray, delimiter=",", newline = '\n', fmt="%.8f")
 
     def show_radar(self):
         # toggle to radar data
