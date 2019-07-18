@@ -145,7 +145,7 @@ class NOSEpickGUI(tk.Tk):
             for _i in range(len(self.xln)):
                 self.x_pickList.append(self.xln[_i])
                 self.y_pickList.append(self.yln[_i])
-            self.pickArray = np.column_stack(np.asarray(self.x_pickList), np.asarray(self.y_pickList))
+            self.pickArray = np.column_stack((np.asarray(self.x_pickList), np.asarray(self.y_pickList)))
             np.savetxt(self.f_saveName, self.pickArray, delimiter=",", newline = '\n', fmt="%.8f")
 
     def show_radar(self):
