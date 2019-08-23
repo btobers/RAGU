@@ -3,7 +3,7 @@ NOSEpick - currently in development stages
 created by: Brandon S. Tober and Michael S. Christoffersen
 date: 25JUN19
 
-last updated: 16AUG19
+last updated: 223AUG19
 
 environment requirements in nose_env.yml
 """
@@ -19,9 +19,11 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 from matplotlib.figure import Figure
 import tkinter as tk
 from tkinter import Button, Frame, messagebox, Canvas, filedialog
+# from PIL import ImageTk
 
 ### USER SPECIFIED VARS ###
 in_path = "/mnt/Swaps/MARS/targ/supl/UAF/2018/aug/export/"
+map_path = "/mnt/Swaps/MARS/targ/supl/grid-AKDEM/"
 
 
 ### CODE ###
@@ -59,6 +61,9 @@ class NOSEpickGUI(tk.Tk):
         # button for saving
         self.saveButton = Button(text = "Save", command = self.savePick)
         self.saveButton.pack(in_=self.controls, side="left")
+        # button for basemap display
+        self.basemapButton = Button(text = "Map", command = self.basemap)
+        self.basemapButton.pack(in_=self.controls, side="left")
         # button for exit
         self.exitButton = Button(text = "Exit", fg = "red", command = self.close_window)
         self.exitButton.pack(in_=self.controls, side="left")
@@ -79,8 +84,9 @@ class NOSEpickGUI(tk.Tk):
         self.click = self.fig.canvas.mpl_connect("button_press_event", self.addseg)
         # variable declarations
         self.toolbar = None
-        self.f_loadName = ''
-        self.f_saveName = ''
+        self.f_loadName = ""
+        self.map_loadName = ""
+        self.f_saveName = ""
 
     def inMsg(self):
         # instructions button message box
@@ -105,11 +111,11 @@ class NOSEpickGUI(tk.Tk):
             self.dtype = "amp"
             self.matplotCanvas()
             # get index of selected file in directory
-            self.file_path = self.f_loadName.rstrip(self.f_loadName.split('/')[-1])
+            self.file_path = self.f_loadName.rstrip(self.f_loadName.split("/")[-1])
             self.file_list = os.listdir(self.file_path)
             self.file_list.sort()
             for _i in range(len(self.file_list)):
-                if self.file_list[_i] == self.f_loadName.split('/')[-1]:
+                if self.file_list[_i] == self.f_loadName.split("/")[-1]:
                     self.file_index = _i
 
     def matplotCanvas(self):
@@ -126,11 +132,27 @@ class NOSEpickGUI(tk.Tk):
         self.dataCanvas._tkcanvas.pack()
         self.dataCanvas.draw()
 
+    def basemap(self):
+        # pull track up on dem basemap
+        # if self.f_loadName:
+        self.map_loadName = filedialog.askopenfilename(initialdir = map_path,title = "Select file",filetypes = (("tif files","*.tif"),("all files","*.*")))
+        if self.map_loadName:
+            print("Loading Basemap: ", self.map_loadName)
+            self.basemap_window = tk.Toplevel(self.master)
+            self.basemap_window.title("NOSEpick - Map Window")
+            self.map_display = Frame(self.basemap_window)
+            self.map_display.pack(side="bottom", fill="both", expand=1)
+            self.mapFig = mpl.figure.Figure()
+            self.map_ax = self.mapFig.add_subplot(111)
+            self.map_dataCanvas = FigureCanvasTkAgg(self.mapFig, self.master)
+            self.map_dataCanvas.get_tk_widget().pack(in_=self.map_display, side="bottom", fill="both", expand=1)
+
+
     def addseg(self, event):
         # add line segments with user input
         if (event.inaxes != self.ax):
             return
-        # print('[' + event.xdata.astype(str) + ', ' + event.ydata.astype(str) + ']')
+        # print("[" + event.xdata.astype(str) + ", " + event.ydata.astype(str) + "]")
         self.xln.append(event.xdata)
         self.yln.append(event.ydata)
         self.pick.set_data(self.xln, self.yln)
@@ -160,9 +182,7 @@ class NOSEpickGUI(tk.Tk):
                     self.x_pickList.append(self.xln[_i])
                     self.y_pickList.append(self.yln[_i])
                 self.pickArray = np.column_stack((np.asarray(self.x_pickList), np.asarray(self.y_pickList)))
-                np.savetxt(self.f_saveName, self.pickArray, delimiter=",", newline = '\n', fmt="%.8f")
-            # except Exception as err:
-            #         print(err)
+                np.savetxt(self.f_saveName, self.pickArray, delimiter=",", newline = "\n", fmt="%.8f")
 
     def clear_picks(self):
         # clear all picks
@@ -193,7 +213,7 @@ class NOSEpickGUI(tk.Tk):
                     self.dtype = "amp"
                     self.matplotCanvas()
                 else:
-                    print('Note: ' + self.f_loadName.split('/')[-1] + ' is the last file in ' + self.file_path)
+                    print("Note: " + self.f_loadName.split("/")[-1] + " is the last file in " + self.file_path)
 
     def show_radar(self):
         # toggle to radar data
@@ -210,7 +230,7 @@ class NOSEpickGUI(tk.Tk):
     def close_window(self):
         # destroy canvas
         # first check if picks have been made and saved
-        if len(self.xln) > 0 and len(self.yln) > 0 and self.f_saveName == '':
+        if len(self.xln) > 0 and len(self.yln) > 0 and self.f_saveName == "":
             if messagebox.askokcancel("Warning", "Exit NOSEpick without saving picks?", icon = "warning") == True:
                 self.master.destroy()
         else:
@@ -219,7 +239,7 @@ class NOSEpickGUI(tk.Tk):
     def save_warning(self):
         # warning to save picks before loading next file
         # first check if picks have been made and saved
-        if len(self.xln) > 0 and len(self.yln) > 0 and self.f_saveName == '':
+        if len(self.xln) > 0 and len(self.yln) > 0 and self.f_saveName == "":
             if messagebox.askokcancel("Warning", "Load next track without saving picks?", icon = "warning") == True:
                 # clear picks
                 self.clear_picks()

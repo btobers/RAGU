@@ -4,7 +4,7 @@ import numpy as np
 class ingester:
     # ingester is a class to create a data ingester
     # builds a dictionary with data and metadata from the file
-    # ned to decide on a standard set of fields
+    # need to decide on a standard set of fields
     def __init__(self, ftype):
         # ftype is a string specifying filetype
         # valid options -
