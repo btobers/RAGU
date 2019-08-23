@@ -5,7 +5,7 @@ date: 25JUN19
 
 last updated: 16AUG19
 
-dependencies in requirements.txt
+environment requirements in nose_env.yml
 """
 
 ### IMPORTS ###
@@ -21,7 +21,7 @@ import tkinter as tk
 from tkinter import Button, Frame, messagebox, Canvas, filedialog
 
 ### USER SPECIFIED VARS ###
-in_path = "/mnt/Swaps/MARS/targ/supl/UAF/"
+in_path = "/mnt/Swaps/MARS/targ/supl/UAF/2018/aug/export/"
 
 
 ### CODE ###
@@ -29,8 +29,8 @@ name = in_path.split("/")[-1].rstrip(".mat")
 class NOSEpickGUI(tk.Tk):
     def __init__(self, master):
         self.master = master
-        master.title("NOSEpick")
-        master.protocol("WM_DELETE_WINDOW", self.close_window)
+        self.master.title("NOSEpick")
+        self.master.protocol("WM_DELETE_WINDOW", self.close_window)
         self.setup()
 
     def setup(self):
@@ -54,11 +54,11 @@ class NOSEpickGUI(tk.Tk):
         self.loadButton = Button(self.master, text = "Load", command = self.load)
         self.loadButton.pack(in_=self.controls, side="left")
         # button for going to next data file
-        self.loadButton = Button(self.master, text = "Next", command = self.next_file)
-        self.loadButton.pack(in_=self.controls, side="left")
+        self.nextButton = Button(self.master, text = "Next", command = self.next_file)
+        self.nextButton.pack(in_=self.controls, side="left")
         # button for saving
-        self.exitButton = Button(text = "Save", command = self.savePick)
-        self.exitButton.pack(in_=self.controls, side="left")
+        self.saveButton = Button(text = "Save", command = self.savePick)
+        self.saveButton.pack(in_=self.controls, side="left")
         # button for exit
         self.exitButton = Button(text = "Exit", fg = "red", command = self.close_window)
         self.exitButton.pack(in_=self.controls, side="left")
@@ -78,8 +78,9 @@ class NOSEpickGUI(tk.Tk):
         self.key = self.fig.canvas.mpl_connect("key_press_event", self.onkey)
         self.click = self.fig.canvas.mpl_connect("button_press_event", self.addseg)
         # variable declarations
-        self.f_loadName = None
-        self.f_saveName = None
+        self.toolbar = None
+        self.f_loadName = ''
+        self.f_saveName = ''
 
     def inMsg(self):
         # instructions button message box
@@ -98,29 +99,30 @@ class NOSEpickGUI(tk.Tk):
         # bring up dialog box for user to load data file
         self.igst = ingester.ingester("h5py")
         self.f_loadName = filedialog.askopenfilename(initialdir = in_path,title = "Select file",filetypes = (("mat files","*.mat"),("all files","*.*")))
-        self.file_path = self.f_loadName.rstrip(self.f_loadName.split('/')[-1])
-        self.file_list = os.listdir(self.file_path)
-        self.file_list.sort()
-        # get index of selected file in directory
-        for _i in range(len(self.file_list)):
-            if self.file_list[_i] == self.f_loadName.split('/')[-1]:
-                self.file_index = _i
         if self.f_loadName:
             print("Loading: ", self.f_loadName)
             self.data = self.igst.read(self.f_loadName)
             self.dtype = "amp"
             self.matplotCanvas()
+            # get index of selected file in directory
+            self.file_path = self.f_loadName.rstrip(self.f_loadName.split('/')[-1])
+            self.file_list = os.listdir(self.file_path)
+            self.file_list.sort()
+            for _i in range(len(self.file_list)):
+                if self.file_list[_i] == self.f_loadName.split('/')[-1]:
+                    self.file_index = _i
 
     def matplotCanvas(self):
         # create matplotlib figure and use imshow to display radargram
+        if self.toolbar:
+            self.toolbar.destroy() 
         self.dataCanvas.get_tk_widget().pack(in_=self.display, side="bottom", fill="both", expand=1)
         self.ax.imshow(np.log(np.power(self.data[self.dtype],2)), cmap="gray", aspect="auto", extent=[self.data["dist"][0], self.data["dist"][-1], self.data["amp"].shape[0] * self.data["dt"] * 1e6, 0])
-        # self.ax.imshow(np.log(self.data["clutter"]), cmap="gray", aspect="auto", extent=[self.data["dist"][0], self.data["dist"][-1], self.data["amp"].shape[0] * self.data["dt"] * 1e6, 0])
         self.ax.set_title(name)
         self.ax.set(xlabel = "along-track distance [km]", ylabel = "two-way travel time [microsec.]")
         # add matplotlib figure nav toolbar
-        toolbar = NavigationToolbar2Tk(self.dataCanvas, self.master)
-        toolbar.update()
+        self.toolbar = NavigationToolbar2Tk(self.dataCanvas, self.master)
+        self.toolbar.update()
         self.dataCanvas._tkcanvas.pack()
         self.dataCanvas.draw()
 
@@ -140,11 +142,9 @@ class NOSEpickGUI(tk.Tk):
             # clear the drawing of line segments
             if messagebox.askokcancel("Warning", "Clear all picks?", icon = "warning") == True:
                 self.clear_picks()
-    
         elif event.key =="backspace":
             # remove last segment
             self.clear_last()
-
         elif event.key =="escape":
             self.close_window()
     
@@ -161,6 +161,8 @@ class NOSEpickGUI(tk.Tk):
                     self.y_pickList.append(self.yln[_i])
                 self.pickArray = np.column_stack((np.asarray(self.x_pickList), np.asarray(self.y_pickList)))
                 np.savetxt(self.f_saveName, self.pickArray, delimiter=",", newline = '\n', fmt="%.8f")
+            # except Exception as err:
+            #         print(err)
 
     def clear_picks(self):
         # clear all picks
@@ -208,7 +210,7 @@ class NOSEpickGUI(tk.Tk):
     def close_window(self):
         # destroy canvas
         # first check if picks have been made and saved
-        if len(self.xln) > 0 and len(self.yln) > 0 and self.f_saveName is None:
+        if len(self.xln) > 0 and len(self.yln) > 0 and self.f_saveName == '':
             if messagebox.askokcancel("Warning", "Exit NOSEpick without saving picks?", icon = "warning") == True:
                 self.master.destroy()
         else:
@@ -217,13 +219,15 @@ class NOSEpickGUI(tk.Tk):
     def save_warning(self):
         # warning to save picks before loading next file
         # first check if picks have been made and saved
-        if len(self.xln) > 0 and len(self.yln) > 0 and self.f_saveName is None:
+        if len(self.xln) > 0 and len(self.yln) > 0 and self.f_saveName == '':
             if messagebox.askokcancel("Warning", "Load next track without saving picks?", icon = "warning") == True:
                 # clear picks
                 self.clear_picks()
                 return True
         else: 
             return True
+
+
 
 ### INITIALIZE ###
 root = tk.Tk()
