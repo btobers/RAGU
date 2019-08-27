@@ -16,7 +16,6 @@ import matplotlib as mpl
 mpl.use("TkAgg")
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-from matplotlib.figure import Figure
 import tkinter as tk
 from tkinter import Button, Frame, messagebox, Canvas, filedialog
 # from PIL import ImageTk
@@ -24,7 +23,6 @@ from tkinter import Button, Frame, messagebox, Canvas, filedialog
 ### USER SPECIFIED VARS ###
 in_path = "/mnt/Swaps/MARS/targ/supl/UAF/2018/aug/export/"
 map_path = "/mnt/Swaps/MARS/targ/supl/grid-AKDEM/"
-
 
 ### CODE ###
 name = in_path.split("/")[-1].rstrip(".mat")
@@ -121,6 +119,7 @@ class NOSEpickGUI(tk.Tk):
     def matplotCanvas(self):
         # create matplotlib figure and use imshow to display radargram
         if self.toolbar:
+            # remove existing toolbar
             self.toolbar.destroy() 
         self.dataCanvas.get_tk_widget().pack(in_=self.display, side="bottom", fill="both", expand=1)
         self.ax.imshow(np.log(np.power(self.data[self.dtype],2)), cmap="gray", aspect="auto", extent=[self.data["dist"][0], self.data["dist"][-1], self.data["amp"].shape[0] * self.data["dt"] * 1e6, 0])
@@ -138,15 +137,22 @@ class NOSEpickGUI(tk.Tk):
         self.map_loadName = filedialog.askopenfilename(initialdir = map_path,title = "Select file",filetypes = (("tif files","*.tif"),("all files","*.*")))
         if self.map_loadName:
             print("Loading Basemap: ", self.map_loadName)
-            self.basemap_window = tk.Toplevel(self.master)
-            self.basemap_window.title("NOSEpick - Map Window")
-            self.map_display = Frame(self.basemap_window)
-            self.map_display.pack(side="bottom", fill="both", expand=1)
-            self.mapFig = mpl.figure.Figure()
-            self.map_ax = self.mapFig.add_subplot(111)
-            self.map_dataCanvas = FigureCanvasTkAgg(self.mapFig, self.master)
-            self.map_dataCanvas.get_tk_widget().pack(in_=self.map_display, side="bottom", fill="both", expand=1)
-
+            try:
+                self.basemap_im = plt.imread(self.map_loadName)
+            except Exception as err:
+                print(err)
+                pass
+        self.basemap_window = tk.Toplevel(self.master)
+        self.basemap_window.title("NOSEpick - Map Window")
+        self.map_display = mpl.figure.Figure()
+        self.map_display_ax = self.map_display.add_subplot(111)
+        self.map_display_ax.imshow(self.basemap_im)
+        # self.map_display = Frame(self.basemap_window)
+        self.map_dataCanvas = FigureCanvasTkAgg(self.map_display, self.basemap_window)
+        self.map_dataCanvas.draw()
+        self.map_dataCanvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+        self.map_toolbar = NavigationToolbar2Tk(self.map_dataCanvas, self.basemap_window)
+        self.map_toolbar.update()
 
     def addseg(self, event):
         # add line segments with user input
@@ -246,8 +252,6 @@ class NOSEpickGUI(tk.Tk):
                 return True
         else: 
             return True
-
-
 
 ### INITIALIZE ###
 root = tk.Tk()

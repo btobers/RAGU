@@ -29,26 +29,37 @@ class ingester:
             exit(1)
 
     def h5py_read(self, fpath):
+        try:
         # read in HDF5 .mat radar block file
-        f = h5py.File(fpath, 'r')
-    
-        # parse data
-        amp = np.array(f['block']['amp'])
-        amp = np.transpose(amp)  
-        ch0 = np.array(f['block']['ch0'])
-        clutter = np.array(f['block']['clutter'])
-        clutter = np.transpose(clutter)
-        dist = np.array(f['block']['dist'])
-        elev = np.array(f['block']['elev_air'])
-        dt = f['block']['dt'][()]
-        # print(list(f['block']["clutter"]))
+            f = h5py.File(fpath, 'r')
+        
+            # parse data
+            # print(list(f['block']))
+            dt = f['block']['dt'][()]
+            num_trace = int(f['block']['num_trace'][0])
+            num_sample = int(f['block']['num_sample'][0])
+            dist = np.array(f['block']['dist'])
+            lat = np.array(f['block']['lat'])
+            lon = np.array(f['block']['lon'])
+            elev = np.array(f['block']['elev_air'])
+            amp = np.array(f['block']['amp'])
+            if amp.shape[0] == num_trace and amp.shape[1] == num_sample:
+                amp = np.transpose(amp)  
+            clutter = np.array(f['block']['clutter'])
+            if clutter.shape[0] == num_trace and clutter.shape[1] == num_sample:
+                clutter = np.transpose(clutter)
+
+            if 'chirp' in list(f['block'].keys()):    
+                bw = f['block']['chirp']['bw'][()]   
+                cf = f['block']['chirp']['cf'][()]    
+                pLen = f['block']['chirp']['len'][()]
+
+            return {"dt": dt, "dist": dist, "lat": lat, "lon": lon, "elev": elev, "amp": amp, "clutter": clutter} # other fields?
+
+        except Exception as err:
+            print(err)
 
 
 
-        if 'chirp' in list(f['block'].keys()):    
-            bw = f['block']['chirp']['bw'][()]   
-            cf = f['block']['chirp']['cf'][()]    
-            pLen = f['block']['chirp']['len'][()]
 
-        return {"amp": amp,"clutter": clutter,"dist": dist,"dt": dt} # clutter? other fields?
 

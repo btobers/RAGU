@@ -2,17 +2,12 @@ import numpy as np
 
 class tools:
     # NOSEpick tools class
-    #  - basemap tool
     #  - pick optimization based on windowed amplitude
     #  - trace viewing
     def __init__(self, master, lat, long, pickData):
         self.lat = lat
         self.long = long
         self.pickData = pickData
-
-
-    def basemap(self):
-        # pull track up on dem basemap
 
     def trace_view(self):
         # show individual trace view along with initial pick location
