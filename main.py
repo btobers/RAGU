@@ -3,25 +3,28 @@ NOSEpick - currently in development stages
 created by: Brandon S. Tober and Michael S. Christoffersen
 date: 25JUN19
 
-last updated: 223AUG19
+last updated: 28AUG19
 
 environment requirements in nose_env.yml
 """
 
 ### IMPORTS ###
 import ingester
+from tools import *
 import os, sys, scipy
 import numpy as np
 import matplotlib as mpl
 mpl.use("TkAgg")
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+from matplotlib.widgets import Slider, Button, RadioButtons
+from osgeo import gdal, osr
 import tkinter as tk
 from tkinter import Button, Frame, messagebox, Canvas, filedialog
 # from PIL import ImageTk
 
 ### USER SPECIFIED VARS ###
-in_path = "/mnt/Swaps/MARS/targ/supl/UAF/2018/aug/export/"
+in_path = "/mnt/Swaps/MARS/targ/supl/UAF/2018/"
 map_path = "/mnt/Swaps/MARS/targ/supl/grid-AKDEM/"
 
 ### CODE ###
@@ -133,26 +136,68 @@ class NOSEpickGUI(tk.Tk):
 
     def basemap(self):
         # pull track up on dem basemap
-        # if self.f_loadName:
-        self.map_loadName = filedialog.askopenfilename(initialdir = map_path,title = "Select file",filetypes = (("tif files","*.tif"),("all files","*.*")))
+        if self.f_loadName:
+            self.map_loadName = filedialog.askopenfilename(initialdir = map_path, title = "Select file", filetypes = (("GeoTIFF files","*.tif"),("all files","*.*")))
         if self.map_loadName:
             print("Loading Basemap: ", self.map_loadName)
             try:
-                self.basemap_im = plt.imread(self.map_loadName)
+                # open geotiff and convert coordinate systems to get lat long of image extent
+                self.basemap_ds = gdal.Open(self.map_loadName)              # open raster
+                self.basemap_im = self.basemap_ds.ReadAsArray()             # read input raster as array
+                self.basemap_proj = self.basemap_ds.GetProjection()         # get coordinate system of input raster
+                self.basemap_proj_xform = osr.SpatialReference()
+                self.basemap_proj_xform.ImportFromWkt(self.basemap_proj)
+                # Get raster georeference info
+                width = self.basemap_ds.RasterXSize
+                height = self.basemap_ds.RasterYSize
+                gt = self.basemap_ds.GetGeoTransform()
+                if gt[2] != 0 or gt[4] != 0:
+                    print('Geotransform rotation!')
+                    print('gt[2]: '+ gt[2] + '\ngt[4]: ' + gt[4])
+                    sys.exit()
+                minx = gt[0]
+                miny = gt[3]  + height*gt[5] 
+                maxx = gt[0]  + width*gt[1]
+                maxy = gt[3] 
+                # create the new coordinate system
+                wgs84_proj4 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+                
+                # self.new_cs = osr.SpatialReference()
+                # self.new_cs.ImportFromProj4(wgs84_proj4)
+
+                # return transformed lat, long of each four corners
+                # self.lleft_xform = tools.transform([minx,miny],self.basemap_proj_xform,self.new_cs)
+                # self.uleft_xform = tools.transform([minx,maxy],self.basemap_proj_xform,self.new_cs)
+                # self.uright_xform = tools.transform([maxx,maxy],self.basemap_proj_xform,self.new_cs)
+                # self.bright_xform = tools.transform([maxx,miny],self.basemap_proj_xform,self.new_cs)
+
+                # transform navdat to csys of geotiff   
+                self.nav_transform = self.data['navdat'].transform(self.basemap_proj)            
+                
+
+                self.basemap_window = tk.Toplevel(self.master)
+                self.basemap_window.title("NOSEpick - Map Window")
+                self.map_display = Frame(self.basemap_window)
+                self.map_display.pack(side="bottom", fill="both", expand=1)
+                self.map_fig = mpl.figure.Figure()
+                self.map_fig_ax = self.map_fig.add_subplot(111)
+                self.map_fig_ax.imshow(self.basemap_im, aspect="auto", extent=[self.lleft_xform[0], self.uright_xform[0], self.lleft_xform[1], self.uright_xform[1]])
+                self.map_fig_ax.set(xlabel = "longitude", ylabel = "latitude")
+                self.map_dataCanvas = FigureCanvasTkAgg(self.map_fig, self.basemap_window)
+                self.map_dataCanvas.get_tk_widget().pack(in_=self.map_display, side="bottom", fill="both", expand=1)
+                self.map_toolbar = NavigationToolbar2Tk(self.map_dataCanvas, self.basemap_window)
+                self.map_toolbar.update()
+                self.map_dataCanvas._tkcanvas.pack()
+                # plot lat, lon atop basemap im
+                self.map_fig_ax.plot(self.data['lon'],self.data['lat'],"r")
+                self.map_dataCanvas.draw()
+
+                plt.plot(self.data['lon'],self.data['lat'],"r")
+                plt.show()
+
             except Exception as err:
                 print(err)
                 pass
-        self.basemap_window = tk.Toplevel(self.master)
-        self.basemap_window.title("NOSEpick - Map Window")
-        self.map_display = mpl.figure.Figure()
-        self.map_display_ax = self.map_display.add_subplot(111)
-        self.map_display_ax.imshow(self.basemap_im)
-        # self.map_display = Frame(self.basemap_window)
-        self.map_dataCanvas = FigureCanvasTkAgg(self.map_display, self.basemap_window)
-        self.map_dataCanvas.draw()
-        self.map_dataCanvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
-        self.map_toolbar = NavigationToolbar2Tk(self.map_dataCanvas, self.basemap_window)
-        self.map_toolbar.update()
 
     def addseg(self, event):
         # add line segments with user input

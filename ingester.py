@@ -1,5 +1,6 @@
 import h5py
 import numpy as np
+from tools import *
 
 class ingester:
     # ingester is a class to create a data ingester
@@ -32,6 +33,8 @@ class ingester:
         try:
         # read in HDF5 .mat radar block file
             f = h5py.File(fpath, 'r')
+
+
         
             # parse data
             # print(list(f['block']))
@@ -54,7 +57,14 @@ class ingester:
                 cf = f['block']['chirp']['cf'][()]    
                 pLen = f['block']['chirp']['len'][()]
 
-            return {"dt": dt, "dist": dist, "lat": lat, "lon": lon, "elev": elev, "amp": amp, "clutter": clutter} # other fields?
+            # convert lon, lat, elev to path()
+            wgs84_proj4 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+            navdat_ls = Path()
+            navdat_ls.csys = wgs84_proj4
+            for i in range(len(lon)):
+                navdat_ls.append(Loc(float(lon[i]),float(lat[i]),float(elev[i])))
+
+            return {"dt": dt, "dist": dist, "navdat": navdat_ls, "amp": amp, "clutter": clutter} # other fields?
 
         except Exception as err:
             print(err)
