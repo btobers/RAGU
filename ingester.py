@@ -34,8 +34,6 @@ class ingester:
         # read in HDF5 .mat radar block file
             f = h5py.File(fpath, 'r')
 
-
-        
             # parse data
             # print(list(f['block']))
             dt = f['block']['dt'][()]
