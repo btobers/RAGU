@@ -237,3 +237,6 @@ def transformPt(pt, in_csys, out_csys):
 
   return npt
 
+def find_nearest(array,value):
+    idx = (np.abs(array-value)).argmin()
+    return idx

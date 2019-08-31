@@ -17,7 +17,6 @@ import matplotlib as mpl
 mpl.use("TkAgg")
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-from matplotlib.widgets import Slider, Button, RadioButtons
 from osgeo import gdal, osr
 import tkinter as tk
 from tkinter import Button, Frame, messagebox, Canvas, filedialog
@@ -74,6 +73,12 @@ class NOSEpickGUI(tk.Tk):
         # button for picking initiation
         self.pickButton = Button(text = "Pick", fg = "green", command = self.picking)
         self.pickButton.pack(in_=self.pickControls, side="left")
+        # button for trace view
+        self.traceButton = Button(text = "Trace View", command = None)
+        self.traceButton.pack(in_=self.pickControls, side="left")
+        # button for pick optimization
+        self.pickOptButton = Button(text = "Pick Optimization", command = None)
+        self.pickOptButton.pack(in_=self.pickControls, side="left")
         # button to toggle on radargram
         self.radarButton = Button(text = "radar", command = self.show_radar)
         self.radarButton.pack(in_=self.switchIm, side="left")        
@@ -81,11 +86,13 @@ class NOSEpickGUI(tk.Tk):
         self.clutterButton = Button(text = "clutter", command = self.show_clutter)
         self.clutterButton.pack(in_=self.switchIm, side="left")        
         # call information messagebox
-        self.inMsg()
+        # self.inMsg()
         # empty fields for pick
         self.xln = []
         self.yln = []
         self.pick, = self.ax.plot([],[],"r")  # empty line
+        self.pick_x_loc = []
+        self.pick_y_loc = []
         # register click and key events
         self.key = self.fig.canvas.mpl_connect("key_press_event", self.onkey)
         self.click = self.fig.canvas.mpl_connect("button_press_event", self.addseg)
@@ -93,10 +100,11 @@ class NOSEpickGUI(tk.Tk):
         self.pick_state = 0
         self.basemap_state = 0
         self.toolbar = None
-        self.map_pt = None
+        self.pick_loc = None
         self.f_loadName = ""
         self.map_loadName = ""
         self.f_saveName = ""
+        self.load()
 
     def inMsg(self):
         # instructions button message box
@@ -138,9 +146,34 @@ class NOSEpickGUI(tk.Tk):
             # remove existing toolbar
             self.toolbar.destroy() 
         self.dataCanvas.get_tk_widget().pack(in_=self.display, side="bottom", fill="both", expand=1)
-        self.ax.imshow(np.log(np.power(self.data[self.dtype],2)), cmap="gray", aspect="auto", extent=[self.data["dist"][0], self.data["dist"][-1], self.data["amp"].shape[0] * self.data["dt"] * 1e6, 0])
+        # find max power in data to scale image
+        maxPow = np.nanmax(np.power(self.data[self.dtype][:],2))
+        imScl = np.log(np.power(self.data[self.dtype],2) / maxPow)
+        maxdB = np.nanmax(imScl)
+        mindB = np.nanmin(imScl)
+        mindB_round = int(np.ceil(mindB / 10.0)) * 10 
+        self.im  = self.ax.imshow(imScl, cmap="gray", aspect="auto", extent=[self.data["dist"][0], self.data["dist"][-1], self.data["amp"].shape[0] * self.data["dt"] * 1e6, 0])
         self.ax.set_title(name)
         self.ax.set(xlabel = "along-track distance [km]", ylabel = "two-way travel time [microsec.]")
+        # add colormap sliders - one for minimum and one for maximum bounds - also add reser button
+        ax_cmax = self.fig.add_axes([0.95, 0.55, 0.01, 0.30])
+        ax_cmin  = self.fig.add_axes([0.95, 0.18, 0.01, 0.30])
+        reset_ax = self.fig.add_axes([0.94, 0.11, 0.03, 0.03])
+        if self.dtype =="amp":
+            self.s_cmax_amp = mpl.widgets.Slider(ax_cmax, 'max', -10, 10, valinit=maxdB, orientation="vertical")
+            self.s_cmin_amp = mpl.widgets.Slider(ax_cmin, 'min', mindB_round - 10, mindB_round + 10, valinit=mindB_round, orientation="vertical")
+            self.s_cmin_amp.on_changed(self.cmap_update)
+            self.s_cmax_amp.on_changed(self.cmap_update)
+            self.cmap_reset_button_amp = mpl.widgets.Button(reset_ax, 'Reset', color="lightgoldenrodyellow", hovercolor='0.975')
+            self.cmap_reset_button_amp.on_clicked(self.cmap_reset)
+        elif self.dtype =="clutter":
+            self.s_cmax_clutter = mpl.widgets.Slider(ax_cmax, 'max', -10, 10, valinit=maxdB, orientation="vertical")
+            self.s_cmin_clutter = mpl.widgets.Slider(ax_cmin, 'min', mindB_round - 10, mindB_round + 10, valinit=mindB_round, orientation="vertical")
+            self.s_cmin_clutter.on_changed(self.cmap_update)
+            self.s_cmax_clutter.on_changed(self.cmap_update)
+            self.cmap_reset_button_clutter = mpl.widgets.Button(reset_ax, 'Reset', color="lightgoldenrodyellow", hovercolor='0.975')
+            self.cmap_reset_button_clutter.on_clicked(self.cmap_reset)
+        # add toolbar to plot
         self.toolbar = NavigationToolbar2Tk(self.dataCanvas, self.master)
         self.toolbar.update()
         self.dataCanvas._tkcanvas.pack()
@@ -164,8 +197,8 @@ class NOSEpickGUI(tk.Tk):
                 height = self.basemap_ds.RasterYSize
                 gt = self.basemap_ds.GetGeoTransform()
                 if gt[2] != 0 or gt[4] != 0:
-                    print('Geotransform rotation!')
-                    print('gt[2]: '+ gt[2] + '\ngt[4]: ' + gt[4])
+                    print('Geotraaxnsform rotation!')
+                    print('gt[2]:ax '+ gt[2] + '\ngt[4]: ' + gt[4])
                     sys.exit()
                 # get corner locations
                 minx = gt[0]
@@ -174,15 +207,6 @@ class NOSEpickGUI(tk.Tk):
                 maxy = gt[3] 
                 # create the new coordinate system
                 wgs84_proj4 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
-
-                # return transformed lat, long of each four corners
-                # self.new_cs = osr.SpatialReference()
-                # self.new_cs.ImportFromProj4(wgs84_proj4)
-                # self.lleft_xform = tools.transform([minx,miny],self.basemap_proj_xform,self.new_cs)
-                # self.uleft_xform = tools.transform([minx,maxy],self.basemap_proj_xform,self.new_cs)
-                # self.uright_xform = tools.transform([maxx,maxy],self.basemap_proj_xform,self.new_cs)
-                # self.bright_xform = tools.transform([maxx,miny],self.basemap_proj_xform,self.new_cs)
-
                 # transform navdat to csys of geotiff   
                 self.nav_transform = self.data['navdat'].transform(self.basemap_proj)  
                 # make list of navdat x and y data for plotting on basemap - convert to kilometers
@@ -210,22 +234,20 @@ class NOSEpickGUI(tk.Tk):
                 # plot lat, lon atop basemap im
                 self.map_fig_ax.plot(self.xdat,self.ydat,"k")
                 # convert axes to kilometers
-                # self.map_xticks = self.map_fig_ax.get_xticks()*1e-3
-                # self.map_yticks = self.map_fig_ax.get_yticks()*1e-3
+                self.map_xticks = self.map_fig_ax.get_xticks()*1e-3
+                self.map_yticks = self.map_fig_ax.get_yticks()*1e-3
                 # shift xticks and yticks if zero is not at the lower left
-                # if minx != 0:
-                #     self.map_xticks = [x + abs(min(self.map_xticks)) for x in self.map_xticks] 
-                # if miny != 0:
-                #     self.map_yticks = [y + abs(min(self.map_yticks)) for y in self.map_yticks] 
-                # self.map_fig_ax.set_xticklabels(self.map_xticks)
-                # self.map_fig_ax.set_yticklabels(self.map_yticks)
+                if minx != 0:
+                    self.map_xticks = [x + abs(min(self.map_xticks)) for x in self.map_xticks] 
+                if miny != 0:
+                    self.map_yticks = [y + abs(min(self.map_yticks)) for y in self.map_yticks] 
+                self.map_fig_ax.set_xticklabels(self.map_xticks)
+                self.map_fig_ax.set_yticklabels(self.map_yticks)
                 # zoom in to 100 km from track on all sides
                 self.map_fig_ax.set(xlim = ((min(self.xdat)- 100000),(max(self.xdat)+ 100000)), ylim = ((min(self.ydat)- 100000),(max(self.ydat)+ 100000)))
                 # annotate each end of the track
                 self.map_fig_ax.plot(self.xdat[0],self.ydat[0],'go',label='start')
                 self.map_fig_ax.plot(self.xdat[-1],self.ydat[-1],'ro',label='end')
-                # plot last pick location
-                # self.map_fig_ax.plot([],[],'wx',label='pick')
                 self.map_fig_ax.legend()                
                 self.map_dataCanvas.draw()
                 
@@ -254,12 +276,17 @@ class NOSEpickGUI(tk.Tk):
             self.yln.append(event.ydata)
             self.pick.set_data(self.xln, self.yln)
             self.fig.canvas.draw()
-            if self.map_loadName:
-                if self.basemap_state == 1:
-                    # plot pick location on basemap
-                    print(self.xdat[int(self.xln[-1])], self.ydat[int(self.xln[-1])])
-                    self.map_fig_ax.plot(self.xdat[int(self.xln[-1])], self.ydat[int(self.xln[-1])], 'wx', label = 'pick')
-                    self.map_fig.canvas.draw()
+        if self.map_loadName:
+            # basemap open, plot picked location regardless of picking state
+            if self.basemap_state == 1:
+                # plot pick location on basemap
+                # first get index of distance closest to event.xdata click
+                dist_idx = find_nearest(self.data["dist"], event.xdata)
+                if self.pick_loc:
+                    self.pick_loc.remove()
+                self.pick_loc = self.map_fig_ax.scatter(self.xdat[dist_idx],self.ydat[dist_idx],c="w",marker="x",zorder=3)  # empty line
+                # self.pick_loc.set_data(self.pick_x_loc, self.pick_y_loc)
+                self.map_fig.canvas.draw()
 
     def onkey(self, event):
         # on-key commands
@@ -329,6 +356,26 @@ class NOSEpickGUI(tk.Tk):
         if self.dtype == "amp":
             self.dtype = "clutter"
             self.matplotCanvas()
+
+    def cmap_update(self, s=None):
+        if self.dtype =="amp":
+            _cmin = self.s_cmin_amp.val
+            _cmax = self.s_cmax_amp.val
+            self.im.set_clim([_cmin, _cmax])
+            self.fig.canvas.draw()
+        if self.dtype =="clutter":
+            _cmin = self.s_cmin_clutter.val
+            _cmax = self.s_cmax_clutter.val
+            self.im.set_clim([_cmin, _cmax])
+            self.fig.canvas.draw()
+
+    def cmap_reset(self, event):
+        if self.dtype =="amp":
+            self.s_cmin_amp.reset()
+            self.s_cmax_amp.reset()
+        elif self.dtype =="clutter":
+            self.s_cmin_clutter.reset()
+            self.s_cmax_clutter.reset()
 
     def close_window(self):
         # destroy canvas
