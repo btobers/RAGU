@@ -25,10 +25,9 @@ from tkinter import Button, Frame, messagebox, Canvas, filedialog
 ### USER SPECIFIED VARS ###
 in_path = "/mnt/Swaps/MARS/targ/supl/UAF/2018/"
 map_path = "/mnt/Swaps/MARS/targ/supl/grid-AKDEM/"
-test_dat_path = in_path + 'aug/export/20180819-215243.mat'
+test_dat_path = in_path + 'may/block_clutter_elev/20180523-225145.mat'
 
 ### CODE ###
-name = in_path.split("/")[-1].rstrip(".mat")
 class NOSEpickGUI(tk.Tk):
     def __init__(self, master):
         self.master = master
@@ -52,9 +51,6 @@ class NOSEpickGUI(tk.Tk):
         self.dataCanvas = FigureCanvasTkAgg(self.fig, self.master)
         # self.dataCanvas.get_tk_widget().pack(in_=self.display, side="bottom", fill="both", expand=1)
         # self.dataCanvas.draw()
-        # button for help message
-        self.instButton = Button(self.master, text = "Instructions", command = self.inMsg)
-        self.instButton.pack(in_=self.controls, side="left")
         # button for loading data
         self.loadButton = Button(self.master, text = "Load", command = self.load)
         self.loadButton.pack(in_=self.controls, side="left")
@@ -67,6 +63,9 @@ class NOSEpickGUI(tk.Tk):
         # button for basemap display
         self.basemapButton = Button(text = "Map", command = self.basemap)
         self.basemapButton.pack(in_=self.controls, side="left")
+        # button for help message
+        self.instButton = Button(self.master, text = "Help", command = self.inMsg)
+        self.instButton.pack(in_=self.controls, side="left")
         # button for exit
         self.exitButton = Button(text = "Exit", fg = "red", command = self.close_window)
         self.exitButton.pack(in_=self.controls, side="left")
@@ -85,9 +84,9 @@ class NOSEpickGUI(tk.Tk):
         # button to toggle on clutter
         self.clutterButton = Button(text = "clutter", command = self.show_clutter)
         self.clutterButton.pack(in_=self.switchIm, side="left")        
-        # call information messagebox
+        # call information messageboxs
         # self.inMsg()
-        # empty fields for pick
+        # empty fields for picks
         self.xln = []
         self.yln = []
         self.pick, = self.ax.plot([],[],"r")  # empty line
@@ -101,9 +100,14 @@ class NOSEpickGUI(tk.Tk):
         self.basemap_state = 0
         self.toolbar = None
         self.pick_loc = None
+        self.ax_cmax = None
+        self.ax_cmin  = None
+        self.reset_ax = None
         self.f_loadName = ""
         self.map_loadName = ""
         self.f_saveName = ""
+        self.amp_imSwitch_flag = ""
+        self.clutter_imSwitch_flag = ""
         self.load()
 
     def inMsg(self):
@@ -131,6 +135,7 @@ class NOSEpickGUI(tk.Tk):
             print("Loading: ", self.f_loadName)
             self.data = self.igst.read(self.f_loadName)
             self.dtype = "amp"
+            self.ax.set_title(self.f_loadName.split("/")[-1].rstrip(".mat"))
             self.matplotCanvas()
             # get index of selected file in directory
             self.file_path = self.f_loadName.rstrip(self.f_loadName.split("/")[-1])
@@ -149,29 +154,41 @@ class NOSEpickGUI(tk.Tk):
         # find max power in data to scale image
         maxPow = np.nanmax(np.power(self.data[self.dtype][:],2))
         imScl = np.log(np.power(self.data[self.dtype],2) / maxPow)
-        maxdB = np.nanmax(imScl)
-        mindB = np.nanmin(imScl)
-        mindB_round = int(np.ceil(mindB / 10.0)) * 10 
+        maxdB = np.rint(np.nanmax(imScl))
+        # mindB = np.nanmin(imScl)
+        # mindB_round = int(np.ceil(mindB / 10.0)) * 10 
+        # cut off data at 10th percentile to avoid extreme outliers
+        mindB = np.rint(np.nanpercentile(imScl,10))
         self.im  = self.ax.imshow(imScl, cmap="gray", aspect="auto", extent=[self.data["dist"][0], self.data["dist"][-1], self.data["amp"].shape[0] * self.data["dt"] * 1e6, 0])
-        self.ax.set_title(name)
         self.ax.set(xlabel = "along-track distance [km]", ylabel = "two-way travel time [microsec.]")
         # add colormap sliders - one for minimum and one for maximum bounds - also add reser button
-        ax_cmax = self.fig.add_axes([0.95, 0.55, 0.01, 0.30])
-        ax_cmin  = self.fig.add_axes([0.95, 0.18, 0.01, 0.30])
-        reset_ax = self.fig.add_axes([0.94, 0.11, 0.03, 0.03])
+        if self.ax_cmax:
+            # remove existing color sliders
+            self.ax_cmax.remove()
+            self.ax_cmin.remove()
+            self.reset_ax.remove()
+        self.ax_cmax = self.fig.add_axes([0.95, 0.55, 0.01, 0.30])
+        self.ax_cmin  = self.fig.add_axes([0.95, 0.18, 0.01, 0.30])
+        self.reset_ax = self.fig.add_axes([0.94, 0.11, 0.03, 0.03])
         if self.dtype =="amp":
-            self.s_cmax_amp = mpl.widgets.Slider(ax_cmax, 'max', -10, 10, valinit=maxdB, orientation="vertical")
-            self.s_cmin_amp = mpl.widgets.Slider(ax_cmin, 'min', mindB_round - 10, mindB_round + 10, valinit=mindB_round, orientation="vertical")
+            if not self.amp_imSwitch_flag:
+                # the first time the amplitude image is loaded, update colormap to cut off values below 10th percentile
+                self.im.set_clim([mindB, maxdB])
+            self.s_cmax_amp = mpl.widgets.Slider(self.ax_cmax, 'max', -10, 10, valinit=maxdB, orientation="vertical")
+            self.s_cmin_amp = mpl.widgets.Slider(self.ax_cmin, 'min', mindB - 10, mindB + 10, valinit=mindB, orientation="vertical")
             self.s_cmin_amp.on_changed(self.cmap_update)
             self.s_cmax_amp.on_changed(self.cmap_update)
-            self.cmap_reset_button_amp = mpl.widgets.Button(reset_ax, 'Reset', color="lightgoldenrodyellow", hovercolor='0.975')
+            self.cmap_reset_button_amp = mpl.widgets.Button(self.reset_ax, 'Reset', color="lightgoldenrodyellow", hovercolor='0.975')
             self.cmap_reset_button_amp.on_clicked(self.cmap_reset)
         elif self.dtype =="clutter":
-            self.s_cmax_clutter = mpl.widgets.Slider(ax_cmax, 'max', -10, 10, valinit=maxdB, orientation="vertical")
-            self.s_cmin_clutter = mpl.widgets.Slider(ax_cmin, 'min', mindB_round - 10, mindB_round + 10, valinit=mindB_round, orientation="vertical")
+            if not self.clutter_imSwitch_flag:
+                # the first time the clutter image is loaded, update colormap to cut off values below 10th percentile
+                self.im.set_clim([mindB, maxdB])
+            self.s_cmax_clutter = mpl.widgets.Slider(self.ax_cmax, 'max', -10, 10, valinit=maxdB, orientation="vertical")
+            self.s_cmin_clutter = mpl.widgets.Slider(self.ax_cmin, 'min', mindB - 10, mindB + 10, valinit=mindB, orientation="vertical")
             self.s_cmin_clutter.on_changed(self.cmap_update)
             self.s_cmax_clutter.on_changed(self.cmap_update)
-            self.cmap_reset_button_clutter = mpl.widgets.Button(reset_ax, 'Reset', color="lightgoldenrodyellow", hovercolor='0.975')
+            self.cmap_reset_button_clutter = mpl.widgets.Button(self.reset_ax, 'Reset', color="lightgoldenrodyellow", hovercolor='0.975')
             self.cmap_reset_button_clutter.on_clicked(self.cmap_reset)
         # add toolbar to plot
         self.toolbar = NavigationToolbar2Tk(self.dataCanvas, self.master)
@@ -205,8 +222,6 @@ class NOSEpickGUI(tk.Tk):
                 miny = gt[3]  + height*gt[5] 
                 maxx = gt[0]  + width*gt[1]
                 maxy = gt[3] 
-                # create the new coordinate system
-                wgs84_proj4 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
                 # transform navdat to csys of geotiff   
                 self.nav_transform = self.data['navdat'].transform(self.basemap_proj)  
                 # make list of navdat x and y data for plotting on basemap - convert to kilometers
@@ -306,13 +321,21 @@ class NOSEpickGUI(tk.Tk):
             self.f_saveName = filedialog.asksaveasfilename(initialdir = "./",title = "Save As",filetypes = (("comma-separated values","*.csv"),))
             if self.f_saveName:
                 print("Exporting picks: ", self.f_saveName)
-                self.x_pickList = []
-                self.y_pickList = []
+                pick_idx = []
+                # self.x_pickList = []
+                # self.y_pickList = []
+                # for _i in range(len(self.xln)):
+                #     self.x_pickList.append(self.xln[_i])
+                #     self.y_pickList.append(self.yln[_i])
+                # self.pickArray = np.column_stack((np.asarray(self.x_pickList), np.asarray(self.y_pickList)))
                 for _i in range(len(self.xln)):
-                    self.x_pickList.append(self.xln[_i])
-                    self.y_pickList.append(self.yln[_i])
-                self.pickArray = np.column_stack((np.asarray(self.x_pickList), np.asarray(self.y_pickList)))
-                np.savetxt(self.f_saveName, self.pickArray, delimiter=",", newline = "\n", fmt="%.8f")
+                    # get nearest trace index of pick locations in data
+                    pick_idx.append(find_nearest(self.data["dist"], self.xln[_i]))
+
+                lon = self.nav_transform[np.asarray(pick_idx)].x
+                lat = self.nav_transform[np.asarray(pick_idx)].y
+                print(lat)
+                np.savetxt(self.f_saveName, np.column_stack((self.xln,self.yln)), delimiter=",", newline = "\n", fmt="%.8f")
 
     def clear_picks(self):
         # clear all picks
@@ -349,12 +372,16 @@ class NOSEpickGUI(tk.Tk):
         # toggle to radar data
         if self.dtype == "clutter":
             self.dtype = "amp"
+            self.amp_imSwitch_flag is True
+            self.im.remove()
             self.matplotCanvas()
 
     def show_clutter(self):
         # toggle to clutter sim
         if self.dtype == "amp":
             self.dtype = "clutter"
+            self.clutter_imSwitch_flag is True
+            self.im.remove()
             self.matplotCanvas()
 
     def cmap_update(self, s=None):

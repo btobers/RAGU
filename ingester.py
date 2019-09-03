@@ -1,6 +1,8 @@
 import h5py
 import numpy as np
 from tools import *
+from PIL import Image
+import matplotlib.pyplot as plt
 
 class ingester:
     # ingester is a class to create a data ingester
@@ -43,6 +45,7 @@ class ingester:
             lat = np.array(f['block']['lat'])
             lon = np.array(f['block']['lon'])
             elev = np.array(f['block']['elev_air'])
+            twtt_surf = np.array(f['block']['twtt_surf'])
             amp = np.array(f['block']['amp'])
             if amp.shape[0] == num_trace and amp.shape[1] == num_sample:
                 amp = np.transpose(amp)  
@@ -57,15 +60,15 @@ class ingester:
 
             # convert lon, lat, elev to path()
             wgs84_proj4 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
-            navdat_ls = Path()
-            navdat_ls.csys = wgs84_proj4
+            navdat = Path()
+            navdat.csys = wgs84_proj4
             for i in range(len(lon)):
-                navdat_ls.append(Loc(float(lon[i]),float(lat[i]),float(elev[i])))
-
-            return {"dt": dt, "dist": dist, "navdat": navdat_ls, "amp": amp, "clutter": clutter} # other fields?
+                navdat.append(Loc(float(lon[i]),float(lat[i]),float(elev[i])))
+          
+            return {"dt": dt, "dist": dist, "navdat": navdat, "twtt_surf": twtt_surf, "amp": amp, "clutter": clutter} # other fields?
 
         except Exception as err:
-            print(err)
+            print("Ingest Error: " + str(err))
 
 
 
