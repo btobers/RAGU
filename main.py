@@ -79,7 +79,7 @@ class NOSEpickGUI(tk.Tk):
         self.pickOptButton = Button(text = "Pick Optimization", command = None)
         self.pickOptButton.pack(in_=self.pickControls, side="left")
         # button to toggle on radargram
-        self.radarButton = Button(text = "radar", command = self.show_radar)
+        self.radarButton = Button(text = "radar", command = self.show_radar, relief="sunken")
         self.radarButton.pack(in_=self.switchIm, side="left")        
         # button to toggle on clutter
         self.clutterButton = Button(text = "clutter", command = self.show_clutter)
@@ -379,6 +379,8 @@ class NOSEpickGUI(tk.Tk):
         # toggle to radar data
         if self.dtype == "clutter":
             self.dtype = "amp"
+            self.clutterButton.config(relief="raised")
+            self.radarButton.config(relief="sunken")
             self.amp_imSwitch_flag is True
             self.im.remove()
             self.matplotCanvas()
@@ -387,6 +389,8 @@ class NOSEpickGUI(tk.Tk):
         # toggle to clutter sim
         if self.dtype == "amp":
             self.dtype = "clutter"
+            self.radarButton.config(relief="raised")
+            self.clutterButton.config(relief="sunken")
             self.clutter_imSwitch_flag is True
             self.im.remove()
             self.matplotCanvas()

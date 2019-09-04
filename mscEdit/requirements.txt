@@ -1,6 +1,0 @@
-python >= 3.7
-h5py
-numpy
-matplotlib
-pytables
-tkinter
