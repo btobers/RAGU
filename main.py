@@ -159,7 +159,10 @@ class NOSEpickGUI(tk.Tk):
         # mindB_round = int(np.ceil(mindB / 10.0)) * 10 
         # cut off data at 10th percentile to avoid extreme outliers
         mindB = np.rint(np.nanpercentile(imScl,10))
-        self.im  = self.ax.imshow(imScl, cmap="gray", aspect="auto", extent=[self.data["dist"][0], self.data["dist"][-1], self.data["amp"].shape[0] * self.data["dt"] * 1e6, 0])
+        self.im  = self.ax.imshow(imScl, cmap="gray", aspect="auto", extent=[self.data["dist"][0], self.data["dist"][-1], self.data["amp"].shape[0] * self.data["dt"], 0])
+        # multiply y-axis label by 1e6 to plot in microseconds
+        self.ax_yticks = np.round(self.ax.get_yticks()*1e6)
+        self.ax.set_yticklabels(self.ax_yticks)
         self.ax.set(xlabel = "along-track distance [km]", ylabel = "two-way travel time [microsec.]")
         # add colormap sliders - one for minimum and one for maximum bounds - also add reser button
         if self.ax_cmax:
@@ -286,7 +289,6 @@ class NOSEpickGUI(tk.Tk):
         if self.pick_state == 1:
             if (event.inaxes != self.ax):
                 return
-            # print("[" + event.xdata.astype(str) + ", " + event.ydata.astype(str) + "]")
             self.xln.append(event.xdata)
             self.yln.append(event.ydata)
             self.pick.set_data(self.xln, self.yln)
@@ -299,8 +301,7 @@ class NOSEpickGUI(tk.Tk):
                 dist_idx = find_nearest(self.data["dist"], event.xdata)
                 if self.pick_loc:
                     self.pick_loc.remove()
-                self.pick_loc = self.map_fig_ax.scatter(self.xdat[dist_idx],self.ydat[dist_idx],c="w",marker="x",zorder=3)  # empty line
-                # self.pick_loc.set_data(self.pick_x_loc, self.pick_y_loc)
+                self.pick_loc = self.map_fig_ax.scatter(self.xdat[dist_idx],self.ydat[dist_idx],c="w",marker="x",zorder=3)
                 self.map_fig.canvas.draw()
 
     def onkey(self, event):
@@ -321,21 +322,27 @@ class NOSEpickGUI(tk.Tk):
             self.f_saveName = filedialog.asksaveasfilename(initialdir = "./",title = "Save As",filetypes = (("comma-separated values","*.csv"),))
             if self.f_saveName:
                 print("Exporting picks: ", self.f_saveName)
-                pick_idx = []
-                # self.x_pickList = []
-                # self.y_pickList = []
-                # for _i in range(len(self.xln)):
-                #     self.x_pickList.append(self.xln[_i])
-                #     self.y_pickList.append(self.yln[_i])
-                # self.pickArray = np.column_stack((np.asarray(self.x_pickList), np.asarray(self.y_pickList)))
-                for _i in range(len(self.xln)):
+                # get necessary data from radargram for pick locations
+                num_picks = len(self.xln)
+                v_ice = 3e8/np.sqrt(3.15)
+                lon = np.zeros(num_picks)
+                lat = np.zeros(num_picks)
+                elev_air = np.zeros(num_picks)
+                twtt_surf = np.zeros(num_picks)
+                twtt_bed = np.asarray(self.yln)
+                thick = np.zeros(num_picks)
+                for _i in range(num_picks):
                     # get nearest trace index of pick locations in data
-                    pick_idx.append(find_nearest(self.data["dist"], self.xln[_i]))
-
-                lon = self.nav_transform[np.asarray(pick_idx)].x
-                lat = self.nav_transform[np.asarray(pick_idx)].y
-                print(lat)
-                np.savetxt(self.f_saveName, np.column_stack((self.xln,self.yln)), delimiter=",", newline = "\n", fmt="%.8f")
+                    # find trace number of pick in radar data
+                    pick_idx = find_nearest(self.data["dist"], self.xln[_i])
+                    lon[_i] = self.data["navdat"][pick_idx].x
+                    lat[_i] = self.data["navdat"][pick_idx].y
+                    elev_air[_i] = self.data["navdat"][pick_idx].z
+                    twtt_surf[_i] = self.data["twtt_surf"][pick_idx]
+                    # calculate ice thickness
+                    thick[_i] = ((twtt_bed[_i]-twtt_surf[_i])*v_ice)/2
+                header = "lon,lat,elev_air,twtt_surf,twtt_bed,thick"
+                np.savetxt(self.f_saveName, np.column_stack((lon,lat,elev_air,twtt_surf,twtt_bed,thick)), delimiter=",", newline="\n", fmt="%.8f", header=header, comments="")
 
     def clear_picks(self):
         # clear all picks

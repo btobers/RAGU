@@ -44,7 +44,7 @@ class ingester:
             dist = np.array(f['block']['dist'])
             lat = np.array(f['block']['lat'])
             lon = np.array(f['block']['lon'])
-            elev = np.array(f['block']['elev_air'])
+            elev_surf = np.array(f['block']['elev_air'])
             twtt_surf = np.array(f['block']['twtt_surf'])
             amp = np.array(f['block']['amp'])
             if amp.shape[0] == num_trace and amp.shape[1] == num_sample:
@@ -63,7 +63,7 @@ class ingester:
             navdat = Path()
             navdat.csys = wgs84_proj4
             for i in range(len(lon)):
-                navdat.append(Loc(float(lon[i]),float(lat[i]),float(elev[i])))
+                navdat.append(Loc(float(lon[i]),float(lat[i]),float(elev_surf[i])))
           
             return {"dt": dt, "dist": dist, "navdat": navdat, "twtt_surf": twtt_surf, "amp": amp, "clutter": clutter} # other fields?
 
