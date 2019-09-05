@@ -186,7 +186,10 @@ class NOSEpickGUI(tk.Tk):
         self.reset_ax = self.fig.add_axes([0.94, 0.11, 0.03, 0.03])
         if self.dtype =="amp":
             if not self.amp_imSwitch_flag:
-                # the first time the amplitude image is loaded, update colormap to cut off values below 10th percentile
+                # the first time the am
+                self.ydat = []
+                for _i in range(len(self.nav_transform)):
+                    self.xdat.append(self.nav_transform[_i].x)plitude image is loaded, update colormap to cut off values below 10th percentile
                 self.im.set_clim([mindB, maxdB])
             self.s_cmax_amp = mpl.widgets.Slider(self.ax_cmax, 'max', -10, 10, valinit=maxdB, orientation="vertical")
             self.s_cmin_amp = mpl.widgets.Slider(self.ax_cmin, 'min', mindB - 10, mindB + 10, valinit=mindB, orientation="vertical")
@@ -248,7 +251,6 @@ class NOSEpickGUI(tk.Tk):
                 self.basemap_window = tk.Toplevel(self.master)
                 self.basemap_window.protocol("WM_DELETE_WINDOW", self.basemap_close)
                 self.basemap_window.title("NOSEpick - Map Window")
-                self.basemap_state = 1
                 self.map_display = Frame(self.basemap_window)
                 self.map_display.pack(side="bottom", fill="both", expand=1)
                 self.map_fig = mpl.figure.Figure()
@@ -279,6 +281,7 @@ class NOSEpickGUI(tk.Tk):
                 self.map_fig_ax.plot(self.xdat[-1],self.ydat[-1],'ro',label='end')
                 self.map_fig_ax.legend()                
                 self.map_dataCanvas.draw()
+                self.basemap_state = 1
                 
             except Exception as err:
                 print(err)
@@ -307,7 +310,9 @@ class NOSEpickGUI(tk.Tk):
 
     def addseg(self, event):
         # add line segments with user input
-        # first check if picking state is a go
+        # find nearest index to event.xdata for plotting on basemap and for linearly interpolating twtt between points
+        pick_idx_1 = find_nearest(self.data["dist"], event.xdata)
+        # check if picking state is a go
         if self.pick_state == 1:
             if (event.inaxes != self.ax):
                 return
@@ -315,8 +320,8 @@ class NOSEpickGUI(tk.Tk):
             self.yln.append(event.ydata)
             num_pick = len(self.xln)
             if num_pick >= 2:
-                pick_idx_0 = find_nearest(self.data["dist"], self.xln[-2])
-                pick_idx_1 = find_nearest(self.data["dist"], self.xln[-1])
+                # if there are at least two picked points, find range of all trace numbers within their range
+                pick_idx_0 = find_nearest(self.data["dist"], self.xln[-2])   
                 self.pick_dict["layer_" + str(self.pick_layer)][pick_idx_0] = self.yln[-2]
                 self.pick_dict["layer_" + str(self.pick_layer)][pick_idx_1] = self.yln[-1]
                 self.pick_idx = np.arange(pick_idx_0,pick_idx_1 + 1)
@@ -327,20 +332,17 @@ class NOSEpickGUI(tk.Tk):
         if self.map_loadName:
             # basemap open, plot picked location regardless of picking state
             if self.basemap_state == 1:
-                # plot pick location on basemap
-                # first get index of distance closest to event.xdata click
-                dist_idx = find_nearest(self.data["dist"], event.xdata)
+                # plot pick location of last click on basemap
                 if self.pick_loc:
                     self.pick_loc.remove()
-                self.pick_loc = self.map_fig_ax.scatter(self.xdat[dist_idx],self.ydat[dist_idx],c="w",marker="x",zorder=3)
+                self.pick_loc = self.map_fig_ax.scatter(self.xdat[pick_idx_1],self.ydat[pick_idx_1],c="w",marker="x",zorder=3)
                 self.map_fig.canvas.draw()
 
     def onkey(self, event):
         # on-key commands
         if event.key =="c":
             # clear the drawing of line segments
-            if messagebox.askokcancel("Warning", "Clear all picks?", icon = "warning") == True:
-                self.clear_picks()
+            self.clear_picks()
         elif event.key =="backspace":
             # remove last segment
             self.clear_last()
@@ -378,7 +380,7 @@ class NOSEpickGUI(tk.Tk):
 
     def clear_picks(self):
         # clear all picks
-        if len(self.xln) and len(self.yln) > 0:
+        if len(self.xln) > 0 and messagebox.askokcancel("Warning", "Clear all picks?", icon = "warning") == True:
             del self.xln[:]
             del self.yln[:]
             self.pick.set_data(self.xln, self.yln)
@@ -386,7 +388,7 @@ class NOSEpickGUI(tk.Tk):
 
     def clear_last(self):
         # clear last pick
-        if len(self.xln) and len(self.yln) > 0:
+        if len(self.xln) > 0:
             del self.xln[-1:]
             del self.yln[-1:]
             self.pick.set_data(self.xln, self.yln)
@@ -403,6 +405,10 @@ class NOSEpickGUI(tk.Tk):
                     print("Loading: ", self.f_loadName)
                     self.data = self.igst.read(self.f_loadName)
                     self.dtype = "amp"
+                    del self.xln[:]
+                    del self.yln[:]
+                    del self.xln_old[:]
+                    del self.yln_old[:]
                     self.var_reset()
                     self.matplotCanvas()
                 else:
@@ -451,7 +457,7 @@ class NOSEpickGUI(tk.Tk):
     def close_window(self):
         # destroy canvas
         # first check if picks have been made and saved
-        if len(self.xln) > 0 and len(self.yln) > 0 and self.f_saveName == "":
+        if len(self.xln) > 0 and self.f_saveName == "":
             if messagebox.askokcancel("Warning", "Exit NOSEpick without saving picks?", icon = "warning") == True:
                 self.master.destroy()
         else:
