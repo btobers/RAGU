@@ -349,38 +349,32 @@ class NOSEpickGUI(tk.Tk):
     
     def savePick(self):
         # save picks
-        if len(self.xln) > 0 and len(self.yln) > 0:
+        if len(self.xln_old) > 0 and self.save_warning() is True:
             self.f_saveName = filedialog.asksaveasfilename(initialdir = "./",title = "Save As",filetypes = (("comma-separated values","*.csv"),))
             if self.f_saveName:
-                print("Exporting picks: ", self.f_saveName)
-                # get necessary data from radargram for pick locations
-
                 v_ice = 3e8/np.sqrt(3.15)
-                lon = np.zeros(num_picks)
-                lat = np.zeros(num_picks)
-                elev_air = np.zeros(num_picks)
-                twtt_surf = np.zeros(num_picks)
-                twtt_bed = np.asarray(self.yln)
-                thick = np.zeros(num_picks)
-
-
-                # for _i in range(num_picks - 1):
-                #     # get nearest trace index of pick locations in data
-                #     # find trace number of pick in radar data
-                #     # fill in trace numbers between pick locations
-                #     pick_idx_0 = find_nearest(self.data["dist"], self.xln[_i])
-                #     pick_idx_1 = find_nearest(self.data["dist"], self.xln[_i + 1])
-                #     pick_idx = np.append(np.arange(pick_idx_0,pick_idx_1 + 1)
-
-
-                #     lon = self.data["navdat"][pick_idx].x
-                #     lat[_i] = self.data["navdat"][pick_idx].y
-                #     elev_air[_i] = self.data["navdat"][pick_idx].z
-                #     twtt_surf[_i] = self.data["twtt_surf"][pick_idx]
-                #     # calculate ice thickness
-                #     thick[_i] = ((twtt_bed[_i]-twtt_surf[_i])*v_ice)/2
-                # header = "lon,lat,elev_air,twtt_surf,twtt_bed,thick"
-                # np.savetxt(self.f_saveName, np.column_stack((lon,lat,elev_air,twtt_surf,twtt_bed,thick)), delimiter=",", newline="\n", fmt="%.8f", header=header, comments="")
+                lon = []
+                lat = []
+                elev_air = []
+                twtt_surf = []
+                twtt_bed = []
+                thick = []
+                # get necessary data from radargram for pick locations
+                # iterate through pick_dict layers
+                num_pic_lyr = self.pick_layer
+                for _i in range(num_pic_lyr):
+                    num_pt = len(np.where(self.pick_dict["layer_" + str(_i)] != -1)[0])
+                    pick_idx = np.where(self.pick_dict["layer_" + str(_i)] != -1)[0]
+                    for _j in range(num_pt):
+                        lon.append(self.data["navdat"][pick_idx[_j]].x)
+                        lat.append(self.data["navdat"][pick_idx[_j]].y)
+                        elev_air.append(self.data["navdat"][pick_idx[_j]].z)
+                        twtt_surf.append(self.data["twtt_surf"][pick_idx[_j]])
+                        twtt_bed.append(self.pick_dict["layer_" + str(_i)][pick_idx[_j]])
+                        thick.append(((twtt_bed[_j]-twtt_surf[_j])*v_ice)/2)
+                header = "lon,lat,elev_air,twtt_surf,twtt_bed,thick"
+                np.savetxt(self.f_saveName, np.column_stack((np.asarray(lon),np.asarray(lat),np.asarray(elev_air),np.asarray(twtt_surf),np.asarray(twtt_bed),np.asarray(thick))), delimiter=",", newline="\n", fmt="%.8f", header=header, comments="")
+                print("Picks exported: ", self.f_saveName)
 
     def clear_picks(self):
         # clear all picks
@@ -466,7 +460,7 @@ class NOSEpickGUI(tk.Tk):
     def save_warning(self):
         # warning to save picks before loading next file
         # first check if picks have been made and saved
-        if len(self.xln) > 0 and len(self.yln) > 0 and self.f_saveName == "":
+        if len(self.xln) > 0 and self.f_saveName == "":
             if messagebox.askokcancel("Warning", "Load next track without saving picks?", icon = "warning") == True:
                 # clear picks
                 self.clear_picks()
