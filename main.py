@@ -23,9 +23,9 @@ from tkinter import Button, Frame, messagebox, Canvas, filedialog
 # from PIL import ImageTk
 
 ### USER SPECIFIED VARS ###
-in_path = "/mnt/Swaps/MARS/targ/supl/UAF/2018/"
-map_path = "/mnt/Swaps/MARS/targ/supl/grid-AKDEM/"
-test_dat_path = in_path + 'may/block_clutter_elev/20180523-225145.mat'
+in_path = "/home/mchristo/proj/NOSEpick/"
+map_path = "/home/mchristo/proj/NOSEpick/hs.tif"
+test_dat_path = in_path + '20180819-215243.mat'
 
 ### CODE ###
 class NOSEpickGUI(tk.Tk):
@@ -171,6 +171,10 @@ class NOSEpickGUI(tk.Tk):
         # cut off data at 10th percentile to avoid extreme outliers
         mindB = np.rint(np.nanpercentile(imScl,10))
         self.im  = self.ax.imshow(imScl, cmap="gray", aspect="auto", extent=[self.data["dist"][0], self.data["dist"][-1], self.data["amp"].shape[0] * self.data["dt"], 0])
+
+        # Save background
+        self.axbg = self.dataCanvas.copy_from_bbox(self.ax.bbox)
+        
         # multiply y-axis label by 1e6 to plot in microseconds
         self.ax_yticks = np.round(self.ax.get_yticks()*1e6)
         self.ax.set_yticklabels(self.ax_yticks)
@@ -327,8 +331,13 @@ class NOSEpickGUI(tk.Tk):
                 self.pick_idx = np.arange(pick_idx_0,pick_idx_1 + 1)
                 # linearly interpolate twtt values between pick points at idx_0 and idx_1
                 self.pick_dict["layer_" + str(self.pick_layer)][self.pick_idx] = np.interp(self.pick_idx, [pick_idx_0,pick_idx_1], [self.yln[-2],self.yln[-1]])
+            
+            # Redraw pick quickly with blitting
             self.pick.set_data(self.xln, self.yln)
-            self.fig.canvas.draw()
+            self.dataCanvas.restore_region(self.axbg)
+            self.ax.draw_artist(self.pick)
+            self.dataCanvas.blit(self.ax.bbox)
+
         if self.map_loadName:
             # basemap open, plot picked location regardless of picking state
             if self.basemap_state == 1:

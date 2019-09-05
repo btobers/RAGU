@@ -1,0 +1,8 @@
+# Pycache
+__pycache__/
+
+# Test data
+testData/
+
+# Python bytecode
+*.pyc
