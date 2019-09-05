@@ -1,7 +1,6 @@
 import h5py
 import numpy as np
 from tools import *
-from PIL import Image
 import matplotlib.pyplot as plt
 
 class ingester:

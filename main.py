@@ -15,7 +15,7 @@ import matplotlib as mpl
 mpl.use("TkAgg")
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-from osgeo import gdal, osr
+import gdal, osr
 import tkinter as tk
 from tkinter import Button, Frame, messagebox, Canvas, filedialog
 # from PIL import ImageTk

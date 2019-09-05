@@ -1,5 +1,5 @@
 import numpy as np
-from osgeo import gdal, osr
+import gdal, osr
 
 class tools:
   # NOSEpick tools class
