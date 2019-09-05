@@ -38,14 +38,14 @@ class ingester:
 
             # parse data
             # print(list(f['block']))
-            dt = f['block']['dt'][()]
+            dt = float(f['block']['dt'][0])
             num_trace = int(f['block']['num_trace'][0])
             num_sample = int(f['block']['num_sample'][0])
-            dist = np.array(f['block']['dist'])
-            lat = np.array(f['block']['lat'])
-            lon = np.array(f['block']['lon'])
-            elev_surf = np.array(f['block']['elev_air'])
-            twtt_surf = np.array(f['block']['twtt_surf'])
+            dist = np.array(f['block']['dist']).flatten()
+            lat = np.array(f['block']['lat']).flatten()
+            lon = np.array(f['block']['lon']).flatten()
+            elev_surf = np.array(f['block']['elev_air']).flatten()
+            twtt_surf = np.array(f['block']['twtt_surf']).flatten()
             amp = np.array(f['block']['amp'])
             if amp.shape[0] == num_trace and amp.shape[1] == num_sample:
                 amp = np.transpose(amp)  
@@ -65,7 +65,7 @@ class ingester:
             for i in range(len(lon)):
                 navdat.append(Loc(float(lon[i]),float(lat[i]),float(elev_surf[i])))
           
-            return {"dt": dt, "dist": dist, "navdat": navdat, "twtt_surf": twtt_surf, "amp": amp, "clutter": clutter} # other fields?
+            return {"dt": dt, "num_trace": num_trace, "num_sample": num_sample, "dist": dist, "navdat": navdat, "twtt_surf": twtt_surf, "amp": amp, "clutter": clutter} # other fields?
 
         except Exception as err:
             print("Ingest Error: " + str(err))

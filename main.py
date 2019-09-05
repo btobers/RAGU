@@ -46,7 +46,7 @@ class NOSEpickGUI(tk.Tk):
         self.display = Frame(self.master)
         self.display.pack(side="bottom", fill="both", expand=1)
         # blank data canvas
-        self.fig = mpl.figure.Figure()          # need to make two of these - add seg canvas on top of image canvas!!!!
+        self.fig = mpl.figure.Figure()
         self.ax = self.fig.add_subplot(111)
         self.dataCanvas = FigureCanvasTkAgg(self.fig, self.master)
         # self.dataCanvas.get_tk_widget().pack(in_=self.display, side="bottom", fill="both", expand=1)
@@ -86,29 +86,29 @@ class NOSEpickGUI(tk.Tk):
         self.clutterButton.pack(in_=self.switchIm, side="left")        
         # call information messageboxs
         # self.inMsg()
-        # empty fields for picks
-        self.xln = []
-        self.yln = []
-        self.pick, = self.ax.plot([],[],"r")  # empty line
-        self.pick_x_loc = []
-        self.pick_y_loc = []
         # register click and key events
         self.key = self.fig.canvas.mpl_connect("key_press_event", self.onkey)
         self.click = self.fig.canvas.mpl_connect("button_press_event", self.addseg)
+        self.f_loadName = ""
+        self.var_reset()
+        self.load()
+    
+    def var_reset(self):
         # variable declarations
         self.pick_state = 0
+        self.pick_layer = 0
         self.basemap_state = 0
+        self.pick_dict = {}
+        self.pick_idx = []
         self.toolbar = None
         self.pick_loc = None
         self.ax_cmax = None
         self.ax_cmin  = None
         self.reset_ax = None
-        self.f_loadName = ""
         self.map_loadName = ""
         self.f_saveName = ""
         self.amp_imSwitch_flag = ""
         self.clutter_imSwitch_flag = ""
-        self.load()
 
     def inMsg(self):
         # instructions button message box
@@ -136,6 +136,17 @@ class NOSEpickGUI(tk.Tk):
             self.data = self.igst.read(self.f_loadName)
             self.dtype = "amp"
             self.ax.set_title(self.f_loadName.split("/")[-1].rstrip(".mat"))
+            # self.ax = self.fig.add_axes([0.0, self.data["dt"]*self.data["num_sample"], self.data["dist"][-1], self.data["dt"]*self.data["num_sample"]])
+            # empty fields for picks
+            self.xln = []
+            self.yln = []
+            self.pick, = self.ax.plot([],[],"r")  # empty line for current pick
+            self.xln_old = []
+            self.yln_old = []
+            self.saved_pick, = self.ax.plot([],[],"g")  # empty line for saved pick
+            # self.ax.patch.set_alpha(0)
+            self.pick_x_loc = []
+            self.pick_y_loc = []
             self.matplotCanvas()
             # get index of selected file in directory
             self.file_path = self.f_loadName.rstrip(self.f_loadName.split("/")[-1])
@@ -278,9 +289,20 @@ class NOSEpickGUI(tk.Tk):
         if self.f_loadName:
             if self.pick_state == 0:
                 self.pick_state = 1
+                self.pick_dict["layer_" + str(self.pick_layer)] = np.ones(self.data["num_trace"])*-1
                 self.pickButton.configure(fg = "red")
             elif self.pick_state == 1:
                 self.pick_state = 0
+                self.pick_layer += 1
+                # save picked lines to old variable and clear line variables
+                self.xln_old.extend(self.xln)
+                self.yln_old.extend(self.yln)
+                del self.xln[:]
+                del self.yln[:]
+                # plot saved pick in green
+                self.pick.set_data(self.xln, self.yln)
+                self.saved_pick.set_data(self.xln_old, self.yln_old)
+                self.fig.canvas.draw()
                 self.pickButton.configure(fg = "green")
 
     def addseg(self, event):
@@ -291,6 +313,15 @@ class NOSEpickGUI(tk.Tk):
                 return
             self.xln.append(event.xdata)
             self.yln.append(event.ydata)
+            num_pick = len(self.xln)
+            if num_pick >= 2:
+                pick_idx_0 = find_nearest(self.data["dist"], self.xln[-2])
+                pick_idx_1 = find_nearest(self.data["dist"], self.xln[-1])
+                self.pick_dict["layer_" + str(self.pick_layer)][pick_idx_0] = self.yln[-2]
+                self.pick_dict["layer_" + str(self.pick_layer)][pick_idx_1] = self.yln[-1]
+                self.pick_idx = np.arange(pick_idx_0,pick_idx_1 + 1)
+                # linearly interpolate twtt values between pick points at idx_0 and idx_1
+                self.pick_dict["layer_" + str(self.pick_layer)][self.pick_idx] = np.interp(self.pick_idx, [pick_idx_0,pick_idx_1], [self.yln[-2],self.yln[-1]])
             self.pick.set_data(self.xln, self.yln)
             self.fig.canvas.draw()
         if self.map_loadName:
@@ -323,7 +354,7 @@ class NOSEpickGUI(tk.Tk):
             if self.f_saveName:
                 print("Exporting picks: ", self.f_saveName)
                 # get necessary data from radargram for pick locations
-                num_picks = len(self.xln)
+
                 v_ice = 3e8/np.sqrt(3.15)
                 lon = np.zeros(num_picks)
                 lat = np.zeros(num_picks)
@@ -331,18 +362,25 @@ class NOSEpickGUI(tk.Tk):
                 twtt_surf = np.zeros(num_picks)
                 twtt_bed = np.asarray(self.yln)
                 thick = np.zeros(num_picks)
-                for _i in range(num_picks):
-                    # get nearest trace index of pick locations in data
-                    # find trace number of pick in radar data
-                    pick_idx = find_nearest(self.data["dist"], self.xln[_i])
-                    lon[_i] = self.data["navdat"][pick_idx].x
-                    lat[_i] = self.data["navdat"][pick_idx].y
-                    elev_air[_i] = self.data["navdat"][pick_idx].z
-                    twtt_surf[_i] = self.data["twtt_surf"][pick_idx]
-                    # calculate ice thickness
-                    thick[_i] = ((twtt_bed[_i]-twtt_surf[_i])*v_ice)/2
-                header = "lon,lat,elev_air,twtt_surf,twtt_bed,thick"
-                np.savetxt(self.f_saveName, np.column_stack((lon,lat,elev_air,twtt_surf,twtt_bed,thick)), delimiter=",", newline="\n", fmt="%.8f", header=header, comments="")
+
+
+                # for _i in range(num_picks - 1):
+                #     # get nearest trace index of pick locations in data
+                #     # find trace number of pick in radar data
+                #     # fill in trace numbers between pick locations
+                #     pick_idx_0 = find_nearest(self.data["dist"], self.xln[_i])
+                #     pick_idx_1 = find_nearest(self.data["dist"], self.xln[_i + 1])
+                #     pick_idx = np.append(np.arange(pick_idx_0,pick_idx_1 + 1)
+
+
+                #     lon = self.data["navdat"][pick_idx].x
+                #     lat[_i] = self.data["navdat"][pick_idx].y
+                #     elev_air[_i] = self.data["navdat"][pick_idx].z
+                #     twtt_surf[_i] = self.data["twtt_surf"][pick_idx]
+                #     # calculate ice thickness
+                #     thick[_i] = ((twtt_bed[_i]-twtt_surf[_i])*v_ice)/2
+                # header = "lon,lat,elev_air,twtt_surf,twtt_bed,thick"
+                # np.savetxt(self.f_saveName, np.column_stack((lon,lat,elev_air,twtt_surf,twtt_bed,thick)), delimiter=",", newline="\n", fmt="%.8f", header=header, comments="")
 
     def clear_picks(self):
         # clear all picks
@@ -371,6 +409,7 @@ class NOSEpickGUI(tk.Tk):
                     print("Loading: ", self.f_loadName)
                     self.data = self.igst.read(self.f_loadName)
                     self.dtype = "amp"
+                    self.var_reset()
                     self.matplotCanvas()
                 else:
                     print("Note: " + self.f_loadName.split("/")[-1] + " is the last file in " + self.file_path)
