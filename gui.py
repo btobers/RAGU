@@ -8,6 +8,7 @@ environment requirements in nose_env.yml
 
 ### IMPORTS ###
 import ingester
+import utils
 from tools import *
 import os, sys, scipy
 import numpy as np
@@ -25,7 +26,7 @@ map_path = "/mnt/Swaps/MARS/targ/supl/grid-AKDEM/"
 test_dat_path = in_path + 'may/block_clutter_elev/20180523-225145.mat'
 
 ### CODE ###
-class NOSEpickGUI(tk.Tk):
+class gui(tk.Tk):
     def __init__(self, master):
         self.master = master
         self.master.title("NOSEpick")
@@ -53,13 +54,13 @@ class NOSEpickGUI(tk.Tk):
         # self.dataCanvas.get_tk_widget().pack(in_=self.display, side="bottom", fill="both", expand=1)
         # self.dataCanvas.draw()
         # button for loading data
-        self.loadButton = Button(self.master, text = "Load", command = self.load)
-        self.loadButton.pack(in_=self.controls, side="left")
+        self.openButton = Button(self.master, text = "Open", command = utils.open)
+        self.opneButton.pack(in_=self.controls, side="left")
         # button for going to next data file
-        self.nextButton = Button(self.master, text = "Next", command = self.next_file)
+        self.nextButton = Button(self.master, text = "Next", command = utils.next_file)
         self.nextButton.pack(in_=self.controls, side="left")
         # button for saving
-        self.saveButton = Button(text = "Save", command = self.savePick)
+        self.saveButton = Button(text = "Save", command = utils.savePick)
         self.saveButton.pack(in_=self.controls, side="left")
         # button for basemap display
         self.basemapButton = Button(text = "Map", command = self.basemap)
@@ -130,24 +131,7 @@ class NOSEpickGUI(tk.Tk):
         \n6. Map button to display basemap
         \n7. Exit button to close application""")
 
-    def open(self):
-        # method to open radar data
-        # bring up dialog box for user to load data file
-        self.igst = ingester.ingester("h5py")
-        if test_dat_path is None:
-            self.f_loadName = filedialog.askopenfilename(initialdir = in_path,title = "Select file",filetypes = (("mat files","*.mat"),("all files","*.*")))
-        else:
-            self.f_loadName = test_dat_path
-        if self.f_loadName:
-            # get index of selected file in directory
-            self.file_path = self.f_loadName.rstrip(self.f_loadName.split("/")[-1])
-            self.file_list = os.listdir(self.file_path)
-            self.file_list.sort()
-            for _i in range(len(self.file_list)):
-                if self.file_list[_i] == self.f_loadName.split("/")[-1]:
-                    self.file_index = _i
-            # call the load method
-            self.load()
+
 
     def load(self):
         # method to load radar data
@@ -175,9 +159,6 @@ class NOSEpickGUI(tk.Tk):
         # self.ax.patch.set_alpha(0)
         self.pick_x_loc = []
         self.pick_y_loc = []
-        self.matplotCanvas()
-
-    def matplotCanvas(self):
         # create matplotlib figure and use imshow to display radargram
         if self.toolbar:
             # remove existing toolbar
@@ -200,7 +181,6 @@ class NOSEpickGUI(tk.Tk):
         # set clutter sim visibility to false
         self.im_clut.set_visible(False)   
 
-
         # Save background
         self.axbg = self.dataCanvas.copy_from_bbox(self.ax.bbox)    
         # multiply y-axis label by 1e6 to plot in microseconds
@@ -208,14 +188,6 @@ class NOSEpickGUI(tk.Tk):
         self.ax.set_yticklabels(self.ax_yticks)
         self.ax.set(xlabel = "along-track distance [km]", ylabel = "two-way travel time [microsec.]")
         
-        # if self.dtype =="amp":
-
-
-        # elif self.dtype =="clutter":
-
-        #     self.s_cmin_clutter.on_changed(self.cmap_update)
-        #     self.s_cmax_clutter.on_changed(self.cmap_update)
-        #     self.cmap_reset_button_clutter.on_clicked(self.cmap_reset)
         # add toolbar to plot
         self.toolbar = NavigationToolbar2Tk(self.dataCanvas, self.master)
         self.toolbar.update()
@@ -362,35 +334,6 @@ class NOSEpickGUI(tk.Tk):
             self.clear_last()
         elif event.key =="escape":
             self.close_window()
-    
-    def savePick(self):
-        # save picks
-        if len(self.xln_old) > 0 and self.save_warning() is True:
-            self.f_saveName = filedialog.asksaveasfilename(initialdir = "./",title = "Save As",filetypes = (("comma-separated values","*.csv"),))
-            if self.f_saveName:
-                v_ice = 3e8/np.sqrt(3.15)
-                lon = []
-                lat = []
-                elev_air = []
-                twtt_surf = []
-                twtt_bed = []
-                thick = []
-                # get necessary data from radargram for pick locations
-                # iterate through pick_dict layers
-                num_pic_lyr = self.pick_layer
-                for _i in range(num_pic_lyr):
-                    num_pt = len(np.where(self.pick_dict["layer_" + str(_i)] != -1)[0])
-                    pick_idx = np.where(self.pick_dict["layer_" + str(_i)] != -1)[0]
-                    for _j in range(num_pt):
-                        lon.append(self.data["navdat"][pick_idx[_j]].x)
-                        lat.append(self.data["navdat"][pick_idx[_j]].y)
-                        elev_air.append(self.data["navdat"][pick_idx[_j]].z)
-                        twtt_surf.append(self.data["twtt_surf"][pick_idx[_j]])
-                        twtt_bed.append(self.pick_dict["layer_" + str(_i)][pick_idx[_j]])
-                        thick.append(((twtt_bed[_j]-twtt_surf[_j])*v_ice)/2)
-                header = "lon,lat,elev_air,twtt_surf,twtt_bed,thick"
-                np.savetxt(self.f_saveName, np.column_stack((np.asarray(lon),np.asarray(lat),np.asarray(elev_air),np.asarray(twtt_surf),np.asarray(twtt_bed),np.asarray(thick))), delimiter=",", newline="\n", fmt="%.8f", header=header, comments="")
-                print("Picks exported: ", self.f_saveName)
 
     def clear_picks(self):
         # clear all picks
@@ -407,24 +350,6 @@ class NOSEpickGUI(tk.Tk):
             del self.yln[-1:]
             self.pick.set_data(self.xln, self.yln)
             self.fig.canvas.draw()
-
-    def next_file(self):
-        # load next data file in directory
-        if self.f_loadName:
-            self.file_index += 1
-            # save pick warning
-            if self.save_warning() is True:
-                if self.file_index <= (len(self.file_list) - 1):
-                    self.f_loadName = (self.file_path + self.file_list[self.file_index])
-                    del self.xln[:]
-                    del self.yln[:]
-                    del self.xln_old[:]
-                    del self.yln_old[:]
-                    self.var_reset()
-                    self.load()
-                    self.matplotCanvas()
-                else:
-                    print("Note: " + self.f_loadName.split("/")[-1] + " is the last file in " + self.file_path)
 
     def show_radar(self):
         # toggle to radar data
