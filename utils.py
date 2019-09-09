@@ -3,7 +3,7 @@ import numpy as np
 from tools import *
 from tkinter import filedialog
 
-
+# a set of utility functions for NOSEpick GUI
 
 def open():
     # open radar data
@@ -42,6 +42,7 @@ def savePick(data, pick_dict):
             np.savetxt(f_saveName, np.column_stack((np.asarray(lon),np.asarray(lat),np.asarray(elev_air),np.asarray(twtt_surf),np.asarray(twtt_bed),np.asarray(thick))), delimiter=",", newline="\n", fmt="%.8f", header=header, comments="")
             print("Picks exported: ", f_saveName)
 
+
 def next_file(f_loadName):
     # load next data file in directory
     # get index of selected file in directory
@@ -59,8 +60,14 @@ def next_file(f_loadName):
             del yln[:]
             del xln_old[:]
             del yln_old[:]
-            
+
             return f_loadName
 
         else:
             print("Note: " + f_loadName.split("/")[-1] + " is the last file in " + file_path)
+
+
+def find_nearest(array,value):
+    # return index in array with value closest to the passed value
+    idx = (np.abs(array-value)).argmin()
+    return idx
