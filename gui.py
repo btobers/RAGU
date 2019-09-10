@@ -10,6 +10,7 @@ environment requirements in nose_env.yml
 import ingester
 import utils
 import imPick
+import basemap
 from tools import *
 import os, sys, scipy
 import numpy as np
@@ -26,7 +27,7 @@ class gui(tk.Tk):
     def __init__(self, master):
         self.master = master
         # self.master.title("NOSEpick")
-        self.master.protocol("WM_DELETE_WINDOW", imPick.close_window)
+        self.master.protocol("WM_DELETE_WINDOW", imPick.imPick.close_window)
         self.setup()
 
 
@@ -60,7 +61,7 @@ class gui(tk.Tk):
         self.saveButton = Button(text = "Save", command = utils.savePick)
         self.saveButton.pack(in_=self.controls, side="left")
         # button for basemap display
-        self.basemapButton = Button(text = "Map", command = self.basemap)
+        self.basemapButton = Button(text = "Map", command = basemap.basemap)
         self.basemapButton.pack(in_=self.controls, side="left")
         # button for help message
         self.instButton = Button(self.master, text = "Help", command = utils.help)
