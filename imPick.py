@@ -9,6 +9,69 @@ class imPick:
     def __init__(self):
         sys.exit()
 
+
+    def load(self):
+        # method to load radar data
+        print("Loading: ", self.f_loadName)
+        # ingest the data
+        self.data = self.igst.read(self.f_loadName)
+        # set figure title
+        self.ax.set_title(self.f_loadName.split("/")[-1].rstrip(".mat"))
+        # find max power in data to scale image
+        maxPow_data = np.nanmax(np.power(self.data[self.dtype][:],2))
+        maxPow_clut = np.nanmax(np.power(self.data["clutter"][:],2))
+        # scale data in dB with maxPow value as the reference
+        self.imScl_data = np.log(np.power(self.data[self.dtype],2) / maxPow_data)
+        self.imScl_clut = np.log(np.power(self.data["clutter"],2) / maxPow_clut)
+        # cut off data at 10th percentile to avoid extreme outliers - round down
+        self.mindB_data = np.floor(np.nanpercentile(self.imScl_data,10))
+        self.mindB_clut = np.floor(np.nanpercentile(self.imScl_clut,10))
+        # empty fields for picks
+        self.xln = []
+        self.yln = []
+        self.pick, = self.ax.plot([],[],"r")  # empty line for current pick
+        self.xln_old = []
+        self.yln_old = []
+        self.saved_pick, = self.ax.plot([],[],"g")  # empty line for saved pick
+        # self.ax.patch.set_alpha(0)
+        self.pick_x_loc = []
+        self.pick_y_loc = []
+        # create matplotlib figure and use imshow to display radargram
+        if self.toolbar:
+            # remove existing toolbar
+            self.toolbar.destroy() 
+        self.dataCanvas.get_tk_widget().pack(in_=self.display, side="bottom", fill="both", expand=1)      
+        # display image data for radargram and clutter sim
+        self.im_data  = self.ax.imshow(self.imScl_data, cmap="gray", aspect="auto", extent=[self.data["dist"][0], self.data["dist"][-1], self.data["amp"].shape[0] * self.data["dt"], 0])
+        self.im_clut  = self.ax.imshow(self.imScl_clut, cmap="gray", aspect="auto", extent=[self.data["dist"][0], self.data["dist"][-1], self.data["amp"].shape[0] * self.data["dt"], 0])
+        # the first time the amplitude image is loaded, update colormap to cut off values below 10th percentile
+        self.im_data.set_clim([self.mindB_data, 0.0])
+        self.im_clut.set_clim([self.mindB_clut, 0.0])
+        # create colormap sliders and reset button - initialize for data image
+        self.s_cmin = mpl.widgets.Slider(self.ax_cmin, 'min', self.mindB_data - 10, self.mindB_data + 10, valinit=self.mindB_data, orientation="vertical")
+        self.s_cmax = mpl.widgets.Slider(self.ax_cmax, 'max', -10, 10, valinit=0.0, orientation="vertical")
+        self.cmap_reset_button = mpl.widgets.Button(self.reset_ax, 'Reset', color="lightgoldenrodyellow")
+        self.s_cmin.on_changed(self.cmap_update)
+        self.s_cmax.on_changed(self.cmap_update)
+        
+        self.cmap_reset_button.on_clicked(self.cmap_reset)
+        # set clutter sim visibility to false
+        self.im_clut.set_visible(False)   
+
+        # Save background
+        self.axbg = self.dataCanvas.copy_from_bbox(self.ax.bbox)    
+        # multiply y-axis label by 1e6 to plot in microseconds
+        self.ax_yticks = np.round(self.ax.get_yticks()*1e6)
+        self.ax.set_yticklabels(self.ax_yticks)
+        self.ax.set(xlabel = "along-track distance [km]", ylabel = "two-way travel time [microsec.]")
+        
+        # add toolbar to plot
+        self.toolbar = NavigationToolbar2Tk(self.dataCanvas, self.master)
+        self.toolbar.update()
+        self.dataCanvas._tkcanvas.pack()
+        self.dataCanvas.draw()
+
+
     def picking(self):
         # change status of pick_state based on button click
         if self.f_loadName:
@@ -199,7 +262,3 @@ class imPick:
         # close the basemap window and set state
         self.basemap_window.destroy()
         self.basemap_state = 0
-
-
-
-

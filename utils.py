@@ -1,9 +1,26 @@
 import ingester
 import numpy as np
 from tools import *
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
+
 
 # a set of utility functions for NOSEpick GUI
+
+
+def help():
+    # help message box
+    messagebox.showinfo("NOSEpick Instructions",
+    """Nearly Optimal Subsurface Extractor:
+    \n\n1. Load button to open radargram
+    \n2. Click along reflector surface to pick
+    \n\t\u2022<backspace> to remove the last
+    \n\t\u2022<c> to remove all
+    \n3. Radar and clutter buttons to toggle
+    \n4. Next button to load next file
+    \n5. Save button to export picks
+    \n6. Map button to display basemap
+    \n7. Exit button to close application""")
+
 
 def open():
     # open radar data
