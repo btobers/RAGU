@@ -8,8 +8,8 @@ environment requirements in nose_env.yml
 
 ### IMPORTS ###
 # import ingester
-# import utils
-# import imPick
+import utils
+import imPick
 # import basemap
 from tools import *
 import os, sys, scipy
@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 import gdal, osr
 import tkinter as tk
-from tkinter import Button, Frame, messagebox, Canvas, filedialog, Menu
+from tkinter import Button, Frame, messagebox, Canvas, filedialog, Menu, Radiobutton
 
 
 class gui(tk.Tk):
@@ -33,33 +33,82 @@ class gui(tk.Tk):
 
     def setup(self):
         # frames for data display and UI
-        self.controls = Frame(self.master)
-        self.controls.pack(side="top")
-        self.pickControls = Frame(self.master)
-        self.pickControls.pack(side="top")
-        self.switchIm = Frame(self.master)
-        self.switchIm.pack(side="bottom")
+        # self.controls = Frame(self.master)
+        # self.controls.pack(side="top")
+        # self.pickControls = Frame(self.master)
+        # self.pickControls.pack(side="top")
+        # self.switchIm = Frame(self.master)
+        # self.switchIm.pack(side="left")
         self.display = Frame(self.master)
         self.display.pack(side="bottom", fill="both", expand=1)
         # blank data canvas
-        self.fig = mpl.figure.Figure()
-        self.ax = self.fig.add_subplot(111)
-        self.dataCanvas = FigureCanvasTkAgg(self.fig, self.master)
-        # add axes for colormap sliders and reset button
-        self.ax_cmax = self.fig.add_axes([0.95, 0.55, 0.01, 0.30])
-        self.ax_cmin  = self.fig.add_axes([0.95, 0.18, 0.01, 0.30])
-        self.reset_ax = self.fig.add_axes([0.935, 0.11, 0.04, 0.03])
+        # self.fig = mpl.figure.Figure()
+        # self.ax = self.fig.add_subplot(111)
+        # self.dataCanvas = FigureCanvasTkAgg(self.fig, self.master)
+        # # add axes for colormap sliders and reset button
+        # self.ax_cmax = self.fig.add_axes([0.95, 0.55, 0.01, 0.30])
+        # self.ax_cmin  = self.fig.add_axes([0.95, 0.18, 0.01, 0.30])
+        # self.reset_ax = self.fig.add_axes([0.935, 0.11, 0.04, 0.03])
         # self.dataCanvas.get_tk_widget().pack(in_=self.display, side="bottom", fill="both", expand=1)
         # self.dataCanvas.draw()
 
 
         # file menu
-        self.menu = Menu(self.master)
-        self.openMenu = Menu(self.menu)
-        self.openMenu.add_command(label='Open')
-        # button for loading data
-        
+        menubar = Menu(self.master)
 
+        # create individual menu bars
+        fileMenu = Menu(menubar, tearoff=0)
+        toolMenu = Menu(menubar, tearoff=0)
+        viewMenu = Menu(menubar, tearoff=0)
+        mapMenu = Menu(menubar, tearoff=0)
+        helpMenu = Menu(menubar, tearoff=0)
+
+        # create pick submenu
+        pickSubMenu = Menu(toolMenu, tearoff=0)
+
+        # file menu items
+        fileMenu.add_command(label='Open', command=utils.open)
+        fileMenu.add_command(label="Save", command=utils.savePick)
+        fileMenu.add_command(label="Next", command=utils.next_file)
+        fileMenu.add_command(label="Exit", command = self.close_window)
+
+
+        # pick submenu items
+        pickSubMenu.add_command(label="New")
+        pickSubMenu.add_command(label="Save")
+        pickSubMenu.add_separator()
+        pickSubMenu.add_command(label="Optimize")
+
+        # view menu items
+        viewMenu.add_command(label="Radargram")
+        viewMenu.add_command(label="Cluttergram")
+        viewMenu.add_separator()
+        viewMenu.add_command(label="Trace-View")
+
+        # map menu items
+        mapMenu.add_command(label="Open")
+
+        # help menu items
+        helpMenu.add_command(label="Instructions")
+
+        # add menu items to menubar
+        menubar.add_cascade(label="File", menu=fileMenu)
+        toolMenu.add_cascade(label="Pick", menu=pickSubMenu)
+        menubar.add_cascade(label="Tools", menu=toolMenu)
+        menubar.add_cascade(label="View", menu=viewMenu)
+        menubar.add_cascade(label="Map", menu=mapMenu)
+        menubar.add_cascade(label="Help", menu=helpMenu)
+        
+        # add the menubar to the window
+        self.master.config(menu=menubar)
+
+        # add radio buttons for toggling between radargram and clutter-sim
+        self.v = tk.StringVar()
+        radarRad = Radiobutton(self.master, text="Radar", variable=self.v, value="data",command=imPick.imPick.show_radar).pack(anchor="w",side="left")
+        clutterRad = Radiobutton(self.master, anchor='w',text="Clutter", variable=self.v, value="clut",command=imPick.imPick.show_clutter).pack(anchor="w",side="left")  
+        self.v.set("data")
+
+        # button for loading data
 
     #     self.openButton = Button(self.master, text = "Open", command = utils.open)
     #     self.opneButton.pack(in_=self.controls, side="left")
@@ -121,3 +170,12 @@ class gui(tk.Tk):
     #     self.f_saveName = ""
     #     self.data_imSwitch_flag = ""
     #     self.clut_imSwitch_flag = ""
+
+    def close_window(self):
+        # destroy canvas
+        # first check if picks have been made and saved
+        if len(self.xln) > 0 and self.f_saveName == "":
+            if messagebox.askokcancel("Warning", "Exit NOSEpick without saving picks?", icon = "warning") == True:
+                self.master.destroy()
+        else:
+            self.master.destroy()
