@@ -1,19 +1,53 @@
+import ingester
 import h5py
 import numpy as np
+import tkinter as tk
 from tools import *
-import matplotlib.pyplot as plt
 import sys
+import matplotlib as mpl
+mpl.use("TkAgg")
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 
 class imPick:
     # imPick is a class to pick horizons from a radar image
-    def __init__(self):
-        sys.exit()
+    def __init__(self,master,display,f_loadName):
+        self.master = master
+        self.display=display
+
+        self.f_loadName = f_loadName
+        # frames for data display and UI
+        # self.controls = Frame(self.master)
+        # self.controls.pack(side="top")
+        # self.pickControls = Frame(self.master)
+        # self.pickControls.pack(side="top")
+        # self.switchIm = Frame(self.master)
+        # self.switchIm.pack(side="left")
+
+        
+        # blank data canvas
+        self.dtype = "amp"
+        self.toolbar = None
+        self.fig = mpl.figure.Figure()
+        self.fig.patch.set_facecolor(self.master.cget('bg'))
+        self.ax = self.fig.add_subplot(111)
+        self.dataCanvas = FigureCanvasTkAgg(self.fig, self.master)
+        # add axes for colormap sliders and reset button
+        self.ax_cmax = self.fig.add_axes([0.95, 0.55, 0.01, 0.30])
+        self.ax_cmin  = self.fig.add_axes([0.95, 0.18, 0.01, 0.30])
+        self.reset_ax = self.fig.add_axes([0.935, 0.11, 0.04, 0.03])
+        self.dataCanvas.get_tk_widget().pack(in_=self.display, side="bottom", fill="both", expand=1)
+        self.dataCanvas.draw()
+        self.key = self.fig.canvas.mpl_connect("key_press_event", self.onkey)
+        self.click = self.fig.canvas.mpl_connect("button_press_event", self.addseg)
+        self.load()
 
 
     def load(self):
         # method to load radar data
-        print("Loading: ", self.f_loadName)
+        print("Loading: " + self.f_loadName)
         # ingest the data
+        self.igst = ingester.ingester("h5py")
         self.data = self.igst.read(self.f_loadName)
         # set figure title
         self.ax.set_title(self.f_loadName.split("/")[-1].rstrip(".mat"))

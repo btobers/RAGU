@@ -1,15 +1,23 @@
 import numpy as np
 from tools import *
+import tkinter as tk
+import matplotlib as mpl
+mpl.use("TkAgg")
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 
-class basmap:
+class basemap:
     # basemap is a class which loads and handles the basemap
-    def __init__(self):
+    def __init__(self, master, map_path):
+        self.master = master
+        self.map_loadName = map_path
+        self.basemap_state = 0
+        self.show()
 
-    def basemap(self):
+
+    def show(self):
         # pull track up on dem basemap
-        if self.f_loadName:
-            self.map_loadName = filedialog.askopenfilename(initialdir = map_path, title = "Select file", filetypes = (("GeoTIFF files","*.tif"),("all files","*.*")))
+           
         if self.map_loadName:
             print("Loading Basemap: ", self.map_loadName)
             try:
@@ -32,19 +40,19 @@ class basmap:
                 miny = gt[3]  + height*gt[5] 
                 maxx = gt[0]  + width*gt[1]
                 maxy = gt[3] 
-                # transform navdat to csys of geotiff   
-                self.nav_transform = self.data['navdat'].transform(self.basemap_proj)  
-                # make list of navdat x and y data for plotting on basemap - convert to kilometers
-                self.xdat = []
-                self.ydat = []
-                for _i in range(len(self.nav_transform)):
-                    self.xdat.append(self.nav_transform[_i].x)
-                    self.ydat.append(self.nav_transform[_i].y)
-                # create new window and show basemap
+                # # transform navdat to csys of geotiff   
+                # self.nav_transform = self.data['navdat'].transform(self.basemap_proj)  
+                # # make list of navdat x and y data for plotting on basemap - convert to kilometers
+                # self.xdat = []
+                # self.ydat = []
+                # for _i in range(len(self.nav_transform)):
+                #     self.xdat.append(self.nav_transform[_i].x)
+                #     self.ydat.append(self.nav_transform[_i].y)
+                # # create new window and show basemap
                 self.basemap_window = tk.Toplevel(self.master)
                 self.basemap_window.protocol("WM_DELETE_WINDOW", self.basemap_close)
                 self.basemap_window.title("NOSEpick - Map Window")
-                self.map_display = Frame(self.basemap_window)
+                self.map_display = tk.Frame(self.basemap_window)
                 self.map_display.pack(side="bottom", fill="both", expand=1)
                 self.map_fig = mpl.figure.Figure()
                 self.map_fig_ax = self.map_fig.add_subplot(111)
@@ -82,6 +90,9 @@ class basmap:
 
 
 
-
+    def basemap_close(self):
+        # close the basemap window and set state
+        self.basemap_window.destroy()
+        self.basemap_state = 0
 
 

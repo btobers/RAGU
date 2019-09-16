@@ -7,29 +7,6 @@ from tkinter import filedialog, messagebox
 # a set of utility functions for NOSEpick GUI
 
 
-def help():
-    # help message box
-    messagebox.showinfo("NOSEpick Instructions",
-    """Nearly Optimal Subsurface Extractor:
-    \n\n1. Load button to open radargram
-    \n2. Click along reflector surface to pick
-    \n\t\u2022<backspace> to remove the last
-    \n\t\u2022<c> to remove all
-    \n3. Radar and clutter buttons to toggle
-    \n4. Next button to load next file
-    \n5. Save button to export picks
-    \n6. Map button to display basemap
-    \n7. Exit button to close application""")
-
-
-def open():
-    # open radar data
-    # bring up dialog box for user to load data file
-    igst = ingester.ingester("h5py")
-    f_loadName = filedialog.askopenfilename(initialdir = in_path,title = "Select file",filetypes = (("mat files","*.mat"),("all files","*.*")))
-    return f_loadName
-
-
 def savePick(data, pick_dict):
     # save picks
     if save_warning() is True:
@@ -60,28 +37,6 @@ def savePick(data, pick_dict):
             print("Picks exported: ", f_saveName)
 
 
-def next_file(f_loadName):
-    # load next data file in directory
-    # get index of selected file in directory
-    file_path = f_loadName.rstrip(f_loadName.split("/")[-1])
-    file_list = os.listdir(file_path)
-    file_list.sort()
-    for _i in range(len(file_list)):
-        if file_list[_i] == f_loadName.split("/")[-1]:
-            file_index = _i
-            
-        # check if more files exist in directory following current file
-        if file_index <= (len(file_list) - 1):
-            f_loadName = (file_path + file_list[file_index])
-            del xln[:]
-            del yln[:]
-            del xln_old[:]
-            del yln_old[:]
-
-            return f_loadName
-
-        else:
-            print("Note: " + f_loadName.split("/")[-1] + " is the last file in " + file_path)
 
 
 def find_nearest(array,value):

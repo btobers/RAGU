@@ -11,9 +11,9 @@ import gui
 import tkinter as tk
 
 ### USER SPECIFIED VARS ###
-in_path = "/mnt/Swaps/MARS/targ/supl/UAF/2018/"
+in_path = "/mnt/Swaps/MARS/targ/supl/UAF/2018/aug/export"
 map_path = "/mnt/Swaps/MARS/targ/supl/grid-AKDEM/"
-test_dat_path = in_path + 'may/block_clutter_elev/20180523-225145.mat'
+# test_dat_path = in_path + 'may/block_clutter_elev/20180523-225145.mat'
 
 ### INITIALIZE ###
 root = tk.Tk()
@@ -21,6 +21,8 @@ root = tk.Tk()
 w, h = root.winfo_screenwidth(), root.winfo_screenheight()
 root.geometry("%dx%d+0+0" % (.5*w, .5*h))
 root.title("NOSEpick")
+# img = tk.PhotoImage(file='nose-pick-icon.png')
+# root.tk.call('wm', 'iconphoto', root._w, img)
 # call the NOSEpickGUI class
-gui = gui.gui(root, in_path,map_path)
+gui = gui.MainGUI(root, in_path, map_path)
 root.mainloop()
