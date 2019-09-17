@@ -1,4 +1,6 @@
 import ingester
+import utils
+import basemap
 import h5py
 import numpy as np
 import tkinter as tk
@@ -28,6 +30,8 @@ class imPick:
         # blank data canvas
         self.dtype = "amp"
         self.toolbar = None
+        self.pick_dict = {}
+        self.pick_state = 1
         self.fig = mpl.figure.Figure()
         self.fig.patch.set_facecolor(self.master.cget('bg'))
         self.ax = self.fig.add_subplot(111)
@@ -105,6 +109,10 @@ class imPick:
         self.dataCanvas._tkcanvas.pack()
         self.dataCanvas.draw()
 
+        
+        # # pass navdat to basemap class
+        # basemap.basemap(self.data["navdat"])
+
 
     def picking(self):
         # change status of pick_state based on button click
@@ -125,7 +133,7 @@ class imPick:
                 self.pick.set_data(self.xln, self.yln)
                 self.saved_pick.set_data(self.xln_old, self.yln_old)
                 self.fig.canvas.draw()
-                self.pickButton.configure(fg = "green")
+
 
     def addseg(self, event):
         # add line segments with user input
@@ -153,14 +161,14 @@ class imPick:
             self.ax.draw_artist(self.pick)
             self.dataCanvas.blit(self.ax.bbox)
 
-        if self.map_loadName:
-            # basemap open, plot picked location regardless of picking state
-            if self.basemap_state == 1:
-                # plot pick location on basemap
-                if self.pick_loc:
-                    self.pick_loc.remove()
-                self.pick_loc = self.map_fig_ax.scatter(self.xdat[pick_idx_1],self.ydat[pick_idx_1],c="w",marker="x",zorder=3)
-                self.map_fig.canvas.draw()
+        # if self.map_loadName:
+        #     # basemap open, plot picked location regardless of picking state
+        #     if self.basemap_state == 1:
+        #         # plot pick location on basemap
+        #         if self.pick_loc:
+        #             self.pick_loc.remove()
+        #         self.pick_loc = self.map_fig_ax.scatter(self.xdat[pick_idx_1],self.ydat[pick_idx_1],c="w",marker="x",zorder=3)
+        #         self.map_fig.canvas.draw()
 
     def onkey(self, event):
         # on-key commands
@@ -292,7 +300,7 @@ class imPick:
         else: 
             return True
 
-    def basemap_close(self):
-        # close the basemap window and set state
-        self.basemap_window.destroy()
-        self.basemap_state = 0
+    #the get_nav method returns the nav data       
+    def get_nav(self):
+        return self.data["navdat"]
+

@@ -1,6 +1,7 @@
 import numpy as np
-from tools import *
+import tools
 import tkinter as tk
+import gdal, osr
 import matplotlib as mpl
 mpl.use("TkAgg")
 import matplotlib.pyplot as plt
@@ -11,13 +12,18 @@ class basemap:
     def __init__(self, master, map_path):
         self.master = master
         self.map_loadName = map_path
-        self.basemap_state = 0
-        self.show()
+        # create tkinter toplevel window to display basemap
+        self.basemap_window = tk.Toplevel(self.master)
+        self.basemap_window.title("NOSEpick - Map Window")
+        self.map_display = tk.Frame(self.basemap_window)
+        self.map_display.pack(side="bottom", fill="both", expand=1)
+        # bind escape key to basemap_close()
+        self.basemap_window.bind("<Escape>", self.basemap_close)
+        self.map()
 
-
-    def show(self):
+    # map is a method to plot the basemap in the basemap window
+    def map(self):
         # pull track up on dem basemap
-           
         if self.map_loadName:
             print("Loading Basemap: ", self.map_loadName)
             try:
@@ -32,29 +38,17 @@ class basemap:
                 height = self.basemap_ds.RasterYSize
                 gt = self.basemap_ds.GetGeoTransform()
                 if gt[2] != 0 or gt[4] != 0:
-                    print('Geotraaxnsform rotation!')
+                    print('Geotransform rotation!')
                     print('gt[2]:ax '+ gt[2] + '\ngt[4]: ' + gt[4])
-                    sys.exit()
-                # get corner locations
+                    return
+                # get image corner locations
                 minx = gt[0]
                 miny = gt[3]  + height*gt[5] 
                 maxx = gt[0]  + width*gt[1]
                 maxy = gt[3] 
-                # # transform navdat to csys of geotiff   
-                # self.nav_transform = self.data['navdat'].transform(self.basemap_proj)  
-                # # make list of navdat x and y data for plotting on basemap - convert to kilometers
-                # self.xdat = []
-                # self.ydat = []
-                # for _i in range(len(self.nav_transform)):
-                #     self.xdat.append(self.nav_transform[_i].x)
-                #     self.ydat.append(self.nav_transform[_i].y)
-                # # create new window and show basemap
-                self.basemap_window = tk.Toplevel(self.master)
-                self.basemap_window.protocol("WM_DELETE_WINDOW", self.basemap_close)
-                self.basemap_window.title("NOSEpick - Map Window")
-                self.map_display = tk.Frame(self.basemap_window)
-                self.map_display.pack(side="bottom", fill="both", expand=1)
+                # show basemap figure in basemap window
                 self.map_fig = mpl.figure.Figure()
+                self.map_fig.patch.set_facecolor(self.master.cget('bg'))
                 self.map_fig_ax = self.map_fig.add_subplot(111)
                 self.map_fig_ax.imshow(self.basemap_im, cmap="gray", aspect="auto", extent=[minx, maxx, miny, maxy])
                 self.map_fig_ax.set(xlabel = "x [km]", ylabel = "y [km]")
@@ -63,8 +57,6 @@ class basemap:
                 self.map_toolbar = NavigationToolbar2Tk(self.map_dataCanvas, self.basemap_window)
                 self.map_toolbar.update()
                 self.map_dataCanvas._tkcanvas.pack()
-                # plot lat, lon atop basemap im
-                self.map_fig_ax.plot(self.xdat,self.ydat,"k")
                 # convert axes to kilometers
                 self.map_xticks = self.map_fig_ax.get_xticks()*1e-3
                 self.map_yticks = self.map_fig_ax.get_yticks()*1e-3
@@ -75,12 +67,6 @@ class basemap:
                     self.map_yticks = [y + abs(min(self.map_yticks)) for y in self.map_yticks] 
                 self.map_fig_ax.set_xticklabels(self.map_xticks)
                 self.map_fig_ax.set_yticklabels(self.map_yticks)
-                # zoom in to 100 km from track on all sides
-                self.map_fig_ax.set(xlim = ((min(self.xdat)- 100000),(max(self.xdat)+ 100000)), ylim = ((min(self.ydat)- 100000),(max(self.ydat)+ 100000)))
-                # annotate each end of the track
-                self.map_fig_ax.plot(self.xdat[0],self.ydat[0],'go',label='start')
-                self.map_fig_ax.plot(self.xdat[-1],self.ydat[-1],'ro',label='end')
-                self.map_fig_ax.legend()                
                 self.map_dataCanvas.draw()
                 self.basemap_state = 1
                 
@@ -88,11 +74,29 @@ class basemap:
                 print("basemap load error: " + str(err))
                 pass
 
+    # set_nav is a method to update the navigation data plotted on the basemap
+    def set_nav(self, navdat):
+        self.navdat = navdat
+        if self.basemap_state == 1:
+            # transform navdat to csys of geotiff   
+            self.nav_transform = self.navdat.transform(self.basemap_proj)  
+            # make list of navdat x and y data for plotting on basemap - convert to kilometers
+            self.xdat = []
+            self.ydat = []
+            for _i in range(len(self.nav_transform)):
+                self.xdat.append(self.nav_transform[_i].x)
+                self.ydat.append(self.nav_transform[_i].y)       
+            # plot lat, lon atop basemap im
+            self.map_fig_ax.plot(self.xdat,self.ydat,"k")
+            # zoom in to 100 km from track on all sides
+            self.map_fig_ax.set(xlim = ((min(self.xdat)- 100000),(max(self.xdat)+ 100000)), ylim = ((min(self.ydat)- 100000),(max(self.ydat)+ 100000)))
+            # annotate each end of the track
+            self.map_fig_ax.plot(self.xdat[0],self.ydat[0],'go',label='start')
+            self.map_fig_ax.plot(self.xdat[-1],self.ydat[-1],'ro',label='end')
+            self.map_fig_ax.legend()  
+            self.map_dataCanvas.draw() 
 
-
-    def basemap_close(self):
-        # close the basemap window and set state
+    # basemap_close is a method to close the basemap window
+    def basemap_close(self, event):
         self.basemap_window.destroy()
         self.basemap_state = 0
-
-

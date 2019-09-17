@@ -13,7 +13,6 @@ import tkinter as tk
 ### USER SPECIFIED VARS ###
 in_path = "/mnt/Swaps/MARS/targ/supl/UAF/2018/aug/export"
 map_path = "/mnt/Swaps/MARS/targ/supl/grid-AKDEM/"
-# test_dat_path = in_path + 'may/block_clutter_elev/20180523-225145.mat'
 
 ### INITIALIZE ###
 root = tk.Tk()

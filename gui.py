@@ -18,7 +18,6 @@ import matplotlib as mpl
 mpl.use("TkAgg")
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-import gdal, osr
 import tkinter as tk
 from tkinter import Button, Frame, messagebox, Canvas, filedialog, Menu, Radiobutton
 
@@ -32,12 +31,12 @@ class MainGUI(tk.Tk):
         self.map_path = map_path
         self.setup()
 
-
+    # setup is a method which generates the app menubar and buttons
     def setup(self):
-        # file menu
+        # generate menubar
         menubar = Menu(self.master)
 
-        # create individual menu bars
+        # create individual menubar items
         fileMenu = Menu(menubar, tearoff=0)
         pickMenu = Menu(menubar, tearoff=0)
         viewMenu = Menu(menubar, tearoff=0)
@@ -51,8 +50,7 @@ class MainGUI(tk.Tk):
         fileMenu.add_command(label="Exit    [Escape]", command=self.close_window)
 
         # pick menu items
-        pickMenu.add_command(label="New")
-        pickMenu.add_command(label="Save")
+        pickMenu.add_command(label="New Pick    [Ctrl+N]", command=self.pick)
         pickMenu.add_separator()
         pickMenu.add_command(label="Optimize")
 
@@ -69,7 +67,7 @@ class MainGUI(tk.Tk):
         # help menu items
         helpMenu.add_command(label="Instructions", command=self.help)
 
-        # add menu items to menubar
+        # add items to menubar
         menubar.add_cascade(label="File", menu=fileMenu)
         menubar.add_cascade(label="Pick", menu=pickMenu)
         menubar.add_cascade(label="View", menu=viewMenu)
@@ -79,71 +77,26 @@ class MainGUI(tk.Tk):
         # add the menubar to the window
         self.master.config(menu=menubar)
 
-
         # build data display frame
         self.display = tk.Frame(self.master)
         self.display.pack(side="bottom", fill="both", expand=1)
-
         
         # add radio buttons for toggling between radargram and clutter-sim
         radarRad = Radiobutton(self.master, text="Radar", variable=self.im_status, value="data",command=imPick.imPick.show_radar).pack(side="left")
         clutterRad = Radiobutton(self.master,text="Clutter", variable=self.im_status, value="clut",command=imPick.imPick.show_clutter).pack(side="left")  
         self.im_status.set("data")
 
-
         # bind keypress events
         self.master.bind("<Key>", self.key)   
 
-        # call the instructions
-        # self.help()  
-
-    
-
-        # button for loading data
-
-    #     self.openButton = Button(self.master, text = "Open", command = utils.open)
-    #     self.opneButton.pack(in_=self.controls, side="left")
-    #     # button for going to next data file
-    #     self.nextButton = Button(self.master, text = "Next", command = utils.next_file)
-    #     self.nextButton.pack(in_=self.controls, side="left")
-    #     # button for saving
-    #     self.saveButton = Button(text = "Save", command = utils.savePick)
-    #     self.saveButton.pack(in_=self.controls, side="left")
-    #     # button for basemap display
-    #     self.basemapButton = Button(text = "Map", command = basemap.basemap)
-    #     self.basemapButton.pack(in_=self.controls, side="left")
-    #     # button for help message
-    #     self.instButton = Button(self.master, text = "Help", command = utils.help)
-    #     self.instButton.pack(in_=self.controls, side="left")
-    #     # button for exit
-    #     self.exitButton = Button(text = "Exit", fg = "red", command = self.close_window)
-    #     self.exitButton.pack(in_=self.controls, side="left")
-    #     # button for picking initiation
-    #     self.pickButton = Button(text = "Pick", fg = "green", command = imPick.imPick.picking)
-    #     self.pickButton.pack(in_=self.pickControls, side="left")
-    #     # button for trace view
-    #     self.traceButton = Button(text = "Trace View", command = None)
-    #     self.traceButton.pack(in_=self.pickControls, side="left")
-    #     # button for pick optimization
-    #     self.pickOptButton = Button(text = "Pick Optimization", command = None)
-    #     self.pickOptButton.pack(in_=self.pickControls, side="left")
-    #     # button to toggle on radargram
-    #     self.radarButton = Button(text = "radar", command = imPick.imPick.show_radar, relief="sunken")
-    #     self.radarButton.pack(in_=self.switchIm, side="left")        
-    #     # button to toggle on clutter
-    #     self.clutterButton = Button(text = "clutter", command = imPick.imPick.show_clutter)
-    #     self.clutterButton.pack(in_=self.switchIm, side="left")        
-    #     # call information messageboxs
-    #     # utils.help()
-    #     # register click and key events
 
         self.f_loadName = ""
         self.f_saveName = ""
         self.map_loadName = ""
-    #     self.dtype = "amp"
-    #     self.var_reset()
-    #     utils.open()
-    
+
+
+        self.open_loc()
+
     
     # def var_reset(self):
     #     # variable declarations
@@ -163,19 +116,25 @@ class MainGUI(tk.Tk):
     #     self.data_imSwitch_flag = ""
     #     self.clut_imSwitch_flag = ""
 
+    # key is a method to handle UI keypress events
     def key(self,event):
-        # keypress event
+        # event.state & 4 True for Ctrl+Key
+        # event.state & 1 True for Shift+Key
         if event.state & 4 and event.keysym == "o":
-            # ctrl+o open file
+            # ctrl+O open file
             self.open_loc()
 
         elif event.state & 4 and event.keysym == "s":
-            # ctrl+s save picks
+            # ctrl+S save picks
             self.save_loc()
 
         elif event.state & 4 and event.keysym == "m":
-            # ctrl+m open map
+            # ctrl+M open map
             self.map_loc()
+
+        elif event.state & 4 and event.keysym == "n":
+            # ctrl+N open map
+            self.pick()
 
         elif event.state & 1 and event.keysym == "greater":
             # shift+. (>) next file
@@ -199,9 +158,10 @@ class MainGUI(tk.Tk):
     def open_loc(self):
         # open location
         # bring up dialog box for user to load data file
-        self.f_loadName = filedialog.askopenfilename(initialdir = self.in_path,title = "Select file",filetypes = (("mat files","*.mat"),("all files","*.*")))
+        # self.f_loadName = filedialog.askopenfilename(initialdir = self.in_path,title = "Select file",filetypes = (("mat files","*.mat"),("all files","*.*")))
+        self.f_loadName = self.in_path + "/20180819-215243.mat"
         if self.f_loadName:
-            imPick.imPick(self.master, self.display, self.f_loadName)
+            self.imPick = imPick.imPick(self.master, self.display, self.f_loadName)
 
 
     def save_loc(self):
@@ -215,7 +175,12 @@ class MainGUI(tk.Tk):
             self.map_loadName = filedialog.askopenfilename(initialdir = self.map_path, title = "Select file", filetypes = (("GeoTIFF files","*.tif"),("all files","*.*")))
             
         if self.map_loadName:
-            basemap.basemap(self.master, self.map_loadName)
+            self.basemap = basemap.basemap(self.master, self.map_loadName)
+            self.basemap.set_nav(self.imPick.get_nav())
+
+
+    def pick(self):
+        return
 
     def next_loc(self):
         # get filename for next file in directory, if one exists
