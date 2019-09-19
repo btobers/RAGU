@@ -33,6 +33,12 @@ class MainGUI(tk.Tk):
 
     # setup is a method which generates the app menubar and buttons
     def setup(self):
+
+        self.f_loadName = ""
+        self.im_status = tk.StringVar()
+        self.im_status.set("data")       
+
+
         # generate menubar
         menubar = Menu(self.master)
 
@@ -50,14 +56,15 @@ class MainGUI(tk.Tk):
         fileMenu.add_command(label="Exit    [Escape]", command=self.close_window)
 
         # pick menu items
-        pickMenu.add_command(label="New Pick    [Ctrl+N]", command=self.pick)
+        pickMenu.add_command(label="Begin    [Ctrl+N]", command=self.new_pick)
+        pickMenu.add_command(label="Stop     [Q]", command=self.stop_pick)
+        pickMenu.add_command(label="New Layer    [Ctrl+L]", command=self.new_pick)      
         pickMenu.add_separator()
         pickMenu.add_command(label="Optimize")
 
         # view menu items
-        self.im_status = tk.StringVar()
-        viewMenu.add_radiobutton(label="Radargram", variable=self.im_status, value="data",command=imPick.imPick.show_radar)
-        viewMenu.add_radiobutton(label="Cluttergram", variable=self.im_status, value="clut",command=imPick.imPick.show_clutter)
+        viewMenu.add_radiobutton(label="Radargram", variable=self.im_status, value="data",command=self.im_switch)
+        viewMenu.add_radiobutton(label="Cluttergram", variable=self.im_status, value="clut",command=self.im_switch)
         viewMenu.add_separator()
         viewMenu.add_command(label="Trace-View")
 
@@ -82,20 +89,19 @@ class MainGUI(tk.Tk):
         self.display.pack(side="bottom", fill="both", expand=1)
         
         # add radio buttons for toggling between radargram and clutter-sim
-        radarRad = Radiobutton(self.master, text="Radar", variable=self.im_status, value="data",command=imPick.imPick.show_radar).pack(side="left")
-        clutterRad = Radiobutton(self.master,text="Clutter", variable=self.im_status, value="clut",command=imPick.imPick.show_clutter).pack(side="left")  
-        self.im_status.set("data")
+        radarRad = Radiobutton(self.master, text="Radargram", variable=self.im_status, value="data",command=self.im_switch).pack(side="left")
+        clutterRad = Radiobutton(self.master,text="Cluttergram", variable=self.im_status, value="clut",command=self.im_switch).pack(side="left")  
+        
 
         # bind keypress events
-        self.master.bind("<Key>", self.key)   
+        self.master.bind("<Key>", self.key)
 
 
-        self.f_loadName = ""
         self.f_saveName = ""
         self.map_loadName = ""
 
 
-        self.open_loc()
+        # self.open_loc()
 
     
     # def var_reset(self):
@@ -113,8 +119,7 @@ class MainGUI(tk.Tk):
     #     self.clut_cmax = None
     #     self.map_loadName = ""
     #     self.f_saveName = ""
-    #     self.data_imSwitch_flag = ""
-    #     self.clut_imSwitch_flag = ""
+
 
     # key is a method to handle UI keypress events
     def key(self,event):
@@ -133,8 +138,16 @@ class MainGUI(tk.Tk):
             self.map_loc()
 
         elif event.state & 4 and event.keysym == "n":
-            # ctrl+N open map
-            self.pick()
+            # ctrl+N begin pick
+            self.new_pick()
+
+        elif event.state & 4 and event.keysym == "l":
+            # ctrl+L new pick layer
+            self.new_pick()
+
+        elif event.keysym == "q":
+            # Q new pick layer
+            self.stop_pick()
 
         elif event.state & 1 and event.keysym == "greater":
             # shift+. (>) next file
@@ -142,6 +155,25 @@ class MainGUI(tk.Tk):
 
         elif event.keysym == "Escape" or event.keysym == "escape":
             self.close_window()
+
+        # tab key to toggle between radar and clutter sim display
+        elif event.keysym == "Tab":
+            self.im_switch()
+
+
+    # im_switch is a method to toggle imPick between data and clutter images
+    def im_switch(self):
+        if self.f_loadName:
+            print("\n"+ self.im_status.get())
+            if self.im_status.get() == "data":
+                print("switching to clut")
+                self.im_status.set("clut")
+                self.imPick.set_im(self.im_status.get())
+
+            elif self.im_status.get() == "clut":
+                print("switching to data")
+                self.im_status.set("data")
+                self.imPick.set_im(self.im_status.get())
 
             
     def close_window(self):
@@ -158,17 +190,18 @@ class MainGUI(tk.Tk):
     def open_loc(self):
         # open location
         # bring up dialog box for user to load data file
-        # self.f_loadName = filedialog.askopenfilename(initialdir = self.in_path,title = "Select file",filetypes = (("mat files","*.mat"),("all files","*.*")))
-        self.f_loadName = self.in_path + "/20180819-215243.mat"
+        self.f_loadName = filedialog.askopenfilename(initialdir = self.in_path,title = "Select file",filetypes = (("mat files","*.mat"),("all files","*.*")))
+        # self.f_loadName = self.in_path + "/20180819-215243.mat"
         if self.f_loadName:
             self.imPick = imPick.imPick(self.master, self.display, self.f_loadName)
+            self.im_status.set("data")
 
 
     def save_loc(self):
         # get desired save location for pick data
         self.f_saveName = filedialog.asksaveasfilename(initialdir = self.in_path,title = "Save As",filetypes = (("comma-separated values","*.csv"),))
     
-    
+    # map_loc is a method to get the desired basemap location and initialize
     def map_loc(self):
         # get desired basemap location
         if self.f_loadName:
@@ -177,10 +210,19 @@ class MainGUI(tk.Tk):
         if self.map_loadName:
             self.basemap = basemap.basemap(self.master, self.map_loadName)
             self.basemap.set_nav(self.imPick.get_nav())
+            # pass basemap to imPick for plotting pick location
+            self.imPick.get_basemap(self.basemap)
 
+    # pick is a method to call the picking method within imPick
+    def new_pick(self):
+        if self.f_loadName:
+            self.imPick.picking(True)
 
-    def pick(self):
-        return
+    def stop_pick(self):
+        if self.f_loadName:
+            self.imPick.picking(False)
+
+    # stop 
 
     def next_loc(self):
         # get filename for next file in directory, if one exists

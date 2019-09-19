@@ -11,7 +11,7 @@ import gui
 import tkinter as tk
 
 ### USER SPECIFIED VARS ###
-in_path = "/mnt/Swaps/MARS/targ/supl/UAF/2018/aug/export"
+in_path = "/mnt/Swaps/MARS/targ/supl/UAF/2018/may/block_clutter_elev"
 map_path = "/mnt/Swaps/MARS/targ/supl/grid-AKDEM/"
 
 ### INITIALIZE ###

@@ -19,6 +19,7 @@ class basemap:
         self.map_display.pack(side="bottom", fill="both", expand=1)
         # bind escape key to basemap_close()
         self.basemap_window.bind("<Escape>", self.basemap_close)
+        self.pick_loc = None
         self.map()
 
     # map is a method to plot the basemap in the basemap window
@@ -96,7 +97,26 @@ class basemap:
             self.map_fig_ax.legend()  
             self.map_dataCanvas.draw() 
 
+
+    # plot_idx is a method to plot the location of a click event on the datacanvas to the basemap
+    def plot_idx(self, idx):
+        idx = idx
+        # basemap open, plot picked location regardless of picking state
+        if self.basemap_state == 1:
+            # plot pick location on basemap
+            if self.pick_loc:
+                self.pick_loc.remove()
+            self.pick_loc = self.map_fig_ax.scatter(self.xdat[idx],self.ydat[idx],c="w",marker="x",zorder=3)
+            self.map_fig.canvas.draw()
+
+        
     # basemap_close is a method to close the basemap window
     def basemap_close(self, event):
         self.basemap_window.destroy()
         self.basemap_state = 0
+
+
+    # get_state is a mathod to get the basemap state
+    def get_state(self):
+        if self.map_loadName:
+            return self.basemap_window.state()

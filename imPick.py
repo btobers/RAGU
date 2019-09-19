@@ -18,20 +18,20 @@ class imPick:
         self.display=display
 
         self.f_loadName = f_loadName
-        # frames for data display and UI
-        # self.controls = Frame(self.master)
-        # self.controls.pack(side="top")
-        # self.pickControls = Frame(self.master)
-        # self.pickControls.pack(side="top")
-        # self.switchIm = Frame(self.master)
-        # self.switchIm.pack(side="left")
 
-        
         # blank data canvas
+        self.data_imSwitch_flag = ""
+        self.clut_imSwitch_flag = ""
         self.dtype = "amp"
         self.toolbar = None
+        self.basemap = None
         self.pick_dict = {}
-        self.pick_state = 1
+        self.pick_state = 0
+        self.pick_layer = 0
+        self.data_cmin = None
+        self.data_cmax = None
+        self.clut_cmin = None
+        self.clut_cmax = None
         self.fig = mpl.figure.Figure()
         self.fig.patch.set_facecolor(self.master.cget('bg'))
         self.ax = self.fig.add_subplot(111)
@@ -113,34 +113,39 @@ class imPick:
         # # pass navdat to basemap class
         # basemap.basemap(self.data["navdat"])
 
-
-    def picking(self):
-        # change status of pick_state based on button click
-        if self.f_loadName:
-            if self.pick_state == 0:
-                self.pick_state = 1
-                self.pick_dict["layer_" + str(self.pick_layer)] = np.ones(self.data["num_trace"])*-1
-                self.pickButton.configure(fg = "red")
-            elif self.pick_state == 1:
-                self.pick_state = 0
-                self.pick_layer += 1
-                # save picked lines to old variable and clear line variables
-                self.xln_old.extend(self.xln)
-                self.yln_old.extend(self.yln)
-                del self.xln[:]
-                del self.yln[:]
-                # plot saved pick in green
-                self.pick.set_data(self.xln, self.yln)
-                self.saved_pick.set_data(self.xln_old, self.yln_old)
-                self.fig.canvas.draw()
+    # picking is a method to generate a new pick dictionary layer and plot the data
+    def picking(self, state):
+        self.pick_state = state
+        if self.pick_state == True:
+            self.pick_dict["layer_" + str(self.pick_layer)] = np.ones(self.data["num_trace"])*-1
+            self.xln_old.extend(self.xln)
+            self.yln_old.extend(self.yln)
+            print(self.xln_old)
+            del self.xln[:]
+            del self.yln[:]
+            # plot saved pick in green
+            self.pick.set_data(self.xln, self.yln)
+            self.saved_pick.set_data(self.xln_old, self.yln_old)
+            self.fig.canvas.draw()            
+            self.pick_layer += 1
+        elif self.pick_state == False:
+            # save picked lines to old variable and clear line variables
+            self.xln_old.extend(self.xln)
+            self.yln_old.extend(self.yln)
+            del self.xln[:]
+            del self.yln[:]
+            # plot saved pick in green
+            self.pick.set_data(self.xln, self.yln)
+            self.saved_pick.set_data(self.xln_old, self.yln_old)
+            self.fig.canvas.draw()
 
 
     def addseg(self, event):
         # add line segments with user input
         # find nearest index to event.xdata for plotting on basemap and for linearly interpolating twtt between points
-        pick_idx_1 = utils.find_nearest(self.data["dist"], event.xdata)
+        self.pick_idx_1 = utils.find_nearest(self.data["dist"], event.xdata)
         # check if picking state is a go
-        if self.pick_state == 1:
+        if self.pick_state == True:
             if (event.inaxes != self.ax):
                 return
             self.xln.append(event.xdata)
@@ -149,26 +154,21 @@ class imPick:
             if num_pick >= 2:
                 # if there are at least two picked points, find range of all trace numbers within their range
                 pick_idx_0 = utils.find_nearest(self.data["dist"], self.xln[-2])
-                self.pick_dict["layer_" + str(self.pick_layer)][pick_idx_0] = self.yln[-2]
-                self.pick_dict["layer_" + str(self.pick_layer)][pick_idx_1] = self.yln[-1]
-                self.pick_idx = np.arange(pick_idx_0,pick_idx_1 + 1)
+                self.pick_dict["layer_" + str(self.pick_layer - 1)][pick_idx_0] = self.yln[-2]
+                self.pick_dict["layer_" + str(self.pick_layer - 1)][self.pick_idx_1] = self.yln[-1]
+                self.pick_idx = np.arange(pick_idx_0,self.pick_idx_1 + 1)
                 # linearly interpolate twtt values between pick points at idx_0 and idx_1
-                self.pick_dict["layer_" + str(self.pick_layer)][self.pick_idx] = np.interp(self.pick_idx, [pick_idx_0,pick_idx_1], [self.yln[-2],self.yln[-1]])
+                self.pick_dict["layer_" + str(self.pick_layer - 1)][self.pick_idx] = np.interp(self.pick_idx, [pick_idx_0,self.pick_idx_1], [self.yln[-2],self.yln[-1]])
             
-            # Redraw pick quickly with blitting
+            # redraw pick quickly with blitting
             self.pick.set_data(self.xln, self.yln)
             self.dataCanvas.restore_region(self.axbg)
             self.ax.draw_artist(self.pick)
             self.dataCanvas.blit(self.ax.bbox)
-
-        # if self.map_loadName:
-        #     # basemap open, plot picked location regardless of picking state
-        #     if self.basemap_state == 1:
-        #         # plot pick location on basemap
-        #         if self.pick_loc:
-        #             self.pick_loc.remove()
-        #         self.pick_loc = self.map_fig_ax.scatter(self.xdat[pick_idx_1],self.ydat[pick_idx_1],c="w",marker="x",zorder=3)
-        #         self.map_fig.canvas.draw()
+        
+        # plot pick location to basemap
+        if self.basemap:
+            self.basemap.plot_idx(self.pick_idx_1)
 
     def onkey(self, event):
         # on-key commands
@@ -178,8 +178,7 @@ class imPick:
         elif event.key =="backspace":
             # remove last segment
             self.clear_last()
-        elif event.key =="escape":
-            self.close_window()
+
 
     def clear_picks(self):
         # clear all picks
@@ -199,55 +198,47 @@ class imPick:
 
     def show_radar(self):
         # toggle to radar data
-        if self.im_clut.get_visible():
-            # get clutter colormap slider values for reviewing
-            self.clut_cmin = self.s_cmin.val
-            self.clut_cmax = self.s_cmax.val
-            # set button relief
-            self.clutterButton.config(relief="raised")
-            self.radarButton.config(relief="sunken")
-            # set colorbar initial values to previous values
-            self.s_cmin.valinit = self.data_cmin
-            self.s_cmax.valinit = self.data_cmax
-            # set colorbar bounds
-            self.s_cmin.valmin = self.mindB_data - 10
-            self.s_cmin.valmax = self.mindB_data + 10
-            self.s_cmax.valmin = -10
-            self.s_cmax.valmax = 10
-            # reverse visilibilty
-            self.im_clut.set_visible(False)
-            self.im_data.set_visible(True)
-            # redraw canvas
-            self.fig.canvas.draw()
+        # get clutter colormap slider values for reviewing
+        self.clut_cmin = self.s_cmin.val
+        self.clut_cmax = self.s_cmax.val
+        # set colorbar initial values to previous values
+        self.s_cmin.valinit = self.data_cmin
+        self.s_cmax.valinit = self.data_cmax
+        # set colorbar bounds
+        self.s_cmin.valmin = self.mindB_data - 10
+        self.s_cmin.valmax = self.mindB_data + 10
+        self.s_cmax.valmin = -10
+        self.s_cmax.valmax = 10
+        # reverse visilibilty
+        self.im_clut.set_visible(False)
+        self.im_data.set_visible(True)
+        # redraw canvas
+        self.fig.canvas.draw()
 
     def show_clutter(self):
         # toggle to clutter sim viewing
-        if self.im_data.get_visible():
-            # get radar data colormap slider values for reviewing
-            self.data_cmin = self.s_cmin.val
-            self.data_cmax = self.s_cmax.val
-            # set button relief
-            self.radarButton.config(relief="raised")
-            self.clutterButton.config(relief="sunken")
-            if not self.clut_imSwitch_flag:
-                # if this is the first time viewing the clutter sim, set colorbar limits to initial values
-                self.s_cmin.valmin = self.mindB_clut - 10
-                self.s_cmin.valmax = self.mindB_clut + 10
-                self.s_cmin.valinit = self.mindB_clut
-                self.s_cmax.valmin = -10
-                self.s_cmax.valmax = 10
-                self.s_cmax.valinit = 0
-            else: 
-                # if clutter has been shown before revert to previous colorbar values
-                self.im_clut.set_clim([self.clut_cmin, self.clut_cmax])
+        # get radar data colormap slider values for reviewing
+        self.data_cmin = self.s_cmin.val
+        self.data_cmax = self.s_cmax.val
+        if not self.clut_imSwitch_flag:
+            # if this is the first time viewing the clutter sim, set colorbar limits to initial values
+            self.s_cmin.valmin = self.mindB_clut - 10
+            self.s_cmin.valmax = self.mindB_clut + 10
+            self.s_cmin.valinit = self.mindB_clut
+            self.s_cmax.valmin = -10
+            self.s_cmax.valmax = 10
+            self.s_cmax.valinit = 0
+        else: 
+            # if clutter has been shown before revert to previous colorbar values
+            self.im_clut.set_clim([self.clut_cmin, self.clut_cmax])
 
-            # reverse visilibilty
-            self.im_data.set_visible(False)
-            self.im_clut.set_visible(True)
-            # set flag to indicate that clutter has been viewed for resetting colorbar limits
-            self.clut_imSwitch_flag is True    
-            # redraw canvas
-            self.fig.canvas.draw()
+        # reverse visilibilty
+        self.im_data.set_visible(False)
+        self.im_clut.set_visible(True)
+        # set flag to indicate that clutter has been viewed for resetting colorbar limits
+        self.clut_imSwitch_flag is True    
+        # redraw canvas
+        self.fig.canvas.draw()
 
     def cmap_update(self, s=None):
         # method to update image colormap based on slider values
@@ -300,7 +291,23 @@ class imPick:
         else: 
             return True
 
-    #the get_nav method returns the nav data       
+    # get_nav method returns the nav data       
     def get_nav(self):
         return self.data["navdat"]
 
+    # get_idx is a method that reurns the trace index of a click event on the image
+    def get_idx(self):
+        return self.pick_idx_1
+
+    # set_im is a method to set which data is being displayed
+    def set_im(self, im_status):
+        im_status = im_status
+        if im_status == "data":
+            self.show_radar()
+
+        elif im_status =="clut":
+            self.show_clutter()
+
+    # get_basemap is a method to hold the basemap object passed from gui
+    def get_basemap(self, basemap):
+        self.basemap = basemap
