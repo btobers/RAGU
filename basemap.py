@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 
 class basemap:
-    # basemap is a class which loads and handles the basemap
     def __init__(self, master, map_path):
         self.master = master
         self.map_loadName = map_path
@@ -20,7 +19,7 @@ class basemap:
         # bind escape key to basemap_close()
         self.basemap_window.bind("<Escape>", self.basemap_close)
         self.pick_loc = None
-        self.map()
+
 
     # map is a method to plot the basemap in the basemap window
     def map(self):
@@ -74,6 +73,7 @@ class basemap:
             except Exception as err:
                 print("basemap load error: " + str(err))
                 pass
+
 
     # set_nav is a method to update the navigation data plotted on the basemap
     def set_nav(self, navdat):

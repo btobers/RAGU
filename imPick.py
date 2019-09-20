@@ -13,46 +13,69 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 
 class imPick:
     # imPick is a class to pick horizons from a radar image
-    def __init__(self,master,display,f_loadName):
+    def __init__(self,master,display):
         self.master = master
-        self.display=display
+        self.display = display
+        self.pickLabel = tk.Label(self.master, text="Picking Layer:\t0", fg="#d9d9d9")
+        self.pickLabel.pack(side="right")
+        
+        self.fig = mpl.figure.Figure()
+        self.fig.patch.set_facecolor("#d9d9d9")
+        self.dataCanvas = FigureCanvasTkAgg(self.fig, self.master)
+        self.dataCanvas.get_tk_widget().pack(in_=self.display, side="bottom", fill="both", expand=1)
+        self.key = self.fig.canvas.mpl_connect("key_press_event", self.onkey)
+        self.click = self.fig.canvas.mpl_connect("button_press_event", self.addseg)
 
-        self.f_loadName = f_loadName
+        # add axes for colormap sliders and reset button - leave invisible until data loaded
+        self.ax_cmax = self.fig.add_axes([0.95, 0.55, 0.01, 0.30])
+        self.ax_cmax.set_visible(False)
+        self.ax_cmin  = self.fig.add_axes([0.95, 0.18, 0.01, 0.30])
+        self.ax_cmin.set_visible(False)
+        self.reset_ax = self.fig.add_axes([0.935, 0.11, 0.04, 0.03])
+        self.reset_ax.set_visible(False)
+        self.ax = self.fig.add_subplot(111)
+        self.ax.set_visible(False)
 
-        # blank data canvas
+        # self.dataCanvas.draw()
+
+
+    # set_vars is a method to set imPick variables
+    def set_vars(self):
         self.data_imSwitch_flag = ""
         self.clut_imSwitch_flag = ""
+        self.f_loadName = ""
+        self.f_saveName = ""
         self.dtype = "amp"
         self.toolbar = None
         self.basemap = None
         self.pick_dict = {}
-        self.pick_state = 0
+        self.pick_state = False
         self.pick_layer = 0
         self.data_cmin = None
         self.data_cmax = None
         self.clut_cmin = None
         self.clut_cmax = None
-        self.fig = mpl.figure.Figure()
-        self.fig.patch.set_facecolor(self.master.cget('bg'))
-        self.ax = self.fig.add_subplot(111)
-        self.dataCanvas = FigureCanvasTkAgg(self.fig, self.master)
-        # add axes for colormap sliders and reset button
-        self.ax_cmax = self.fig.add_axes([0.95, 0.55, 0.01, 0.30])
-        self.ax_cmin  = self.fig.add_axes([0.95, 0.18, 0.01, 0.30])
-        self.reset_ax = self.fig.add_axes([0.935, 0.11, 0.04, 0.03])
-        self.dataCanvas.get_tk_widget().pack(in_=self.display, side="bottom", fill="both", expand=1)
-        self.dataCanvas.draw()
-        self.key = self.fig.canvas.mpl_connect("key_press_event", self.onkey)
-        self.click = self.fig.canvas.mpl_connect("button_press_event", self.addseg)
-        self.load()
+        # empty fields for picks
+        self.xln_old = []
+        self.yln_old = []
+        self.xln = []
+        self.yln = []
+        self.pick = None
+        self.saved_pick = None
 
 
-    def load(self):
+    def load(self, f_loadName):
+        self.f_loadName = f_loadName
         # method to load radar data
         print("Loading: " + self.f_loadName)
         # ingest the data
         self.igst = ingester.ingester("h5py")
         self.data = self.igst.read(self.f_loadName)
+        # set scalebar axes now that data displayed
+        self.ax.set_visible(True)
+        self.ax_cmax.set_visible(True)
+        self.ax_cmin.set_visible(True)
+        self.reset_ax.set_visible(True)
         # set figure title
         self.ax.set_title(self.f_loadName.split("/")[-1].rstrip(".mat"))
         # find max power in data to scale image
@@ -64,16 +87,8 @@ class imPick:
         # cut off data at 10th percentile to avoid extreme outliers - round down
         self.mindB_data = np.floor(np.nanpercentile(self.imScl_data,10))
         self.mindB_clut = np.floor(np.nanpercentile(self.imScl_clut,10))
-        # empty fields for picks
-        self.xln = []
-        self.yln = []
         self.pick, = self.ax.plot([],[],"r")  # empty line for current pick
-        self.xln_old = []
-        self.yln_old = []
         self.saved_pick, = self.ax.plot([],[],"g")  # empty line for saved pick
-        # self.ax.patch.set_alpha(0)
-        self.pick_x_loc = []
-        self.pick_y_loc = []
         # create matplotlib figure and use imshow to display radargram
         if self.toolbar:
             # remove existing toolbar
@@ -109,24 +124,26 @@ class imPick:
         self.dataCanvas._tkcanvas.pack()
         self.dataCanvas.draw()
 
-        
-        # # pass navdat to basemap class
-        # basemap.basemap(self.data["navdat"])
 
-    # picking is a method to generate a new pick dictionary layer and plot the data
-    def picking(self, state):
+    # get_pickState is a method to return the current picking state
+    def get_pickState(self):
+        return self.pick_state
+
+
+    # set_pickState is a method to generate a new pick dictionary layer and plot the data
+    def set_pickState(self, state):
         self.pick_state = state
         if self.pick_state == True:
             self.pick_dict["layer_" + str(self.pick_layer)] = np.ones(self.data["num_trace"])*-1
             self.xln_old.extend(self.xln)
             self.yln_old.extend(self.yln)
-            print(self.xln_old)
             del self.xln[:]
             del self.yln[:]
             # plot saved pick in green
             self.pick.set_data(self.xln, self.yln)
             self.saved_pick.set_data(self.xln_old, self.yln_old)
-            self.fig.canvas.draw()            
+            # self.fig.canvas.draw()  
+            self.pickLabel.config(text="Picking Layer:\t" + str(self.pick_layer), fg="#008000")          
             self.pick_layer += 1
         elif self.pick_state == False:
             # save picked lines to old variable and clear line variables
@@ -137,56 +154,60 @@ class imPick:
             # plot saved pick in green
             self.pick.set_data(self.xln, self.yln)
             self.saved_pick.set_data(self.xln_old, self.yln_old)
+            self.pickLabel.config(fg="#FF0000")
             self.fig.canvas.draw()
 
 
+    # addseg is a method to for user to generate picks
     def addseg(self, event):
-        # add line segments with user input
-        # find nearest index to event.xdata for plotting on basemap and for linearly interpolating twtt between points
-        self.pick_idx_1 = utils.find_nearest(self.data["dist"], event.xdata)
-        # check if picking state is a go
-        if self.pick_state == True:
-            if (event.inaxes != self.ax):
-                return
-            self.xln.append(event.xdata)
-            self.yln.append(event.ydata)
-            num_pick = len(self.xln)
-            if num_pick >= 2:
-                # if there are at least two picked points, find range of all trace numbers within their range
-                pick_idx_0 = utils.find_nearest(self.data["dist"], self.xln[-2])
-                self.pick_dict["layer_" + str(self.pick_layer - 1)][pick_idx_0] = self.yln[-2]
-                self.pick_dict["layer_" + str(self.pick_layer - 1)][self.pick_idx_1] = self.yln[-1]
-                self.pick_idx = np.arange(pick_idx_0,self.pick_idx_1 + 1)
-                # linearly interpolate twtt values between pick points at idx_0 and idx_1
-                self.pick_dict["layer_" + str(self.pick_layer - 1)][self.pick_idx] = np.interp(self.pick_idx, [pick_idx_0,self.pick_idx_1], [self.yln[-2],self.yln[-1]])
+        if self.f_loadName:
+            # find nearest index to event.xdata
+            self.pick_idx_1 = utils.find_nearest(self.data["dist"], event.xdata)
+            # check if picking state is a go
+            if self.pick_state == True:
+                if (event.inaxes != self.ax):
+                    return
+                self.xln.append(event.xdata)
+                self.yln.append(event.ydata)
+                num_pick = len(self.xln)
+                if num_pick >= 2:
+                    # if there are at least two picked points, find range of all trace numbers within their range
+                    pick_idx_0 = utils.find_nearest(self.data["dist"], self.xln[-2])
+                    self.pick_dict["layer_" + str(self.pick_layer - 1)][pick_idx_0] = self.yln[-2]
+                    self.pick_dict["layer_" + str(self.pick_layer - 1)][self.pick_idx_1] = self.yln[-1]
+                    self.pick_idx = np.arange(pick_idx_0,self.pick_idx_1 + 1)
+                    # linearly interpolate twtt values between pick points at idx_0 and idx_1
+                    self.pick_dict["layer_" + str(self.pick_layer - 1)][self.pick_idx] = np.interp(self.pick_idx, [pick_idx_0,self.pick_idx_1], [self.yln[-2],self.yln[-1]])
+                
+                # redraw pick quickly with blitting
+                self.pick.set_data(self.xln, self.yln)
+                self.dataCanvas.restore_region(self.axbg)
+                self.ax.draw_artist(self.pick)
+                self.dataCanvas.blit(self.ax.bbox)
             
-            # redraw pick quickly with blitting
-            self.pick.set_data(self.xln, self.yln)
-            self.dataCanvas.restore_region(self.axbg)
-            self.ax.draw_artist(self.pick)
-            self.dataCanvas.blit(self.ax.bbox)
-        
-        # plot pick location to basemap
-        if self.basemap:
-            self.basemap.plot_idx(self.pick_idx_1)
+            # plot pick location to basemap
+            if self.basemap:
+                self.basemap.plot_idx(self.pick_idx_1)
+
 
     def onkey(self, event):
         # on-key commands
         if event.key =="c":
             # clear the drawing of line segments
             self.clear_picks()
-        elif event.key =="backspace":
+        elif event.key =="delete":
             # remove last segment
             self.clear_last()
 
 
     def clear_picks(self):
         # clear all picks
-        if len(self.xln) and messagebox.askokcancel("Warning", "Clear all picks?", icon = "warning") == True:
+        if len(self.xln) and tk.messagebox.askokcancel("Warning", "Clear all picks?", icon = "warning") == True:
             del self.xln[:]
             del self.yln[:]
             self.pick.set_data(self.xln, self.yln)
             self.fig.canvas.draw()
+
 
     def clear_last(self):
         # clear last pick
@@ -195,6 +216,7 @@ class imPick:
             del self.yln[-1:]
             self.pick.set_data(self.xln, self.yln)
             self.fig.canvas.draw()
+
 
     def show_radar(self):
         # toggle to radar data
@@ -214,6 +236,7 @@ class imPick:
         self.im_data.set_visible(True)
         # redraw canvas
         self.fig.canvas.draw()
+
 
     def show_clutter(self):
         # toggle to clutter sim viewing
@@ -240,6 +263,7 @@ class imPick:
         # redraw canvas
         self.fig.canvas.draw()
 
+
     def cmap_update(self, s=None):
         # method to update image colormap based on slider values
         try:
@@ -256,6 +280,7 @@ class imPick:
         except Exception as err:
             print("cmap_update error: " + str(err))
 
+
     def cmap_reset(self, event):
         # reset sliders to initial values
         if self.im_data.get_visible():
@@ -271,33 +296,51 @@ class imPick:
             # slider max bounds will be same as for real data
             self.s_cmax.reset()
 
-    def close_window(self):
-        # destroy canvas
-        # first check if picks have been made and saved
-        if len(self.xln) > 0 and self.f_saveName == "":
-            if messagebox.askokcancel("Warning", "Exit NOSEpick without saving picks?", icon = "warning") == True:
+
+    # exit_warningn is a method which closes the window if no picks exist, or if the user would like to discard existing picks
+    def exit_warning(self):
+        # check if picks have been made and saved
+        if len(self.xln + self.xln_old) > 0 and self.f_saveName == "":
+            if tk.messagebox.askokcancel("Warning", "Exit NOSEpick without saving picks?", icon = "warning") == True:
                 self.master.destroy()
         else:
             self.master.destroy()
 
-    def save_warning(self):
-        # warning to save picks before loading next file
-        # first check if picks have been made and saved
-        if len(self.xln) > 0 and self.f_saveName == "":
-            if messagebox.askokcancel("Warning", "Load next track without saving picks?", icon = "warning") == True:
-                # clear picks
-                self.clear_picks()
+
+    # nextSave_warning is a method which checks if picks exist or if the user would like to discard existing picks before moving to the next track
+    def nextSave_warning(self):
+        # check if picks have been made and saved
+        if len(self.xln + self.xln_old) > 0 and self.f_saveName == "":
+            if tk.messagebox.askokcancel("Warning", "Load next track without saving picks?", icon = "warning") == True:
                 return True
         else: 
             return True
+
+
+    # clear_canvas is a method to clear the data canvas and figures to reset app
+    def clear_canvas(self):
+        # if self.save_warning() == True:
+        self.im_clut.remove()
+        self.im_data.remove()
+        self.pick.remove()
+        self.saved_pick.remove()
+        self.set_vars()
+
+
+    # get_pickLen is a method to return the length of existing picks
+    def get_pickLen(self):
+        return len(self.xln + self.xln_old)
+        
 
     # get_nav method returns the nav data       
     def get_nav(self):
         return self.data["navdat"]
 
+
     # get_idx is a method that reurns the trace index of a click event on the image
     def get_idx(self):
         return self.pick_idx_1
+
 
     # set_im is a method to set which data is being displayed
     def set_im(self, im_status):
@@ -308,6 +351,15 @@ class imPick:
         elif im_status =="clut":
             self.show_clutter()
 
+
     # get_basemap is a method to hold the basemap object passed from gui
     def get_basemap(self, basemap):
         self.basemap = basemap
+
+
+    # save is a method to receive the pick save location from gui and save using utils.save
+    def save(self, f_saveName, data, pick_dict):
+        self.f_saveName = f_saveName
+        data = data
+        pick_dict = pick_dict
+        utils.savePick(self.f_saveName, data, pick_dict)

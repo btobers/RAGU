@@ -2,7 +2,7 @@
 NOSEpick - currently in development stages
 created by: Brandon S. Tober and Michael S. Christoffersen
 date: 25JUN19
-last updated: 09SEP2019
+last updated: 19SEP2019
 environment requirements in nose_env.yml
 """
 
@@ -21,23 +21,20 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 import tkinter as tk
 from tkinter import Button, Frame, messagebox, Canvas, filedialog, Menu, Radiobutton
 
-
+# MainGUI is the NOSEpick class which sets the gui interface and holds operating variables
 class MainGUI(tk.Tk):
-    # class to setup and hold gui attributes
     def __init__(self, master, in_path, map_path):
         self.master = master
-        # self.master.protocol("WM_DELETE_WINDOW", imPick.imPick.close_window)
         self.in_path = in_path
         self.map_path = map_path
-        self.setup()
 
-    # setup is a method which generates the app menubar and buttons
+    # setup is a method which generates the app menubar and buttons and initializes some vars
     def setup(self):
-
         self.f_loadName = ""
+        self.f_saveName = ""
+        self.map_loadName = ""
         self.im_status = tk.StringVar()
         self.im_status.set("data")       
-
 
         # generate menubar
         menubar = Menu(self.master)
@@ -51,14 +48,13 @@ class MainGUI(tk.Tk):
 
         # file menu items
         fileMenu.add_command(label="Open    [Ctrl+O]", command=self.open_loc)
-        fileMenu.add_command(label="Save    [Ctrl+S", command=self.save_loc)
-        fileMenu.add_command(label="Next    [>]", command=self.next_loc)
-        fileMenu.add_command(label="Exit    [Escape]", command=self.close_window)
+        fileMenu.add_command(label="Save    [Ctrl+S]", command=self.save_loc)
+        fileMenu.add_command(label="Next         [>]", command=self.next_loc)
+        fileMenu.add_command(label="Exit    [Ctrl+Q]", command=self.close_window)
 
         # pick menu items
-        pickMenu.add_command(label="Begin    [Ctrl+N]", command=self.new_pick)
-        pickMenu.add_command(label="Stop     [Q]", command=self.stop_pick)
-        pickMenu.add_command(label="New Layer    [Ctrl+L]", command=self.new_pick)      
+        pickMenu.add_command(label="Begin/New Layer    [Ctrl+N]", command=self.new_pick)
+        pickMenu.add_command(label="Stop               [Q]", command=self.stop_pick)
         pickMenu.add_separator()
         pickMenu.add_command(label="Optimize")
 
@@ -87,146 +83,123 @@ class MainGUI(tk.Tk):
         # build data display frame
         self.display = tk.Frame(self.master)
         self.display.pack(side="bottom", fill="both", expand=1)
+
+        # initialize imPick
+        self.imPick = imPick.imPick(self.master, self.display)
+        self.imPick.set_vars()
         
         # add radio buttons for toggling between radargram and clutter-sim
         radarRad = Radiobutton(self.master, text="Radargram", variable=self.im_status, value="data",command=self.im_switch).pack(side="left")
         clutterRad = Radiobutton(self.master,text="Cluttergram", variable=self.im_status, value="clut",command=self.im_switch).pack(side="left")  
         
-
         # bind keypress events
         self.master.bind("<Key>", self.key)
 
-
-        self.f_saveName = ""
-        self.map_loadName = ""
-
-
-        # self.open_loc()
-
-    
-    # def var_reset(self):
-    #     # variable declarations
-    #     self.pick_state = 0
-    #     self.pick_layer = 0
-    #     self.basemap_state = 0
-    #     self.pick_dict = {}
-    #     self.pick_idx = []
-    #     self.toolbar = None
-    #     self.pick_loc = None
-    #     self.data_cmin = None
-    #     self.data_cmax = None
-    #     self.clut_cmin = None
-    #     self.clut_cmax = None
-    #     self.map_loadName = ""
-    #     self.f_saveName = ""
+        self.open_loc()
 
 
     # key is a method to handle UI keypress events
     def key(self,event):
         # event.state & 4 True for Ctrl+Key
         # event.state & 1 True for Shift+Key
+        # Ctrl+O open file
         if event.state & 4 and event.keysym == "o":
-            # ctrl+O open file
             self.open_loc()
 
+        # Ctrl+S save picks
         elif event.state & 4 and event.keysym == "s":
-            # ctrl+S save picks
             self.save_loc()
 
+        # Ctrl+M open map
         elif event.state & 4 and event.keysym == "m":
-            # ctrl+M open map
             self.map_loc()
 
+        # Ctrl+N begin pick
         elif event.state & 4 and event.keysym == "n":
-            # ctrl+N begin pick
             self.new_pick()
 
-        elif event.state & 4 and event.keysym == "l":
-            # ctrl+L new pick layer
-            self.new_pick()
-
-        elif event.keysym == "q":
-            # Q new pick layer
-            self.stop_pick()
-
-        elif event.state & 1 and event.keysym == "greater":
-            # shift+. (>) next file
-            self.next_loc()
-
-        elif event.keysym == "Escape" or event.keysym == "escape":
+        # Ctrl+Q new pick layer
+        elif event.state & 4 and event.keysym == "q":
             self.close_window()
+
+        # shift+. (>) next file
+        elif event.state & 1 and event.keysym == "greater":
+            self.next_loc()
 
         # tab key to toggle between radar and clutter sim display
         elif event.keysym == "Tab":
             self.im_switch()
 
+        # Escape key to stop picking current layer
+        elif event.keysym == "Escape":
+            self.stop_pick()
+
 
     # im_switch is a method to toggle imPick between data and clutter images
     def im_switch(self):
         if self.f_loadName:
-            print("\n"+ self.im_status.get())
             if self.im_status.get() == "data":
-                print("switching to clut")
                 self.im_status.set("clut")
                 self.imPick.set_im(self.im_status.get())
 
             elif self.im_status.get() == "clut":
-                print("switching to data")
                 self.im_status.set("data")
                 self.imPick.set_im(self.im_status.get())
 
-            
+
+    # close_window is a gui method to call the imPick close_warning
     def close_window(self):
-        # destroy canvas
-        # first check if picks have been made and saved
-        # if len(self.xln) > 0 and self.f_saveName == "":
-        #     if messagebox.askokcancel("Warning", "Exit NOSEpick without saving picks?", icon = "warning") == True:
-        #         self.master.destroy()
-        # else:
-        #     self.master.destroy()
-        self.master.destroy()
+        self.imPick.exit_warning()
 
 
+    # open_loc is a gui method which has the user select and input data file - then passed to imPick.load()
     def open_loc(self):
-        # open location
-        # bring up dialog box for user to load data file
         self.f_loadName = filedialog.askopenfilename(initialdir = self.in_path,title = "Select file",filetypes = (("mat files","*.mat"),("all files","*.*")))
-        # self.f_loadName = self.in_path + "/20180819-215243.mat"
         if self.f_loadName:
-            self.imPick = imPick.imPick(self.master, self.display, self.f_loadName)
+            self.imPick.load(self.f_loadName)
             self.im_status.set("data")
 
+        if self.map_loadName:
+            # pass basemap to imPick for plotting pick location
+            self.basemap.set_nav(self.imPick.get_nav())
+            self.imPick.get_basemap(self.basemap)            
 
+
+    # save_loc is method to receieve the desired pick save location from user input
     def save_loc(self):
-        # get desired save location for pick data
-        self.f_saveName = filedialog.asksaveasfilename(initialdir = self.in_path,title = "Save As",filetypes = (("comma-separated values","*.csv"),))
+        if self.f_loadName and self.imPick.get_pickLen() > 0:
+            self.f_saveName = filedialog.asksaveasfilename(initialdir = self.in_path,title = "Save As",filetypes = (("comma-separated values","*.csv"),))
     
+
     # map_loc is a method to get the desired basemap location and initialize
     def map_loc(self):
-        # get desired basemap location
-        if self.f_loadName:
-            self.map_loadName = filedialog.askopenfilename(initialdir = self.map_path, title = "Select file", filetypes = (("GeoTIFF files","*.tif"),("all files","*.*")))
+        self.map_loadName = filedialog.askopenfilename(initialdir = self.map_path, title = "Select file", filetypes = (("GeoTIFF files","*.tif"),("all files","*.*")))
             
         if self.map_loadName:
             self.basemap = basemap.basemap(self.master, self.map_loadName)
-            self.basemap.set_nav(self.imPick.get_nav())
+            self.basemap.map()
+
+        if self.f_loadName:
             # pass basemap to imPick for plotting pick location
+            self.basemap.set_nav(self.imPick.get_nav())
             self.imPick.get_basemap(self.basemap)
 
-    # pick is a method to call the picking method within imPick
+
+    # new_pick is a method which begins a new imPick pick layer
     def new_pick(self):
         if self.f_loadName:
-            self.imPick.picking(True)
+            self.imPick.set_pickState(True)
 
+
+    # stop_pick is a method which terminates the current imPick pick layer
     def stop_pick(self):
-        if self.f_loadName:
-            self.imPick.picking(False)
+        if self.imPick.get_pickState() is True:
+            self.imPick.set_pickState(False)
 
-    # stop 
 
+    # next_loc is a method to get the filename of the next data file in the directory then call imPick.load()
     def next_loc(self):
-        # get filename for next file in directory, if one exists
-        if self.f_loadName:
+        if self.f_loadName and self.imPick.nextSave_warning() == True:
             # get index of crurrently displayed file in directory
             file_path = self.f_loadName.rstrip(self.f_loadName.split("/")[-1])
             file_list = os.listdir(file_path)
@@ -240,12 +213,8 @@ class MainGUI(tk.Tk):
             # check if more files exist in directory following current file
             if file_index <= (len(file_list) - 1):
                 self.f_loadName = (file_path + file_list[file_index])
-                # del xln[:]
-                # del yln[:]
-                # del xln_old[:]
-                # del yln_old[:]
-                
-                imPick.imPick.load(self.f_loadName)
+                self.imPick.clear_canvas()
+                self.imPick.load(self.f_loadName)
 
             else:
                 print("Note: " + self.f_loadName.split("/")[-1] + " is the last file in " + file_path)
@@ -264,28 +233,3 @@ class MainGUI(tk.Tk):
         \n5. Save button to export picks
         \n6. Map button to display basemap
         \n7. Exit button to close application""")
-        
-        # dialogbox = tk.Toplevel(self.master)
-        # dialogbox.title("NOSEpick Instructions")
-
-
-        # T = tk.Text(dialogbox)
-        # T.image_create(tk.END, image=photo)
-        # message =  """Nearly Optimal Subsurface Extractor:
-        # \n\n1. Load button to open radargram
-        # \n2. Click along reflector surface to pick
-        # \n\t\u2022<backspace> to remove the last
-        # \n\t\u2022<c> to remove all
-        # \n3. Radar and clutter buttons to toggle
-        # \n4. Next button to load next file
-        # \n5. Save button to export picks
-        # \n6. Map button to display basemap
-        # \n7. Exit button to close application"""
-        # T.insert(tk.END, message)
-        # T.pack(expand=True, fill="both")
-
-        # close_button = tk.Button(dialogbox,text="Ok", 
-        #                         command=dialogbox.destroy)
-        # close_button.pack(side="bottom")
-
-    
