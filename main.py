@@ -12,6 +12,7 @@ import tkinter as tk
 
 ### USER SPECIFIED VARS ###
 in_path = "/mnt/Swaps/MARS/targ/supl/UAF/2018/may/block_clutter_elev"
+out_path = "/home/anomalocaris/Desktop"
 map_path = "/mnt/Swaps/MARS/targ/supl/grid-AKDEM/"
 
 ### INITIALIZE ###
@@ -24,6 +25,6 @@ root.config(bg="#d9d9d9")
 # img = tk.PhotoImage(file='nose-pick-icon.png')
 # root.tk.call('wm', 'iconphoto', root._w, img)
 # call the NOSEpickGUI class
-gui = gui.MainGUI(root, in_path, map_path)
+gui = gui.MainGUI(root, in_path, out_path, map_path)
 gui.setup()
 root.mainloop()

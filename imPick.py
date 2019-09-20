@@ -142,7 +142,7 @@ class imPick:
             # plot saved pick in green
             self.pick.set_data(self.xln, self.yln)
             self.saved_pick.set_data(self.xln_old, self.yln_old)
-            # self.fig.canvas.draw()  
+            self.fig.canvas.draw()  
             self.pickLabel.config(text="Picking Layer:\t" + str(self.pick_layer), fg="#008000")          
             self.pick_layer += 1
         elif self.pick_state == False:
@@ -358,8 +358,6 @@ class imPick:
 
 
     # save is a method to receive the pick save location from gui and save using utils.save
-    def save(self, f_saveName, data, pick_dict):
+    def save(self, f_saveName):
         self.f_saveName = f_saveName
-        data = data
-        pick_dict = pick_dict
-        utils.savePick(self.f_saveName, data, pick_dict)
+        utils.savePick(self.f_saveName, self.data, self.pick_dict)

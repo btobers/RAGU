@@ -23,9 +23,10 @@ from tkinter import Button, Frame, messagebox, Canvas, filedialog, Menu, Radiobu
 
 # MainGUI is the NOSEpick class which sets the gui interface and holds operating variables
 class MainGUI(tk.Tk):
-    def __init__(self, master, in_path, map_path):
+    def __init__(self, master, in_path, out_path, map_path):
         self.master = master
         self.in_path = in_path
+        self.out_path = out_path
         self.map_path = map_path
 
     # setup is a method which generates the app menubar and buttons and initializes some vars
@@ -168,7 +169,10 @@ class MainGUI(tk.Tk):
     # save_loc is method to receieve the desired pick save location from user input
     def save_loc(self):
         if self.f_loadName and self.imPick.get_pickLen() > 0:
-            self.f_saveName = filedialog.asksaveasfilename(initialdir = self.in_path,title = "Save As",filetypes = (("comma-separated values","*.csv"),))
+            self.f_saveName = filedialog.asksaveasfilename(initialfile = self.f_loadName.split("/")[-1].rstrip(".mat") + "_pk",
+                                initialdir = self.out_path,title = "Save As",filetypes = (("comma-separated values","*.csv"),))
+        if self.f_saveName:
+            self.imPick.save(self.f_saveName)
     
 
     # map_loc is a method to get the desired basemap location and initialize
