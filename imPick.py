@@ -20,36 +20,36 @@ class imPick(tk.Frame):
 
         # set up frames
         infoFrame = tk.Frame(self.parent)
-        infoFrame.grid(row=0,sticky='NESW')
-        buttonFrame = tk.Frame(infoFrame)
-        buttonFrame.grid(row=0,column=0)
+        infoFrame.pack(side="top",fill="both")
+        # buttonFrame = tk.Frame(infoFrame)
+        # buttonFrame.grid(row=0,column=0)
         toolbarFrame = tk.Frame(infoFrame)
-        toolbarFrame.grid(row=0,column=3,padx=20)
+        toolbarFrame.pack(side="bottom",fill="both")
         dataFrame = tk.Frame(self.parent)
-        dataFrame.grid(row=1)
-        cmapFrame = tk.Frame(dataFrame)
-        cmapFrame.grid(column=1)
+        dataFrame.pack(side="bottom", fill="both", expand=1)
+        # cmapFrame = tk.Frame(dataFrame)
+        # cmapFrame.grid(column=1)
 
 
         self.im_status = tk.StringVar()
         # self.im_status.set("data")    
         # add radio buttons for toggling between radargram and clutter-sim
         radarRad = tk.Radiobutton(infoFrame, text="Radargram", variable=self.im_status, value="data",command=self.show_data)
-        radarRad.grid(row=0,column=0,pady=2)
+        radarRad.pack(side="left")
         clutterRad = tk.Radiobutton(infoFrame,text="Cluttergram", variable=self.im_status, value="clut",command=self.show_clut)
-        clutterRad.grid(row=0,column=1,pady=5) 
+        clutterRad.pack(side="left")
         self.im_status.set("data")
         
 
 
 
-        self.pickLabel = tk.Label(infoFrame, text="Picking Layer:\t0")#, fg="#d9d9d9")
-        self.pickLabel.grid(row=0,column=2,padx=15,pady=5)
+        self.pickLabel = tk.Label(infoFrame, text="Picking Layer:\t0", fg="#d9d9d9")
+        self.pickLabel.pack(side="right")
 
         self.fig = mpl.figure.Figure()
         self.fig.patch.set_facecolor("#d9d9d9")
         self.dataCanvas = FigureCanvasTkAgg(self.fig, dataFrame)
-        self.dataCanvas.get_tk_widget().grid()
+        self.dataCanvas.get_tk_widget().pack(in_=dataFrame, side="bottom", fill="both", expand=1)
         # add toolbar to plot
         self.toolbar = NavigationToolbar2Tk(self.dataCanvas, toolbarFrame)
         self.toolbar.update()
@@ -149,7 +149,7 @@ class imPick(tk.Frame):
         self.ax.set_yticklabels(self.ax_yticks)
         self.ax.set(xlabel = "along-track distance [km]", ylabel = "two-way travel time [microsec.]")
         # self.openIm.remove()
-        self.dataCanvas._tkcanvas.grid()
+        self.dataCanvas._tkcanvas.pack()
         self.dataCanvas.draw()
 
 
