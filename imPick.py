@@ -4,6 +4,7 @@ import basemap
 import h5py
 import numpy as np
 import tkinter as tk
+from tkinter import ttk as ttk
 from tools import *
 import sys
 import matplotlib as mpl
@@ -11,18 +12,47 @@ mpl.use("TkAgg")
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 
-class imPick:
+class imPick(tk.Frame):
     # imPick is a class to pick horizons from a radar image
-    def __init__(self,master,display):
-        self.master = master
-        self.display = display
-        self.pickLabel = tk.Label(self.master, text="Picking Layer:\t0", fg="#d9d9d9")
-        self.pickLabel.pack(side="right")
+    def __init__(self, parent, *args, **kwargs):
+        tk.Frame.__init__(self, parent, *args, **kwargs)
+        self.parent = parent
+
+        # set up frames
+        infoFrame = tk.Frame(self.parent)
+        infoFrame.grid(row=0,sticky='NESW')
+        buttonFrame = tk.Frame(infoFrame)
+        buttonFrame.grid(row=0,column=0)
+        toolbarFrame = tk.Frame(infoFrame)
+        toolbarFrame.grid(row=0,column=3,padx=20)
+        dataFrame = tk.Frame(self.parent)
+        dataFrame.grid(row=1)
+        cmapFrame = tk.Frame(dataFrame)
+        cmapFrame.grid(column=1)
+
+
+        self.im_status = tk.StringVar()
+        # self.im_status.set("data")    
+        # add radio buttons for toggling between radargram and clutter-sim
+        radarRad = tk.Radiobutton(infoFrame, text="Radargram", variable=self.im_status, value="data",command=self.show_data)
+        radarRad.grid(row=0,column=0,pady=2)
+        clutterRad = tk.Radiobutton(infoFrame,text="Cluttergram", variable=self.im_status, value="clut",command=self.show_clut)
+        clutterRad.grid(row=0,column=1,pady=5) 
+        self.im_status.set("data")
         
+
+
+
+        self.pickLabel = tk.Label(infoFrame, text="Picking Layer:\t0")#, fg="#d9d9d9")
+        self.pickLabel.grid(row=0,column=2,padx=15,pady=5)
+
         self.fig = mpl.figure.Figure()
         self.fig.patch.set_facecolor("#d9d9d9")
-        self.dataCanvas = FigureCanvasTkAgg(self.fig, self.master)
-        self.dataCanvas.get_tk_widget().pack(in_=self.display, side="bottom", fill="both", expand=1)
+        self.dataCanvas = FigureCanvasTkAgg(self.fig, dataFrame)
+        self.dataCanvas.get_tk_widget().grid()
+        # add toolbar to plot
+        self.toolbar = NavigationToolbar2Tk(self.dataCanvas, toolbarFrame)
+        self.toolbar.update()
         self.key = self.fig.canvas.mpl_connect("key_press_event", self.onkey)
         self.click = self.fig.canvas.mpl_connect("button_press_event", self.addseg)
 
@@ -34,7 +64,11 @@ class imPick:
         self.reset_ax = self.fig.add_axes([0.935, 0.11, 0.04, 0.03])
         self.reset_ax.set_visible(False)
         self.ax = self.fig.add_subplot(111)
+        # im = mpl.image.imread('./lib/Radar_sounding.png')
+        # self.openIm = self.ax.imshow(im)
         self.ax.set_visible(False)
+
+
 
         # self.dataCanvas.draw()
 
@@ -90,10 +124,7 @@ class imPick:
         self.pick, = self.ax.plot([],[],"r")  # empty line for current pick
         self.saved_pick, = self.ax.plot([],[],"g")  # empty line for saved pick
         # create matplotlib figure and use imshow to display radargram
-        if self.toolbar:
-            # remove existing toolbar
-            self.toolbar.destroy() 
-        self.dataCanvas.get_tk_widget().pack(in_=self.display, side="bottom", fill="both", expand=1)      
+        # self.dataCanvas.get_tk_widget().pack(in_=self.display, side="bottom", fill="both", expand=1)      
         # display image data for radargram and clutter sim
         self.im_data  = self.ax.imshow(self.imScl_data, cmap="gray", aspect="auto", extent=[self.data["dist"][0], self.data["dist"][-1], self.data["amp"].shape[0] * self.data["dt"], 0])
         self.im_clut  = self.ax.imshow(self.imScl_clut, cmap="gray", aspect="auto", extent=[self.data["dist"][0], self.data["dist"][-1], self.data["amp"].shape[0] * self.data["dt"], 0])
@@ -117,11 +148,8 @@ class imPick:
         self.ax_yticks = np.round(self.ax.get_yticks()*1e6)
         self.ax.set_yticklabels(self.ax_yticks)
         self.ax.set(xlabel = "along-track distance [km]", ylabel = "two-way travel time [microsec.]")
-        
-        # add toolbar to plot
-        self.toolbar = NavigationToolbar2Tk(self.dataCanvas, self.master)
-        self.toolbar.update()
-        self.dataCanvas._tkcanvas.pack()
+        # self.openIm.remove()
+        self.dataCanvas._tkcanvas.grid()
         self.dataCanvas.draw()
 
 
@@ -198,7 +226,9 @@ class imPick:
         elif event.key =="delete":
             # remove last segment
             self.clear_last()
-
+        elif event.key==" ":
+            print('here')
+            self.set_im()
 
     def clear_picks(self):
         # clear all picks
@@ -218,7 +248,7 @@ class imPick:
             self.fig.canvas.draw()
 
 
-    def show_radar(self):
+    def show_data(self):
         # toggle to radar data
         # get clutter colormap slider values for reviewing
         self.clut_cmin = self.s_cmin.val
@@ -236,9 +266,10 @@ class imPick:
         self.im_data.set_visible(True)
         # redraw canvas
         self.fig.canvas.draw()
+        self.im_status.set("data")
 
 
-    def show_clutter(self):
+    def show_clut(self):
         # toggle to clutter sim viewing
         # get radar data colormap slider values for reviewing
         self.data_cmin = self.s_cmin.val
@@ -262,6 +293,7 @@ class imPick:
         self.clut_imSwitch_flag is True    
         # redraw canvas
         self.fig.canvas.draw()
+        self.im_status.set("clut")
 
 
     def cmap_update(self, s=None):
@@ -302,9 +334,9 @@ class imPick:
         # check if picks have been made and saved
         if len(self.xln + self.xln_old) > 0 and self.f_saveName == "":
             if tk.messagebox.askokcancel("Warning", "Exit NOSEpick without saving picks?", icon = "warning") == True:
-                self.master.destroy()
+                self.parent.destroy()
         else:
-            self.master.destroy()
+            self.parent.destroy()
 
 
     # nextSave_warning is a method which checks if picks exist or if the user would like to discard existing picks before moving to the next track
@@ -325,6 +357,7 @@ class imPick:
         self.pick.remove()
         self.saved_pick.remove()
         self.set_vars()
+        print("data canvas cleared")
 
 
     # get_pickLen is a method to return the length of existing picks
@@ -343,13 +376,14 @@ class imPick:
 
 
     # set_im is a method to set which data is being displayed
-    def set_im(self, im_status):
-        im_status = im_status
-        if im_status == "data":
-            self.show_radar()
+    def set_im(self):
+        print('here-2')
+        print(self.im_status.get())
+        if self.im_status.get() == "data":
+            self.show_clut()
 
-        elif im_status =="clut":
-            self.show_clutter()
+        elif self.im_status.get() =="clut":
+            self.show_data()
 
 
     # get_basemap is a method to hold the basemap object passed from gui

@@ -19,33 +19,32 @@ mpl.use("TkAgg")
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 import tkinter as tk
-from tkinter import Button, Frame, messagebox, Canvas, filedialog, Menu, Radiobutton
 
 # MainGUI is the NOSEpick class which sets the gui interface and holds operating variables
-class MainGUI(tk.Tk):
-    def __init__(self, master, in_path, out_path, map_path):
-        self.master = master
+class MainGUI(tk.Frame):
+    def __init__(self, parent, in_path, out_path, map_path, *args, **kwargs):
+        tk.Frame.__init__(self, parent, *args, **kwargs)
+        self.parent = parent
         self.in_path = in_path
         self.out_path = out_path
         self.map_path = map_path
+        self.setup()
 
     # setup is a method which generates the app menubar and buttons and initializes some vars
     def setup(self):
         self.f_loadName = ""
         self.f_saveName = ""
-        self.map_loadName = ""
-        self.im_status = tk.StringVar()
-        self.im_status.set("data")       
+        self.map_loadName = "" 
 
         # generate menubar
-        menubar = Menu(self.master)
+        menubar = tk.Menu(self.parent)
 
         # create individual menubar items
-        fileMenu = Menu(menubar, tearoff=0)
-        pickMenu = Menu(menubar, tearoff=0)
-        viewMenu = Menu(menubar, tearoff=0)
-        mapMenu = Menu(menubar, tearoff=0)
-        helpMenu = Menu(menubar, tearoff=0)
+        fileMenu = tk.Menu(menubar, tearoff=0)
+        pickMenu = tk.Menu(menubar, tearoff=0)
+        viewMenu = tk.Menu(menubar, tearoff=0)
+        mapMenu = tk.Menu(menubar, tearoff=0)
+        helpMenu = tk.Menu(menubar, tearoff=0)
 
         # file menu items
         fileMenu.add_command(label="Open    [Ctrl+O]", command=self.open_loc)
@@ -60,9 +59,6 @@ class MainGUI(tk.Tk):
         pickMenu.add_command(label="Optimize")
 
         # view menu items
-        viewMenu.add_radiobutton(label="Radargram", variable=self.im_status, value="data",command=self.im_switch)
-        viewMenu.add_radiobutton(label="Cluttergram", variable=self.im_status, value="clut",command=self.im_switch)
-        viewMenu.add_separator()
         viewMenu.add_command(label="Trace-View")
 
         # map menu items
@@ -79,22 +75,16 @@ class MainGUI(tk.Tk):
         menubar.add_cascade(label="Help", menu=helpMenu)
         
         # add the menubar to the window
-        self.master.config(menu=menubar)
+        self.parent.config(menu=menubar)
 
-        # build data display frame
-        self.display = tk.Frame(self.master)
-        self.display.pack(side="bottom", fill="both", expand=1)
 
         # initialize imPick
-        self.imPick = imPick.imPick(self.master, self.display)
+        self.imPick = imPick.imPick(self.parent)
         self.imPick.set_vars()
         
-        # add radio buttons for toggling between radargram and clutter-sim
-        radarRad = Radiobutton(self.master, text="Radargram", variable=self.im_status, value="data",command=self.im_switch).pack(side="left")
-        clutterRad = Radiobutton(self.master,text="Cluttergram", variable=self.im_status, value="clut",command=self.im_switch).pack(side="left")  
-        
+
         # bind keypress events
-        self.master.bind("<Key>", self.key)
+        self.parent.bind("<Key>", self.key)
 
         self.open_loc()
 
@@ -127,25 +117,9 @@ class MainGUI(tk.Tk):
         elif event.state & 1 and event.keysym == "greater":
             self.next_loc()
 
-        # tab key to toggle between radar and clutter sim display
-        elif event.keysym == "Tab":
-            self.im_switch()
-
         # Escape key to stop picking current layer
         elif event.keysym == "Escape":
             self.stop_pick()
-
-
-    # im_switch is a method to toggle imPick between data and clutter images
-    def im_switch(self):
-        if self.f_loadName:
-            if self.im_status.get() == "data":
-                self.im_status.set("clut")
-                self.imPick.set_im(self.im_status.get())
-
-            elif self.im_status.get() == "clut":
-                self.im_status.set("data")
-                self.imPick.set_im(self.im_status.get())
 
 
     # close_window is a gui method to call the imPick close_warning
@@ -155,13 +129,18 @@ class MainGUI(tk.Tk):
 
     # open_loc is a gui method which has the user select and input data file - then passed to imPick.load()
     def open_loc(self):
-        self.f_loadName = filedialog.askopenfilename(initialdir = self.in_path,title = "Select file",filetypes = (("mat files","*.mat"),("all files","*.*")))
+        # if previous track has already been opened, clear imPick canvas
+        if self.f_loadName:
+            self.imPick.clear_canvas()
+
+        # select input file
+        self.f_loadName = tk.filedialog.askopenfilename(initialdir = self.in_path,title = "Select file",filetypes = (("mat files","*.mat"),("all files","*.*")))
+        # if input selected, pass filename to imPick.load()
         if self.f_loadName:
             self.imPick.load(self.f_loadName)
-            self.im_status.set("data")
 
+        # pass basemap to imPick for plotting pick location
         if self.map_loadName:
-            # pass basemap to imPick for plotting pick location
             self.basemap.set_nav(self.imPick.get_nav())
             self.imPick.get_basemap(self.basemap)            
 
@@ -169,7 +148,7 @@ class MainGUI(tk.Tk):
     # save_loc is method to receieve the desired pick save location from user input
     def save_loc(self):
         if self.f_loadName and self.imPick.get_pickLen() > 0:
-            self.f_saveName = filedialog.asksaveasfilename(initialfile = self.f_loadName.split("/")[-1].rstrip(".mat") + "_pk",
+            self.f_saveName = tk.filedialog.asksaveasfilename(initialfile = self.f_loadName.split("/")[-1].rstrip(".mat") + "_pk",
                                 initialdir = self.out_path,title = "Save As",filetypes = (("comma-separated values","*.csv"),))
         if self.f_saveName:
             self.imPick.save(self.f_saveName)
@@ -177,10 +156,10 @@ class MainGUI(tk.Tk):
 
     # map_loc is a method to get the desired basemap location and initialize
     def map_loc(self):
-        self.map_loadName = filedialog.askopenfilename(initialdir = self.map_path, title = "Select file", filetypes = (("GeoTIFF files","*.tif"),("all files","*.*")))
+        self.map_loadName = tk.filedialog.askopenfilename(initialdir = self.map_path, title = "Select file", filetypes = (("GeoTIFF files","*.tif"),("all files","*.*")))
             
         if self.map_loadName:
-            self.basemap = basemap.basemap(self.master, self.map_loadName)
+            self.basemap = basemap.basemap(self.parent, self.map_loadName)
             self.basemap.map()
 
         if self.f_loadName:

@@ -7,7 +7,7 @@ mpl.use("TkAgg")
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 
-class basemap:
+class basemap(tk.Tk):
     def __init__(self, master, map_path):
         self.master = master
         self.map_loadName = map_path
