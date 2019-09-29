@@ -25,8 +25,8 @@ class imPick(tk.Frame):
         # buttonFrame.grid(row=0,column=0)
         toolbarFrame = tk.Frame(infoFrame)
         toolbarFrame.pack(side="bottom",fill="both")
-        dataFrame = tk.Frame(self.parent)
-        dataFrame.pack(side="bottom", fill="both", expand=1)
+        self.dataFrame = tk.Frame(self.parent)
+        self.dataFrame.pack(side="bottom", fill="both", expand=1)
         # cmapFrame = tk.Frame(dataFrame)
         # cmapFrame.grid(column=1)
 
@@ -34,22 +34,20 @@ class imPick(tk.Frame):
         self.im_status = tk.StringVar()
         # self.im_status.set("data")    
         # add radio buttons for toggling between radargram and clutter-sim
-        radarRad = tk.Radiobutton(infoFrame, text="Radargram", variable=self.im_status, value="data",command=self.show_data)
-        radarRad.pack(side="left")
-        clutterRad = tk.Radiobutton(infoFrame,text="Cluttergram", variable=self.im_status, value="clut",command=self.show_clut)
-        clutterRad.pack(side="left")
+        radarRadio = tk.Radiobutton(infoFrame, text="Radargram", variable=self.im_status, value="data",command=self.show_data)
+        radarRadio.pack(side="left")
+        clutterRadio = tk.Radiobutton(infoFrame,text="Cluttergram", variable=self.im_status, value="clut",command=self.show_clut)
+        clutterRadio.pack(side="left")
         self.im_status.set("data")
         
-
-
 
         self.pickLabel = tk.Label(infoFrame, text="Picking Layer:\t0", fg="#d9d9d9")
         self.pickLabel.pack(side="right")
 
         self.fig = mpl.figure.Figure()
         self.fig.patch.set_facecolor("#d9d9d9")
-        self.dataCanvas = FigureCanvasTkAgg(self.fig, dataFrame)
-        self.dataCanvas.get_tk_widget().pack(in_=dataFrame, side="bottom", fill="both", expand=1)
+        self.dataCanvas = FigureCanvasTkAgg(self.fig, self.parent)
+        # self.dataCanvas.get_tk_widget().pack(in_=dataFrame, side="bottom", fill="both", expand=1)
         # add toolbar to plot
         self.toolbar = NavigationToolbar2Tk(self.dataCanvas, toolbarFrame)
         self.toolbar.update()
@@ -83,6 +81,7 @@ class imPick(tk.Frame):
         self.toolbar = None
         self.basemap = None
         self.pick_dict = {}
+        self.pick_idx = None
         self.pick_state = False
         self.pick_layer = 0
         self.data_cmin = None
@@ -122,12 +121,14 @@ class imPick(tk.Frame):
         self.mindB_data = np.floor(np.nanpercentile(self.imScl_data,10))
         self.mindB_clut = np.floor(np.nanpercentile(self.imScl_clut,10))
         self.pick, = self.ax.plot([],[],"r")  # empty line for current pick
-        self.saved_pick, = self.ax.plot([],[],"g")  # empty line for saved pick
+        self.saved_pick = self.ax.scatter([],[],c="g",marker=".",s=4,linewidth=0)  # empty line for saved pick
         # create matplotlib figure and use imshow to display radargram
-        # self.dataCanvas.get_tk_widget().pack(in_=self.display, side="bottom", fill="both", expand=1)      
+        self.dataCanvas.get_tk_widget().pack(in_=self.dataFrame, side="bottom", fill="both", expand=1)      
         # display image data for radargram and clutter sim
-        self.im_data  = self.ax.imshow(self.imScl_data, cmap="gray", aspect="auto", extent=[self.data["dist"][0], self.data["dist"][-1], self.data["amp"].shape[0] * self.data["dt"], 0])
-        self.im_clut  = self.ax.imshow(self.imScl_clut, cmap="gray", aspect="auto", extent=[self.data["dist"][0], self.data["dist"][-1], self.data["amp"].shape[0] * self.data["dt"], 0])
+        self.im_data  = self.ax.imshow(self.imScl_data, cmap="gray", aspect="auto", extent=[self.data["dist"][0], 
+                        self.data["dist"][-1], self.data["amp"].shape[0] * self.data["dt"], 0])
+        self.im_clut  = self.ax.imshow(self.imScl_clut, cmap="gray", aspect="auto", extent=[self.data["dist"][0], 
+                        self.data["dist"][-1], self.data["amp"].shape[0] * self.data["dt"], 0])
         # the first time the amplitude image is loaded, update colormap to cut off values below 10th percentile
         self.im_data.set_clim([self.mindB_data, 0.0])
         self.im_clut.set_clim([self.mindB_clut, 0.0])
@@ -143,7 +144,8 @@ class imPick(tk.Frame):
         self.im_clut.set_visible(False)   
 
         # Save background
-        self.axbg = self.dataCanvas.copy_from_bbox(self.ax.bbox)    
+        self.axbg = self.dataCanvas.copy_from_bbox(self.ax.bbox)
+            
         # multiply y-axis label by 1e6 to plot in microseconds
         self.ax_yticks = np.round(self.ax.get_yticks()*1e6)
         self.ax.set_yticklabels(self.ax_yticks)
@@ -162,60 +164,82 @@ class imPick(tk.Frame):
     def set_pickState(self, state):
         self.pick_state = state
         if self.pick_state == True:
+            # if previous layers already exist, call pick interp and clear points for new layer
+            if len(self.xln) >= 2:
+                self.pick_layer += 1
+            # initialize pick index and twtt dictionaries for current picking layer
             self.pick_dict["layer_" + str(self.pick_layer)] = np.ones(self.data["num_trace"])*-1
-            self.xln_old.extend(self.xln)
-            self.yln_old.extend(self.yln)
-            del self.xln[:]
-            del self.yln[:]
-            # plot saved pick in green
-            self.pick.set_data(self.xln, self.yln)
-            self.saved_pick.set_data(self.xln_old, self.yln_old)
-            self.fig.canvas.draw()  
             self.pickLabel.config(text="Picking Layer:\t" + str(self.pick_layer), fg="#008000")          
-            self.pick_layer += 1
+
         elif self.pick_state == False:
-            # save picked lines to old variable and clear line variables
-            self.xln_old.extend(self.xln)
-            self.yln_old.extend(self.yln)
-            del self.xln[:]
-            del self.yln[:]
-            # plot saved pick in green
-            self.pick.set_data(self.xln, self.yln)
-            self.saved_pick.set_data(self.xln_old, self.yln_old)
+            if len(self.xln) >=  2:
+                self.pick_layer += 1
+                # only advance pick layer if picks made on previous layer
             self.pickLabel.config(fg="#FF0000")
-            self.fig.canvas.draw()
+        self.plot_picks()
+
 
 
     # addseg is a method to for user to generate picks
     def addseg(self, event):
         if self.f_loadName:
+            if (event.inaxes != self.ax):
+                return
             # find nearest index to event.xdata
             self.pick_idx_1 = utils.find_nearest(self.data["dist"], event.xdata)
             # check if picking state is a go
             if self.pick_state == True:
-                if (event.inaxes != self.ax):
-                    return
                 self.xln.append(event.xdata)
                 self.yln.append(event.ydata)
-                num_pick = len(self.xln)
-                if num_pick >= 2:
-                    # if there are at least two picked points, find range of all trace numbers within their range
-                    pick_idx_0 = utils.find_nearest(self.data["dist"], self.xln[-2])
-                    self.pick_dict["layer_" + str(self.pick_layer - 1)][pick_idx_0] = self.yln[-2]
-                    self.pick_dict["layer_" + str(self.pick_layer - 1)][self.pick_idx_1] = self.yln[-1]
-                    self.pick_idx = np.arange(pick_idx_0,self.pick_idx_1 + 1)
-                    # linearly interpolate twtt values between pick points at idx_0 and idx_1
-                    self.pick_dict["layer_" + str(self.pick_layer - 1)][self.pick_idx] = np.interp(self.pick_idx, [pick_idx_0,self.pick_idx_1], [self.yln[-2],self.yln[-1]])
-                
+
                 # redraw pick quickly with blitting
                 self.pick.set_data(self.xln, self.yln)
                 self.dataCanvas.restore_region(self.axbg)
                 self.ax.draw_artist(self.pick)
+                # self.ax.draw_artist(self.saved_pick)
                 self.dataCanvas.blit(self.ax.bbox)
-            
+
+                # if more than two picks, call pick_interp
+                if len(self.xln) >= 2:
+                    self.pick_interp()
             # plot pick location to basemap
             if self.basemap:
                 self.basemap.plot_idx(self.pick_idx_1)
+
+
+    # pick_interp is a method for linearly interpolating twtt between pick locations
+    def pick_interp(self):
+        # if there are at least two picked points, find range of all trace numbers within their range
+        try:
+            pick_idx_0 = utils.find_nearest(self.data["dist"], self.xln[-2])
+            self.pick_dict["layer_" + str(self.pick_layer)][pick_idx_0] = self.yln[-2]
+            self.pick_dict["layer_" + str(self.pick_layer)][self.pick_idx_1] = self.yln[-1]
+            pick_idx = np.arange(pick_idx_0,self.pick_idx_1 + 1)
+            # linearly interpolate twtt values between pick points at idx_0 and idx_1
+            self.pick_dict["layer_" + str(self.pick_layer)][pick_idx] = np.interp(pick_idx, [pick_idx_0,self.pick_idx_1], [self.yln[-2],self.yln[-1]])
+
+            self.xln_old.extend(self.data["dist"][pick_idx])
+            self.yln_old.extend(self.pick_dict["layer_" + str(self.pick_layer)][pick_idx])
+            self.pick.set_data(self.xln, self.yln) 
+
+        except Exception as err:
+            print(err)
+    
+
+    # plot_picks is a method to plot the existing pick layers
+    def plot_picks(self):
+        # remove saved picks
+        del self.xln[:]
+        del self.yln[:]  
+        # self.saved_pick.set_data(self.xln_old, self.yln_old)
+        # self.ax.scatter(self.xln_old,self.yln_old,c="g",marker=".")
+        self.saved_pick.set_offsets(np.c_[self.xln_old,self.yln_old])
+        self.dataCanvas.restore_region(self.axbg)
+        self.ax.draw_artist(self.pick)
+        self.ax.draw_artist(self.saved_pick)
+        self.dataCanvas.blit(self.ax.bbox)
+        # self.fig.canvas.draw()
+
 
 
     def onkey(self, event):
@@ -227,8 +251,8 @@ class imPick(tk.Frame):
             # remove last segment
             self.clear_last()
         elif event.key==" ":
-            print('here')
             self.set_im()
+
 
     def clear_picks(self):
         # clear all picks
@@ -357,7 +381,6 @@ class imPick(tk.Frame):
         self.pick.remove()
         self.saved_pick.remove()
         self.set_vars()
-        print("data canvas cleared")
 
 
     # get_pickLen is a method to return the length of existing picks
@@ -377,8 +400,6 @@ class imPick(tk.Frame):
 
     # set_im is a method to set which data is being displayed
     def set_im(self):
-        print('here-2')
-        print(self.im_status.get())
         if self.im_status.get() == "data":
             self.show_clut()
 
