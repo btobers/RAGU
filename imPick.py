@@ -5,7 +5,6 @@ import h5py
 import numpy as np
 import tkinter as tk
 from tkinter import ttk as ttk
-from tools import *
 import sys
 import matplotlib as mpl
 mpl.use("TkAgg")
@@ -32,7 +31,6 @@ class imPick(tk.Frame):
 
 
         self.im_status = tk.StringVar()
-        # self.im_status.set("data")    
         # add radio buttons for toggling between radargram and clutter-sim
         radarRadio = tk.Radiobutton(infoFrame, text="Radargram", variable=self.im_status, value="data",command=self.show_data)
         radarRadio.pack(side="left")
@@ -120,8 +118,9 @@ class imPick(tk.Frame):
         # cut off data at 10th percentile to avoid extreme outliers - round down
         self.mindB_data = np.floor(np.nanpercentile(self.imScl_data,10))
         self.mindB_clut = np.floor(np.nanpercentile(self.imScl_clut,10))
-        self.pick, = self.ax.plot([],[],"r")  # empty line for current pick
-        self.saved_pick = self.ax.scatter([],[],c="g",marker=".",s=4,linewidth=0)  # empty line for saved pick
+        self.surf, = self.ax.plot(self.data["dist"],self.data["twtt_surf"],"c")                       # empty line for twtt surface
+        self.pick, = self.ax.plot([],[],"r")                                        # empty line for current pick
+        self.saved_pick = self.ax.scatter([],[],c="g",marker=".",s=8,linewidth=0)   # empty line for saved pick
         # create matplotlib figure and use imshow to display radargram
         self.dataCanvas.get_tk_widget().pack(in_=self.dataFrame, side="bottom", fill="both", expand=1)      
         # display image data for radargram and clutter sim
@@ -141,7 +140,7 @@ class imPick(tk.Frame):
         
         self.cmap_reset_button.on_clicked(self.cmap_reset)
         # set clutter sim visibility to false
-        self.im_clut.set_visible(False)   
+        self.im_clut.set_visible(False)
 
         # Save background
         self.axbg = self.dataCanvas.copy_from_bbox(self.ax.bbox)
@@ -179,7 +178,6 @@ class imPick(tk.Frame):
         self.plot_picks()
 
 
-
     # addseg is a method to for user to generate picks
     def addseg(self, event):
         if self.f_loadName:
@@ -203,7 +201,7 @@ class imPick(tk.Frame):
                 if len(self.xln) >= 2:
                     self.pick_interp()
             # plot pick location to basemap
-            if self.basemap:
+            if self.basemap and self.basemap.get_state() == 1:
                 self.basemap.plot_idx(self.pick_idx_1)
 
 
@@ -231,15 +229,12 @@ class imPick(tk.Frame):
         # remove saved picks
         del self.xln[:]
         del self.yln[:]  
-        # self.saved_pick.set_data(self.xln_old, self.yln_old)
-        # self.ax.scatter(self.xln_old,self.yln_old,c="g",marker=".")
+        self.pick.set_data(self.xln, self.yln)
         self.saved_pick.set_offsets(np.c_[self.xln_old,self.yln_old])
         self.dataCanvas.restore_region(self.axbg)
         self.ax.draw_artist(self.pick)
         self.ax.draw_artist(self.saved_pick)
         self.dataCanvas.blit(self.ax.bbox)
-        # self.fig.canvas.draw()
-
 
 
     def onkey(self, event):
@@ -378,6 +373,7 @@ class imPick(tk.Frame):
         # if self.save_warning() == True:
         self.im_clut.remove()
         self.im_data.remove()
+        self.surf.remove()
         self.pick.remove()
         self.saved_pick.remove()
         self.set_vars()

@@ -1,11 +1,11 @@
 import numpy as np
-import tools
 import tkinter as tk
 import gdal, osr
 import matplotlib as mpl
 mpl.use("TkAgg")
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+# from PIL import Image
 
 class basemap(tk.Tk):
     def __init__(self, master, map_path):
@@ -80,21 +80,15 @@ class basemap(tk.Tk):
         self.navdat = navdat
         if self.basemap_state == 1:
             # transform navdat to csys of geotiff   
-            self.nav_transform = self.navdat.transform(self.basemap_proj)  
-            # make list of navdat x and y data for plotting on basemap - convert to kilometers
-            self.xdat = []
-            self.ydat = []
-            for _i in range(len(self.nav_transform)):
-                self.xdat.append(self.nav_transform[_i].x)
-                self.ydat.append(self.nav_transform[_i].y)       
+            self.nav_transform = self.navdat.transform(self.basemap_proj)    
             # plot lat, lon atop basemap im
-            self.map_fig_ax.plot(self.xdat,self.ydat,"k")
+            self.track, = self.map_fig_ax.plot(self.nav_transform.navdat[:,0],self.nav_transform.navdat[:,1],"k")
             # zoom in to 100 km from track on all sides
-            self.map_fig_ax.set(xlim = ((min(self.xdat)- 100000),(max(self.xdat)+ 100000)), ylim = ((min(self.ydat)- 100000),(max(self.ydat)+ 100000)))
+            self.map_fig_ax.set(xlim = ((np.amin(self.nav_transform.navdat[:,0])- 100000),(np.amax(self.nav_transform.navdat[:,0])+ 100000)), ylim = ((np.amin(self.nav_transform.navdat[:,1])- 100000),(np.amax(self.nav_transform.navdat[:,1])+ 100000)))
             # annotate each end of the track
-            self.map_fig_ax.plot(self.xdat[0],self.ydat[0],'go',label='start')
-            self.map_fig_ax.plot(self.xdat[-1],self.ydat[-1],'ro',label='end')
-            self.map_fig_ax.legend()  
+            self.track_start, = self.map_fig_ax.plot(self.nav_transform.navdat[0,0],self.nav_transform.navdat[0,1],'go',label='start')
+            self.track_end, = self.map_fig_ax.plot(self.nav_transform.navdat[-1,0],self.nav_transform.navdat[-1,1],'ro',label='end')
+            self.legend = self.map_fig_ax.legend()  
             self.map_dataCanvas.draw() 
 
 
@@ -106,7 +100,7 @@ class basemap(tk.Tk):
             # plot pick location on basemap
             if self.pick_loc:
                 self.pick_loc.remove()
-            self.pick_loc = self.map_fig_ax.scatter(self.xdat[idx],self.ydat[idx],c="w",marker="x",zorder=3)
+            self.pick_loc = self.map_fig_ax.scatter(self.nav_transform.navdat[idx,0],self.nav_transform.navdat[idx,1],c="w",marker="x",zorder=3)
             self.map_fig.canvas.draw()
 
         
@@ -118,5 +112,13 @@ class basemap(tk.Tk):
 
     # get_state is a mathod to get the basemap state
     def get_state(self):
-        if self.map_loadName:
-            return self.basemap_window.state()
+        return self.basemap_state
+
+    
+    # clear_basemap is a method to clear the basemap 
+    def clear_nav(self):
+        self.track.remove()
+        self.legend.remove()
+        self.track_start.remove()
+        self.track_end.remove()
+        self.map_fig.canvas.draw()

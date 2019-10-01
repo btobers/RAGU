@@ -1,6 +1,5 @@
 import ingester
 import numpy as np
-from tools import *
 from tkinter import filedialog, messagebox
 
 

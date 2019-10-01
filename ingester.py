@@ -1,6 +1,6 @@
 import h5py
 import numpy as np
-from tools import *
+from nav import *
 import matplotlib.pyplot as plt
 
 class ingester:
@@ -43,7 +43,7 @@ class ingester:
             dist = np.array(f['block']['dist']).flatten()
             lat = np.array(f['block']['lat']).flatten()
             lon = np.array(f['block']['lon']).flatten()
-            elev_surf = np.array(f['block']['elev_air']).flatten()
+            elev_air = np.array(f['block']['elev_air']).flatten()
             twtt_surf = np.array(f['block']['twtt_surf']).flatten()
             amp = np.array(f['block']['amp'])
             if amp.shape[0] == num_trace and amp.shape[1] == num_sample:
@@ -57,19 +57,15 @@ class ingester:
                 cf = f['block']['chirp']['cf'][()]    
                 pLen = f['block']['chirp']['len'][()]
 
-            # convert lon, lat, elev to path()
+            # convert lon, lat, elev to navdat object of nav class
             wgs84_proj4 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
-            navdat = Path()
+            navdat = nav()
             navdat.csys = wgs84_proj4
-            for i in range(len(lon)):
-                navdat.append(Loc(float(lon[i]),float(lat[i]),float(elev_surf[i])))
-          
+            navdat.navdat = np.column_stack((lon,lat,elev_air))
+
+            f.close()
+            
             return {"dt": dt, "num_trace": num_trace, "num_sample": num_sample, "dist": dist, "navdat": navdat, "twtt_surf": twtt_surf, "amp": amp, "clutter": clutter} # other fields?
 
         except Exception as err:
             print("Ingest Error: " + str(err))
-
-
-
-
-

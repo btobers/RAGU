@@ -11,7 +11,6 @@ environment requirements in nose_env.yml
 import utils
 import imPick
 import basemap
-from tools import *
 import os, sys, scipy
 import numpy as np
 import matplotlib as mpl
@@ -77,14 +76,15 @@ class MainGUI(tk.Frame):
         # add the menubar to the window
         self.parent.config(menu=menubar)
 
-
         # initialize imPick
         self.imPick = imPick.imPick(self.parent)
         self.imPick.set_vars()
-        
 
         # bind keypress events
         self.parent.bind("<Key>", self.key)
+
+        # handle x-button closing of window
+        self.parent.protocol("WM_DELETE_WINDOW", self.close_window)
 
         self.open_loc()
 
@@ -131,7 +131,7 @@ class MainGUI(tk.Frame):
     def open_loc(self):
         # if previous track has already been opened, clear imPick canvas
         if self.f_loadName:
-            self.imPick.clear_canvas()
+            self.imPick.clear_canvas()                
 
         # select input file
         self.f_loadName = tk.filedialog.askopenfilename(initialdir = self.in_path,title = "Select file",filetypes = (("mat files","*.mat"),("all files","*.*")))
@@ -141,6 +141,7 @@ class MainGUI(tk.Frame):
 
         # pass basemap to imPick for plotting pick location
         if self.map_loadName:
+            self.basemap.clear_nav()
             self.basemap.set_nav(self.imPick.get_nav())
             self.imPick.get_basemap(self.basemap)            
 
@@ -199,13 +200,19 @@ class MainGUI(tk.Frame):
                 self.imPick.clear_canvas()
                 self.imPick.load(self.f_loadName)
 
+
+                if self.map_loadName and self.basemap.get_state() == 1:
+                    self.basemap.clear_nav()
+                    self.basemap.set_nav(self.imPick.get_nav())
+                    self.imPick.get_basemap(self.basemap)
+
             else:
                 print("Note: " + self.f_loadName.split("/")[-1] + " is the last file in " + file_path)
 
 
     def help(self):
         # help message box
-        messagebox.showinfo("NOSEpick Instructions",
+        tk.messagebox.showinfo("NOSEpick Instructions",
         """Nearly Optimal Subsurface Extractor:
         \n\n1. Load button to open radargram
         \n2. Click along reflector surface to pick
