@@ -48,12 +48,12 @@ class MainGUI(tk.Frame):
         # file menu items
         fileMenu.add_command(label="Open    [Ctrl+O]", command=self.open_loc)
         fileMenu.add_command(label="Save    [Ctrl+S]", command=self.save_loc)
-        fileMenu.add_command(label="Next         [>]", command=self.next_loc)
+        fileMenu.add_command(label="Next    [Shft+.]", command=self.next_loc)
         fileMenu.add_command(label="Exit    [Ctrl+Q]", command=self.close_window)
 
         # pick menu items
         pickMenu.add_command(label="Begin/New Layer    [Ctrl+N]", command=self.new_pick)
-        pickMenu.add_command(label="Stop               [Q]", command=self.stop_pick)
+        pickMenu.add_command(label="Stop               [Escape]", command=self.stop_pick)
         pickMenu.add_separator()
         pickMenu.add_command(label="Optimize")
 
@@ -65,6 +65,7 @@ class MainGUI(tk.Frame):
 
         # help menu items
         helpMenu.add_command(label="Instructions", command=self.help)
+        helpMenu.add_command(label="Keyboard Shortcuts", command=self.shortcuts)
 
         # add items to menubar
         menubar.add_cascade(label="File", menu=fileMenu)
@@ -86,7 +87,7 @@ class MainGUI(tk.Frame):
         # handle x-button closing of window
         self.parent.protocol("WM_DELETE_WINDOW", self.close_window)
 
-        self.open_loc()
+        # self.open_loc()
 
 
     # key is a method to handle UI keypress events
@@ -109,7 +110,7 @@ class MainGUI(tk.Frame):
         elif event.state & 4 and event.keysym == "n":
             self.new_pick()
 
-        # Ctrl+Q new pick layer
+        # Ctrl+Q close NOSEpick
         elif event.state & 4 and event.keysym == "q":
             self.close_window()
 
@@ -212,9 +213,9 @@ class MainGUI(tk.Frame):
 
     def help(self):
         # help message box
-        tk.messagebox.showinfo("NOSEpick Instructions",
+        tk.messagebox.showinfo("Instructions",
         """Nearly Optimal Subsurface Extractor:
-        \n\n1. Load button to open radargram
+        \n\n1. File->Load to open radargram
         \n2. Click along reflector surface to pick
         \n\t\u2022<backspace> to remove the last
         \n\t\u2022<c> to remove all
@@ -223,3 +224,15 @@ class MainGUI(tk.Frame):
         \n5. Save button to export picks
         \n6. Map button to display basemap
         \n7. Exit button to close application""")
+
+    def shortcuts(self):
+        # shortcut list
+        tk.messagebox.showinfo("Keyboard Shortcuts",
+        """<Ctrl-o>\tOpen radar data file
+        \n<Ctrl-m>\tOpen basemap window
+        \n<Ctrl-n>\tBegin new pick layer
+        \n<Escape>\tEnd current pick layer
+        \n<Spacebar>\tToggle between radar and\t\t\tclutter images
+        \n<Ctrl-s>\tExport pick data
+        \n<Shift+.>\tOpen next file in \t\t\t\tdirectory
+        \n<Ctrl-q>\tQuit NOSEpick""")

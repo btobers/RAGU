@@ -13,11 +13,12 @@ class basemap(tk.Tk):
         self.map_loadName = map_path
         # create tkinter toplevel window to display basemap
         self.basemap_window = tk.Toplevel(self.master)
+        self.basemap_window.config(bg="#d9d9d9")
         self.basemap_window.title("NOSEpick - Map Window")
         self.map_display = tk.Frame(self.basemap_window)
         self.map_display.pack(side="bottom", fill="both", expand=1)
-        # bind escape key to basemap_close()
-        self.basemap_window.bind("<Escape>", self.basemap_close)
+        # bind ctrl-q key to basemap_close()
+        self.basemap_window.bind("<Control-q>", self.basemap_close)
         self.pick_loc = None
 
 
@@ -50,7 +51,7 @@ class basemap(tk.Tk):
                 self.map_fig = mpl.figure.Figure()
                 self.map_fig.patch.set_facecolor(self.master.cget('bg'))
                 self.map_fig_ax = self.map_fig.add_subplot(111)
-                self.map_fig_ax.imshow(self.basemap_im, cmap="gray", aspect="auto", extent=[minx, maxx, miny, maxy])
+                self.map_fig_ax.imshow(self.basemap_im, cmap="terrain", aspect="auto", extent=[minx, maxx, miny, maxy])
                 self.map_fig_ax.set(xlabel = "x [km]", ylabel = "y [km]")
                 self.map_dataCanvas = FigureCanvasTkAgg(self.map_fig, self.basemap_window)
                 self.map_dataCanvas.get_tk_widget().pack(in_=self.map_display, side="bottom", fill="both", expand=1)
@@ -84,7 +85,7 @@ class basemap(tk.Tk):
             # plot lat, lon atop basemap im
             self.track, = self.map_fig_ax.plot(self.nav_transform.navdat[:,0],self.nav_transform.navdat[:,1],"k")
             # zoom in to 100 km from track on all sides
-            self.map_fig_ax.set(xlim = ((np.amin(self.nav_transform.navdat[:,0])- 100000),(np.amax(self.nav_transform.navdat[:,0])+ 100000)), ylim = ((np.amin(self.nav_transform.navdat[:,1])- 100000),(np.amax(self.nav_transform.navdat[:,1])+ 100000)))
+            self.map_fig_ax.axis([(np.amin(self.nav_transform.navdat[:,0])- 100000),(np.amax(self.nav_transform.navdat[:,0])+ 100000),(np.amin(self.nav_transform.navdat[:,1])- 100000),(np.amax(self.nav_transform.navdat[:,1])+ 100000)])
             # annotate each end of the track
             self.track_start, = self.map_fig_ax.plot(self.nav_transform.navdat[0,0],self.nav_transform.navdat[0,1],'go',label='start')
             self.track_end, = self.map_fig_ax.plot(self.nav_transform.navdat[-1,0],self.nav_transform.navdat[-1,1],'ro',label='end')

@@ -65,10 +65,6 @@ class imPick(tk.Frame):
         self.ax.set_visible(False)
 
 
-
-        # self.dataCanvas.draw()
-
-
     # set_vars is a method to set imPick variables
     def set_vars(self):
         self.data_imSwitch_flag = ""
@@ -335,11 +331,9 @@ class imPick(tk.Frame):
     def cmap_reset(self, event):
         # reset sliders to initial values
         if self.im_data.get_visible():
-            print('data')
             self.s_cmin.reset()
             self.s_cmax.reset()
         else:
-            print('clut')
             # if clutter is displayed, change slider bounds
             self.s_cmin.valmin = self.mindB_clut - 10
             self.s_cmin.valmax = self.mindB_clut + 10
