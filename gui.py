@@ -87,7 +87,7 @@ class MainGUI(tk.Frame):
         # handle x-button closing of window
         self.parent.protocol("WM_DELETE_WINDOW", self.close_window)
 
-        # self.open_loc()
+        self.open_loc()
 
 
     # key is a method to handle UI keypress events
@@ -115,7 +115,7 @@ class MainGUI(tk.Frame):
             self.close_window()
 
         # shift+. (>) next file
-        elif event.state & 1 and event.keysym == "greater":
+        elif event.keysym =="Right":
             self.next_loc()
 
         # Escape key to stop picking current layer
@@ -215,24 +215,26 @@ class MainGUI(tk.Frame):
         # help message box
         tk.messagebox.showinfo("Instructions",
         """Nearly Optimal Subsurface Extractor:
-        \n\n1. File->Load to open radargram
-        \n2. Click along reflector surface to pick
-        \n\t\u2022<backspace> to remove the last
-        \n\t\u2022<c> to remove all
-        \n3. Radar and clutter buttons to toggle
-        \n4. Next button to load next file
-        \n5. Save button to export picks
-        \n6. Map button to display basemap
-        \n7. Exit button to close application""")
+        \n\n1. File->Load to load data file
+        \n2. Map->Open to load basemap
+        \n3. Pick->Begin/New Layer 
+        \n4. Click along reflector surface to pick\n   horizon
+        \n\t\u2022[backspace] to remove the last
+        \n\t\u2022[c] to remove all
+        \n5. Pick->Stop to end current pick layer
+        \n6. Radio buttons to toggle between radar\n   and clutter images
+        \n7. File->Save to export picks
+        \n8. File->Next to load next data file
+        \n9. File->Quit to exit application""")
 
     def shortcuts(self):
         # shortcut list
         tk.messagebox.showinfo("Keyboard Shortcuts",
-        """<Ctrl-o>\tOpen radar data file
-        \n<Ctrl-m>\tOpen basemap window
-        \n<Ctrl-n>\tBegin new pick layer
-        \n<Escape>\tEnd current pick layer
-        \n<Spacebar>\tToggle between radar and\t\t\tclutter images
-        \n<Ctrl-s>\tExport pick data
-        \n<Shift+.>\tOpen next file in \t\t\t\tdirectory
-        \n<Ctrl-q>\tQuit NOSEpick""")
+        """[Ctrl+o]\tOpen radar data file
+        \n[Ctrl+m]\tOpen basemap window
+        \n[Ctrl+n]\tBegin new pick layer
+        \n[Escape]\tEnd current pick layer
+        \n[Spacebar]\tToggle between radar and\t\t\tclutter images
+        \n[Ctrl+s]\tExport pick data
+        \n[Right]\t\tOpen next file in \t\t\t\tdirectory
+        \n[Ctrl+q]\tQuit NOSEpick""")

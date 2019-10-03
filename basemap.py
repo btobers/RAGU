@@ -8,11 +8,11 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 # from PIL import Image
 
 class basemap(tk.Tk):
-    def __init__(self, master, map_path):
-        self.master = master
+    def __init__(self, parent, map_path):
+        self.parent = parent
         self.map_loadName = map_path
         # create tkinter toplevel window to display basemap
-        self.basemap_window = tk.Toplevel(self.master)
+        self.basemap_window = tk.Toplevel(self.parent)
         self.basemap_window.config(bg="#d9d9d9")
         self.basemap_window.title("NOSEpick - Map Window")
         self.map_display = tk.Frame(self.basemap_window)
@@ -20,7 +20,7 @@ class basemap(tk.Tk):
         # bind ctrl-q key to basemap_close()
         self.basemap_window.bind("<Control-q>", self.basemap_close)
         self.pick_loc = None
-
+        self.track = None
 
     # map is a method to plot the basemap in the basemap window
     def map(self):
@@ -49,7 +49,7 @@ class basemap(tk.Tk):
                 maxy = gt[3] 
                 # show basemap figure in basemap window
                 self.map_fig = mpl.figure.Figure()
-                self.map_fig.patch.set_facecolor(self.master.cget('bg'))
+                self.map_fig.patch.set_facecolor(self.parent.cget('bg'))
                 self.map_fig_ax = self.map_fig.add_subplot(111)
                 self.map_fig_ax.imshow(self.basemap_im, cmap="terrain", aspect="auto", extent=[minx, maxx, miny, maxy])
                 self.map_fig_ax.set(xlabel = "x [km]", ylabel = "y [km]")
@@ -118,8 +118,9 @@ class basemap(tk.Tk):
     
     # clear_basemap is a method to clear the basemap 
     def clear_nav(self):
-        self.track.remove()
-        self.legend.remove()
-        self.track_start.remove()
-        self.track_end.remove()
-        self.map_fig.canvas.draw()
+        if self.track:
+            self.track.remove()
+            self.legend.remove()
+            self.track_start.remove()
+            self.track_end.remove()
+            self.map_fig.canvas.draw()
