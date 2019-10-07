@@ -51,6 +51,9 @@ class basemap(tk.Tk):
                 self.map_fig = mpl.figure.Figure()
                 self.map_fig.patch.set_facecolor(self.parent.cget('bg'))
                 self.map_fig_ax = self.map_fig.add_subplot(111)
+                # if using rgb image, make sure the proper shape
+                if self.basemap_im.shape[0] == 3:
+                    self.basemap_im = np.dstack([self.basemap_im[0,:,:],self.basemap_im[1,:,:],self.basemap_im[2,:,:]])
                 self.map_fig_ax.imshow(self.basemap_im, cmap="terrain", aspect="auto", extent=[minx, maxx, miny, maxy])
                 self.map_fig_ax.set(xlabel = "x [km]", ylabel = "y [km]")
                 self.map_dataCanvas = FigureCanvasTkAgg(self.map_fig, self.basemap_window)

@@ -20,14 +20,10 @@ class imPick(tk.Frame):
         # set up frames
         infoFrame = tk.Frame(self.parent)
         infoFrame.pack(side="top",fill="both")
-        # buttonFrame = tk.Frame(infoFrame)
-        # buttonFrame.grid(row=0,column=0)
         toolbarFrame = tk.Frame(infoFrame)
         toolbarFrame.pack(side="bottom",fill="both")
         self.dataFrame = tk.Frame(self.parent)
         self.dataFrame.pack(side="bottom", fill="both", expand=1)
-        # cmapFrame = tk.Frame(dataFrame)
-        # cmapFrame.grid(column=1)
 
 
         self.im_status = tk.StringVar()
@@ -67,6 +63,7 @@ class imPick(tk.Frame):
 
     # set_vars is a method to set imPick variables
     def set_vars(self):
+        self.pickLabel.config(text="Picking Layer:\t0", fg="#d9d9d9")
         self.data_imSwitch_flag = ""
         self.clut_imSwitch_flag = ""
         self.f_loadName = ""
@@ -82,6 +79,7 @@ class imPick(tk.Frame):
         self.data_cmax = None
         self.clut_cmin = None
         self.clut_cmax = None
+        self.axbg = None
         # empty fields for picks
         self.xln_old = []
         self.yln_old = []
@@ -114,7 +112,7 @@ class imPick(tk.Frame):
         # cut off data at 10th percentile to avoid extreme outliers - round down
         self.mindB_data = np.floor(np.nanpercentile(self.imScl_data,10))
         self.mindB_clut = np.floor(np.nanpercentile(self.imScl_clut,10))
-        self.surf, = self.ax.plot(self.data["dist"],self.data["twtt_surf"],"c")                       # empty line for twtt surface
+        self.surf, = self.ax.plot(self.data["dist"],self.data["twtt_surf"],"c")     # empty line for twtt surface
         self.pick, = self.ax.plot([],[],"r")                                        # empty line for current pick
         self.saved_pick = self.ax.scatter([],[],c="g",marker=".",s=8,linewidth=0)   # empty line for saved pick
         # create matplotlib figure and use imshow to display radargram
@@ -190,8 +188,10 @@ class imPick(tk.Frame):
                 self.pick.set_data(self.xln, self.yln)
                 self.dataCanvas.restore_region(self.axbg)
                 self.ax.draw_artist(self.pick)
-                # self.ax.draw_artist(self.saved_pick)
+                self.ax.draw_artist(self.saved_pick)
                 self.dataCanvas.blit(self.ax.bbox)
+                # self.fig.canvas.draw()
+
 
                 # if more than two picks, call pick_interp
                 if len(self.xln) >= 2:
@@ -231,7 +231,7 @@ class imPick(tk.Frame):
         self.ax.draw_artist(self.pick)
         self.ax.draw_artist(self.saved_pick)
         self.dataCanvas.blit(self.ax.bbox)
-
+        # self.fig.canvas.draw()
 
     def onkey(self, event):
         # on-key commands
@@ -247,16 +247,21 @@ class imPick(tk.Frame):
 
     def clear_picks(self):
         # clear all picks
-        if len(self.xln) and tk.messagebox.askokcancel("Warning", "Clear all picks?", icon = "warning") == True:
+        if len(self.xln + self.xln_old) > 0 and tk.messagebox.askokcancel("Warning", "Clear all picks?", icon = "warning") == True:
             del self.xln[:]
             del self.yln[:]
+            del self.yln_old[:]
+            del self.xln_old[:]
             self.pick.set_data(self.xln, self.yln)
+            self.saved_pick.set_offsets(np.c_[self.xln_old,self.yln_old])
+            self.pickLabel.config(text="Picking Layer:\t0")
+            self.pick_layer = 0
             self.fig.canvas.draw()
 
 
     def clear_last(self):
         # clear last pick
-        if len(self.xln) and len(self.yln) > 0:
+        if len(self.xln) > 0:
             del self.xln[-1:]
             del self.yln[-1:]
             self.pick.set_data(self.xln, self.yln)
@@ -305,7 +310,7 @@ class imPick(tk.Frame):
         self.im_data.set_visible(False)
         self.im_clut.set_visible(True)
         # set flag to indicate that clutter has been viewed for resetting colorbar limits
-        self.clut_imSwitch_flag is True    
+        self.clut_imSwitch_flag = True    
         # redraw canvas
         self.fig.canvas.draw()
         self.im_status.set("clut")
@@ -364,12 +369,19 @@ class imPick(tk.Frame):
 
     # clear_canvas is a method to clear the data canvas and figures to reset app
     def clear_canvas(self):
-        # if self.save_warning() == True:
-        self.im_clut.remove()
-        self.im_data.remove()
-        self.surf.remove()
-        self.pick.remove()
-        self.saved_pick.remove()
+        print('clear canvas')
+        self.ax.clear()
+        del self.xln[:]
+        del self.yln[:]
+        del self.yln_old[:]
+        del self.xln_old[:]
+        self.pick.set_data(self.xln, self.yln)
+        self.saved_pick.set_offsets(np.c_[self.xln_old,self.yln_old])
+        # self.im_clut.remove()
+        # self.im_data.remove()
+        # self.surf.remove()
+        # self.pick.remove()
+        # self.saved_pick.remove()
         self.set_vars()
 
 

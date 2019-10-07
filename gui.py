@@ -48,12 +48,12 @@ class MainGUI(tk.Frame):
         # file menu items
         fileMenu.add_command(label="Open    [Ctrl+O]", command=self.open_loc)
         fileMenu.add_command(label="Save    [Ctrl+S]", command=self.save_loc)
-        fileMenu.add_command(label="Next    [Shft+.]", command=self.next_loc)
+        fileMenu.add_command(label="Next     [Right]", command=self.next_loc)
         fileMenu.add_command(label="Exit    [Ctrl+Q]", command=self.close_window)
 
         # pick menu items
-        pickMenu.add_command(label="Begin/New Layer    [Ctrl+N]", command=self.new_pick)
-        pickMenu.add_command(label="Stop               [Escape]", command=self.stop_pick)
+        pickMenu.add_command(label="New     [Ctrl+N]", command=self.new_pick)
+        pickMenu.add_command(label="Stop    [Escape]", command=self.stop_pick)
         pickMenu.add_separator()
         pickMenu.add_command(label="Optimize")
 
@@ -61,7 +61,7 @@ class MainGUI(tk.Frame):
         viewMenu.add_command(label="Trace-View")
 
         # map menu items
-        mapMenu.add_command(label="Open    [Ctrl+M]", command=self.map_loc)
+        mapMenu.add_command(label="Open     [Ctrl+M]", command=self.map_loc)
 
         # help menu items
         helpMenu.add_command(label="Instructions", command=self.help)
@@ -79,7 +79,6 @@ class MainGUI(tk.Frame):
 
         # initialize imPick
         self.imPick = imPick.imPick(self.parent)
-        self.imPick.set_vars()
 
         # bind keypress events
         self.parent.bind("<Key>", self.key)
@@ -134,6 +133,8 @@ class MainGUI(tk.Frame):
         if self.f_loadName:
             self.imPick.clear_canvas()                
 
+        self.imPick.set_vars()
+        
         # select input file
         self.f_loadName = tk.filedialog.askopenfilename(initialdir = self.in_path,title = "Select file",filetypes = (("mat files","*.mat"),("all files","*.*")))
         # if input selected, pass filename to imPick.load()
@@ -217,7 +218,7 @@ class MainGUI(tk.Frame):
         """Nearly Optimal Subsurface Extractor:
         \n\n1. File->Load to load data file
         \n2. Map->Open to load basemap
-        \n3. Pick->Begin/New Layer 
+        \n3. Pick->New to begin new pick layer 
         \n4. Click along reflector surface to pick\n   horizon
         \n\t\u2022[backspace] to remove the last
         \n\t\u2022[c] to remove all
