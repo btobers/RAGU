@@ -2,6 +2,7 @@ import h5py
 import numpy as np
 from nav import *
 import matplotlib.pyplot as plt
+import scipy.io as scio
 
 class ingester:
     # ingester is a class to create a data ingester
@@ -34,38 +35,62 @@ class ingester:
         try:
         # read in HDF5 .mat radar block file
             f = h5py.File(fpath, 'r')
+            # print(list(f['block']))
 
             # parse data
-            # print(list(f['block']))
             dt = float(f['block']['dt'][0])
             num_trace = int(f['block']['num_trace'][0])
             num_sample = int(f['block']['num_sample'][0])
             dist = np.array(f['block']['dist']).flatten()
-            lat = np.array(f['block']['lat']).flatten()
             lon = np.array(f['block']['lon']).flatten()
+            lat = np.array(f['block']['lat']).flatten()
             elev_air = np.array(f['block']['elev_air']).flatten()
             twtt_surf = np.array(f['block']['twtt_surf']).flatten()
             amp = np.array(f['block']['amp'])
-            if amp.shape[0] == num_trace and amp.shape[1] == num_sample:
-                amp = np.transpose(amp)  
             clutter = np.array(f['block']['clutter'])
-            if clutter.shape[0] == num_trace and clutter.shape[1] == num_sample:
-                clutter = np.transpose(clutter)
 
-            if 'chirp' in list(f['block'].keys()):    
-                bw = f['block']['chirp']['bw'][()]   
-                cf = f['block']['chirp']['cf'][()]    
-                pLen = f['block']['chirp']['len'][()]
+
+            # if 'chirp' in list(f['block'].keys()):    
+            #     bw = f['block']['chirp']['bw'][()]   
+            #     cf = f['block']['chirp']['cf'][()]    
+            #     pLen = f['block']['chirp']['len'][()]
 
             # convert lon, lat, elev to navdat object of nav class
-            wgs84_proj4 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
-            navdat = nav()
-            navdat.csys = wgs84_proj4
-            navdat.navdat = np.column_stack((lon,lat,elev_air))
+
 
             f.close()
             
-            return {"dt": dt, "num_trace": num_trace, "num_sample": num_sample, "dist": dist, "navdat": navdat, "twtt_surf": twtt_surf, "amp": amp, "clutter": clutter} # other fields?
+
 
         except Exception as err:
-            print("Ingest Error: " + str(err))
+            print("Ingest Error: " + str(err) + "\nError using h5py - tying with scipy.io")
+            try:
+                f = scio.loadmat(fpath)
+
+                dt = float(f['block']['dt'][0])
+                num_trace = int(f['block']['num_trace'][0])
+                num_sample = int(f['block']['num_sample'][0])
+                dist = f['block']['dist'][0][0].flatten()
+                lon = f['block']['lon'][0][0].flatten()
+                lat = f['block']['lat'][0][0].flatten()
+                elev_air = f['block']['elev_air'][0][0].flatten()
+                twtt_surf = f['block']['twtt_surf'][0][0].flatten()
+                amp = f['block']['amp'][0][0]
+                clutter = f['block']['clutter'][0][0]
+
+
+            except Exception as err:
+                print(err)
+                pass
+
+        if amp.shape[0] == num_trace and amp.shape[1] == num_sample:
+            amp = np.transpose(amp)  
+        if clutter.shape[0] == num_trace and clutter.shape[1] == num_sample:
+            clutter = np.transpose(clutter)
+
+        wgs84_proj4 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+        navdat = nav()
+        navdat.csys = wgs84_proj4
+        navdat.navdat = np.column_stack((lon,lat,elev_air))
+        
+        return {"dt": dt, "num_trace": num_trace, "num_sample": num_sample, "dist": dist, "navdat": navdat, "twtt_surf": twtt_surf, "amp": amp, "clutter": clutter} # other fields?
