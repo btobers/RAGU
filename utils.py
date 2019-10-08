@@ -19,19 +19,23 @@ def savePick(f_saveName, data, pick_dict):
     thick = []
     # get necessary data from radargram for pick locations
     # iterate through pick_dict layers
-    num_pick_lyr = len(pick_dict)
-    for _i in range(num_pick_lyr):
-        num_pt = len(np.where(pick_dict["layer_" + str(_i)] != -1)[0])
+    for _i in range(len(pick_dict)):
         pick_idx = np.where(pick_dict["layer_" + str(_i)] != -1)[0]
-        for _j in range(num_pt):
-            lon.append(data["navdat"][pick_idx[_j]].x)
-            lat.append(data["navdat"][pick_idx[_j]].y)
-            elev_air.append(data["navdat"][pick_idx[_j]].z)
-            twtt_surf.append(data["twtt_surf"][pick_idx[_j]])
-            twtt_bed.append(pick_dict["layer_" + str(_i)][pick_idx[_j]])
-            thick.append(((twtt_bed[_j]-twtt_surf[_j])*v_ice)/2)
+
+        lon.append(data["navdat"].navdat[pick_idx[:],0])
+        lat.append(data["navdat"].navdat[pick_idx[:],1])
+        elev_air.append(data["navdat"].navdat[pick_idx[:],2])
+        twtt_surf.append(data["twtt_surf"][pick_idx[:]])
+        twtt_bed.append(pick_dict["layer_" + str(_i)][pick_idx[:]])
+
+        # calculate ice thickness - using twtt_bed and twtt_surf
+        thick.append((((pick_dict["layer_" + str(_i)][pick_idx]) - (data["twtt_surf"][pick_idx])) * v_ice) / 2)
+        
+    # combine the data into a matrix for export
+    dstack = np.column_stack((np.hstack(lon).T,np.hstack(lat).T,np.hstack(elev_air).T,np.hstack(twtt_surf).T,np.hstack(twtt_bed).T,np.hstack(thick).T))
+
     header = "lon,lat,elev_air,twtt_surf,twtt_bed,thick"
-    np.savetxt(f_saveName, np.column_stack((np.asarray(lon),np.asarray(lat),np.asarray(elev_air),np.asarray(twtt_surf),np.asarray(twtt_bed),np.asarray(thick))), delimiter=",", newline="\n", fmt="%.8f", header=header, comments="")
+    np.savetxt(f_saveName, dstack, delimiter=",", newline="\n", fmt="%.8f", header=header, comments="")
     print("Picks exported: ", f_saveName)
 
 
