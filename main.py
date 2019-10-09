@@ -12,9 +12,9 @@ import tkinter as tk
 
 ### USER SPECIFIED VARS ###
 # in_path = "/mnt/Swaps/MARS/targ/supl/UAF/2018/may/block_clutter_elev"
-in_path = "/media/anomalocaris/bush-goliath/data/2018"
+in_path = "/media/anomalocaris/bush-goliath/"
 # out_path = "/home/anomalocaris/Desktop"
-out_path = "/media/anomalocaris/bush-goliath/data/2018"
+out_path = "/media/anomalocaris/bush-goliath/"
 map_path = "/mnt/Swaps/MARS/targ/supl/grid-AKDEM/"
 
 ### INITIALIZE ###

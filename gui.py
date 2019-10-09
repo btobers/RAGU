@@ -136,7 +136,7 @@ class MainGUI(tk.Frame):
         self.imPick.set_vars()
         
         # select input file
-        self.f_loadName = tk.filedialog.askopenfilename(initialdir = self.in_path,title = "Select file",filetypes = (("mat files","*.mat"),("all files","*.*")))
+        self.f_loadName = tk.filedialog.askopenfilename(initialdir = self.in_path,title = "Select file",filetypes = (("hd5f files", "*.h5"),("mat files","*.mat"),("all files","*.*")))
         # if input selected, pass filename to imPick.load()
         if self.f_loadName:
             self.imPick.load(self.f_loadName)
