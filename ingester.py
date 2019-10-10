@@ -1,6 +1,7 @@
 import h5py
 import numpy as np
 from nav import *
+import utils
 import matplotlib.pyplot as plt
 import scipy.io as scio
 import sys
@@ -41,15 +42,14 @@ class ingester:
 
             # ingest for new 2019 data onward
             if fpath.endswith(".h5"):
+                crs = f["loc0"].attrs["CRS"]
                 dt = float(1/(f["rx0"].attrs["fsHz"]))
                 num_trace = f["rx0"].attrs["numTraces"]
                 num_sample = f["rx0"].attrs["samplesPerTrace"]
-                lon =  f["loc0"]["lon"]
-                lat =  f["loc0"]["lat"]
-                elev_air =  f["loc0"]["altM"]
-                twtt_surf = np.zeros(num_trace) 
-                # print('here')
-                # sys.exit()
+                lon =  np.array(f["loc0"]["lon"]).flatten().astype(np.float64)
+                lat =  np.array(f["loc0"]["lat"]).flatten().astype(np.float64)
+                elev_air =  np.array(f["loc0"]["altM"]).flatten().astype(np.float64)
+                twtt_surf = np.zeros(num_trace)
                 amp = np.array(f["proc0"])
                 if "sim0" in f.keys():
                     clutter = np.array(f["sim0"])
@@ -69,15 +69,8 @@ class ingester:
                 amp = np.array(f["block"]["amp"])
                 clutter = np.array(f["block"]["clutter"])
 
-
-            # if "chirp" in list(f["block"].keys()):    
-            #     bw = f["block"]["chirp"]["bw"][()]   
-            #     cf = f["block"]["chirp"]["cf"][()]    
-            #     pLen = f["block"]["chirp"]["len"][()]
-
             f.close()
             
-
 
         except Exception as err:
             print("Ingest Error: " + str(err) + "\nError using h5py - tying with scipy.io")
@@ -107,11 +100,16 @@ class ingester:
         if clutter.shape[0] == num_trace and clutter.shape[1] == num_sample:
             clutter = np.transpose(clutter)
 
-
         # convert lon, lat, elev to navdat object of nav class
         wgs84_proj4 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
         navdat = nav()
         navdat.csys = wgs84_proj4
         navdat.navdat = np.column_stack((lon,lat,elev_air))
+
+        # create dist array if new .h5 data - convert nav to meters then find cumulative euclidian distance
+        if fpath.endswith(".h5"):
+            ak_nad83_proj4 = "+proj=aea +lat_1=55 +lat_2=65 +lat_0=50 +lon_0=-154 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs" 
+            navdat_transform = navdat.transform(ak_nad83_proj4)
+            dist = utils.euclid_dist(navdat_transform)
         
-        return {"dt": dt, "num_trace": num_trace, "num_sample": num_sample, "navdat": navdat, "twtt_surf": twtt_surf, "amp": amp, "clutter": clutter} # other fields?
+        return {"dt": dt, "num_trace": num_trace, "num_sample": num_sample, "navdat": navdat, "twtt_surf": twtt_surf,"dist": dist, "amp": amp, "clutter": clutter} # other fields?

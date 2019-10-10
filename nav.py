@@ -1,5 +1,6 @@
 import numpy as np
 import gdal, osr
+import sys
 
 
 class Dem:
@@ -60,7 +61,7 @@ class nav:
     transform = osr.CoordinateTransformation(source, target)
     xform = transform.TransformPoint
 
-    for _i in range(navdat.navdat.shape[0]):
+    for _i in range(navdat.navdat.shape[0]):      
       navdat_xform[_i,:] = np.asarray(xform(navdat.navdat[_i,0],navdat.navdat[_i,1],navdat.navdat[_i,2]))
     navdat.navdat = navdat_xform
     navdat.csys = targ

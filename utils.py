@@ -1,6 +1,19 @@
 import ingester
 import numpy as np
 from tkinter import filedialog, messagebox
+import matplotlib.pyplot as plt
+import sys
+
+# calculate total euclidian distance along a line
+def euclid_dist(nav):
+    dist = np.zeros(nav.navdat.shape[0])
+    for _i in range(len(dist)):
+        if _i>=1:
+            dist[_i] = dist[_i-1] + np.sqrt((nav.navdat[_i,0] - nav.navdat[_i-1,0])**2 + (nav.navdat[_i,1] - nav.navdat[_i-1,1])**2)
+    # convert to km
+    dist = dist*1e-3
+
+    return dist  
 
 
 # a set of utility functions for NOSEpick GUI

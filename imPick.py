@@ -5,7 +5,7 @@ import h5py
 import numpy as np
 import tkinter as tk
 from tkinter import ttk as ttk
-import sys
+import sys,os
 import matplotlib as mpl
 mpl.use("TkAgg")
 import matplotlib.pyplot as plt
@@ -102,7 +102,7 @@ class imPick(tk.Frame):
         self.ax_cmin.set_visible(True)
         self.reset_ax.set_visible(True)
         # set figure title
-        self.ax.set_title(self.f_loadName.split("/")[-1].rstrip(".mat"))
+        self.ax.set_title(os.path.splitext(self.f_loadName.split("/")[-1])[0])
         # find max power in data to scale image
         maxPow_data = np.nanmax(np.power(self.data[self.dtype][:],2))
         maxPow_clut = np.nanmax(np.power(self.data["clutter"][:],2))
@@ -112,16 +112,16 @@ class imPick(tk.Frame):
         # cut off data at 10th percentile to avoid extreme outliers - round down
         self.mindB_data = np.floor(np.nanpercentile(self.imScl_data,10))
         self.mindB_clut = np.floor(np.nanpercentile(self.imScl_clut,10))
-        # self.surf, = self.ax.plot(self.data["dist"],self.data["twtt_surf"],"c")     # empty line for twtt surface
+        self.surf, = self.ax.plot(self.data["dist"],self.data["twtt_surf"],"c")     # empty line for twtt surface
         self.pick, = self.ax.plot([],[],"r")                                        # empty line for current pick
         self.saved_pick = self.ax.scatter([],[],c="g",marker=".",s=8,linewidth=0)   # empty line for saved pick
         # create matplotlib figure and use imshow to display radargram
         self.dataCanvas.get_tk_widget().pack(in_=self.dataFrame, side="bottom", fill="both", expand=1)      
         # display image data for radargram and clutter sim
-        self.im_data  = self.ax.imshow(self.imScl_data, cmap="gray", aspect="auto", extent=[0, 
-                        self.data["num_trace"], self.data["amp"].shape[0] * self.data["dt"], 0])
-        self.im_clut  = self.ax.imshow(self.imScl_clut, cmap="gray", aspect="auto", extent=[0, 
-                        self.data["num_trace"], self.data["amp"].shape[0] * self.data["dt"], 0])
+        self.im_data  = self.ax.imshow(self.imScl_data, cmap="gray", aspect="auto", extent=[self.data["dist"][0], 
+                        self.data["dist"][-1], self.data["amp"].shape[0] * self.data["dt"], 0])
+        self.im_clut  = self.ax.imshow(self.imScl_clut, cmap="gray", aspect="auto", extent=[self.data["dist"][0], 
+                        self.data["dist"][-1], self.data["amp"].shape[0] * self.data["dt"], 0])
         # the first time the amplitude image is loaded, update colormap to cut off values below 10th percentile
         self.im_data.set_clim([self.mindB_data, 0.0])
         self.im_clut.set_clim([self.mindB_clut, 0.0])
