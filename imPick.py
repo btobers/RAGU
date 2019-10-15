@@ -119,9 +119,9 @@ class imPick(tk.Frame):
         self.dataCanvas.get_tk_widget().pack(in_=self.dataFrame, side="bottom", fill="both", expand=1)      
         # display image data for radargram and clutter sim
         self.im_data  = self.ax.imshow(self.imScl_data, cmap="gray", aspect="auto", extent=[self.data["dist"][0], 
-                        self.data["dist"][-1], self.data["amp"].shape[0] * self.data["dt"], 0])
+                        self.data["dist"][-1], self.data["amp"].shape[0] * self.data["dt"] * 1e6, 0])
         self.im_clut  = self.ax.imshow(self.imScl_clut, cmap="gray", aspect="auto", extent=[self.data["dist"][0], 
-                        self.data["dist"][-1], self.data["amp"].shape[0] * self.data["dt"], 0])
+                        self.data["dist"][-1], self.data["amp"].shape[0] * self.data["dt"] * 1e6, 0])
         # the first time the amplitude image is loaded, update colormap to cut off values below 10th percentile
         self.im_data.set_clim([self.mindB_data, 0.0])
         self.im_clut.set_clim([self.mindB_clut, 0.0])
@@ -140,8 +140,8 @@ class imPick(tk.Frame):
         self.axbg = self.dataCanvas.copy_from_bbox(self.ax.bbox)
             
         # multiply y-axis label by 1e6 to plot in microseconds
-        self.ax_yticks = np.round(self.ax.get_yticks()*1e6)
-        self.ax.set_yticklabels(self.ax_yticks)
+        # self.ax_yticks = np.round(self.ax.get_yticks()*1e6)
+        # self.ax.set_yticklabels(self.ax_yticks)
         self.ax.set(xlabel = "along-track distance [km]", ylabel = "two-way travel time [microsec.]")
         # self.openIm.remove()
         self.dataCanvas._tkcanvas.pack()
@@ -318,6 +318,8 @@ class imPick(tk.Frame):
 
     def cmap_update(self, s=None):
         # method to update image colormap based on slider values
+        print(self.s_cmin.val, self.s_cmax.val)
+    
         try:
             if self.im_data.get_visible():
                 # apply slider values to visible image

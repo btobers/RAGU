@@ -151,7 +151,7 @@ class MainGUI(tk.Frame):
     # save_loc is method to receieve the desired pick save location from user input
     def save_loc(self):
         if self.f_loadName and self.imPick.get_pickLen() > 0:
-            self.f_saveName = tk.filedialog.asksaveasfilename(initialfile = self.f_loadName.split("/")[-1].rstrip(".mat") + "_pk",
+            self.f_saveName = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_pk",
                                 initialdir = self.out_path,title = "Save As",filetypes = (("comma-separated values","*.csv"),))
         if self.f_saveName:
             self.imPick.save(self.f_saveName)

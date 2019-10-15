@@ -34,11 +34,10 @@ class ingester:
             exit(1)
 
     def h5py_read(self, fpath):
+        # try reading HDF5 radar file
         try:
-        # read in HDF5 .mat radar block file
             f = h5py.File(fpath, "r")
             # print(list(f["block"]))
-
 
             # ingest for new 2019 data onward
             if fpath.endswith(".h5"):
@@ -70,10 +69,10 @@ class ingester:
                 clutter = np.array(f["block"]["clutter"])
 
             f.close()
-            
 
-        except Exception as err:
-            print("Ingest Error: " + str(err) + "\nError using h5py - tying with scipy.io")
+        # if h5py.File does not work, try scipy.io  
+        except:
+            print("Ingest Error: File cannot be read with h5py, trying with scipy.io" )
             try:
                 f = scio.loadmat(fpath)
 
@@ -88,9 +87,8 @@ class ingester:
                 amp = f["block"]["amp"][0][0]
                 clutter = f["block"]["clutter"][0][0]
 
-
             except Exception as err:
-                print(err)
+                print("ingest Error: " + err)
                 pass
 
 
