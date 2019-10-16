@@ -60,6 +60,14 @@ class imPick(tk.Frame):
         # self.openIm = self.ax.imshow(im)
         self.ax.set_visible(False)
 
+        # create colormap sliders and reset button - initialize for data image
+        self.s_cmin = mpl.widgets.Slider(self.ax_cmin, 'min', orientation="vertical")
+        self.s_cmax = mpl.widgets.Slider(self.ax_cmax, 'max', orientation="vertical")
+        self.cmap_reset_button = mpl.widgets.Button(self.reset_ax, 'Reset', color="lightgoldenrodyellow")
+        self.s_cmin.on_changed(self.cmap_update)
+        self.s_cmax.on_changed(self.cmap_update)
+        self.cmap_reset_button.on_clicked(self.cmap_reset)
+
 
     # set_vars is a method to set imPick variables
     def set_vars(self):
@@ -69,7 +77,6 @@ class imPick(tk.Frame):
         self.f_loadName = ""
         self.f_saveName = ""
         self.dtype = "amp"
-        self.toolbar = None
         self.basemap = None
         self.pick_dict = {}
         self.pick_idx = None
@@ -79,7 +86,6 @@ class imPick(tk.Frame):
         self.data_cmax = None
         self.clut_cmin = None
         self.clut_cmax = None
-        self.axbg = None
         # empty fields for picks
         self.xln_old = []
         self.yln_old = []
@@ -88,64 +94,71 @@ class imPick(tk.Frame):
         self.pick = None
         self.saved_pick = None
 
-
+    # load calls ingest() on the data file and sets the datacanvas
     def load(self, f_loadName):
         self.f_loadName = f_loadName
-        # method to load radar data
         print("Loading: " + self.f_loadName)
         # ingest the data
         self.igst = ingester.ingester("h5py")
         self.data = self.igst.read(self.f_loadName)
+
         # set scalebar axes now that data displayed
         self.ax.set_visible(True)
         self.ax_cmax.set_visible(True)
         self.ax_cmin.set_visible(True)
         self.reset_ax.set_visible(True)
+
         # set figure title
         self.ax.set_title(os.path.splitext(self.f_loadName.split("/")[-1])[0])
+
         # find max power in data to scale image
         maxPow_data = np.nanmax(np.power(self.data[self.dtype][:],2))
         maxPow_clut = np.nanmax(np.power(self.data["clutter"][:],2))
+
         # scale data in dB with maxPow value as the reference
         self.imScl_data = np.log(np.power(self.data[self.dtype],2) / maxPow_data)
         self.imScl_clut = np.log(np.power(self.data["clutter"],2) / maxPow_clut)
+
         # cut off data at 10th percentile to avoid extreme outliers - round down
         self.mindB_data = np.floor(np.nanpercentile(self.imScl_data,10))
         self.mindB_clut = np.floor(np.nanpercentile(self.imScl_clut,10))
         self.surf, = self.ax.plot(self.data["dist"],self.data["twtt_surf"],"c")     # empty line for twtt surface
         self.pick, = self.ax.plot([],[],"r")                                        # empty line for current pick
         self.saved_pick = self.ax.scatter([],[],c="g",marker=".",s=8,linewidth=0)   # empty line for saved pick
-        # create matplotlib figure and use imshow to display radargram
-        self.dataCanvas.get_tk_widget().pack(in_=self.dataFrame, side="bottom", fill="both", expand=1)      
+
+        self.dataCanvas.get_tk_widget().pack(in_=self.dataFrame, side="bottom", fill="both", expand=1) 
+             
         # display image data for radargram and clutter sim
         self.im_data  = self.ax.imshow(self.imScl_data, cmap="gray", aspect="auto", extent=[self.data["dist"][0], 
                         self.data["dist"][-1], self.data["amp"].shape[0] * self.data["dt"] * 1e6, 0])
         self.im_clut  = self.ax.imshow(self.imScl_clut, cmap="gray", aspect="auto", extent=[self.data["dist"][0], 
                         self.data["dist"][-1], self.data["amp"].shape[0] * self.data["dt"] * 1e6, 0])
+
         # the first time the amplitude image is loaded, update colormap to cut off values below 10th percentile
         self.im_data.set_clim([self.mindB_data, 0.0])
         self.im_clut.set_clim([self.mindB_clut, 0.0])
-        # create colormap sliders and reset button - initialize for data image
-        self.s_cmin = mpl.widgets.Slider(self.ax_cmin, 'min', self.mindB_data - 10, self.mindB_data + 10, valinit=self.mindB_data, orientation="vertical")
-        self.s_cmax = mpl.widgets.Slider(self.ax_cmax, 'max', -10, 10, valinit=0.0, orientation="vertical")
-        self.cmap_reset_button = mpl.widgets.Button(self.reset_ax, 'Reset', color="lightgoldenrodyellow")
-        self.s_cmin.on_changed(self.cmap_update)
-        self.s_cmax.on_changed(self.cmap_update)
-        
-        self.cmap_reset_button.on_clicked(self.cmap_reset)
+
+        # set slider bounds
+        self.s_cmin.valmin = self.mindB_data - 10
+        self.s_cmin.valmax = self.mindB_data + 10
+        self.s_cmin.valinit = self.mindB_data
+        self.s_cmax.valmin = -10
+        self.s_cmax.valmax = 10
+        self.s_cmax.valinit = 0
+        self.fig.canvas.draw()
+
         # set clutter sim visibility to false
         self.im_clut.set_visible(False)
 
-        # Save background
-        self.axbg = self.dataCanvas.copy_from_bbox(self.ax.bbox)
-            
-        # multiply y-axis label by 1e6 to plot in microseconds
-        # self.ax_yticks = np.round(self.ax.get_yticks()*1e6)
-        # self.ax.set_yticklabels(self.ax_yticks)
+        # label axes    
         self.ax.set(xlabel = "along-track distance [km]", ylabel = "two-way travel time [microsec.]")
-        # self.openIm.remove()
+
+        # update the canvas
         self.dataCanvas._tkcanvas.pack()
         self.dataCanvas.draw()
+
+        # save background
+        self.axbg = self.dataCanvas.copy_from_bbox(self.ax.bbox)
 
 
     # get_pickState is a method to return the current picking state
@@ -319,7 +332,6 @@ class imPick(tk.Frame):
     def cmap_update(self, s=None):
         # method to update image colormap based on slider values
         print(self.s_cmin.val, self.s_cmax.val)
-    
         try:
             if self.im_data.get_visible():
                 # apply slider values to visible image
@@ -371,19 +383,7 @@ class imPick(tk.Frame):
 
     # clear_canvas is a method to clear the data canvas and figures to reset app
     def clear_canvas(self):
-        print('clear canvas')
-        self.ax.clear()
-        del self.xln[:]
-        del self.yln[:]
-        del self.yln_old[:]
-        del self.xln_old[:]
-        self.pick.set_data(self.xln, self.yln)
-        self.saved_pick.set_offsets(np.c_[self.xln_old,self.yln_old])
-        # self.im_clut.remove()
-        # self.im_data.remove()
-        # self.surf.remove()
-        # self.pick.remove()
-        # self.saved_pick.remove()
+        self.ax.cla()
         self.set_vars()
 
 
