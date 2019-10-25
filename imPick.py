@@ -56,17 +56,12 @@ class imPick(tk.Frame):
         self.reset_ax = self.fig.add_axes([0.935, 0.11, 0.04, 0.03])
         self.reset_ax.set_visible(False)
         self.ax = self.fig.add_subplot(111)
-        # im = mpl.image.imread('./lib/Radar_sounding.png')
-        # self.openIm = self.ax.imshow(im)
         self.ax.set_visible(False)
 
         # create colormap sliders and reset button - initialize for data image
-        self.s_cmin = mpl.widgets.Slider(self.ax_cmin, 'min', orientation="vertical")
-        self.s_cmax = mpl.widgets.Slider(self.ax_cmax, 'max', orientation="vertical")
+        self.s_cmin = mpl.widgets.Slider(self.ax_cmin, 'min', 0, 1, orientation="vertical")
+        self.s_cmax = mpl.widgets.Slider(self.ax_cmax, 'max', 0, 1, orientation="vertical")
         self.cmap_reset_button = mpl.widgets.Button(self.reset_ax, 'Reset', color="lightgoldenrodyellow")
-        self.s_cmin.on_changed(self.cmap_update)
-        self.s_cmax.on_changed(self.cmap_update)
-        self.cmap_reset_button.on_clicked(self.cmap_reset)
 
 
     # set_vars is a method to set imPick variables
@@ -145,7 +140,8 @@ class imPick(tk.Frame):
         self.s_cmax.valmin = -10
         self.s_cmax.valmax = 10
         self.s_cmax.valinit = 0
-        self.fig.canvas.draw()
+
+        self.update_slider()
 
         # set clutter sim visibility to false
         self.im_clut.set_visible(False)
@@ -294,6 +290,7 @@ class imPick(tk.Frame):
         self.s_cmin.valmax = self.mindB_data + 10
         self.s_cmax.valmin = -10
         self.s_cmax.valmax = 10
+        self.update_slider()
         # reverse visilibilty
         self.im_clut.set_visible(False)
         self.im_data.set_visible(True)
@@ -307,18 +304,22 @@ class imPick(tk.Frame):
         # get radar data colormap slider values for reviewing
         self.data_cmin = self.s_cmin.val
         self.data_cmax = self.s_cmax.val
+
         if not self.clut_imSwitch_flag:
             # if this is the first time viewing the clutter sim, set colorbar limits to initial values
-            self.s_cmin.valmin = self.mindB_clut - 10
-            self.s_cmin.valmax = self.mindB_clut + 10
             self.s_cmin.valinit = self.mindB_clut
-            self.s_cmax.valmin = -10
-            self.s_cmax.valmax = 10
             self.s_cmax.valinit = 0
         else: 
             # if clutter has been shown before revert to previous colorbar values
             self.im_clut.set_clim([self.clut_cmin, self.clut_cmax])
+            self.s_cmin.valinit = self.clut_cmin
+            self.s_cmax.valinit = self.clut_cmax
 
+        self.s_cmin.valmin = self.mindB_clut - 10
+        self.s_cmin.valmax = self.mindB_clut + 10            
+        self.s_cmax.valmin = -10
+        self.s_cmax.valmax = 10
+        self.update_slider()
         # reverse visilibilty
         self.im_data.set_visible(False)
         self.im_clut.set_visible(True)
@@ -328,10 +329,17 @@ class imPick(tk.Frame):
         self.fig.canvas.draw()
         self.im_status.set("clut")
 
+    def update_slider(self):
+        self.ax_cmax.clear()
+        self.ax_cmin.clear()
+        self.s_cmin.__init__(self.ax_cmin, 'min', valmin=self.s_cmin.valmin, valmax=self.s_cmin.valmax, valinit=self.s_cmin.valinit, orientation="vertical")
+        self.s_cmax.__init__(self.ax_cmax, 'max', valmin=self.s_cmax.valmin, valmax=self.s_cmax.valmax, valinit=self.s_cmax.valinit, orientation="vertical")
+        self.s_cmin.on_changed(self.cmap_update)
+        self.s_cmax.on_changed(self.cmap_update)
+        self.cmap_reset_button.on_clicked(self.cmap_reset)
 
     def cmap_update(self, s=None):
         # method to update image colormap based on slider values
-        print(self.s_cmin.val, self.s_cmax.val)
         try:
             if self.im_data.get_visible():
                 # apply slider values to visible image
