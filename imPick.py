@@ -112,8 +112,10 @@ class imPick(tk.Frame):
 
         # scale data in dB with maxPow value as the reference
         self.imScl_data = np.log(np.power(self.data[self.dtype],2) / maxPow_data)
-        self.imScl_clut = np.log(np.power(self.data["clutter"],2) / maxPow_clut)
-
+        if np.any(self.data["clutter"]):
+            self.imScl_clut = np.log(np.power(self.data["clutter"],2) / maxPow_clut)
+        else:
+            self.imScl_clut = self.data["clutter"]
         # cut off data at 10th percentile to avoid extreme outliers - round down
         self.mindB_data = np.floor(np.nanpercentile(self.imScl_data,10))
         self.mindB_clut = np.floor(np.nanpercentile(self.imScl_clut,10))
