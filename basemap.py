@@ -126,4 +126,7 @@ class basemap(tk.Tk):
             self.legend.remove()
             self.track_start.remove()
             self.track_end.remove()
-            self.map_fig.canvas.draw()
+        if self.pick_loc:
+            self.pick_loc.remove()
+            self.pick_loc = None
+        self.map_fig.canvas.draw()
