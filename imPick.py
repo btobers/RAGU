@@ -62,6 +62,7 @@ class imPick(tk.Frame):
         self.s_cmin = mpl.widgets.Slider(self.ax_cmin, 'min', 0, 1, orientation="vertical")
         self.s_cmax = mpl.widgets.Slider(self.ax_cmax, 'max', 0, 1, orientation="vertical")
         self.cmap_reset_button = mpl.widgets.Button(self.reset_ax, 'Reset', color="lightgoldenrodyellow")
+        self.cmap_reset_button.on_clicked(self.cmap_reset)
 
 
     # set_vars is a method to set imPick variables
@@ -338,7 +339,6 @@ class imPick(tk.Frame):
         self.s_cmax.__init__(self.ax_cmax, 'max', valmin=self.s_cmax.valmin, valmax=self.s_cmax.valmax, valinit=self.s_cmax.valinit, orientation="vertical")
         self.s_cmin.on_changed(self.cmap_update)
         self.s_cmax.on_changed(self.cmap_update)
-        self.cmap_reset_button.on_clicked(self.cmap_reset)
 
     def cmap_update(self, s=None):
         # method to update image colormap based on slider values
@@ -360,15 +360,23 @@ class imPick(tk.Frame):
     def cmap_reset(self, event):
         # reset sliders to initial values
         if self.im_data.get_visible():
-            self.s_cmin.reset()
-            self.s_cmax.reset()
+            self.s_cmin.valmin = self.mindB_data - 10
+            self.s_cmin.valmax = self.mindB_data + 10
+            self.s_cmin.valinit = self.mindB_data
+            self.s_cmax.valmin = -10
+            self.s_cmax.valmax = 10
+            self.s_cmax.valinit = 0
         else:
             # if clutter is displayed, change slider bounds
             self.s_cmin.valmin = self.mindB_clut - 10
             self.s_cmin.valmax = self.mindB_clut + 10
             self.s_cmin.valinit = self.mindB_clut
-            # slider max bounds will be same as for real data
-            self.s_cmax.reset()
+            self.s_cmax.valmin = -10
+            self.s_cmax.valmax = 10
+            self.s_cmax.valinit = 0
+        self.update_slider()
+        self.cmap_update()
+
 
 
     # exit_warningn is a method which closes the window if no picks exist, or if the user would like to discard existing picks
