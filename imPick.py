@@ -32,6 +32,12 @@ class imPick(tk.Frame):
         radarRadio.pack(side="left")
         clutterRadio = tk.Radiobutton(infoFrame,text="Cluttergram", variable=self.im_status, value="clut",command=self.show_clut)
         clutterRadio.pack(side="left")
+        self.comments = tk.StringVar()
+        self.commentBox = tk.Entry(infoFrame, textvariable = self.comments)
+        self.commentBox.pack(side='right')
+        commentsLabel = tk.Label(infoFrame,text="comments:")
+        commentsLabel.pack(side='right')
+
         self.im_status.set("data")
         
 
@@ -114,10 +120,10 @@ class imPick(tk.Frame):
 
         # scale data in dB with maxPow value as the reference
         self.imScl_data = np.log(np.power(self.data[self.dtype],2) / maxPow_data)
-        if np.any(self.data["clutter"]):
-            self.imScl_clut = np.log(np.power(self.data["clutter"],2) / maxPow_clut)
-        else:
-            self.imScl_clut = self.data["clutter"]
+        # if np.any(self.data["clutter"]):
+        #     self.imScl_clut = np.log(np.power(self.data["clutter"],2) / maxPow_clut)
+        # else:
+        self.imScl_clut = self.data["clutter"]
 
         # cut off data at 10th percentile to avoid extreme outliers - round down
         self.mindB_data = np.floor(np.nanpercentile(self.imScl_data,10))
@@ -250,6 +256,7 @@ class imPick(tk.Frame):
     def onkey(self, event):
         # on-key commands
         if event.key =="c":
+            print(self.commentBox.get())
             # clear the drawing of line segments
             self.clear_picks()
         elif event.key =="delete":

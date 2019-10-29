@@ -75,7 +75,7 @@ class ingester:
             print("Ingest Error: File cannot be read with h5py, trying with scipy.io" )
             try:
                 f = scio.loadmat(fpath)
-
+                
                 dt = float(f["block"]["dt"][0])
                 num_trace = int(f["block"]["num_trace"][0])
                 num_sample = int(f["block"]["num_sample"][0])
