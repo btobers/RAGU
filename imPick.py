@@ -108,6 +108,7 @@ class imPick(tk.Frame):
         self.ax.set_title(os.path.splitext(self.f_loadName.split("/")[-1])[0])
 
         # find max power in data to scale image
+        self.data["clutter"][np.where(self.data["clutter"] == -np.inf)] = np.NaN
         maxPow_data = np.nanmax(np.power(self.data[self.dtype][:],2))
         maxPow_clut = np.nanmax(np.power(self.data["clutter"][:],2))
 
@@ -117,6 +118,7 @@ class imPick(tk.Frame):
             self.imScl_clut = np.log(np.power(self.data["clutter"],2) / maxPow_clut)
         else:
             self.imScl_clut = self.data["clutter"]
+
         # cut off data at 10th percentile to avoid extreme outliers - round down
         self.mindB_data = np.floor(np.nanpercentile(self.imScl_data,10))
         self.mindB_clut = np.floor(np.nanpercentile(self.imScl_clut,10))
@@ -340,6 +342,7 @@ class imPick(tk.Frame):
         self.s_cmin.on_changed(self.cmap_update)
         self.s_cmax.on_changed(self.cmap_update)
 
+
     def cmap_update(self, s=None):
         # method to update image colormap based on slider values
         try:
@@ -352,7 +355,6 @@ class imPick(tk.Frame):
                 self.clut_cmin = self.s_cmin.val
                 self.clut_cmax = self.s_cmax.val
                 self.im_clut.set_clim([self.clut_cmin, self.clut_cmax])
-            self.fig.canvas.draw()
         except Exception as err:
             print("cmap_update error: " + str(err))
 

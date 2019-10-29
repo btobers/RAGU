@@ -11,12 +11,12 @@ import gui
 import tkinter as tk
 
 ### USER SPECIFIED VARS ###
-# in_path = "/media/anomalocaris/beefmaster/MARS/targ/supl/UAF/2018/may/block_clutter_elev"
-in_path = "/mnt/Swaps/MARS/targ/supl/UAF/2018"
-out_path = "/home/anomalocaris/Desktop"
-# out_path = "/mnt/Swaps/MARS/targ/supl/OIB_AK/2019/sept"
-# map_path = "/media/anomalocaris/beefmaster/MARS/targ/supl/grid-AKDEM/"
-map_path = "/mnt/Swaps/MARS/targ/supl/grid-AKDEM/"
+in_path = "/media/anomalocaris/beefmaster/MARS/targ/supl/UAF/2018/aug/block_clutter/"
+# in_path = "/mnt/Swaps/MARS/targ/supl/UAF/2018"
+# out_path = "/home/anomalocaris/Desktop"
+out_path = "/media/anomalocaris/beefmaster/MARS/targ/supl/UAF/2018/aug/picks/"
+map_path = "/media/anomalocaris/beefmaster/MARS/targ/supl/grid-AKDEM/"
+# map_path = "/mnt/Swaps/MARS/targ/supl/grid-AKDEM/"
 
 ### INITIALIZE ###
 root = tk.Tk()
