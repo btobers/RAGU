@@ -72,7 +72,7 @@ class ingester:
 
         # if h5py.File does not work, try scipy.io  
         except:
-            print("Ingest Error: File cannot be read with h5py, trying with scipy.io" )
+            # print("Ingest Error: File cannot be read with h5py, trying with scipy.io" )
             try:
                 f = scio.loadmat(fpath)
                 

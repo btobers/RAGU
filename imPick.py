@@ -25,22 +25,13 @@ class imPick(tk.Frame):
         self.dataFrame = tk.Frame(self.parent)
         self.dataFrame.pack(side="bottom", fill="both", expand=1)
 
-
         self.im_status = tk.StringVar()
         # add radio buttons for toggling between radargram and clutter-sim
         radarRadio = tk.Radiobutton(infoFrame, text="Radargram", variable=self.im_status, value="data",command=self.show_data)
         radarRadio.pack(side="left")
         clutterRadio = tk.Radiobutton(infoFrame,text="Cluttergram", variable=self.im_status, value="clut",command=self.show_clut)
         clutterRadio.pack(side="left")
-        self.comments = tk.StringVar()
-        self.commentBox = tk.Entry(infoFrame, textvariable = self.comments)
-        self.commentBox.pack(side='right')
-        commentsLabel = tk.Label(infoFrame,text="comments:")
-        commentsLabel.pack(side='right')
-
-        self.im_status.set("data")
         
-
         self.pickLabel = tk.Label(infoFrame, text="Picking Layer:\t0", fg="#d9d9d9")
         self.pickLabel.pack(side="right")
 
@@ -95,6 +86,8 @@ class imPick(tk.Frame):
         self.yln = []
         self.pick = None
         self.saved_pick = None
+        self.im_status.set("data")
+
 
     # load calls ingest() on the data file and sets the datacanvas
     def load(self, f_loadName):
@@ -113,21 +106,36 @@ class imPick(tk.Frame):
         # set figure title
         self.ax.set_title(os.path.splitext(self.f_loadName.split("/")[-1])[0])
 
-        # find max power in data to scale image
-        self.data["clutter"][np.where(self.data["clutter"] == -np.inf)] = np.NaN
-        maxPow_data = np.nanmax(np.power(self.data[self.dtype][:],2))
-        maxPow_clut = np.nanmax(np.power(self.data["clutter"][:],2))
+        # calculate power of data
+        Pow_data = np.power(self.data["amp"],2)
+        # place data in dB for visualization
+        self.dB_data = np.log(Pow_data)
 
-        # scale data in dB with maxPow value as the reference
-        self.imScl_data = np.log(np.power(self.data[self.dtype],2) / maxPow_data)
-        # if np.any(self.data["clutter"]):
-        #     self.imScl_clut = np.log(np.power(self.data["clutter"],2) / maxPow_clut)
-        # else:
-        self.imScl_clut = self.data["clutter"]
+        # replace any negative infinity clutter values with nans
+        self.data["clutter"][np.where(self.data["clutter"] == -np.inf)] = np.NaN
+        
+        # get clutter data in dB for visualization
+        # check if clutter data exists
+        if np.any(self.data["clutter"]):
+            # check if clutter data is storede in linear space or log space - lin space should have values less than 1
+            # if in lin space, convert to dB
+            if np.nanmax(np.abs(self.data["clutter"])) < 1:
+                Pow_clut = np.power(self.data["clutter"],2)
+                self.dB_clut = np.log(Pow_clut)
+            # if in log space, leave as is
+            else:
+                self.dB_clut = self.data["clutter"]
+        # if no clutter data, use empty array
+        else:
+            self.dB_clut = self.data["clutter"]
 
         # cut off data at 10th percentile to avoid extreme outliers - round down
-        self.mindB_data = np.floor(np.nanpercentile(self.imScl_data,10))
-        self.mindB_clut = np.floor(np.nanpercentile(self.imScl_clut,10))
+        self.mindB_data = np.floor(np.nanpercentile(self.dB_data,10))
+        self.mindB_clut = np.floor(np.nanpercentile(self.dB_clut,10))
+        
+        self.maxdB_data = np.nanmax(self.dB_data)
+        self.maxdB_clut = np.nanmax(self.dB_clut)
+
         self.surf, = self.ax.plot(self.data["dist"],self.data["twtt_surf"],"c")     # empty line for twtt surface
         self.pick, = self.ax.plot([],[],"r")                                        # empty line for current pick
         self.saved_pick = self.ax.scatter([],[],c="g",marker=".",s=8,linewidth=0)   # empty line for saved pick
@@ -135,22 +143,22 @@ class imPick(tk.Frame):
         self.dataCanvas.get_tk_widget().pack(in_=self.dataFrame, side="bottom", fill="both", expand=1) 
              
         # display image data for radargram and clutter sim
-        self.im_data  = self.ax.imshow(self.imScl_data, cmap="gray", aspect="auto", extent=[self.data["dist"][0], 
+        self.im_data  = self.ax.imshow(self.dB_data, cmap="gray", aspect="auto", extent=[self.data["dist"][0], 
                         self.data["dist"][-1], self.data["amp"].shape[0] * self.data["dt"] * 1e6, 0])
-        self.im_clut  = self.ax.imshow(self.imScl_clut, cmap="gray", aspect="auto", extent=[self.data["dist"][0], 
+        self.im_clut  = self.ax.imshow(self.dB_clut, cmap="gray", aspect="auto", extent=[self.data["dist"][0], 
                         self.data["dist"][-1], self.data["amp"].shape[0] * self.data["dt"] * 1e6, 0])
 
         # the first time the amplitude image is loaded, update colormap to cut off values below 10th percentile
-        self.im_data.set_clim([self.mindB_data, 0.0])
-        self.im_clut.set_clim([self.mindB_clut, 0.0])
+        self.im_data.set_clim([self.mindB_data, self.maxdB_data])
+        self.im_clut.set_clim([self.mindB_clut, self.maxdB_clut])
 
         # set slider bounds
         self.s_cmin.valmin = self.mindB_data - 10
         self.s_cmin.valmax = self.mindB_data + 10
         self.s_cmin.valinit = self.mindB_data
-        self.s_cmax.valmin = -10
-        self.s_cmax.valmax = 10
-        self.s_cmax.valinit = 0
+        self.s_cmax.valmin = self.maxdB_data - 10
+        self.s_cmax.valmax = self.maxdB_data + 10
+        self.s_cmax.valinit = self.maxdB_data
 
         self.update_slider()
 
@@ -177,6 +185,8 @@ class imPick(tk.Frame):
     def set_pickState(self, state):
         self.pick_state = state
         if self.pick_state == True:
+            # update canvas background
+            self.axbg = self.dataCanvas.copy_from_bbox(self.ax.bbox)
             # if previous layers already exist, call pick interp and clear points for new layer
             if len(self.xln) >= 2:
                 self.pick_layer += 1
@@ -256,7 +266,6 @@ class imPick(tk.Frame):
     def onkey(self, event):
         # on-key commands
         if event.key =="c":
-            print(self.commentBox.get())
             # clear the drawing of line segments
             self.clear_picks()
         elif event.key =="delete":
@@ -300,8 +309,8 @@ class imPick(tk.Frame):
         # set colorbar bounds
         self.s_cmin.valmin = self.mindB_data - 10
         self.s_cmin.valmax = self.mindB_data + 10
-        self.s_cmax.valmin = -10
-        self.s_cmax.valmax = 10
+        self.s_cmax.valmin = self.maxdB_data - 10
+        self.s_cmax.valmax = self.maxdB_data + 10
         self.update_slider()
         # reverse visilibilty
         self.im_clut.set_visible(False)
@@ -320,7 +329,7 @@ class imPick(tk.Frame):
         if not self.clut_imSwitch_flag:
             # if this is the first time viewing the clutter sim, set colorbar limits to initial values
             self.s_cmin.valinit = self.mindB_clut
-            self.s_cmax.valinit = 0
+            self.s_cmax.valinit = self.maxdB_clut
         else: 
             # if clutter has been shown before revert to previous colorbar values
             self.im_clut.set_clim([self.clut_cmin, self.clut_cmax])
@@ -329,8 +338,8 @@ class imPick(tk.Frame):
 
         self.s_cmin.valmin = self.mindB_clut - 10
         self.s_cmin.valmax = self.mindB_clut + 10            
-        self.s_cmax.valmin = -10
-        self.s_cmax.valmax = 10
+        self.s_cmax.valmin = self.maxdB_clut - 10
+        self.s_cmax.valmax = self.maxdB_clut + 10
         self.update_slider()
         # reverse visilibilty
         self.im_data.set_visible(False)
@@ -372,17 +381,17 @@ class imPick(tk.Frame):
             self.s_cmin.valmin = self.mindB_data - 10
             self.s_cmin.valmax = self.mindB_data + 10
             self.s_cmin.valinit = self.mindB_data
-            self.s_cmax.valmin = -10
-            self.s_cmax.valmax = 10
-            self.s_cmax.valinit = 0
+            self.s_cmax.valmin = self.maxdB_data - 10
+            self.s_cmax.valmax = self.maxdB_data + 10
+            self.s_cmax.valinit = self.maxdB_data
         else:
             # if clutter is displayed, change slider bounds
             self.s_cmin.valmin = self.mindB_clut - 10
             self.s_cmin.valmax = self.mindB_clut + 10
             self.s_cmin.valinit = self.mindB_clut
-            self.s_cmax.valmin = -10
-            self.s_cmax.valmax = 10
-            self.s_cmax.valinit = 0
+            self.s_cmax.valmin = self.maxdB_clut - 10
+            self.s_cmax.valmax = self.maxdB_clut + 10
+            self.s_cmax.valinit = self.maxdB_clut
         self.update_slider()
         self.cmap_update()
 

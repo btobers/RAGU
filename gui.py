@@ -29,6 +29,7 @@ class MainGUI(tk.Frame):
         self.map_path = map_path
         self.setup()
 
+
     # setup is a method which generates the app menubar and buttons and initializes some vars
     def setup(self):
         self.f_loadName = ""
@@ -227,6 +228,7 @@ class MainGUI(tk.Frame):
         \n7. File->Save to export picks
         \n8. File->Next to load next data file
         \n9. File->Quit to exit application""")
+
 
     def shortcuts(self):
         # shortcut list
