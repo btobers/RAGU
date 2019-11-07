@@ -11,8 +11,8 @@ import gui
 import tkinter as tk
 
 ### USER SPECIFIED VARS ###
-# in_path = "/media/anomalocaris/beefmaster/MARS/targ/supl/UAF/2018/aug/block_clutter/"
-in_path = "/mnt/Swaps/MARS/targ/supl/UAF/2018/may/block_clutter_elev/"
+in_path = "/media/anomalocaris/beefmaster/MARS/targ/supl/UAF/2018/aug/block_clutter/"
+# in_path = "/mnt/Swaps/MARS/targ/supl/UAF/2018/may/block_clutter_elev/"
 # out_path = "/home/anomalocaris/Desktop"
 out_path = "/media/anomalocaris/beefmaster/MARS/targ/supl/UAF/2018/aug/picks/"
 map_path = "/media/anomalocaris/beefmaster/MARS/targ/supl/grid-AKDEM/"
@@ -22,7 +22,7 @@ map_path = "/media/anomalocaris/beefmaster/MARS/targ/supl/grid-AKDEM/"
 root = tk.Tk()
 # get screen size - open root window half screen
 w, h = root.winfo_screenwidth(), root.winfo_screenheight()
-root.geometry("%dx%d+0+0" % (.5*w, .5*h))
+root.geometry("%dx%d+0+0" % (w, h))
 root.title("NOSEpick")
 root.config(bg="#d9d9d9")
 # img = tk.PhotoImage(file='nose-pick-icon.png')

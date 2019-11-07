@@ -187,7 +187,7 @@ class imPick(tk.Frame):
         if self.pick_state == True:
             # update canvas background
             self.axbg = self.dataCanvas.copy_from_bbox(self.ax.bbox)
-            # if previous layers already exist, call pick interp and clear points for new layer
+            # if a layer was already being picked, advance the pick layer count to begin new layer
             if len(self.xln) >= 2:
                 self.pick_layer += 1
             # initialize pick index and twtt dictionaries for current picking layer
@@ -278,22 +278,35 @@ class imPick(tk.Frame):
     def clear_picks(self):
         # clear all picks
         if len(self.xln + self.xln_old) > 0 and tk.messagebox.askokcancel("Warning", "Clear all picks?", icon = "warning") == True:
+            # delete pick lists
             del self.xln[:]
             del self.yln[:]
             del self.yln_old[:]
             del self.xln_old[:]
             self.pick.set_data(self.xln, self.yln)
             self.saved_pick.set_offsets(np.c_[self.xln_old,self.yln_old])
-            self.pickLabel.config(text="Picking Layer:\t0")
+            # clear pick dictionary
+            self.pick_dict.clear()
+            # reset pick layer increment to 0
             self.pick_layer = 0
+            self.pickLabel.config(text="Picking Layer:\t" + str(self.pick_layer))
             self.fig.canvas.draw()
 
 
     def clear_last(self):
         # clear last pick
         if len(self.xln) > 0:
+            # get indices of last two ponts picked to remove twtt from pick_dict - reset to -1.
+            pick_idx_0 = utils.find_nearest(self.data["dist"], self.xln[-2])
+            pick_idx_1 = utils.find_nearest(self.data["dist"], self.xln[-1])
+            pick_idx = np.arange(pick_idx_0,pick_idx_1 + 1)
+            self.pick_dict["layer_" + str(self.pick_layer)][pick_idx[:]] = -1.
+            # delete last pick
             del self.xln[-1:]
             del self.yln[-1:]
+            # delete all points between last two click events
+            del self.xln_old[-len(pick_idx):]
+            del self.yln_old[-len(pick_idx):]
             self.pick.set_data(self.xln, self.yln)
             self.fig.canvas.draw()
 
