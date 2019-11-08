@@ -5,7 +5,7 @@ import h5py
 import numpy as np
 import tkinter as tk
 from tkinter import ttk as ttk
-import sys,os
+import sys,os,time
 import matplotlib as mpl
 mpl.use("TkAgg")
 import matplotlib.pyplot as plt
@@ -54,6 +54,10 @@ class imPick(tk.Frame):
         self.reset_ax.set_visible(False)
         self.ax = self.fig.add_subplot(111)
         self.ax.set_visible(False)
+
+        # connect xlim_change with event to update image background for blitting
+        # self.ax.callbacks.connect('xlim_changed', self.update_bg)
+        self.draw_cid = self.fig.canvas.mpl_connect('draw_event', self.update_bg)
 
         # create colormap sliders and reset button - initialize for data image
         self.s_cmin = mpl.widgets.Slider(self.ax_cmin, 'min', 0, 1, orientation="vertical")
@@ -186,7 +190,7 @@ class imPick(tk.Frame):
         self.pick_state = state
         if self.pick_state == True:
             # update canvas background
-            self.axbg = self.dataCanvas.copy_from_bbox(self.ax.bbox)
+            # self.axbg = self.dataCanvas.copy_from_bbox(self.ax.bbox)
             # if a layer was already being picked, advance the pick layer count to begin new layer
             if len(self.xln) >= 2:
                 self.pick_layer += 1
@@ -244,6 +248,10 @@ class imPick(tk.Frame):
 
             self.xln_old.extend(self.data["dist"][pick_idx])
             self.yln_old.extend(self.pick_dict["layer_" + str(self.pick_layer)][pick_idx])
+            print(pick_idx)
+            print(self.data["dist"][pick_idx])
+            print(self.xln_old)
+            print(self.yln_old)
             self.pick.set_data(self.xln, self.yln) 
 
         except Exception as err:
@@ -408,7 +416,41 @@ class imPick(tk.Frame):
         self.update_slider()
         self.cmap_update()
 
+    def safe_draw(self):
+        """temporarily disconnect the draw_event callback to avoid recursion"""
+        canvas = self.fig.canvas
+        canvas.mpl_disconnect(self.draw_cid)
+        canvas.draw()
+        self.draw_cid = canvas.mpl_connect('draw_event', self.update_bg)
 
+    def update_bg(self, event=None):
+        """
+        when the figure is resized, hide picks, draw everything,
+        and update the background.
+        """
+        if self.saved_pick:
+            self.pick.set_visible(False)
+            self.saved_pick.set_visible(False)
+            self.safe_draw()
+            self.axbg = self.dataCanvas.copy_from_bbox(self.ax.bbox)
+            self.pick.set_visible(True)
+            self.saved_pick.set_visible(True)
+            self.blit()
+        else:
+            self.safe_draw()
+            self.axbg = self.dataCanvas.copy_from_bbox(self.ax.bbox)
+            self.blit()
+
+
+    def blit(self):
+        """
+        update the figure, without needing to redraw the
+        "axbg" artists.
+        """
+        self.fig.canvas.restore_region(self.axbg)
+        self.ax.draw_artist(self.pick)
+        self.ax.draw_artist(self.saved_pick)
+        self.fig.canvas.blit(self.ax.bbox)
 
     # exit_warningn is a method which closes the window if no picks exist, or if the user would like to discard existing picks
     def exit_warning(self):
