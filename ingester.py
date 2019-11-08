@@ -98,6 +98,13 @@ class ingester:
         if clutter.shape[0] == num_trace and clutter.shape[1] == num_sample:
             clutter = np.transpose(clutter)
 
+
+        # interpolate nav data if not unique location for each trace
+        if len(np.unique(lon)) < num_trace:
+            lon = utils.interp_array(lon)
+            lat = utils.interp_array(lat)
+            dist = utils.interp_array(dist)
+
         # convert lon, lat, elev to navdat object of nav class
         wgs84_proj4 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
         navdat = nav()
@@ -109,5 +116,5 @@ class ingester:
             ak_nad83_proj4 = "+proj=aea +lat_1=55 +lat_2=65 +lat_0=50 +lon_0=-154 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs" 
             navdat_transform = navdat.transform(ak_nad83_proj4)
             dist = utils.euclid_dist(navdat_transform)
-        
+
         return {"dt": dt, "num_trace": num_trace, "num_sample": num_sample, "navdat": navdat, "twtt_surf": twtt_surf,"dist": dist, "amp": amp, "clutter": clutter} # other fields?

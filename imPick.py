@@ -220,12 +220,7 @@ class imPick(tk.Frame):
 
                 # redraw pick quickly with blitting
                 self.pick.set_data(self.xln, self.yln)
-                self.dataCanvas.restore_region(self.axbg)
-                self.ax.draw_artist(self.pick)
-                self.ax.draw_artist(self.saved_pick)
-                self.dataCanvas.blit(self.ax.bbox)
-                # self.fig.canvas.draw()
-
+                self.blit()
 
                 # if more than two picks, call pick_interp
                 if len(self.xln) >= 2:
@@ -245,13 +240,9 @@ class imPick(tk.Frame):
             pick_idx = np.arange(pick_idx_0,self.pick_idx_1 + 1)
             # linearly interpolate twtt values between pick points at idx_0 and idx_1
             self.pick_dict["layer_" + str(self.pick_layer)][pick_idx] = np.interp(pick_idx, [pick_idx_0,self.pick_idx_1], [self.yln[-2],self.yln[-1]])
-
+            # extend pick lists
             self.xln_old.extend(self.data["dist"][pick_idx])
             self.yln_old.extend(self.pick_dict["layer_" + str(self.pick_layer)][pick_idx])
-            print(pick_idx)
-            print(self.data["dist"][pick_idx])
-            print(self.xln_old)
-            print(self.yln_old)
             self.pick.set_data(self.xln, self.yln) 
 
         except Exception as err:
@@ -265,11 +256,7 @@ class imPick(tk.Frame):
         del self.yln[:]  
         self.pick.set_data(self.xln, self.yln)
         self.saved_pick.set_offsets(np.c_[self.xln_old,self.yln_old])
-        self.dataCanvas.restore_region(self.axbg)
-        self.ax.draw_artist(self.pick)
-        self.ax.draw_artist(self.saved_pick)
-        self.dataCanvas.blit(self.ax.bbox)
-        # self.fig.canvas.draw()
+        self.blit()
 
     def onkey(self, event):
         # on-key commands
@@ -448,9 +435,12 @@ class imPick(tk.Frame):
         "axbg" artists.
         """
         self.fig.canvas.restore_region(self.axbg)
-        self.ax.draw_artist(self.pick)
-        self.ax.draw_artist(self.saved_pick)
+        if self.pick:
+            self.ax.draw_artist(self.pick)
+        if self.saved_pick:
+            self.ax.draw_artist(self.saved_pick)
         self.fig.canvas.blit(self.ax.bbox)
+
 
     # exit_warningn is a method which closes the window if no picks exist, or if the user would like to discard existing picks
     def exit_warning(self):

@@ -1,5 +1,6 @@
 import ingester
 import numpy as np
+import pandas as pd
 from tkinter import filedialog, messagebox
 import matplotlib.pyplot as plt
 import sys
@@ -56,3 +57,21 @@ def find_nearest(array,value):
     # return index in array with value closest to the passed value
     idx = (np.abs(array-value)).argmin()
     return idx
+
+def interp_array(array):
+    # interpolate forward linearly between repeated values in an array to remove stair-stepped data
+    array_cp = np.copy(array)
+    # first map unique values in array
+    mapping = {}
+    unique = pd.unique(array)
+    for _i in range(len(unique) - 1):
+        mapping[_i] = np.where(array == unique[_i])[0]
+        interp_ind = np.arange(mapping[_i][0], mapping[_i][-1] + 2) 
+        array_cp[interp_ind] = np.interp(interp_ind, [interp_ind[0], interp_ind[-1]], [array[interp_ind[0]], array[interp_ind[-1]]])
+
+    # for the last set of unique values, interpolate between last value and current value
+    mapping[_i + 1] = np.where(array == unique[_i + 1])[0]
+    interp_ind = np.arange(mapping[_i - 1][0], mapping[_i + 1][-1] + 1) 
+    array_cp[interp_ind] = np.interp(interp_ind, [interp_ind[0], interp_ind[-1]], [array[interp_ind[0]], array[interp_ind[-1]]])
+
+    return array_cp
