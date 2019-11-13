@@ -176,12 +176,16 @@ class MainGUI(tk.Frame):
     def new_pick(self):
         if self.f_loadName:
             self.imPick.set_pickState(True)
+            self.imPick.plot_picks()
+            self.imPick.blit()
 
 
     # stop_pick is a method which terminates the current imPick pick layer
     def stop_pick(self):
         if self.imPick.get_pickState() is True:
             self.imPick.set_pickState(False)
+            self.imPick.plot_picks()
+            self.imPick.blit()
 
 
     # next_loc is a method to get the filename of the next data file in the directory then call imPick.load()
@@ -233,11 +237,16 @@ class MainGUI(tk.Frame):
     def shortcuts(self):
         # shortcut list
         tk.messagebox.showinfo("Keyboard Shortcuts",
-        """[Ctrl+o]\tOpen radar data file
+        """General:
+        \n[Ctrl+o]\tOpen radar data file
         \n[Ctrl+m]\tOpen basemap window
         \n[Ctrl+n]\tBegin new pick layer
         \n[Escape]\tEnd current pick layer
-        \n[Spacebar]\tToggle between radar and\t\t\tclutter images
+        \n[Spacebar]\tToggle between radar and clutter images
         \n[Ctrl+s]\tExport pick data
-        \n[Right]\t\tOpen next file in \t\t\t\tdirectory
-        \n[Ctrl+q]\tQuit NOSEpick""")
+        \n[Right]\t\tOpen next file in directory
+        \n[Ctrl+q]\tQuit NOSEpick
+        \n\nPicking:
+        \n[Backspace]\tRemove last pick event
+        \n[Delete]\tRemove current/ most recent pick layer
+        \n[c]\t\tRemove all picked layers""")

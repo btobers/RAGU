@@ -177,7 +177,10 @@ class imPick(tk.Frame):
         self.dataCanvas.draw()
 
         # save background
-        self.axbg = self.dataCanvas.copy_from_bbox(self.ax.bbox)
+        self.update_bg()
+
+        # update toolbar to save axes extents
+        self.toolbar.update()
 
 
     # get_pickState is a method to return the current picking state
@@ -203,7 +206,6 @@ class imPick(tk.Frame):
                 self.pick_layer += 1
                 # only advance pick layer if picks made on previous layer
             self.pickLabel.config(fg="#FF0000")
-        self.plot_picks()
 
 
     # addseg is a method to for user to generate picks
@@ -249,23 +251,25 @@ class imPick(tk.Frame):
             print(err)
     
 
-    # plot_picks is a method to plot the existing pick layers
+    # plot_picks is a method to remove current pick list and add saved picks to plot
     def plot_picks(self):
         # remove saved picks
         del self.xln[:]
         del self.yln[:]  
         self.pick.set_data(self.xln, self.yln)
         self.saved_pick.set_offsets(np.c_[self.xln_old,self.yln_old])
-        self.blit()
+
 
     def onkey(self, event):
         # on-key commands
         if event.key =="c":
             # clear the drawing of line segments
             self.clear_picks()
-        elif event.key =="delete":
+        elif event.key =="backspace":
             # remove last segment
             self.clear_last()
+        elif event.key =="delete":
+            self.delete_pkLayer()
         elif event.key==" ":
             self.set_im()
 
@@ -274,18 +278,16 @@ class imPick(tk.Frame):
         # clear all picks
         if len(self.xln + self.xln_old) > 0 and tk.messagebox.askokcancel("Warning", "Clear all picks?", icon = "warning") == True:
             # delete pick lists
-            del self.xln[:]
-            del self.yln[:]
             del self.yln_old[:]
             del self.xln_old[:]
-            self.pick.set_data(self.xln, self.yln)
-            self.saved_pick.set_offsets(np.c_[self.xln_old,self.yln_old])
             # clear pick dictionary
             self.pick_dict.clear()
             # reset pick layer increment to 0
             self.pick_layer = 0
+            self.plot_picks()
+            self.set_pickState(False)
             self.pickLabel.config(text="Picking Layer:\t" + str(self.pick_layer))
-            self.fig.canvas.draw()
+            self.blit()
 
 
     def clear_last(self):
@@ -303,8 +305,43 @@ class imPick(tk.Frame):
             del self.xln_old[-len(pick_idx):]
             del self.yln_old[-len(pick_idx):]
             self.pick.set_data(self.xln, self.yln)
-            self.fig.canvas.draw()
+            self.blit()
 
+
+    def delete_pkLayer(self):
+        # delete the most recent pick layer
+        if self.pick_state == True:
+            layer = self.pick_layer
+        else:
+            layer = self.pick_layer - 1
+        if (layer > 0) and (tk.messagebox.askokcancel("Warning", "Delete pick layer " + str(layer) + "?", icon = "warning") == True):
+            self.set_pickState(False)
+            # find first pick location for layer
+            pick_idx_0 = utils.find_nearest(np.asarray(self.xln_old), self.data["dist"][np.where(self.pick_dict["layer_" + str(self.pick_layer - 1)] != -1)[0][0]])
+            # delete pick dict layer
+            del self.pick_dict["layer_" + str(self.pick_layer - 1)]
+            # remove picks from list
+            del self.xln_old[-(len(self.xln_old) - pick_idx_0):]
+            del self.yln_old[-(len(self.yln_old) - pick_idx_0):]      
+            # reset pick layer increment back one
+            self.pick_layer -= 1
+            self.pickLabel.config(text="Picking Layer:\t" + str(self.pick_layer - 1))
+            self.plot_picks()
+            self.blit()
+        elif (layer == 0) and (len(self.xln + self.xln_old) > 0) and (tk.messagebox.askokcancel("Warning", "Delete pick layer " + str(layer) + "?", icon = "warning") == True):
+            self.set_pickState(False)
+            # if only one layer exists, clear all picks
+            # delete pick lists
+            del self.yln_old[:]
+            del self.xln_old[:]
+            # clear pick dictionary
+            self.pick_dict.clear()
+            # reset pick layer increment to 0
+            self.pick_layer = 0
+            self.pickLabel.config(text="Picking Layer:\t" + str(self.pick_layer))
+            self.plot_picks()
+            self.blit()
+            
 
     def show_data(self):
         # toggle to radar data
