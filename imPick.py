@@ -292,7 +292,7 @@ class imPick(tk.Frame):
 
     def clear_last(self):
         # clear last pick
-        if len(self.xln) > 0:
+        if len(self.xln) >= 2:
             # get indices of last two ponts picked to remove twtt from pick_dict - reset to -1.
             pick_idx_0 = utils.find_nearest(self.data["dist"], self.xln[-2])
             pick_idx_1 = utils.find_nearest(self.data["dist"], self.xln[-1])
