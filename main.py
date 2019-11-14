@@ -15,8 +15,8 @@ import tkinter as tk
 in_path = "/mnt/Swaps/MARS/targ/supl/UAF/2018/may/block_clutter_elev/"
 # out_path = "/home/anomalocaris/Desktop"
 out_path = "/media/anomalocaris/beefmaster/MARS/targ/supl/UAF/2018/aug/picks/"
-map_path = "/media/anomalocaris/beefmaster/MARS/targ/supl/grid-AKDEM/"
-# map_path = "/mnt/Swaps/MARS/targ/supl/grid-AKDEM/"
+# map_path = "/media/anomalocaris/beefmaster/MARS/targ/supl/grid-AKDEM/"
+map_path = "/mnt/Swaps/MARS/targ/supl/grid-AKDEM/"
 
 ### INITIALIZE ###
 root = tk.Tk()

@@ -14,7 +14,8 @@ class wvPick(tk.Frame):
         self.parent = parent
 
         # set up variables
-        self.winSize = tk.IntVar()
+        self.winSize = tk.IntVar(value=20)
+        self.stepSize = tk.IntVar(value=50)
 
         # set up frames
         infoFrame = tk.Frame(self.parent)
@@ -27,6 +28,10 @@ class wvPick(tk.Frame):
         # infoFrame exists for options to be added based on optimization needs
         windowLabel = tk.Label(infoFrame, text = "window size [#samples]").pack(side="left")
         windowEntry = tk.Entry(infoFrame, textvariable=self.winSize, width = 5).pack(side="left")
+        stepLabel = tk.Label(infoFrame, text = "\tstep size [#traces]").pack(side="left")
+        stepEntry = tk.Entry(infoFrame, textvariable=self.stepSize, width = 5).pack(side="left")
+        tk.Label(infoFrame, text="\t").pack(side="left")
+        stepButton = tk.Button(infoFrame, text="→", command = self.traceStep, pady=0).pack(side="left")
 
         # create figure object and datacanvas from it
         self.fig = mpl.figure.Figure()
@@ -73,4 +78,7 @@ class wvPick(tk.Frame):
         pick_idx = utils.find_nearest((np.arange(0,self.num_sample + 1)*self.dt), (self.pick_dict["layer_0"][np.where(self.pick_dict["layer_0"] != -1.)[0][0]]*1e-6))
         self.ax.axvline(x = pick_idx, color='r')
         self.dataCanvas.draw()
+
+    def traceStep(self):
+        print('step')
 
