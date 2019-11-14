@@ -4,7 +4,6 @@ import basemap
 import h5py
 import numpy as np
 import tkinter as tk
-from tkinter import ttk as ttk
 import sys,os,time
 import matplotlib as mpl
 mpl.use("TkAgg")
@@ -498,6 +497,16 @@ class imPick(tk.Frame):
     # get_pickLen is a method to return the length of existing picks
     def get_pickLen(self):
         return len(self.xln + self.xln_old)
+
+
+    # get_numPkLyrs is a method to return the number of picking layers which exist
+    def get_numPkLyrs(self):
+        return len(self.pick_dict)
+
+
+    # get_pickDict is a method to return the pick dictionary
+    def get_pickDict(self):
+        return self.pick_dict
         
 
     # get_nav method returns the nav data       

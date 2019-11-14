@@ -8,9 +8,7 @@ environment requirements in nose_env.yml
 
 ### IMPORTS ###
 # import ingester
-import utils
-import imPick
-import basemap
+import imPick, wvPick, basemap, utils
 import os, sys, scipy
 import numpy as np
 import matplotlib as mpl
@@ -18,6 +16,7 @@ mpl.use("TkAgg")
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 import tkinter as tk
+import tkinter.ttk as ttk
 
 # MainGUI is the NOSEpick class which sets the gui interface and holds operating variables
 class MainGUI(tk.Frame):
@@ -42,7 +41,6 @@ class MainGUI(tk.Frame):
         # create individual menubar items
         fileMenu = tk.Menu(menubar, tearoff=0)
         pickMenu = tk.Menu(menubar, tearoff=0)
-        viewMenu = tk.Menu(menubar, tearoff=0)
         mapMenu = tk.Menu(menubar, tearoff=0)
         helpMenu = tk.Menu(menubar, tearoff=0)
 
@@ -56,10 +54,7 @@ class MainGUI(tk.Frame):
         pickMenu.add_command(label="New     [Ctrl+N]", command=self.new_pick)
         pickMenu.add_command(label="Stop    [Escape]", command=self.stop_pick)
         pickMenu.add_separator()
-        pickMenu.add_command(label="Optimize")
-
-        # view menu items
-        viewMenu.add_command(label="Trace-View")
+        pickMenu.add_command(label="Optimize", command=self.pick_opt)
 
         # map menu items
         mapMenu.add_command(label="Open     [Ctrl+M]", command=self.map_loc)
@@ -71,7 +66,6 @@ class MainGUI(tk.Frame):
         # add items to menubar
         menubar.add_cascade(label="File", menu=fileMenu)
         menubar.add_cascade(label="Pick", menu=pickMenu)
-        menubar.add_cascade(label="View", menu=viewMenu)
         menubar.add_cascade(label="Map", menu=mapMenu)
         menubar.add_cascade(label="Help", menu=helpMenu)
         
@@ -79,7 +73,7 @@ class MainGUI(tk.Frame):
         self.parent.config(menu=menubar)
 
         #configure imPick and wvPick tabs
-        self.nb = tk.ttk.Notebook(self.parent)
+        self.nb = ttk.Notebook(self.parent)
         self.nb.pack(side="top",anchor='w', fill="both", expand=1)
         self.imTab = tk.Frame(self.parent)
         self.imTab.pack()
@@ -91,6 +85,9 @@ class MainGUI(tk.Frame):
 
         # initialize imPick
         self.imPick = imPick.imPick(self.imTab)
+
+        # initialize wvPick
+        self.wvPick = wvPick.wvPick(self.wvTab)
 
         # bind keypress events
         self.parent.bind("<Key>", self.key)
@@ -231,6 +228,15 @@ class MainGUI(tk.Frame):
 
             else:
                 print("Note: " + self.f_loadName.split("/")[-1] + " is the last file in " + file_path)
+    
+    # pick_opt is a method to load the wvPick optimization tools
+    def pick_opt(self):
+        # first determine if at least one picking layer exists
+        if self.imPick.get_numPkLyrs() > 0:
+            # set picking state to false
+            self.imPick.set_pickState(False)
+            # get pick layer from imPick and pass to wvPick
+            self.wvPick.set_pickDict(self.imPick.get_pickDict())
 
 
     def help(self):
