@@ -78,8 +78,19 @@ class MainGUI(tk.Frame):
         # add the menubar to the window
         self.parent.config(menu=menubar)
 
+        #configure imPick and wvPick tabs
+        self.nb = tk.ttk.Notebook(self.parent)
+        self.nb.pack(side="top",anchor='w', fill="both", expand=1)
+        self.imTab = tk.Frame(self.parent)
+        self.imTab.pack()
+        self.nb.add(self.imTab, text='imagePick')
+        self.wvTab = tk.Frame(self.parent)
+        self.wvTab.pack()
+        self.nb.add(self.wvTab, text='wavePick')
+
+
         # initialize imPick
-        self.imPick = imPick.imPick(self.parent)
+        self.imPick = imPick.imPick(self.imTab)
 
         # bind keypress events
         self.parent.bind("<Key>", self.key)
@@ -123,9 +134,14 @@ class MainGUI(tk.Frame):
             self.stop_pick()
 
 
-    # close_window is a gui method to call the imPick close_warning
+    # close_window is a gui method to exit NOSEpick
     def close_window(self):
-        self.imPick.exit_warning()
+        # check if picks have been made and saved
+        if self.imPick.get_pickLen() > 0 and self.f_saveName == "":
+            if tk.messagebox.askokcancel("Warning", "Exit NOSEpick without saving picks?", icon = "warning") == True:
+                self.parent.destroy()
+        else:
+            self.parent.destroy()
 
 
     # open_loc is a gui method which has the user select and input data file - then passed to imPick.load()

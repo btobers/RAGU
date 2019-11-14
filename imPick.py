@@ -479,16 +479,6 @@ class imPick(tk.Frame):
         self.fig.canvas.blit(self.ax.bbox)
 
 
-    # exit_warningn is a method which closes the window if no picks exist, or if the user would like to discard existing picks
-    def exit_warning(self):
-        # check if picks have been made and saved
-        if len(self.xln + self.xln_old) > 0 and self.f_saveName == "":
-            if tk.messagebox.askokcancel("Warning", "Exit NOSEpick without saving picks?", icon = "warning") == True:
-                self.parent.destroy()
-        else:
-            self.parent.destroy()
-
-
     # nextSave_warning is a method which checks if picks exist or if the user would like to discard existing picks before moving to the next track
     def nextSave_warning(self):
         # check if picks have been made and saved
