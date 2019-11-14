@@ -1,6 +1,4 @@
-import ingester
-import utils
-import basemap
+import utils, basemap
 import h5py
 import numpy as np
 import tkinter as tk
@@ -93,12 +91,11 @@ class imPick(tk.Frame):
 
 
     # load calls ingest() on the data file and sets the datacanvas
-    def load(self, f_loadName):
+    def load(self,f_loadName, data):
         self.f_loadName = f_loadName
         print("Loading: " + self.f_loadName)
-        # ingest the data
-        self.igst = ingester.ingester("h5py")
-        self.data = self.igst.read(self.f_loadName)
+        # receive the data
+        self.data = data
 
         # set scalebar axes now that data displayed
         self.ax.set_visible(True)
@@ -491,7 +488,6 @@ class imPick(tk.Frame):
     # clear_canvas is a method to clear the data canvas and figures to reset app
     def clear_canvas(self):
         self.ax.cla()
-        self.set_vars()
 
 
     # get_pickLen is a method to return the length of existing picks
@@ -518,6 +514,7 @@ class imPick(tk.Frame):
     def get_idx(self):
         return self.pick_idx_1
 
+    # get_datadB is a method to return the log-scaled data for viewing traces in wvPick
 
     # set_im is a method to set which data is being displayed
     def set_im(self):

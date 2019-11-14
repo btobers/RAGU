@@ -8,7 +8,7 @@ environment requirements in nose_env.yml
 
 ### IMPORTS ###
 # import ingester
-import imPick, wvPick, basemap, utils
+import imPick, wvPick, basemap, utils, ingester
 import os, sys, scipy
 import numpy as np
 import matplotlib as mpl
@@ -45,7 +45,7 @@ class MainGUI(tk.Frame):
         helpMenu = tk.Menu(menubar, tearoff=0)
 
         # file menu items
-        fileMenu.add_command(label="Open    [Ctrl+O]", command=self.open_loc)
+        fileMenu.add_command(label="Open    [Ctrl+O]", command=self.open_data)
         fileMenu.add_command(label="Save    [Ctrl+S]", command=self.save_loc)
         fileMenu.add_command(label="Next     [Right]", command=self.next_loc)
         fileMenu.add_command(label="Exit    [Ctrl+Q]", command=self.close_window)
@@ -85,6 +85,7 @@ class MainGUI(tk.Frame):
 
         # initialize imPick
         self.imPick = imPick.imPick(self.imTab)
+        self.imPick.set_vars()
 
         # initialize wvPick
         self.wvPick = wvPick.wvPick(self.wvTab)
@@ -95,7 +96,7 @@ class MainGUI(tk.Frame):
         # handle x-button closing of window
         self.parent.protocol("WM_DELETE_WINDOW", self.close_window)
 
-        self.open_loc()
+        self.open_data()
 
 
     # key is a method to handle UI keypress events
@@ -104,7 +105,7 @@ class MainGUI(tk.Frame):
         # event.state & 1 True for Shift+Key
         # Ctrl+O open file
         if event.state & 4 and event.keysym == "o":
-            self.open_loc()
+            self.open_data()
 
         # Ctrl+S save picks
         elif event.state & 4 and event.keysym == "s":
@@ -141,19 +142,21 @@ class MainGUI(tk.Frame):
             self.parent.destroy()
 
 
-    # open_loc is a gui method which has the user select and input data file - then passed to imPick.load()
-    def open_loc(self):
-        # if previous track has already been opened, clear imPick canvas
-        if self.f_loadName:
-            self.imPick.clear_canvas()                
-
-        self.imPick.set_vars()
-        
+    # open_data is a gui method which has the user select and input data file - then passed to imPick.load()
+    def open_data(self):
+        temp_loadName = ""
         # select input file
-        self.f_loadName = tk.filedialog.askopenfilename(initialdir = self.in_path,title = "Select file",filetypes = (("data files", ".mat .h5"),("all files",".*")))
-        # if input selected, pass filename to imPick.load()
-        if self.f_loadName:
-            self.imPick.load(self.f_loadName)
+        temp_loadName = tk.filedialog.askopenfilename(initialdir = self.in_path,title = "Select file",filetypes = (("data files", ".mat .h5"),("all files",".*")))
+        # if input selected, clear imPick canvas, ingest data and pass to imPick
+        if temp_loadName:
+            self.f_loadName = temp_loadName
+            self.imPick.clear_canvas()  
+            self.imPick.set_vars()
+            # ingest the data
+            self.igst = ingester.ingester("h5py")
+            self.data = self.igst.read(self.f_loadName)
+            self.imPick.load(self.f_loadName, self.data)
+            self.wvPick.set_data(self.data["amp"], self.data["dt"], self.data["num_sample"])
 
         # pass basemap to imPick for plotting pick location
         if self.map_loadName:
@@ -218,7 +221,9 @@ class MainGUI(tk.Frame):
             if file_index <= (len(file_list) - 1):
                 self.f_loadName = (file_path + file_list[file_index])
                 self.imPick.clear_canvas()
-                self.imPick.load(self.f_loadName)
+                self.imPick.set_vars()
+                self.data = self.igst.read(self.f_loadName)
+                self.imPick.load(self.f_loadName, self.data)
 
 
                 if self.map_loadName and self.basemap.get_state() == 1:
@@ -237,6 +242,7 @@ class MainGUI(tk.Frame):
             self.imPick.set_pickState(False)
             # get pick layer from imPick and pass to wvPick
             self.wvPick.set_pickDict(self.imPick.get_pickDict())
+            self.wvPick.plot_wv()
 
 
     def help(self):

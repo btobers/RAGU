@@ -2,7 +2,7 @@
 NOSEpick - currently in development stages
 created by: Brandon S. Tober and Michael S. Christoffersen
 date: 25JUN19
-last updated: 25OCT2019
+last updated: 14NOV19
 environment requirements in nose_env.yml
 """
 
@@ -11,8 +11,8 @@ import gui
 import tkinter as tk
 
 ### USER SPECIFIED VARS ###
-in_path = "/media/anomalocaris/beefmaster/MARS/targ/supl/UAF/2018/may/"
-# in_path = "/mnt/Swaps/MARS/targ/supl/UAF/2018/may/block_clutter_elev/"
+# in_path = "/media/anomalocaris/beefmaster/MARS/targ/supl/UAF/2018/may/"
+in_path = "/mnt/Swaps/MARS/targ/supl/UAF/2018/may/block_clutter_elev/"
 # out_path = "/home/anomalocaris/Desktop"
 out_path = "/media/anomalocaris/beefmaster/MARS/targ/supl/UAF/2018/aug/picks/"
 map_path = "/media/anomalocaris/beefmaster/MARS/targ/supl/grid-AKDEM/"
