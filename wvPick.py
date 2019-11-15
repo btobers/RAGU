@@ -16,6 +16,8 @@ class wvPick(tk.Frame):
         # set up variables
         self.winSize = tk.IntVar(value=20)
         self.stepSize = tk.IntVar(value=50)
+        self.layerVar = tk.IntVar()
+        self.layerVar.trace('w', self.plot_wv)
 
         # set up frames
         infoFrame = tk.Frame(self.parent)
@@ -32,6 +34,11 @@ class wvPick(tk.Frame):
         stepEntry = tk.Entry(infoFrame, textvariable=self.stepSize, width = 5).pack(side="left")
         tk.Label(infoFrame, text="\t").pack(side="left")
         stepButton = tk.Button(infoFrame, text="→", command = self.traceStep, pady=0).pack(side="left")
+        self.layers=[0]
+        self.layerMenu = tk.OptionMenu(infoFrame, self.layerVar, *self.layers)
+        self.layerMenu.pack(side="right",pady=0)
+        self.layerMenu["highlightthickness"]=0
+        layerLabel = tk.Label(infoFrame, text = "pick layer").pack(side="right")
 
         # create figure object and datacanvas from it
         self.fig = mpl.figure.Figure()
@@ -68,17 +75,28 @@ class wvPick(tk.Frame):
         self.num_pkLyrs = len(self.pick_dict)
         # determine which traces in layer have picks and get twtt to picks
         # self.picked_traces = np.where(self.pick_dict != -1)
-        print(self.pick_dict["layer_0"][np.where(self.pick_dict["layer_0"] != -1.)[0][0]]*1e-6)
+        # print(self.pick_dict["layer_0"][np.where(self.pick_dict["layer_0"] != -1.)[0][0]]*1e-6)
+
+        self.update_option_menu()
 
     # plot_wv is a method to draw the waveform on the datacanvas
-    def plot_wv(self):
+    def plot_wv(self, *args):
+        self.ax.clear()
         self.ax.set_visible(True)
-        self.ax.plot(self.data_dB[:,(np.where(self.pick_dict["layer_0"] != -1.)[0][0])])
+        self.ax.plot(self.data_dB[:,(np.where(self.pick_dict["layer_" + str(self.layerVar.get())] != -1.)[0][0])])
         # get sample index of pick for given trace
-        pick_idx = utils.find_nearest((np.arange(0,self.num_sample + 1)*self.dt), (self.pick_dict["layer_0"][np.where(self.pick_dict["layer_0"] != -1.)[0][0]]*1e-6))
+        pick_idx = utils.find_nearest((np.arange(0,self.num_sample + 1)*self.dt), (self.pick_dict["layer_" + str(self.layerVar.get())][np.where(self.pick_dict["layer_" + str(self.layerVar.get())] != -1.)[0][0]]*1e-6))
         self.ax.axvline(x = pick_idx, color='r')
         self.dataCanvas.draw()
 
     def traceStep(self):
-        print('step')
+        print(self.layerVar.get())
+
+    # update the pick layer menu based on how many layers exist
+    def update_option_menu(self):
+            menu = self.layerMenu["menu"]
+            menu.delete(0, "end")
+            for _i in range(self.num_pkLyrs):
+                menu.add_command(label=_i,
+                command=tk._setit(self.layerVar,_i))
 
