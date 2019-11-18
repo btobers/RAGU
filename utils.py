@@ -4,6 +4,7 @@ import pandas as pd
 from tkinter import filedialog, messagebox
 import matplotlib.pyplot as plt
 import sys
+from scipy.signal import savgol_filter
 
 # calculate total euclidian distance along a line
 def euclid_dist(nav):
@@ -58,20 +59,28 @@ def find_nearest(array,value):
     idx = (np.abs(array-value)).argmin()
     return idx
 
+# interp array is a function which linearly interpolates over an array of data between unique values
 def interp_array(array):
-    # interpolate forward linearly between repeated values in an array to remove stair-stepped data
-    array_cp = np.copy(array)
-    # first map unique values in array
-    mapping = {}
-    unique = pd.unique(array)
-    for _i in range(len(unique) - 1):
-        mapping[_i] = np.where(array == unique[_i])[0]
-        interp_ind = np.arange(mapping[_i][0], mapping[_i][-1] + 2) 
-        array_cp[interp_ind] = np.interp(interp_ind, [interp_ind[0], interp_ind[-1]], [array[interp_ind[0]], array[interp_ind[-1]]])
+    # initialize list of xp and fp coordinates for np.interp
+    xp = []
+    fp = []
+    # initialize value to determine if preceeding array value equals the previous value
+    v = -9999
+    # iterate through array
+    # if current value is not equal to previous value append the current index to xp, and the value to fp
+    # update the value
+    for _i in range(len(array)):
+        if(array[_i] != v):
+            xp.append(_i)
+            fp.append(array[_i])
+            v = array[_i]
 
-    # for the last set of unique values, interpolate between last value and current value
-    mapping[_i + 1] = np.where(array == unique[_i + 1])[0]
-    interp_ind = np.arange(mapping[_i - 1][0], mapping[_i + 1][-1] + 1) 
-    array_cp[interp_ind] = np.interp(interp_ind, [interp_ind[0], interp_ind[-1]], [array[interp_ind[0]], array[interp_ind[-1]]])
+    # update last value of xp
+    xp[-1] = len(array)-1
+    # declare indeces to interpolate over
+    x = np.arange(0, len(array))
+    # interpolate over array
+    array_interp = np.interp(x, xp, fp)
 
-    return array_cp
+    return array_interp
+

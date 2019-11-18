@@ -118,10 +118,10 @@ class ingester:
             navdat.navdat[:,1] = utils.interp_array(lat)
             dist = utils.interp_array(dist)
             
-        # plt.subplot(211)
-        # plt.plot(lon)
-        # plt.subplot(212)
-        # plt.plot(navdat.navdat[:,0])
-        # plt.show()
+        plt.subplot(211)
+        plt.plot(lon)
+        plt.subplot(212)
+        plt.plot(navdat.navdat[:,0])
+        plt.show()
         
         return {"dt": dt, "num_trace": num_trace, "num_sample": num_sample, "navdat": navdat, "twtt_surf": twtt_surf,"dist": dist, "amp": amp, "clutter": clutter} # other fields?
