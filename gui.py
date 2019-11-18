@@ -131,6 +131,23 @@ class MainGUI(tk.Frame):
         elif event.keysym == "Escape":
             self.stop_pick()
 
+        # c key to clear all picks in imPick
+        if event.keysym =="c":
+            # clear the drawing of line segments
+            self.imPick.clear_picks()
+
+        # BackSpace to clear last pick 
+        elif event.keysym =="BackSpace":
+            self.imPick.clear_last()
+
+        # Delete key to remove most recent pick layer
+        elif event.keysym =="Delete":
+            self.imPick.delete_pkLayer()
+
+        # Space key to toggle imPick between radar image and clutter
+        elif event.keysym=="space":
+            self.imPick.set_im()
+
 
     # close_window is a gui method to exit NOSEpick
     def close_window(self):
@@ -182,10 +199,10 @@ class MainGUI(tk.Frame):
             self.basemap = basemap.basemap(self.parent, self.map_loadName)
             self.basemap.map()
 
-        if self.f_loadName:
-            # pass basemap to imPick for plotting pick location
-            self.basemap.set_nav(self.imPick.get_nav())
-            self.imPick.get_basemap(self.basemap)
+            if self.f_loadName:
+                # pass basemap to imPick for plotting pick location
+                self.basemap.set_nav(self.imPick.get_nav())
+                self.imPick.get_basemap(self.basemap)
 
 
     # new_pick is a method which begins a new imPick pick layer
@@ -240,6 +257,8 @@ class MainGUI(tk.Frame):
         if self.imPick.get_numPkLyrs() > 0:
             # set picking state to false
             self.imPick.set_pickState(False)
+            self.imPick.plot_picks()
+            self.imPick.blit()
             # get pick layer from imPick and pass to wvPick
             self.wvPick.set_pickDict(self.imPick.get_pickDict())
             self.wvPick.plot_wv()

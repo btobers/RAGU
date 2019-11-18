@@ -54,6 +54,7 @@ class ingester:
                     clutter = np.array(f["sim0"])
                 else:
                     clutter = np.ones(amp.shape)
+                
 
             # ingest matlab hdf5 blocks
             else:
@@ -90,22 +91,14 @@ class ingester:
                 dist = dist / 10.   # divide distance by 10 to get out of pickGUI format
 
             except Exception as err:
-                print("ingest Error: " + err)
+                print("ingest Error: " + str(err))
                 pass
-
 
         # transpose amp and clutter if flipped
         if amp.shape[0] == num_trace and amp.shape[1] == num_sample:
             amp = np.transpose(amp)  
         if clutter.shape[0] == num_trace and clutter.shape[1] == num_sample:
             clutter = np.transpose(clutter)
-
-
-        # interpolate nav data if not unique location for each trace
-        if len(np.unique(lon)) < num_trace:
-            lon = utils.interp_array(lon)
-            lat = utils.interp_array(lat)
-            dist = utils.interp_array(dist)
 
         # convert lon, lat, elev to navdat object of nav class
         wgs84_proj4 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
@@ -119,4 +112,16 @@ class ingester:
             navdat_transform = navdat.transform(ak_nad83_proj4)
             dist = utils.euclid_dist(navdat_transform)
 
+        # interpolate nav data if not unique location for each trace
+        if len(np.unique(lon)) < num_trace:
+            navdat.navdat[:,0] = utils.interp_array(lon)
+            navdat.navdat[:,1] = utils.interp_array(lat)
+            dist = utils.interp_array(dist)
+            
+        # plt.subplot(211)
+        # plt.plot(lon)
+        # plt.subplot(212)
+        # plt.plot(navdat.navdat[:,0])
+        # plt.show()
+        
         return {"dt": dt, "num_trace": num_trace, "num_sample": num_sample, "navdat": navdat, "twtt_surf": twtt_surf,"dist": dist, "amp": amp, "clutter": clutter} # other fields?

@@ -39,7 +39,6 @@ class imPick(tk.Frame):
         # add toolbar to plot
         self.toolbar = NavigationToolbar2Tk(self.dataCanvas, toolbarFrame)
         self.toolbar.update()
-        self.key = self.fig.canvas.mpl_connect("key_press_event", self.onkey)
         self.click = self.fig.canvas.mpl_connect("button_press_event", self.addseg)
 
         # add axes for colormap sliders and reset button - leave invisible until data loaded
@@ -188,8 +187,6 @@ class imPick(tk.Frame):
     def set_pickState(self, state):
         self.pick_state = state
         if self.pick_state == True:
-            # update canvas background
-            # self.axbg = self.dataCanvas.copy_from_bbox(self.ax.bbox)
             # if a layer was already being picked, advance the pick layer count to begin new layer
             if len(self.xln) >= 2:
                 self.pick_layer += 1
@@ -254,20 +251,6 @@ class imPick(tk.Frame):
         del self.yln[:]  
         self.pick.set_data(self.xln, self.yln)
         self.saved_pick.set_offsets(np.c_[self.xln_old,self.yln_old])
-
-
-    def onkey(self, event):
-        # on-key commands
-        if event.key =="c":
-            # clear the drawing of line segments
-            self.clear_picks()
-        elif event.key =="backspace":
-            # remove last segment
-            self.clear_last()
-        elif event.key =="delete":
-            self.delete_pkLayer()
-        elif event.key==" ":
-            self.set_im()
 
 
     def clear_picks(self):
@@ -514,7 +497,6 @@ class imPick(tk.Frame):
     def get_idx(self):
         return self.pick_idx_1
 
-    # get_datadB is a method to return the log-scaled data for viewing traces in wvPick
 
     # set_im is a method to set which data is being displayed
     def set_im(self):

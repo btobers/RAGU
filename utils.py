@@ -23,7 +23,7 @@ def savePick(f_saveName, data, pick_dict):
     data = data
     pick_dict = pick_dict
 
-    v_ice = 3e8/np.sqrt(3.15)   # EM wave veloity in ice - for thickness calculation
+    v_ice = 3e8/(np.sqrt(3.15)*1e6)   # EM wave veloity in ice - for thickness calculation
     # vars to hold info from pick locations
     lon = []
     lat = []
@@ -39,17 +39,17 @@ def savePick(f_saveName, data, pick_dict):
         lon.append(data["navdat"].navdat[pick_idx[:],0])
         lat.append(data["navdat"].navdat[pick_idx[:],1])
         elev_air.append(data["navdat"].navdat[pick_idx[:],2])
-        twtt_surf.append(data["twtt_surf"][pick_idx[:]])
-        twtt_bed.append(pick_dict["layer_" + str(_i)][pick_idx[:]])
+        twtt_surf.append(data["twtt_surf"][pick_idx[:]]*1e-6)
+        twtt_bed.append(pick_dict["layer_" + str(_i)][pick_idx[:]]*1e-6)
 
         # calculate ice thickness - using twtt_bed and twtt_surf
-        thick.append((((pick_dict["layer_" + str(_i)][pick_idx] * 1e-6) - (data["twtt_surf"][pick_idx]* 1e-6)) * v_ice) / 2)
+        thick.append((((pick_dict["layer_" + str(_i)][pick_idx]) - (data["twtt_surf"][pick_idx])) * v_ice) / 2)
         
     # combine the data into a matrix for export
     dstack = np.column_stack((np.hstack(lon).T,np.hstack(lat).T,np.hstack(elev_air).T,np.hstack(twtt_surf).T,np.hstack(twtt_bed).T,np.hstack(thick).T))
 
     header = "lon,lat,elev_air,twtt_surf,twtt_bed,thick"
-    np.savetxt(f_saveName, dstack, delimiter=",", newline="\n", fmt="%.8f", header=header, comments="")
+    np.savetxt(f_saveName, dstack, delimiter=",", newline="\n", fmt="%s", header=header, comments="")
     print("Picks exported: ", f_saveName)
 
 
