@@ -82,6 +82,8 @@ class MainGUI(tk.Frame):
         self.wvTab.pack()
         self.nb.add(self.wvTab, text='wavePick')
 
+        # bind tab change event to send pick data to wvPick if tab switched from imPick
+        self.nb.bind("<<NotebookTabChanged>>", self.pick_opt)
 
         # initialize imPick
         self.imPick = imPick.imPick(self.imTab)
@@ -252,9 +254,11 @@ class MainGUI(tk.Frame):
                 print("Note: " + self.f_loadName.split("/")[-1] + " is the last file in " + file_path)
     
     # pick_opt is a method to load the wvPick optimization tools
-    def pick_opt(self):
+    def pick_opt(self, event):
+        selection = event.widget.select()
+        tab = event.widget.tab(selection, "text")
         # first determine if at least one picking layer exists
-        if self.imPick.get_numPkLyrs() > 0:
+        if (tab == "wavePick") and (self.imPick.get_numPkLyrs() > 0):
             # set picking state to false
             self.imPick.set_pickState(False)
             self.imPick.plot_picks()

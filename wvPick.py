@@ -21,6 +21,7 @@ class wvPick(tk.Frame):
         self.trace = 0
         self.pick_dict = None
         self.rePick = None
+        self.rePick_idx = {}        # dictionary of indeces of repicked traces for each layer
 
         # set up frames
         infoFrame = tk.Frame(self.parent)
@@ -39,7 +40,7 @@ class wvPick(tk.Frame):
         stepBackward = tk.Button(infoFrame, text="←", command = self.stepBackward, pady=0).pack(side="left")
         stepForward = tk.Button(infoFrame, text="→", command = self.stepForward, pady=0).pack(side="left")
         tk.Label(infoFrame, text="\t").pack(side="left")
-        autoButton = tk.Button(infoFrame, text="AutoPick", command=self.autoPick, pady=0).pack(side="left")
+        autoButton = tk.Button(infoFrame, text="AutoPick", command=self.interpPicks, pady=0).pack(side="left")
         self.layers=[0]
         self.layerMenu = tk.OptionMenu(infoFrame, self.layerVar, *self.layers)
         self.layerMenu.pack(side="right",pady=0)
@@ -73,7 +74,8 @@ class wvPick(tk.Frame):
         self.data_amp = amp
         self.dt = dt
         self.num_sample = num_sample
-        self.data_dB = 20*np.log10(amp)
+        # self.data_dB = 20*np.log10(amp)
+        self.data_dB = np.log(np.power(amp,2))
         self.sampleTime = np.arange(0,self.num_sample+1)*self.dt
 
 
@@ -103,12 +105,12 @@ class wvPick(tk.Frame):
 
         self.dataCanvas.draw()
 
-
+    # step forward is a method to move backwards by the number of traces entered to stepSize
     def stepBackward(self):
         self.trace -= self.stepSize.get()
         self.plot_wv()
 
-
+    # step forward is a method to move forward by the number of traces entered to stepSize
     def stepForward(self):
         self.trace += self.stepSize.get()
         self.plot_wv()
@@ -121,6 +123,7 @@ class wvPick(tk.Frame):
             for _i in range(self.num_pkLyrs):
                 menu.add_command(label=_i,
                     command=tk._setit(self.layerVar,_i))
+                self.rePick_idx["layer_" + str(_i)] = []
 
 
     def autoPick(self):
@@ -128,13 +131,33 @@ class wvPick(tk.Frame):
 
 
     def manualPick(self, event):
-        if not self.pick_dict:
-            return
-        if (event.inaxes != self.ax):
+        if (not self.pick_dict) or (event.inaxes != self.ax):
             return
         if self.rePick:
             self.rePick.remove()
         self.rePick = self.ax.axvline(x=event.xdata, c='g')
         self.dataCanvas.draw()
 
+        # append trace number to rePick_idx list to keep track of indeces for interpolation
+        if (len(self.rePick_idx["layer_" + str(self.layerVar.get())]) == 0) or (self.rePick_idx["layer_" + str(self.layerVar.get())][-1] != self.trace):
+            self.rePick_idx["layer_" + str(self.layerVar.get())].append(self.trace)
+
         self.pick_dict["layer_" + self.layer][self.trace] = round(event.xdata)*self.dt*1e6
+
+    # interpPicks is a method to interpolate linearly between refined picks
+    def interpPicks(self):
+        for _i in range(len(self.rePick_idx)):
+            if len(self.rePick_idx["layer_" + str(_i)]) >= 2:
+                # get indices where picks exist for pick layer
+                idx = np.where(self.pick_dict["layer_" + str(_i)] != -1)[0]
+                # get twtt values at repicked indices
+                q = self.pick_dict["layer_" + str(_i)][self.rePick_idx["layer_" + str(_i)]]
+                # interpolate repicked values for layer
+                # self.pick_dict["layer_" + str(_i)][idx] = 
+                out=np.interp(idx, self.rePick_idx["layer_" + str(_i)], q)
+                plt.plot(self.pick_dict["layer_" + str(_i)][idx])
+                plt.plot(out)
+                plt.show()
+        
+
+               
