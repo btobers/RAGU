@@ -39,7 +39,10 @@ class imPick(tk.Frame):
         # add toolbar to plot
         self.toolbar = NavigationToolbar2Tk(self.dataCanvas, toolbarFrame)
         self.toolbar.update()
-        self.click = self.fig.canvas.mpl_connect("button_press_event", self.addseg)
+        self.click = self.fig.canvas.mpl_connect("button_press_event", self.onpress)
+        self.unclick = self.fig.canvas.mpl_connect('button_release_event', self.onrelease)
+        self.move = self.fig.canvas.mpl_connect('motion_notify_event', self.onmove)
+
 
         # add axes for colormap sliders and reset button - leave invisible until data loaded
         self.ax_cmax = self.fig.add_axes([0.95, 0.55, 0.01, 0.30])
@@ -70,6 +73,7 @@ class imPick(tk.Frame):
         self.f_loadName = ""
         self.f_saveName = ""
         self.dtype = "amp"
+        self.press = False
         self.basemap = None
         self.pick_dict = {}
         self.pick_idx = None
@@ -516,3 +520,18 @@ class imPick(tk.Frame):
     def save(self, f_saveName):
         self.f_saveName = f_saveName
         utils.savePick(self.f_saveName, self.data, self.pick_dict)
+
+
+    def onclick(self,event):
+        if event.inaxes == self.ax:
+            if event.button == 1:
+                self.addseg(event)
+    def onpress(self,event):
+        self.press=True
+    def onmove(self,event):
+        if self.press:
+            self.move=True
+    def onrelease(self,event):
+        if self.press and not self.move:
+            self.onclick(event)
+        self.press=False; self.move=False
