@@ -9,7 +9,7 @@ environment requirements in nose_env.yml
 ### IMPORTS ###
 # import ingester
 import imPick, wvPick, basemap, utils, ingester
-import os, sys, scipy
+import os, sys, scipy, glob
 import numpy as np
 import matplotlib as mpl
 mpl.use("TkAgg")
@@ -99,6 +99,7 @@ class MainGUI(tk.Frame):
         self.parent.protocol("WM_DELETE_WINDOW", self.close_window)
 
         self.open_data()
+        self.next_loc()
 
 
     # key is a method to handle UI keypress events
@@ -228,17 +229,21 @@ class MainGUI(tk.Frame):
         if self.f_loadName and self.imPick.nextSave_warning() == True:
             # get index of crurrently displayed file in directory
             file_path = self.f_loadName.rstrip(self.f_loadName.split("/")[-1])
-            file_list = os.listdir(file_path)
-            file_list.sort()
-            for _i in range(len(file_list)):
-                if file_list[_i] == self.f_loadName.split("/")[-1]:
-                    file_index = _i
+            file_list = []
+
+            # step through files in current directory of same extension as currently loaded data
+            # determine index of currently loaded data within directory 
+            for count,file in enumerate(sorted(glob.glob(file_path + "*." + self.f_loadName.split(".")[-1]))):
+                file_list.append(file)
+                if file == self.f_loadName:
+                    file_index = count
+
             # add one to index to load next file
             file_index += 1
 
             # check if more files exist in directory following current file
             if file_index <= (len(file_list) - 1):
-                self.f_loadName = (file_path + file_list[file_index])
+                self.f_loadName = file_list[file_index]
                 self.imPick.clear_canvas()
                 self.imPick.set_vars()
                 self.data = self.igst.read(self.f_loadName)
