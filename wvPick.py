@@ -41,7 +41,9 @@ class wvPick(tk.Frame):
         stepBackward = tk.Button(infoFrame, text="←", command = self.stepBackward, pady=0).pack(side="left")
         stepForward = tk.Button(infoFrame, text="→", command = self.stepForward, pady=0).pack(side="left")
         tk.Label(infoFrame, text="\t").pack(side="left")
-        autoButton = tk.Button(infoFrame, text="AutoPick", command=self.interpPicks, pady=0).pack(side="left")
+        interpButton = tk.Button(infoFrame, text="Interpolate", command=self.interpPicks, pady=0).pack(side="left")
+        tk.Label(infoFrame, text="\t").pack(side="left")
+        interpButton = tk.Button(infoFrame, text="AutoPick", command=self.autoPick, pady=0).pack(side="left")
         self.layers=[0]
         self.layerMenu = tk.OptionMenu(infoFrame, self.layerVar, *self.layers)
         self.layerMenu.pack(side="right",pady=0)

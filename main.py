@@ -9,6 +9,7 @@ environment requirements in nose_env.yml
 ### IMPORTS ###
 import gui
 import tkinter as tk
+from tkinter import font
 
 ### USER SPECIFIED VARS ###
 in_path = "/media/anomalocaris/beefmaster/MARS/targ/supl/UAF/2019/reproc/"
@@ -20,6 +21,9 @@ map_path = "/mnt/Swaps/MARS/orig/supl/gis/projects/qgis/OIB-AK_radar/"
 
 ### INITIALIZE ###
 root = tk.Tk()
+default_font = font.nametofont("TkDefaultFont")
+default_font.configure(size=10)
+root.option_add("*Font", default_font)
 # get screen size - open root window half screen
 w, h = root.winfo_screenwidth(), root.winfo_screenheight()
 root.geometry("%dx%d+0+0" % (.5*w, .5*h))
