@@ -99,7 +99,6 @@ class MainGUI(tk.Frame):
         self.parent.protocol("WM_DELETE_WINDOW", self.close_window)
 
         self.open_data()
-        self.next_loc()
 
 
     # key is a method to handle UI keypress events
@@ -256,7 +255,7 @@ class MainGUI(tk.Frame):
                     self.imPick.get_basemap(self.basemap)
 
             else:
-                print("Note: " + self.f_loadName.split("/")[-1] + " is the last file in " + file_path)
+                print("Note: " + self.f_loadName.split("/")[-1] + " is the last file in " + file_path + "*." + self.f_loadName.split(".")[-1])
     
     # pick_opt is a method to load the wvPick optimization tools
     def pick_opt(self, event):
