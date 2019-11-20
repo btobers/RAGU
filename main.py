@@ -12,25 +12,23 @@ import tkinter as tk
 from tkinter import font
 
 ### USER SPECIFIED VARS ###
-in_path = "/media/anomalocaris/beefmaster/MARS/targ/supl/UAF/2019/reproc/"
+in_path = "/media/anomalocaris/beefmaster/MARS/targ/supl/UAF/2018/"
 # in_path = "/mnt/Swaps/MARS/targ/supl/UAF/2019/hdf5/"
 # out_path = "/home/anomalocaris/Desktop"
-out_path = "/media/anomalocaris/beefmaster/MARS/targ/supl/UAF/2019/picks/"
-# map_path = "/media/anomalocaris/beefmaster/MARS/targ/supl/grid-AKDEM/"
-map_path = "/mnt/Swaps/MARS/orig/supl/gis/projects/qgis/OIB-AK_radar/"
+out_path = "/media/anomalocaris/beefmaster/MARS/targ/supl/UAF/201/picks/"
+map_path = "/media/anomalocaris/beefmaster/MARS/targ/supl/grid-AKDEM/"
+# map_path = "/mnt/Swaps/MARS/orig/supl/gis/projects/qgis/OIB-AK_radar/"
 
 ### INITIALIZE ###
 root = tk.Tk()
-default_font = font.nametofont("TkDefaultFont")
-default_font.configure(size=10)
-root.option_add("*Font", default_font)
+
 # get screen size - open root window half screen
 w, h = root.winfo_screenwidth(), root.winfo_screenheight()
-root.geometry("%dx%d+0+0" % (.5*w, .5*h))
+root.geometry("%dx%d+0+0" % (1*w, 1*h))
 root.title("NOSEpick")
 root.config(bg="#d9d9d9")
-# img = tk.PhotoImage(file='nose-pick-icon.png')
-# root.tk.call('wm', 'iconphoto', root._w, img)
+img = tk.PhotoImage(file='lib/NosePick_ZOOM-01.png')
+root.tk.call('wm', 'iconphoto', root._w, img)
 # call the NOSEpickGUI class
 gui.MainGUI(root, in_path, out_path, map_path)
 root.mainloop()

@@ -76,4 +76,3 @@ def transformPt(nav, in_csys, out_csys):
   npt = transform.TransformPoint(nav[:,0],nav[:,1]) # x, y, z data list
 
   return npt
-

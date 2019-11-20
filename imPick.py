@@ -41,7 +41,6 @@ class imPick(tk.Frame):
         self.toolbar.update()
         self.click = self.fig.canvas.mpl_connect("button_press_event", self.onpress)
         self.unclick = self.fig.canvas.mpl_connect('button_release_event', self.onrelease)
-        self.move = self.fig.canvas.mpl_connect('motion_notify_event', self.onmove)
 
 
         # add axes for colormap sliders and reset button - leave invisible until data loaded
@@ -91,6 +90,16 @@ class imPick(tk.Frame):
         self.pick = None
         self.saved_pick = None
         self.im_status.set("data")
+
+
+    # startup image to be loaded in the background prior to opening data
+    def start_im(self):
+        self.ax.set_visible(True)
+        self.ax.imshow(mpl.image.imread('lib/NOSEpick-01.png'))
+        self.ax.get_xaxis().set_ticks([])
+        self.ax.get_yaxis().set_ticks([])
+        self.dataCanvas._tkcanvas.pack()
+        self.dataCanvas.draw()
 
 
     # load calls ingest() on the data file and sets the datacanvas
@@ -208,8 +217,6 @@ class imPick(tk.Frame):
     # addseg is a method to for user to generate picks
     def addseg(self, event):
         if self.f_loadName:
-            if (event.inaxes != self.ax):
-                return
             # find nearest index to event.xdata
             self.pick_idx_1 = utils.find_nearest(self.data["dist"], event.xdata)
             # check if picking state is a go
@@ -522,16 +529,14 @@ class imPick(tk.Frame):
         utils.savePick(self.f_saveName, self.data, self.pick_dict)
 
 
-    def onclick(self,event):
-        if event.inaxes == self.ax:
-            if event.button == 1:
-                self.addseg(event)
+    # onpress gets the time of the button_press_event
     def onpress(self,event):
-        self.press=True
-    def onmove(self,event):
-        if self.press:
-            self.move=True
+        self.time_onclick = time.time()
+
+
+    # onrelease calls addseg() if the time between the button press and release events
+    # is below a threshold so that segments aren't drawn while trying to zoom or pan
     def onrelease(self,event):
-        if self.press and not self.move:
-            self.onclick(event)
-        self.press=False; self.move=False
+        if event.inaxes == self.ax:
+            if event.button == 1 and ((time.time() - self.time_onclick) < 0.25):
+                self.addseg(event)

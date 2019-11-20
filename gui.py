@@ -88,6 +88,7 @@ class MainGUI(tk.Frame):
         # initialize imPick
         self.imPick = imPick.imPick(self.imTab)
         self.imPick.set_vars()
+        self.imPick.start_im()
 
         # initialize wvPick
         self.wvPick = wvPick.wvPick(self.wvTab)
