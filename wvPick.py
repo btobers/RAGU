@@ -22,6 +22,7 @@ class wvPick(tk.Frame):
         self.pick_dict = None
         self.rePick = None
         self.rePick_idx = {}        # dictionary of indeces of repicked traces for each layer
+        self.pick_idx0 = []         # list of start index for each pick layer
 
         # set up frames
         infoFrame = tk.Frame(self.parent)
@@ -124,6 +125,7 @@ class wvPick(tk.Frame):
                 menu.add_command(label=_i,
                     command=tk._setit(self.layerVar,_i))
                 self.rePick_idx["layer_" + str(_i)] = []
+                self.pick_idx0.append(np.where(self.pick_dict["layer_" + str(_i)] != -1.)[0][0])
 
 
     def autoPick(self):
@@ -142,22 +144,18 @@ class wvPick(tk.Frame):
         if (len(self.rePick_idx["layer_" + str(self.layerVar.get())]) == 0) or (self.rePick_idx["layer_" + str(self.layerVar.get())][-1] != self.trace):
             self.rePick_idx["layer_" + str(self.layerVar.get())].append(self.trace)
 
-        self.pick_dict["layer_" + self.layer][self.trace] = round(event.xdata)*self.dt*1e6
+        self.pick_dict["layer_" + self.layer][self.pick_idx0[self.layerVar.get()] + self.trace] = round(event.xdata)*self.dt*1e6
+
 
     # interpPicks is a method to interpolate linearly between refined picks
     def interpPicks(self):
         for _i in range(len(self.rePick_idx)):
             if len(self.rePick_idx["layer_" + str(_i)]) >= 2:
                 # get indices where picks exist for pick layer
-                idx = np.where(self.pick_dict["layer_" + str(_i)] != -1)[0]
+                x = np.where(self.pick_dict["layer_" + str(_i)] != -1)[0]
+                # get indeces of repicked traces
+                xp = self.pick_idx0[_i] + self.rePick_idx["layer_" + str(_i)]
                 # get twtt values at repicked indices
-                q = self.pick_dict["layer_" + str(_i)][self.rePick_idx["layer_" + str(_i)]]
+                fp = self.pick_dict["layer_" + str(_i)][xp]
                 # interpolate repicked values for layer
-                # self.pick_dict["layer_" + str(_i)][idx] = 
-                out=np.interp(idx, self.rePick_idx["layer_" + str(_i)], q)
-                plt.plot(self.pick_dict["layer_" + str(_i)][idx])
-                plt.plot(out)
-                plt.show()
-        
-
-               
+                self.pick_dict["layer_" + str(_i)][x] = np.interp(x, xp, fp)                 
