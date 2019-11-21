@@ -166,14 +166,14 @@ class MainGUI(tk.Frame):
     def open_data(self):
         temp_loadName = ""
         # select input file
-        temp_loadName = tk.filedialog.askopenfilename(initialdir = self.in_path,title = "Select file",filetypes = (("data files", ".mat .h5"),("all files",".*")))
+        temp_loadName = tk.filedialog.askopenfilename(initialdir = self.in_path,title = "Select file",filetypes = (("hd5f files", ".mat .h5"),("segy files", ".sgy"),("all files",".*")))
         # if input selected, clear imPick canvas, ingest data and pass to imPick
         if temp_loadName:
             self.f_loadName = temp_loadName
             self.imPick.clear_canvas()  
             self.imPick.set_vars()
             # ingest the data
-            self.igst = ingester.ingester("h5py")
+            self.igst = ingester.ingester(self.f_loadName.split(".")[-1])
             self.data = self.igst.read(self.f_loadName)
             self.imPick.load(self.f_loadName, self.data)
             self.wvPick.set_data(self.data["amp"], self.data["dt"], self.data["num_sample"])
