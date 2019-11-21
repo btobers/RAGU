@@ -12,8 +12,8 @@ import tkinter as tk
 from tkinter import font
 
 ### USER SPECIFIED VARS ###
-# in_path = "/zippy/MARS/targ/supl/UAF/2018/may/"
-in_path = "/home/btober/Desktop/"
+in_path = "/zippy/MARS/targ/supl/UAF/2018/may/"
+# in_path = "/home/btober/Desktop/"
 # in_path = "/mnt/Swaps/MARS/targ/supl/UAF/2019/hdf5/"
 # out_path = "/home/anomalocaris/Desktop"
 out_path = "/zippy/MARS/targ/supl/UAF/2018/may/picks/"

@@ -5,6 +5,7 @@ import matplotlib as mpl
 mpl.use("TkAgg")
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+import os
 # from PIL import Image
 
 class basemap(tk.Tk):
@@ -80,7 +81,7 @@ class basemap(tk.Tk):
 
 
     # set_nav is a method to update the navigation data plotted on the basemap
-    def set_nav(self, navdat):
+    def set_nav(self, navdat, floadName):
         self.navdat = navdat
         if self.basemap_state == 1:
             # transform navdat to csys of geotiff   
@@ -93,6 +94,7 @@ class basemap(tk.Tk):
             self.track_start, = self.map_fig_ax.plot(self.nav_transform.navdat[0,0],self.nav_transform.navdat[0,1],'go',label='start')
             self.track_end, = self.map_fig_ax.plot(self.nav_transform.navdat[-1,0],self.nav_transform.navdat[-1,1],'ro',label='end')
             self.legend = self.map_fig_ax.legend()  
+            self.basemap_window.title("NOSEpick - Map Window: " + os.path.splitext(floadName.split("/")[-1])[0])
             self.map_dataCanvas.draw() 
 
 

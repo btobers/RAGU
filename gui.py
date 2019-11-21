@@ -181,7 +181,7 @@ class MainGUI(tk.Frame):
         # pass basemap to imPick for plotting pick location
         if self.map_loadName:
             self.basemap.clear_nav()
-            self.basemap.set_nav(self.imPick.get_nav())
+            self.basemap.set_nav(self.imPick.get_nav(), self.f_loadName)
             self.imPick.get_basemap(self.basemap)            
 
 
@@ -204,7 +204,7 @@ class MainGUI(tk.Frame):
 
             if self.f_loadName:
                 # pass basemap to imPick for plotting pick location
-                self.basemap.set_nav(self.imPick.get_nav())
+                self.basemap.set_nav(self.imPick.get_nav(), self.f_loadName)
                 self.imPick.get_basemap(self.basemap)
 
 
@@ -252,7 +252,7 @@ class MainGUI(tk.Frame):
 
                 if self.map_loadName and self.basemap.get_state() == 1:
                     self.basemap.clear_nav()
-                    self.basemap.set_nav(self.imPick.get_nav())
+                    self.basemap.set_nav(self.imPick.get_nav(), self.f_loadName)
                     self.imPick.get_basemap(self.basemap)
 
             else:

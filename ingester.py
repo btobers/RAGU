@@ -78,20 +78,43 @@ class ingester:
         return {"dt": dt, "num_trace": num_trace, "num_sample": num_sample, "navdat": navdat, "twtt_surf": twtt_surf,"dist": dist, "amp": amp, "clutter": clutter} # other fields?
 
     def mat_read(self,fpath):
-        # method to ingest .mat files. 
-        f = scio.loadmat(fpath)
+        # method to ingest .mat files. for older matlab files, scio works and h5py does not. for newer files, h5py works and scio does not 
+        try:
+            f = h5py.File(fpath, "r")
 
-        dt = float(f["block"]["dt"][0])
-        num_trace = int(f["block"]["num_trace"][0])
-        num_sample = int(f["block"]["num_sample"][0])
-        dist = f["block"]["dist"][0][0].flatten()
-        lon = f["block"]["lon"][0][0].flatten()
-        lat = f["block"]["lat"][0][0].flatten()
-        elev_air = f["block"]["elev_air"][0][0].flatten()
-        twtt_surf = f["block"]["twtt_surf"][0][0].flatten()
-        amp = f["block"]["amp"][0][0]
-        clutter = f["block"]["clutter"][0][0]
-        dist = dist / 10.   # divide distance by 10 to get out of pickGUI format
+            dt = float(f["block"]["dt"][0])
+            num_trace = int(f["block"]["num_trace"][0])
+            num_sample = int(f["block"]["num_sample"][0])
+            dist = np.array(f["block"]["dist"]).flatten()
+            lon = np.array(f["block"]["lon"]).flatten()
+            lat = np.array(f["block"]["lat"]).flatten()
+            elev_air = np.array(f["block"]["elev_air"]).flatten()
+            twtt_surf = np.array(f["block"]["twtt_surf"]).flatten()
+            amp = np.array(f["block"]["amp"])
+            clutter = np.array(f["block"]["clutter"])
+            dist = dist / 10.   # divide distance by 10 to get out of pickGUI format
+
+            f.close()
+
+        except:
+            try:
+                f = scio.loadmat(fpath)
+
+                dt = float(f["block"]["dt"][0])
+                num_trace = int(f["block"]["num_trace"][0])
+                num_sample = int(f["block"]["num_sample"][0])
+                dist = f["block"]["dist"][0][0].flatten()
+                lon = f["block"]["lon"][0][0].flatten()
+                lat = f["block"]["lat"][0][0].flatten()
+                elev_air = f["block"]["elev_air"][0][0].flatten()
+                twtt_surf = f["block"]["twtt_surf"][0][0].flatten()
+                amp = f["block"]["amp"][0][0]
+                clutter = f["block"]["clutter"][0][0]
+                dist = dist / 10.   # divide distance by 10 to get out of pickGUI format
+
+            except Exception as err:
+                print("ingest Error: " + str(err))
+                pass
 
         # transpose amp and clutter if flipped
         if amp.shape[0] == num_trace and amp.shape[1] == num_sample:
