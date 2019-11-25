@@ -527,6 +527,11 @@ class imPick(tk.Frame):
     def save(self, f_saveName):
         self.f_saveName = f_saveName
         utils.savePick(self.f_saveName, self.data, self.pick_dict)
+        if self.im_status.get() =="clut":
+            self.show_data()
+        extent = self.ax.get_window_extent().transformed(self.fig.dpi_scale_trans.inverted())
+        utils.exportIm(self.f_saveName, self.fig, extent)
+        self.update_bg()
 
 
     # onpress gets the time of the button_press_event

@@ -51,7 +51,7 @@ def savePick(f_saveName, data, pick_dict):
 
     header = "lon,lat,elev_air,twtt_surf,twtt_bed,thick"
     np.savetxt(f_saveName, dstack, delimiter=",", newline="\n", fmt="%s", header=header, comments="")
-    print("Picks exported: ", f_saveName)
+    print("Picks data exported: " + f_saveName)
 
 
 def find_nearest(array,value):
@@ -83,4 +83,8 @@ def interp_array(array):
     array_interp = np.interp(x, xp, fp)
 
     return array_interp
-
+    
+# export the pick image
+def exportIm(fname, fig, extent):
+    fig.savefig(fname.rstrip(".csv") + ".png", dpi = 400, bbox_inches=extent.expanded(1.07, 1.1), facecolor = "#d9d9d9")
+    print("Picks image exported: " + fname.rstrip(".csv") + ".png")

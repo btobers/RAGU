@@ -191,6 +191,7 @@ class MainGUI(tk.Frame):
             self.f_saveName = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_pk",
                                 initialdir = self.out_path,title = "Save As",filetypes = (("comma-separated values","*.csv"),))
         if self.f_saveName:
+            self.stop_pick()
             self.imPick.save(self.f_saveName)
     
 

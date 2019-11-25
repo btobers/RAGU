@@ -140,5 +140,5 @@ class ingester:
         # method to ingest .sgy data
         with open(fpath, 'rb') as segy_in_file:
             # The seg_y_dataset is a lazy-reader, so keep the file open throughout.
-            seg_y_dataset = create_reader(segy_in_file)  # Non-standard Rev 1 little-endian
+            seg_y_dataset = create_reader(segy_in_file, endian='>')  # Non-standard Rev 1 little-endian
             print(seg_y_dataset.num_traces())
