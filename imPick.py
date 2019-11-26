@@ -105,6 +105,7 @@ class imPick(tk.Frame):
     # load calls ingest() on the data file and sets the datacanvas
     def load(self,f_loadName, data):
         self.f_loadName = f_loadName
+        print('----------------------------------------')
         print("Loading: " + self.f_loadName)
         # receive the data
         self.data = data
@@ -148,7 +149,7 @@ class imPick(tk.Frame):
         self.maxdB_data = np.nanmax(self.dB_data)
         self.maxdB_clut = np.nanmax(self.dB_clut)
 
-        self.surf, = self.ax.plot(self.data["dist"],self.data["twtt_surf"],"c")     # empty line for twtt surface
+        self.surf, = self.ax.plot(self.data["dist"],self.data["twtt_surf"]*1e6,"c")     # empty line for twtt surface
         self.pick, = self.ax.plot([],[],"r")                                        # empty line for current pick
         self.saved_pick = self.ax.scatter([],[],c="g",marker=".",s=8,linewidth=0)   # empty line for saved pick
 
@@ -430,12 +431,14 @@ class imPick(tk.Frame):
         self.update_slider()
         self.cmap_update()
 
+
     def safe_draw(self):
         """temporarily disconnect the draw_event callback to avoid recursion"""
         canvas = self.fig.canvas
         canvas.mpl_disconnect(self.draw_cid)
         canvas.draw()
         self.draw_cid = canvas.mpl_connect('draw_event', self.update_bg)
+
 
     def update_bg(self, event=None):
         """
@@ -527,6 +530,8 @@ class imPick(tk.Frame):
     def save(self, f_saveName):
         self.f_saveName = f_saveName
         utils.savePick(self.f_saveName, self.data, self.pick_dict)
+        self.ax.set_xlim((self.data["dist"][0], self.data["dist"][-1]))
+        self.ax.set_ylim((self.data["amp"].shape[0] * self.data["dt"] * 1e6, 0))
         if self.im_status.get() =="clut":
             self.show_data()
         extent = self.ax.get_window_extent().transformed(self.fig.dpi_scale_trans.inverted())

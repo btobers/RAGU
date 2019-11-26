@@ -40,8 +40,8 @@ def savePick(f_saveName, data, pick_dict):
         lon.append(data["navdat"].navdat[pick_idx[:],0])
         lat.append(data["navdat"].navdat[pick_idx[:],1])
         elev_air.append(data["navdat"].navdat[pick_idx[:],2])
-        twtt_surf.append(data["twtt_surf"][pick_idx[:]]*1e-6)
-        twtt_bed.append(pick_dict["layer_" + str(_i)][pick_idx[:]]*1e-6)
+        twtt_surf.append(data["twtt_surf"][pick_idx[:]])        # this should already be stored in microseconds
+        twtt_bed.append(pick_dict["layer_" + str(_i)][pick_idx[:]]*1e-6)    # convert back to microseconds
 
         # calculate ice thickness - using twtt_bed and twtt_surf
         thick.append((((pick_dict["layer_" + str(_i)][pick_idx]) - (data["twtt_surf"][pick_idx])) * v_ice) / 2)
@@ -51,7 +51,7 @@ def savePick(f_saveName, data, pick_dict):
 
     header = "lon,lat,elev_air,twtt_surf,twtt_bed,thick"
     np.savetxt(f_saveName, dstack, delimiter=",", newline="\n", fmt="%s", header=header, comments="")
-    print("Picks data exported: " + f_saveName)
+    print("Pick data exported: " + f_saveName)
 
 
 def find_nearest(array,value):
@@ -87,4 +87,4 @@ def interp_array(array):
 # export the pick image
 def exportIm(fname, fig, extent):
     fig.savefig(fname.rstrip(".csv") + ".png", dpi = 400, bbox_inches=extent.expanded(1.07, 1.1), facecolor = "#d9d9d9")
-    print("Picks image exported: " + fname.rstrip(".csv") + ".png")
+    print("Pick image exported: " + fname.rstrip(".csv") + ".png")

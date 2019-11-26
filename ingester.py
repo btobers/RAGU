@@ -17,7 +17,6 @@ class ingester:
         # valid options -
         # hdf5, mat, segy
         valid_types = ["h5", "mat", "sgy"] # can add more to this
-        print(ftype)
         if (ftype not in valid_types):
             print("Invalid file type specifier")
             print("Valid file types:")
