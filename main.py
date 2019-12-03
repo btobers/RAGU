@@ -12,11 +12,12 @@ import tkinter as tk
 from tkinter import font
 
 ### USER SPECIFIED VARS ###
-in_path = "/zippy/MARS/targ/supl/UAF/2018/may/"
+in_path = "/zippy/MARS/targ/supl/UAF/2018/aug/"
+# in_path = "/zippy/MARS/orig/supl/WISE/blocks/"
 # in_path = "/home/btober/Desktop/"
 # in_path = "/mnt/Swaps/MARS/targ/supl/UAF/2019/hdf5/"
 # out_path = "/home/anomalocaris/Desktop"
-out_path = "/zippy/MARS/targ/supl/UAF/2018/may/picks/"
+out_path = "/zippy/MARS/targ/supl/UAF/2018/aug/"
 map_path = "/zippy/MARS/targ/supl/grid-AKDEM/"
 # map_path = "/mnt/Swaps/MARS/orig/supl/gis/projects/qgis/OIB-AK_radar/"
 

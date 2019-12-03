@@ -51,8 +51,8 @@ class ingester:
         elev_air =  np.array(f["loc0"]["altM"]).flatten().astype(np.float64)
         twtt_surf = np.zeros(num_trace)
         amp = np.array(f["proc0"])
-        if "sim0" in f.keys():
-            clutter = np.array(f["sim0"])
+        if "clutter0" in f.keys():
+            clutter = np.array(f["clutter0"])
         else:
             clutter = np.ones(amp.shape)
         f.close()

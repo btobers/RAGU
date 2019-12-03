@@ -135,19 +135,24 @@ class imPick(tk.Frame):
             if np.nanmax(np.abs(self.data["clutter"])) < 1:
                 Pow_clut = np.power(self.data["clutter"],2)
                 self.dB_clut = np.log(Pow_clut)
+                # self.dB_clut[np.where(self.dB_clut == -np.inf)] = np.NaN
             # if in log space, leave as is
             else:
                 self.dB_clut = self.data["clutter"]
         # if no clutter data, use empty array
         else:
             self.dB_clut = self.data["clutter"]
+            
 
         # cut off data at 10th percentile to avoid extreme outliers - round down
         self.mindB_data = np.floor(np.nanpercentile(self.dB_data,10))
         self.mindB_clut = np.floor(np.nanpercentile(self.dB_clut,10))
         
         self.maxdB_data = np.nanmax(self.dB_data)
-        self.maxdB_clut = np.nanmax(self.dB_clut)
+        # self.maxdB_clut = np.nanmax(self.dB_clut)
+        self.maxdB_clut = np.floor(np.nanpercentile(self.dB_data,90))
+        print(self.mindB_data,self.maxdB_data)
+        print(self.mindB_clut,self.maxdB_clut)
 
         self.surf, = self.ax.plot(self.data["dist"],self.data["twtt_surf"]*1e6,"c")     # empty line for twtt surface
         self.pick, = self.ax.plot([],[],"r")                                        # empty line for current pick
