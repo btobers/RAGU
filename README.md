@@ -30,5 +30,5 @@ To run NOSEpick:
 
 If the default Python environment is not set as Python 3, you will have to specify:
 ```
-$python3 main.py
+$ python3 main.py
 ```
