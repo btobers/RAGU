@@ -16,14 +16,14 @@ NOSEpick is an open source GUI package developed to interpret radar sounding dat
 - *nose_env.yml* contains the dependencies to run the app
 
 To create a conda environment with the required dependencies, run the following command:
-'''
+```
 $ conda env create -f nose_env.yml
-'''
+```
     
 ## Running NOSEpick
 Prior to running NOSEpick, set appropriate data paths in *main.py*
 
 To run NOSEpick:
-'''
+```
 (nose)$ python main.py
-'''
+```
