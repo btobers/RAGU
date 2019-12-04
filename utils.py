@@ -32,6 +32,7 @@ def savePick(f_saveName, data, pick_dict):
     twtt_surf = []
     twtt_bed = []
     thick = []
+
     # get necessary data from radargram for pick locations
     # iterate through pick_dict layers
     for _i in range(len(pick_dict)):
@@ -46,10 +47,16 @@ def savePick(f_saveName, data, pick_dict):
         # calculate ice thickness - using twtt_bed and twtt_surf
         thick.append(((((pick_dict["layer_" + str(_i)][pick_idx]*1e-6) - (data["twtt_surf"][pick_idx])) * v_ice) / 2))
 
-    # combine the data into a matrix for export
-    dstack = np.column_stack((np.hstack(lon).T,np.hstack(lat).T,np.hstack(elev_air).T,np.hstack(twtt_surf).T,np.hstack(twtt_bed).T,np.hstack(thick).T))
+    # calculate gnd elevation 
+    elev_gnd = [a-(b*3e8/2) for a,b in zip(elev_air,twtt_surf)]
 
-    header = "lon,lat,elev_air,twtt_surf,twtt_bed,thick"
+    # calculate bed elevation
+    elev_bed = [a-b for a,b in zip(elev_air,thick)]
+
+    # combine the data into a matrix for export
+    dstack = np.column_stack((np.hstack(lon).T,np.hstack(lat).T,np.hstack(elev_air).T,np.hstack(elev_gnd).T,np.hstack(twtt_surf).T,np.hstack(twtt_bed).T,np.hstack(elev_bed).T,np.hstack(thick).T))
+
+    header = "lon,lat,elev_air,elev_gnd,twtt_surf,twtt_bed,elev_bed,thick"
     np.savetxt(f_saveName, dstack, delimiter=",", newline="\n", fmt="%s", header=header, comments="")
     print("Pick data exported: " + f_saveName)
 

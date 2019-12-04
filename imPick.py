@@ -135,7 +135,7 @@ class imPick(tk.Frame):
             if np.nanmax(np.abs(self.data["clutter"])) < 1:
                 Pow_clut = np.power(self.data["clutter"],2)
                 self.dB_clut = np.log(Pow_clut)
-                # self.dB_clut[np.where(self.dB_clut == -np.inf)] = np.NaN
+                self.dB_clut[np.where(self.dB_clut == -np.inf)] = np.NaN
             # if in log space, leave as is
             else:
                 self.dB_clut = self.data["clutter"]
