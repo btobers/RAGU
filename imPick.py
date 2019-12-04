@@ -151,8 +151,8 @@ class imPick(tk.Frame):
         self.maxdB_data = np.nanmax(self.dB_data)
         # self.maxdB_clut = np.nanmax(self.dB_clut)
         self.maxdB_clut = np.floor(np.nanpercentile(self.dB_data,90))
-        print(self.mindB_data,self.maxdB_data)
-        print(self.mindB_clut,self.maxdB_clut)
+        # print(self.mindB_data,self.maxdB_data)
+        # print(self.mindB_clut,self.maxdB_clut)
 
         self.surf, = self.ax.plot(self.data["dist"],self.data["twtt_surf"]*1e6,"c")     # empty line for twtt surface
         self.pick, = self.ax.plot([],[],"r")                                        # empty line for current pick

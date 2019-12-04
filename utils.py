@@ -19,6 +19,7 @@ def euclid_dist(nav):
 
 
 # a set of utility functions for NOSEpick GUI
+# need to clean up this entire utility at some point
 def savePick(f_saveName, data, pick_dict):
     f_saveName = f_saveName
     data = data
@@ -52,6 +53,14 @@ def savePick(f_saveName, data, pick_dict):
 
     # calculate bed elevation
     elev_bed = [a-b for a,b in zip(elev_air,thick)]
+
+    # if twtt_surf not in data, replace values for twtt_surf, elev_gnd, elev_bed, and thick with NaN's to be recalculated later
+    if not np.any(data["twtt_surf"]):
+        for _i in range(len(lon[0])):
+            twtt_surf[0][_i] = np.nan
+            elev_gnd[0][_i] = np.nan
+            elev_bed[0][_i] = np.nan
+            thick[0][_i] = np.nan
 
     # combine the data into a matrix for export
     dstack = np.column_stack((np.hstack(lon).T,np.hstack(lat).T,np.hstack(elev_air).T,np.hstack(elev_gnd).T,np.hstack(twtt_surf).T,np.hstack(twtt_bed).T,np.hstack(elev_bed).T,np.hstack(thick).T))
@@ -92,6 +101,8 @@ def interp_array(array):
     return array_interp
     
 # export the pick image
+# need to figure out a better way to set extent so that it's not screen specific
+# also need to hold back image from being displayed in app temporarily when saved
 def exportIm(fname, fig, extent):
     fig.savefig(fname.rstrip(".csv") + ".png", dpi = 400, bbox_inches=extent.expanded(1.07, 1.1), facecolor = "#d9d9d9")
     print("Pick image exported: " + fname.rstrip(".csv") + ".png")
