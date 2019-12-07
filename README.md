@@ -32,3 +32,8 @@ If the default Python environment is not set as Python 3, you will have to speci
 ```
 $ python3 main.py
 ```
+
+## Notes
+NOSEpick is still in development, but is in operable standing for interpreting certain datasets.
+Plans for the future are to complete the wvPick optimization tools, as well as add ingesters for additional datasets. So far, the thought is to add a ingester for PulsEKKO data, GSSI, Mala, and SHARAD. A segy ingester is in the works.
+Also need to find a way to render images faster when toggling between radar data and clutter, zooming/resetting the view. This can possible be done by down-sampling the data based on the zoom.
