@@ -91,8 +91,7 @@ class ingester:
             twtt_surf = np.array(f["block"]["twtt_surf"]).flatten()
             amp = np.array(f["block"]["amp"])
             clutter = np.array(f["block"]["clutter"])
-            dist = dist / 10.   # divide distance by 10 to get out of pickGUI format
-
+            dist = dist #/ 10.   # divide distance by 10 to get out of pickGUI format
             f.close()
 
         except:
@@ -109,7 +108,7 @@ class ingester:
                 twtt_surf = f["block"]["twtt_surf"][0][0].flatten()
                 amp = f["block"]["amp"][0][0]
                 clutter = f["block"]["clutter"][0][0]
-                dist = dist / 10.   # divide distance by 10 to get out of pickGUI format
+                dist = dist #/ 10.   # divide distance by 10 to get out of pickGUI format
 
             except Exception as err:
                 print("ingest Error: " + str(err))

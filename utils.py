@@ -27,26 +27,31 @@ def savePick(f_saveName, data, pick_dict):
 
     v_ice = 3e8/(np.sqrt(3.15))   # EM wave veloity in ice - for thickness calculation
     # vars to hold info from pick locations
-    lon = []
-    lat = []
-    elev_air = []
-    twtt_surf = []
-    twtt_bed = []
-    thick = []
+    # lon = []
+    # lat = []
+    # elev_air = []
+    # twtt_surf = []
+    # twtt_bed = []
+    # thick = []
 
-    # get necessary data from radargram for pick locations
+    lon = data["navdat"].navdat[:,0]
+    lat = data["navdat"].navdat[:,1]
+    elev_air = data["navdat"].navdat[:,2]
+    twtt_surf = data["twtt_surf"]
+    twtt_bed = np.repeat(np.nan,lon.shape[0])
+    thick = np.repeat(np.nan,lon.shape[0])
+    elev_gnd = np.repeat(np.nan,lon.shape[0])
+    elev_bed = np.repeat(np.nan,lon.shape[0])
+
+
     # iterate through pick_dict layers
     for _i in range(len(pick_dict)):
         pick_idx = np.where(pick_dict["layer_" + str(_i)] != -1)[0]
 
-        lon.append(data["navdat"].navdat[pick_idx[:],0])
-        lat.append(data["navdat"].navdat[pick_idx[:],1])
-        elev_air.append(data["navdat"].navdat[pick_idx[:],2])
-        twtt_surf.append(data["twtt_surf"][pick_idx[:]])        # this should already be stored in microseconds
-        twtt_bed.append(pick_dict["layer_" + str(_i)][pick_idx[:]]*1e-6)    # convert back to microseconds
+        twtt_bed[pick_idx] = pick_dict["layer_" + str(_i)][pick_idx[:]]*1e-6    # convert back to microseconds
 
         # calculate ice thickness - using twtt_bed and twtt_surf
-        thick.append(((((pick_dict["layer_" + str(_i)][pick_idx]*1e-6) - (data["twtt_surf"][pick_idx])) * v_ice) / 2))
+        thick[pick_idx] = ((((pick_dict["layer_" + str(_i)][pick_idx][:]*1e-6) - (data["twtt_surf"][pick_idx][:])) * v_ice) / 2)
 
     # calculate gnd elevation 
     elev_gnd = [a-(b*3e8/2) for a,b in zip(elev_air,twtt_surf)]
@@ -56,14 +61,13 @@ def savePick(f_saveName, data, pick_dict):
 
     # if twtt_surf not in data, replace values for twtt_surf, elev_gnd, elev_bed, and thick with NaN's to be recalculated later
     if not np.any(data["twtt_surf"]):
-        for _i in range(len(lon[0])):
-            twtt_surf[0][_i] = np.nan
-            elev_gnd[0][_i] = np.nan
-            elev_bed[0][_i] = np.nan
-            thick[0][_i] = np.nan
+        twtt_surf = np.repeat(np.nan,lon.shape[0])
+        thick = np.repeat(np.nan,lon.shape[0])
+        elev_gnd = np.repeat(np.nan,lon.shape[0])
+        elev_bed = np.repeat(np.nan,lon.shape[0])
 
     # combine the data into a matrix for export
-    dstack = np.column_stack((np.hstack(lon).T,np.hstack(lat).T,np.hstack(elev_air).T,np.hstack(elev_gnd).T,np.hstack(twtt_surf).T,np.hstack(twtt_bed).T,np.hstack(elev_bed).T,np.hstack(thick).T))
+    dstack = np.column_stack((lon,lat,elev_air,elev_gnd,twtt_surf,twtt_bed,elev_bed,thick))
 
     header = "lon,lat,elev_air,elev_gnd,twtt_surf,twtt_bed,elev_bed,thick"
     np.savetxt(f_saveName, dstack, delimiter=",", newline="\n", fmt="%s", header=header, comments="")
