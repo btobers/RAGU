@@ -5,7 +5,7 @@ import utils
 import matplotlib.pyplot as plt
 import scipy.io as scio
 import sys
-from segpy.reader import create_reader
+# from segpy.reader import create_reader
 
 
 class ingester:
@@ -136,7 +136,8 @@ class ingester:
 
     def segypy_read(self, fpath):
         # method to ingest .sgy data
-        with open(fpath, 'rb') as segy_in_file:
-            # The seg_y_dataset is a lazy-reader, so keep the file open throughout.
-            seg_y_dataset = create_reader(segy_in_file, endian='>')  # Non-standard Rev 1 little-endian
-            print(seg_y_dataset.num_traces())
+        # with open(fpath, 'rb') as segy_in_file:
+        #     # The seg_y_dataset is a lazy-reader, so keep the file open throughout.
+        #     seg_y_dataset = create_reader(segy_in_file, endian='>')  # Non-standard Rev 1 little-endian
+        #     print(seg_y_dataset.num_traces())
+        sys.exit()
