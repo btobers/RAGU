@@ -15,12 +15,19 @@ from tkinter import font
 # in_path = "/zippy/MARS/targ/supl/UAF/2018/aug/"
 # in_path = "/zippy/MARS/orig/supl/WISE/blocks/"
 # in_path = "/home/btober/Desktop/"
-in_path = "/zippy/MARS/targ/supl/UAF/2019/hdf5/"
 # out_path = "/home/anomalocaris/Desktop"
-out_path = "/zippy/MARS/targ/supl/UAF/2019/picks/"
 # out_path = "/home/btober/Desktop/"
-map_path = "/zippy/MARS/targ/supl/grid-AKDEM/"
-# map_path = "/mnt/Swaps/MARS/orig/supl/gis/projects/qgis/OIB-AK_radar/"
+# anomalocaris paths
+in_path = "/mnt/Swaps/MARS/targ/supl/UAF/2018/"
+out_path = "/home/anomalocaris/Desktop/"
+map_path = "/mnt/Swaps/MARS/orig/supl/gis/projects/qgis/OIB-AK_radar/"
+
+# colugo paths
+
+# beefmaser paths
+# in_path = "/media/anomalocaris/beefmaster/MARS/targ/supl/UAF/2019/hdf5/"
+# out_path = "/media/anomalocaris/beefmaster/MARS/targ/supl/UAF/2019/picks/"
+# map_path = "/media/anomalocaris/beefmaster/MARS/targ/supl/grid-AKDEM/"
 
 ### INITIALIZE ###
 root = tk.Tk()

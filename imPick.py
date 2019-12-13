@@ -155,7 +155,7 @@ class imPick(tk.Frame):
         # print(self.mindB_clut,self.maxdB_clut)
 
         self.surf, = self.ax.plot(self.data["dist"],self.data["twtt_surf"]*1e6,"c")     # empty line for twtt surface
-        self.pick, = self.ax.plot([],[],"r")                                        # empty line for current pick
+        self.pick  = self.ax.scatter([],[],c="r",marker="x",s=8,linewidth=0)                                    # empty line for current pick
         self.saved_pick = self.ax.scatter([],[],c="g",marker=".",s=8,linewidth=0)   # empty line for saved pick
 
         self.dataCanvas.get_tk_widget().pack(in_=self.dataFrame, side="bottom", fill="both", expand=1) 
@@ -229,14 +229,14 @@ class imPick(tk.Frame):
             if self.pick_state == True:
                 self.xln.append(event.xdata)
                 self.yln.append(event.ydata)
-
+                print(self.xln)
                 # redraw pick quickly with blitting
-                self.pick.set_data(self.xln, self.yln)
+                self.pick.set_offsets(np.c_[self.xln, self.yln])
                 self.blit()
 
                 # if more than two picks, call pick_interp
-                if len(self.xln) >= 2:
-                    self.pick_interp()
+                # if len(self.xln) >= 2:
+                    # self.pick_interp()
             # plot pick location to basemap
             if self.basemap and self.basemap.get_state() == 1:
                 self.basemap.plot_idx(self.pick_idx_1)
@@ -255,7 +255,7 @@ class imPick(tk.Frame):
             # extend pick lists
             self.xln_old.extend(self.data["dist"][pick_idx])
             self.yln_old.extend(self.pick_dict["layer_" + str(self.pick_layer)][pick_idx])
-            self.pick.set_data(self.xln, self.yln) 
+            self.pick.set_offsets(np.c_[self.xln, self.yln])
 
         except Exception as err:
             print(err)
@@ -266,7 +266,7 @@ class imPick(tk.Frame):
         # remove saved picks
         del self.xln[:]
         del self.yln[:]  
-        self.pick.set_data(self.xln, self.yln)
+        self.pick.set_offsets(np.c_[self.xln, self.yln])
         self.saved_pick.set_offsets(np.c_[self.xln_old,self.yln_old])
 
 
@@ -288,19 +288,24 @@ class imPick(tk.Frame):
 
     def clear_last(self):
         # clear last pick
-        if len(self.xln) >= 2:
-            # get indices of last two ponts picked to remove twtt from pick_dict - reset to -1.
-            pick_idx_0 = utils.find_nearest(self.data["dist"], self.xln[-2])
-            pick_idx_1 = utils.find_nearest(self.data["dist"], self.xln[-1])
-            pick_idx = np.arange(pick_idx_0,pick_idx_1 + 1)
-            self.pick_dict["layer_" + str(self.pick_layer)][pick_idx[:]] = -1.
+        # if len(self.xln) >= 2:
+        #     # get indices of last two ponts picked to remove twtt from pick_dict - reset to -1.
+        #     pick_idx_0 = utils.find_nearest(self.data["dist"], self.xln[-2])
+        #     pick_idx_1 = utils.find_nearest(self.data["dist"], self.xln[-1])
+        #     pick_idx = np.arange(pick_idx_0,pick_idx_1 + 1)
+        #     self.pick_dict["layer_" + str(self.pick_layer)][pick_idx[:]] = -1.
+        #     # delete last pick
+        #     del self.xln[-1:]
+        #     del self.yln[-1:]
+        #     # delete all points between last two click events
+        #     del self.xln_old[-len(pick_idx):]
+        #     del self.yln_old[-len(pick_idx):]
+
+        if len(self.xln) >= 1:
             # delete last pick
             del self.xln[-1:]
             del self.yln[-1:]
-            # delete all points between last two click events
-            del self.xln_old[-len(pick_idx):]
-            del self.yln_old[-len(pick_idx):]
-            self.pick.set_data(self.xln, self.yln)
+            self.pick.set_offsets(np.c_[self.xln, self.yln])
             self.blit()
 
 
@@ -535,6 +540,7 @@ class imPick(tk.Frame):
     def save(self, f_saveName):
         self.f_saveName = f_saveName
         utils.savePick(self.f_saveName, self.data, self.pick_dict)
+        # zoom out to full rgram extent to save pick image
         self.ax.set_xlim((self.data["dist"][0], self.data["dist"][-1]))
         self.ax.set_ylim((self.data["amp"].shape[0] * self.data["dt"] * 1e6, 0))
         if self.im_status.get() =="clut":
