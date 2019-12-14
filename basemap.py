@@ -74,6 +74,8 @@ class basemap(tk.Tk):
                 # self.map_fig_ax.set_yticklabels(self.map_yticks)
                 self.map_dataCanvas.draw()
                 self.basemap_state = 1
+                self.draw_cid = self.map_fig.canvas.mpl_connect('draw_event', self.update_bg)
+
                 
             except Exception as err:
                 print("basemap load error: " + str(err))
@@ -107,7 +109,7 @@ class basemap(tk.Tk):
             if self.pick_loc:
                 self.pick_loc.remove()
             self.pick_loc = self.map_fig_ax.scatter(self.nav_transform.navdat[idx,0],self.nav_transform.navdat[idx,1],c="w",marker="x",zorder=3)
-            self.map_fig.canvas.draw()
+            self.blit()
 
         
     # basemap_close is a method to close the basemap window
@@ -132,3 +134,38 @@ class basemap(tk.Tk):
             self.pick_loc.remove()
             self.pick_loc = None
         self.map_fig.canvas.draw()
+
+    def safe_draw(self):
+        """temporarily disconnect the draw_event callback to avoid recursion"""
+        canvas = self.map_fig.canvas
+        canvas.mpl_disconnect(self.draw_cid)
+        canvas.draw()
+        self.draw_cid = canvas.mpl_connect('draw_event', self.update_bg)
+
+
+    def update_bg(self, event=None):
+        """
+        when the figure is resized, hide picks, draw everything,
+        and update the background.
+        """
+        if self.pick_loc:
+            self.pick_loc.set_visible(False)
+            self.safe_draw()
+            self.axbg = self.map_dataCanvas.copy_from_bbox(self.map_fig_ax.bbox)
+            self.pick_loc.set_visible(True)
+            self.blit()
+        else:
+            self.safe_draw()
+            self.axbg = self.map_dataCanvas.copy_from_bbox(self.map_fig_ax.bbox)
+            self.blit()
+
+
+    def blit(self):
+        """
+        update the figure, without needing to redraw the
+        "axbg" artists.
+        """
+        self.map_fig.canvas.restore_region(self.axbg)
+        if self.pick_loc:
+            self.map_fig_ax.draw_artist(self.pick_loc)
+        self.map_fig.canvas.blit(self.map_fig_ax.bbox)

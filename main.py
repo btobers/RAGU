@@ -20,7 +20,7 @@ from tkinter import font
 # anomalocaris paths
 in_path = "/mnt/Swaps/MARS/targ/supl/UAF/2018/"
 out_path = "/home/anomalocaris/Desktop/"
-map_path = "/mnt/Swaps/MARS/orig/supl/gis/projects/qgis/OIB-AK_radar/"
+map_path = "/mnt/Swaps/MARS/targ/supl/grid-AKDEM/"
 
 # colugo paths
 
