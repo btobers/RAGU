@@ -50,9 +50,21 @@ class MainGUI(tk.Frame):
         fileMenu.add_command(label="Next     [Right]", command=self.next_loc)
         fileMenu.add_command(label="Exit    [Ctrl+Q]", command=self.close_window)
 
-        # pick menu items
-        pickMenu.add_command(label="New     [Ctrl+N]", command=self.new_pick)
-        pickMenu.add_command(label="Stop    [Escape]", command=self.stop_pick)
+        # pick menu subitems
+        surfacePickMenu = tk.Menu(pickMenu,tearoff=0)
+        subsurfacePickMenu = tk.Menu(pickMenu,tearoff=0)
+
+        # subsurface pick menu items
+        subsurfacePickMenu.add_command(label="New     [Ctrl+N]", command=self.new_pick)
+        subsurfacePickMenu.add_command(label="Stop    [Escape]", command=self.stop_pick)
+
+        # surface pick menu items
+        surfacePickMenu.add_command(label="New", command=self.start_surf_pick)
+        surfacePickMenu.add_command(label="Stop", command=self.end_surf_pick)    
+
+        pickMenu.add_cascade(label="Surface", menu = surfacePickMenu)
+        pickMenu.add_cascade(label="Subsurface", menu = subsurfacePickMenu)  
+
         pickMenu.add_separator()
         pickMenu.add_command(label="Optimize", command=self.pick_opt)
 
@@ -88,7 +100,7 @@ class MainGUI(tk.Frame):
         # initialize imPick
         self.imPick = imPick.imPick(self.imTab)
         self.imPick.set_vars()
-        self.imPick.start_im()
+        # self.imPick.start_im()
 
         # initialize wvPick
         self.wvPick = wvPick.wvPick(self.wvTab)
@@ -99,7 +111,7 @@ class MainGUI(tk.Frame):
         # handle x-button closing of window
         self.parent.protocol("WM_DELETE_WINDOW", self.close_window)
 
-        self.open_data()
+        # self.open_data()
 
 
     # key is a method to handle UI keypress events
@@ -213,7 +225,7 @@ class MainGUI(tk.Frame):
     # new_pick is a method which begins a new imPick pick layer
     def new_pick(self):
         if self.f_loadName:
-            self.imPick.set_pickState(True)
+            self.imPick.set_pickState(True,surf="subsurface")
             self.imPick.pick_interp()
             self.imPick.plot_picks()
             self.imPick.blit()
@@ -222,7 +234,7 @@ class MainGUI(tk.Frame):
     # stop_pick is a method which terminates the current imPick pick layer
     def stop_pick(self):
         if self.imPick.get_pickState() is True:
-            self.imPick.set_pickState(False)
+            self.imPick.set_pickState(False,surf="subsurface")
             self.imPick.pick_interp()
             self.imPick.plot_picks()
             self.imPick.blit()
@@ -269,12 +281,20 @@ class MainGUI(tk.Frame):
         # first determine if at least one picking layer exists
         if (tab == "wavePick") and (self.imPick.get_numPkLyrs() > 0):
             # set picking state to false
-            self.imPick.set_pickState(False)
+            self.imPick.set_pickState(False,surf="subsurface")
             self.imPick.plot_picks()
             self.imPick.blit()
             # get pick layer from imPick and pass to wvPick
             self.wvPick.set_pickDict(self.imPick.get_pickDict())
             self.wvPick.plot_wv()
+
+    def start_surf_pick(self):
+        self.imPick.set_pickState(True,surf="surface")
+        pass
+    def end_surf_pick(self):
+        self.imPick.pick_interp()
+        self.imPick.blit()
+
 
 
     def help(self):

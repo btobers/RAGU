@@ -88,6 +88,8 @@ class imPick(tk.Frame):
         self.yln_old = []
         self.xln = []
         self.yln = []
+        self.xln_surf = []
+        self.yln_surf = []
         self.pick = None
         self.saved_pick = None
         self.im_status.set("data")
@@ -158,6 +160,7 @@ class imPick(tk.Frame):
         self.surf, = self.ax.plot(self.data["dist"],self.data["twtt_surf"]*1e6,"c")     # empty line for twtt surface
         self.pick, = self.ax.plot([],[],"rx")                                    # empty line for current pick
         self.saved_pick = self.ax.scatter([],[],c="g",marker=".",s=8,linewidth=0)   # empty line for saved pick
+        self.surf_pick = self.ax.plot([],[],"yx")
 
         self.dataCanvas.get_tk_widget().pack(in_=self.dataFrame, side="bottom", fill="both", expand=1) 
              
@@ -204,24 +207,26 @@ class imPick(tk.Frame):
 
 
     # set_pickState is a method to generate a new pick dictionary layer and plot the data
-    def set_pickState(self, state):
+    def set_pickState(self, state, surf = None):
         self.pick_state = state
-        if self.pick_state == True:
-            # if a layer was already being picked, advance the pick segment count to begin new layer
-            if len(self.xln) >= 2:
-                self.pick_segment += 1
-            # if current layer has only one pick, remove
-            else:
-                self.clear_last()
-            self.pickLabel.config(text="Pick Segment:\t" + str(self.pick_segment), fg="#008000")  
-            # initialize pick index and twtt dictionaries for current picking layer
-            self.pick_dict["segment_" + str(self.pick_segment)] = np.ones(self.data["num_trace"])*-1
-        elif self.pick_state == False:
-            if len(self.xln) >=  2:
-                self.pick_segment += 1
-                # only advance pick segment if picks made on previous layer
-            self.pickLabel.config(fg="#FF0000")
-
+        self.pick_surf = surf
+        if self.pick_surf == "subsurface":
+            if self.pick_state == True:
+                # if a layer was already being picked, advance the pick segment count to begin new layer
+                if len(self.xln) >= 2:
+                    self.pick_segment += 1
+                # if current layer has only one pick, remove
+                else:
+                    self.clear_last()
+                self.pickLabel.config(text="Pick Segment:\t" + str(self.pick_segment), fg="#008000")  
+                # initialize pick index and twtt dictionaries for current picking layer
+                self.pick_dict["segment_" + str(self.pick_segment)] = np.ones(self.data["num_trace"])*-1
+            elif self.pick_state == False:
+                if len(self.xln) >=  2:
+                    self.pick_segment += 1
+                    # only advance pick segment if picks made on previous layer
+                self.pickLabel.config(fg="#FF0000")
+        
 
     # addseg is a method to for user to generate picks
     def addseg(self, event):
@@ -234,10 +239,15 @@ class imPick(tk.Frame):
                 if (len(self.xln) >= 1) and (event.xdata <= self.xln[-1]):
                     pass
                 else:
-                    self.xln.append(event.xdata)
-                    self.yln.append(event.ydata)
-                    # redraw pick quickly with blitting
-                    self.pick.set_data(self.xln, self.yln)
+                    if self.pick_surf == 'subsurface':
+                        self.xln.append(event.xdata)
+                        self.yln.append(event.ydata)
+                        # redraw pick quickly with blitting
+                        self.pick.set_data(self.xln, self.yln)
+                    elif self.pick_surf == "surface":
+                        self.xln_surf.append(event.xdata)
+                        self.yln_surf.append(event.ydata)
+                        self.surf_pick.set_data(self.xln_surf, self.yln_surf)
                     self.blit()
 
             # plot pick location to basemap

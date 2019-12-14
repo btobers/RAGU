@@ -107,5 +107,5 @@ def interp_array(array):
 # need to figure out a better way to set extent so that it's not screen specific
 # also need to hold back image from being displayed in app temporarily when saved
 def exportIm(fname, fig, extent):
-    fig.savefig(fname.rstrip(".csv") + ".png", dpi = 400, bbox_inches=extent.expanded(1.07, 1.1), facecolor = "#d9d9d9")
+    fig.savefig(fname.rstrip(".csv") + ".png", dpi = 500, bbox_inches=extent.expanded(1.07, 1.1), facecolor = "#d9d9d9")
     print("Pick image exported: " + fname.rstrip(".csv") + ".png")
