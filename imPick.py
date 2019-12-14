@@ -30,7 +30,7 @@ class imPick(tk.Frame):
         clutterRadio = tk.Radiobutton(infoFrame,text="Cluttergram", variable=self.im_status, value="clut",command=self.show_clut)
         clutterRadio.pack(side="left")
         
-        self.pickLabel = tk.Label(infoFrame, text="Picking Layer:\t0", fg="#d9d9d9")
+        self.pickLabel = tk.Label(infoFrame, text="Picking Segment:\t0", fg="#d9d9d9")
         self.pickLabel.pack(side="right")
 
         self.fig = mpl.figure.Figure()
@@ -67,7 +67,7 @@ class imPick(tk.Frame):
 
     # set_vars is a method to set imPick variables
     def set_vars(self):
-        self.pickLabel.config(text="Picking Layer:\t0", fg="#d9d9d9")
+        self.pickLabel.config(text="Picking Segment:\t0", fg="#d9d9d9")
         self.data_imSwitch_flag = ""
         self.clut_imSwitch_flag = ""
         self.f_loadName = ""
@@ -78,7 +78,7 @@ class imPick(tk.Frame):
         self.pick_dict = {}
         self.pick_idx = None
         self.pick_state = False
-        self.pick_layer = 0
+        self.pick_segment = 0
         self.data_cmin = None
         self.data_cmax = None
         self.clut_cmin = None
@@ -207,19 +207,19 @@ class imPick(tk.Frame):
     def set_pickState(self, state):
         self.pick_state = state
         if self.pick_state == True:
-            # if a layer was already being picked, advance the pick layer count to begin new layer
+            # if a layer was already being picked, advance the pick segment count to begin new layer
             if len(self.xln) >= 2:
-                self.pick_layer += 1
+                self.pick_segment += 1
             # if current layer has only one pick, remove
             else:
                 self.clear_last()
-            self.pickLabel.config(text="Picking Layer:\t" + str(self.pick_layer), fg="#008000")  
+            self.pickLabel.config(text="Picking Segment:\t" + str(self.pick_segment), fg="#008000")  
             # initialize pick index and twtt dictionaries for current picking layer
-            self.pick_dict["layer_" + str(self.pick_layer)] = np.ones(self.data["num_trace"])*-1
+            self.pick_dict["segment_" + str(self.pick_segment)] = np.ones(self.data["num_trace"])*-1
         elif self.pick_state == False:
             if len(self.xln) >=  2:
-                self.pick_layer += 1
-                # only advance pick layer if picks made on previous layer
+                self.pick_segment += 1
+                # only advance pick segment if picks made on previous layer
             self.pickLabel.config(fg="#FF0000")
 
 
@@ -257,10 +257,10 @@ class imPick(tk.Frame):
                 # generate array between first and last pick indices on current layer
                 pick_idx = np.arange(pick_idx_0,self.pick_idx_1 + 1)
                 # add cubic spline output interpolation to pick dictionary
-                self.pick_dict["layer_" + str(self.pick_layer - 1)][pick_idx] = cs(self.data["dist"][pick_idx])
+                self.pick_dict["segment_" + str(self.pick_segment - 1)][pick_idx] = cs(self.data["dist"][pick_idx])
                 # add pick interpolation to saved pick list
                 self.xln_old.extend(self.data["dist"][pick_idx])
-                self.yln_old.extend(self.pick_dict["layer_" + str(self.pick_layer - 1)][pick_idx])
+                self.yln_old.extend(self.pick_dict["segment_" + str(self.pick_segment - 1)][pick_idx])
 
         except Exception as err:
             print(err)
@@ -283,11 +283,11 @@ class imPick(tk.Frame):
             del self.xln_old[:]
             # clear pick dictionary
             self.pick_dict.clear()
-            # reset pick layer increment to 0
-            self.pick_layer = 0
+            # reset pick segment increment to 0
+            self.pick_segment = 0
             self.plot_picks()
             self.set_pickState(False)
-            self.pickLabel.config(text="Picking Layer:\t" + str(self.pick_layer))
+            self.pickLabel.config(text="Picking Segment:\t" + str(self.pick_segment))
             self.blit()
 
 
@@ -302,26 +302,26 @@ class imPick(tk.Frame):
 
 
     def delete_pkLayer(self):
-        # delete the most recent pick layer
+        # delete the most recent pick segment
         if self.pick_state == True:
-            layer = self.pick_layer
+            layer = self.pick_segment
         else:
-            layer = self.pick_layer - 1
-        if (layer > 0) and (tk.messagebox.askokcancel("Warning", "Delete pick layer " + str(layer) + "?", icon = "warning") == True):
+            layer = self.pick_segment - 1
+        if (layer > 0) and (tk.messagebox.askokcancel("Warning", "Delete pick segment " + str(layer) + "?", icon = "warning") == True):
             self.set_pickState(False)
             # find first pick location for layer
-            pick_idx_0 = utils.find_nearest(np.asarray(self.xln_old), self.data["dist"][np.where(self.pick_dict["layer_" + str(self.pick_layer - 1)] != -1)[0][0]])
+            pick_idx_0 = utils.find_nearest(np.asarray(self.xln_old), self.data["dist"][np.where(self.pick_dict["segment_" + str(self.pick_segment - 1)] != -1)[0][0]])
             # delete pick dict layer
-            del self.pick_dict["layer_" + str(self.pick_layer - 1)]
+            del self.pick_dict["segment_" + str(self.pick_segment - 1)]
             # remove picks from list
             del self.xln_old[-(len(self.xln_old) - pick_idx_0):]
             del self.yln_old[-(len(self.yln_old) - pick_idx_0):]      
-            # reset pick layer increment back one
-            self.pick_layer -= 1
-            self.pickLabel.config(text="Picking Layer:\t" + str(self.pick_layer - 1))
+            # reset pick segment increment back one
+            self.pick_segment -= 1
+            self.pickLabel.config(text="Picking Segment:\t" + str(self.pick_segment - 1))
             self.plot_picks()
             self.blit()
-        elif (layer == 0) and (len(self.xln + self.xln_old) > 0) and (tk.messagebox.askokcancel("Warning", "Delete pick layer " + str(layer) + "?", icon = "warning") == True):
+        elif (layer == 0) and (len(self.xln + self.xln_old) > 0) and (tk.messagebox.askokcancel("Warning", "Delete pick segment " + str(layer) + "?", icon = "warning") == True):
             self.set_pickState(False)
             # if only one layer exists, clear all picks
             # delete pick lists
@@ -329,9 +329,9 @@ class imPick(tk.Frame):
             del self.xln_old[:]
             # clear pick dictionary
             self.pick_dict.clear()
-            # reset pick layer increment to 0
-            self.pick_layer = 0
-            self.pickLabel.config(text="Picking Layer:\t" + str(self.pick_layer))
+            # reset pick segment increment to 0
+            self.pick_segment = 0
+            self.pickLabel.config(text="Picking Segment:\t" + str(self.pick_segment))
             self.plot_picks()
             self.blit()
             

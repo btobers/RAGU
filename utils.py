@@ -46,12 +46,12 @@ def savePick(f_saveName, data, pick_dict):
 
     # iterate through pick_dict layers
     for _i in range(len(pick_dict)):
-        pick_idx = np.where(pick_dict["layer_" + str(_i)] != -1)[0]
+        pick_idx = np.where(pick_dict["segment_" + str(_i)] != -1)[0]
 
-        twtt_bed[pick_idx] = pick_dict["layer_" + str(_i)][pick_idx[:]]*1e-6    # convert back to microseconds
+        twtt_bed[pick_idx] = pick_dict["segment_" + str(_i)][pick_idx[:]]*1e-6    # convert back to microseconds
 
         # calculate ice thickness - using twtt_bed and twtt_surf
-        thick[pick_idx] = ((((pick_dict["layer_" + str(_i)][pick_idx][:]*1e-6) - (data["twtt_surf"][pick_idx][:])) * v_ice) / 2)
+        thick[pick_idx] = ((((pick_dict["segment_" + str(_i)][pick_idx][:]*1e-6) - (data["twtt_surf"][pick_idx][:])) * v_ice) / 2)
 
     # calculate gnd elevation 
     elev_gnd = [a-(b*3e8/2) for a,b in zip(elev_air,twtt_surf)]
