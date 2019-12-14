@@ -131,7 +131,9 @@ class ingester:
         # interpolate nav data if not unique location for each trace
         if len(np.unique(lon)) < num_trace:
             navdat.navdat[:,0] = utils.interp_array(lon)
+        if len(np.unique(lat)) < num_trace:
             navdat.navdat[:,1] = utils.interp_array(lat)
+        if len(np.unique(dist)) < num_trace:
             dist = utils.interp_array(dist)
         
         return {"dt": dt, "num_trace": num_trace, "num_sample": num_sample, "navdat": navdat, "twtt_surf": twtt_surf,"dist": dist, "amp": amp, "clutter": clutter} # other fields?

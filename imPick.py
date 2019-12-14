@@ -7,6 +7,7 @@ import matplotlib as mpl
 mpl.use("TkAgg")
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+from scipy.interpolate import CubicSpline
 
 class imPick(tk.Frame):
     # imPick is a class to pick horizons from a radar image
@@ -155,7 +156,7 @@ class imPick(tk.Frame):
         # print(self.mindB_clut,self.maxdB_clut)
 
         self.surf, = self.ax.plot(self.data["dist"],self.data["twtt_surf"]*1e6,"c")     # empty line for twtt surface
-        self.pick  = self.ax.scatter([],[],c="r",marker="x",s=8,linewidth=0)                                    # empty line for current pick
+        self.pick, = self.ax.plot([],[],"rx")                                    # empty line for current pick
         self.saved_pick = self.ax.scatter([],[],c="g",marker=".",s=8,linewidth=0)   # empty line for saved pick
 
         self.dataCanvas.get_tk_widget().pack(in_=self.dataFrame, side="bottom", fill="both", expand=1) 
@@ -209,10 +210,12 @@ class imPick(tk.Frame):
             # if a layer was already being picked, advance the pick layer count to begin new layer
             if len(self.xln) >= 2:
                 self.pick_layer += 1
+            # if current layer has only one pick, remove
+            else:
+                self.clear_last()
+            self.pickLabel.config(text="Picking Layer:\t" + str(self.pick_layer), fg="#008000")  
             # initialize pick index and twtt dictionaries for current picking layer
             self.pick_dict["layer_" + str(self.pick_layer)] = np.ones(self.data["num_trace"])*-1
-            self.pickLabel.config(text="Picking Layer:\t" + str(self.pick_layer), fg="#008000")          
-
         elif self.pick_state == False:
             if len(self.xln) >=  2:
                 self.pick_layer += 1
@@ -229,33 +232,31 @@ class imPick(tk.Frame):
             if self.pick_state == True:
                 self.xln.append(event.xdata)
                 self.yln.append(event.ydata)
-                print(self.xln)
                 # redraw pick quickly with blitting
-                self.pick.set_offsets(np.c_[self.xln, self.yln])
+                self.pick.set_data(self.xln, self.yln)
                 self.blit()
 
-                # if more than two picks, call pick_interp
-                # if len(self.xln) >= 2:
-                    # self.pick_interp()
             # plot pick location to basemap
             if self.basemap and self.basemap.get_state() == 1:
                 self.basemap.plot_idx(self.pick_idx_1)
 
 
-    # pick_interp is a method for linearly interpolating twtt between pick locations
+    # pick_interp is a method for cubic spline interpolation of twtt between pick locations
     def pick_interp(self):
-        # if there are at least two picked points, find range of all trace numbers within their range
+        # if there are at least two picked points, interpolate
         try:
-            pick_idx_0 = utils.find_nearest(self.data["dist"], self.xln[-2])
-            self.pick_dict["layer_" + str(self.pick_layer)][pick_idx_0] = self.yln[-2]
-            self.pick_dict["layer_" + str(self.pick_layer)][self.pick_idx_1] = self.yln[-1]
-            pick_idx = np.arange(pick_idx_0,self.pick_idx_1 + 1)
-            # linearly interpolate twtt values between pick points at idx_0 and idx_1
-            self.pick_dict["layer_" + str(self.pick_layer)][pick_idx] = np.interp(pick_idx, [pick_idx_0,self.pick_idx_1], [self.yln[-2],self.yln[-1]])
-            # extend pick lists
-            self.xln_old.extend(self.data["dist"][pick_idx])
-            self.yln_old.extend(self.pick_dict["layer_" + str(self.pick_layer)][pick_idx])
-            self.pick.set_offsets(np.c_[self.xln, self.yln])
+            if len(self.xln) >= 2:
+                # cubic spline between picks
+                cs = CubicSpline(self.xln,self.yln)
+                # get the first pick x-position for current layer
+                pick_idx_0 = utils.find_nearest(self.data["dist"], self.xln[0])
+                # generate array between first and last pick indices on current layer
+                pick_idx = np.arange(pick_idx_0,self.pick_idx_1 + 1)
+                # add cubic spline output interpolation to pick dictionary
+                self.pick_dict["layer_" + str(self.pick_layer - 1)][pick_idx] = cs(self.data["dist"][pick_idx])
+                # add pick interpolation to saved pick list
+                self.xln_old.extend(self.data["dist"][pick_idx])
+                self.yln_old.extend(self.pick_dict["layer_" + str(self.pick_layer - 1)][pick_idx])
 
         except Exception as err:
             print(err)
@@ -265,8 +266,8 @@ class imPick(tk.Frame):
     def plot_picks(self):
         # remove saved picks
         del self.xln[:]
-        del self.yln[:]  
-        self.pick.set_offsets(np.c_[self.xln, self.yln])
+        del self.yln[:]
+        self.pick.set_data(self.xln, self.yln)
         self.saved_pick.set_offsets(np.c_[self.xln_old,self.yln_old])
 
 
@@ -288,24 +289,11 @@ class imPick(tk.Frame):
 
     def clear_last(self):
         # clear last pick
-        # if len(self.xln) >= 2:
-        #     # get indices of last two ponts picked to remove twtt from pick_dict - reset to -1.
-        #     pick_idx_0 = utils.find_nearest(self.data["dist"], self.xln[-2])
-        #     pick_idx_1 = utils.find_nearest(self.data["dist"], self.xln[-1])
-        #     pick_idx = np.arange(pick_idx_0,pick_idx_1 + 1)
-        #     self.pick_dict["layer_" + str(self.pick_layer)][pick_idx[:]] = -1.
-        #     # delete last pick
-        #     del self.xln[-1:]
-        #     del self.yln[-1:]
-        #     # delete all points between last two click events
-        #     del self.xln_old[-len(pick_idx):]
-        #     del self.yln_old[-len(pick_idx):]
-
         if len(self.xln) >= 1:
-            # delete last pick
             del self.xln[-1:]
             del self.yln[-1:]
-            self.pick.set_offsets(np.c_[self.xln, self.yln])
+            # reset self.pick, then blit
+            self.pick.set_data(self.xln, self.yln)
             self.blit()
 
 

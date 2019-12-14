@@ -101,6 +101,7 @@ def interp_array(array):
     x = np.arange(0, len(array))
     # interpolate over array
     array_interp = np.interp(x, xp, fp)
+    print('interp')
 
     return array_interp
     

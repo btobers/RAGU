@@ -214,6 +214,7 @@ class MainGUI(tk.Frame):
     def new_pick(self):
         if self.f_loadName:
             self.imPick.set_pickState(True)
+            self.imPick.pick_interp()
             self.imPick.plot_picks()
             self.imPick.blit()
 
@@ -222,6 +223,7 @@ class MainGUI(tk.Frame):
     def stop_pick(self):
         if self.imPick.get_pickState() is True:
             self.imPick.set_pickState(False)
+            self.imPick.pick_interp()
             self.imPick.plot_picks()
             self.imPick.blit()
 
