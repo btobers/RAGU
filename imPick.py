@@ -30,7 +30,7 @@ class imPick(tk.Frame):
         clutterRadio = tk.Radiobutton(infoFrame,text="Cluttergram", variable=self.im_status, value="clut",command=self.show_clut)
         clutterRadio.pack(side="left")
         
-        self.pickLabel = tk.Label(infoFrame, text="Picking Segment:\t0", fg="#d9d9d9")
+        self.pickLabel = tk.Label(infoFrame, text="Pick Segment:\t0", fg="#d9d9d9")
         self.pickLabel.pack(side="right")
 
         self.fig = mpl.figure.Figure()
@@ -67,7 +67,7 @@ class imPick(tk.Frame):
 
     # set_vars is a method to set imPick variables
     def set_vars(self):
-        self.pickLabel.config(text="Picking Segment:\t0", fg="#d9d9d9")
+        self.pickLabel.config(text="Pick Segment:\t0", fg="#d9d9d9")
         self.data_imSwitch_flag = ""
         self.clut_imSwitch_flag = ""
         self.f_loadName = ""
@@ -150,8 +150,8 @@ class imPick(tk.Frame):
         self.mindB_clut = np.floor(np.nanpercentile(self.dB_clut,10))
         
         self.maxdB_data = np.nanmax(self.dB_data)
-        # self.maxdB_clut = np.nanmax(self.dB_clut)
-        self.maxdB_clut = np.floor(np.nanpercentile(self.dB_data,90))
+        self.maxdB_clut = np.nanmax(self.dB_clut)
+        # self.maxdB_clut = np.floor(np.nanpercentile(self.dB_clut,90))
         # print(self.mindB_data,self.maxdB_data)
         # print(self.mindB_clut,self.maxdB_clut)
 
@@ -213,7 +213,7 @@ class imPick(tk.Frame):
             # if current layer has only one pick, remove
             else:
                 self.clear_last()
-            self.pickLabel.config(text="Picking Segment:\t" + str(self.pick_segment), fg="#008000")  
+            self.pickLabel.config(text="Pick Segment:\t" + str(self.pick_segment), fg="#008000")  
             # initialize pick index and twtt dictionaries for current picking layer
             self.pick_dict["segment_" + str(self.pick_segment)] = np.ones(self.data["num_trace"])*-1
         elif self.pick_state == False:
@@ -287,7 +287,7 @@ class imPick(tk.Frame):
             self.pick_segment = 0
             self.plot_picks()
             self.set_pickState(False)
-            self.pickLabel.config(text="Picking Segment:\t" + str(self.pick_segment))
+            self.pickLabel.config(text="Pick Segment:\t" + str(self.pick_segment))
             self.blit()
 
 
@@ -318,7 +318,7 @@ class imPick(tk.Frame):
             del self.yln_old[-(len(self.yln_old) - pick_idx_0):]      
             # reset pick segment increment back one
             self.pick_segment -= 1
-            self.pickLabel.config(text="Picking Segment:\t" + str(self.pick_segment - 1))
+            self.pickLabel.config(text="Pick Segment:\t" + str(self.pick_segment - 1))
             self.plot_picks()
             self.blit()
         elif (layer == 0) and (len(self.xln + self.xln_old) > 0) and (tk.messagebox.askokcancel("Warning", "Delete pick segment " + str(layer) + "?", icon = "warning") == True):
@@ -331,7 +331,7 @@ class imPick(tk.Frame):
             self.pick_dict.clear()
             # reset pick segment increment to 0
             self.pick_segment = 0
-            self.pickLabel.config(text="Picking Segment:\t" + str(self.pick_segment))
+            self.pickLabel.config(text="Pick Segment:\t" + str(self.pick_segment))
             self.plot_picks()
             self.blit()
             

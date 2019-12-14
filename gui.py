@@ -166,8 +166,8 @@ class MainGUI(tk.Frame):
     def open_data(self):
         temp_loadName = ""
         # select input file
-        # temp_loadName = tk.filedialog.askopenfilename(initialdir = self.in_path,title = "Select file",filetypes = (("hd5f files", ".mat .h5"),("segy files", ".sgy"),("all files",".*")))
-        temp_loadName = "/mnt/Swaps/MARS/targ/supl/UAF/2018/aug/export/20180817-222930.mat"
+        temp_loadName = tk.filedialog.askopenfilename(initialdir = self.in_path,title = "Select file",filetypes = (("hd5f files", ".mat .h5"),("segy files", ".sgy"),("all files",".*")))
+        # temp_loadName = "/mnt/Swaps/MARS/targ/supl/UAF/2018/aug/export/20180817-222930.mat"
         # if input selected, clear imPick canvas, ingest data and pass to imPick
         if temp_loadName:
             self.f_loadName = temp_loadName
@@ -287,7 +287,7 @@ class MainGUI(tk.Frame):
         \n4. Click along reflector surface to pick\n   horizon
         \n\t\u2022[backspace] to remove the last
         \n\t\u2022[c] to remove all
-        \n5. Pick->Stop to end current pick layer
+        \n5. Pick->Stop to end current pick segment
         \n6. Radio buttons to toggle between radar\n   and clutter images
         \n7. File->Save to export picks
         \n8. File->Next to load next data file
@@ -300,13 +300,13 @@ class MainGUI(tk.Frame):
         """General:
         \n[Ctrl+o]\tOpen radar data file
         \n[Ctrl+m]\tOpen basemap window
-        \n[Ctrl+n]\tBegin new pick layer
-        \n[Escape]\tEnd current pick layer
+        \n[Ctrl+n]\tBegin new pick segment
+        \n[Escape]\tEnd current pick segment
         \n[Spacebar]\tToggle between radar and clutter images
         \n[Ctrl+s]\tExport pick data
         \n[Right]\t\tOpen next file in directory
         \n[Ctrl+q]\tQuit NOSEpick
         \n\nPicking:
         \n[Backspace]\tRemove last pick event
-        \n[Delete]\tRemove current/ most recent pick layer
-        \n[c]\t\tRemove all picked layers""")
+        \n[Delete]\tRemove current/ most recent pick segment
+        \n[c]\t\tRemove all picked segments""")
