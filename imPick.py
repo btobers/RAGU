@@ -230,11 +230,15 @@ class imPick(tk.Frame):
             self.pick_idx_1 = utils.find_nearest(self.data["dist"], event.xdata)
             # check if picking state is a go
             if self.pick_state == True:
-                self.xln.append(event.xdata)
-                self.yln.append(event.ydata)
-                # redraw pick quickly with blitting
-                self.pick.set_data(self.xln, self.yln)
-                self.blit()
+                # make sure pick falls after previous pick
+                if (len(self.xln) >= 1) and (event.xdata <= self.xln[-1]):
+                    pass
+                else:
+                    self.xln.append(event.xdata)
+                    self.yln.append(event.ydata)
+                    # redraw pick quickly with blitting
+                    self.pick.set_data(self.xln, self.yln)
+                    self.blit()
 
             # plot pick location to basemap
             if self.basemap and self.basemap.get_state() == 1:
