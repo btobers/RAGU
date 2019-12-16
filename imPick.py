@@ -90,8 +90,10 @@ class imPick(tk.Frame):
         self.yln = []
         self.xln_surf = []
         self.yln_surf = []
+        self.surf = None
         self.pick = None
         self.saved_pick = None
+        self.surf_pick = None
         self.im_status.set("data")
 
 
@@ -157,10 +159,10 @@ class imPick(tk.Frame):
         # print(self.mindB_data,self.maxdB_data)
         # print(self.mindB_clut,self.maxdB_clut)
 
-        self.surf, = self.ax.plot(self.data["dist"],self.data["twtt_surf"]*1e6,"c")     # empty line for twtt surface
+        self.surf, = self.ax.plot(self.data["dist"],self.data["twtt_surf"]*1e6,"c")     # line for twtt surface
         self.pick, = self.ax.plot([],[],"rx")                                    # empty line for current pick
         self.saved_pick = self.ax.scatter([],[],c="g",marker=".",s=8,linewidth=0)   # empty line for saved pick
-        self.surf_pick = self.ax.plot([],[],"yx")
+        self.surf_pick, = self.ax.plot([],[],"mx")
 
         self.dataCanvas.get_tk_widget().pack(in_=self.dataFrame, side="bottom", fill="both", expand=1) 
              
@@ -226,7 +228,8 @@ class imPick(tk.Frame):
                     self.pick_segment += 1
                     # only advance pick segment if picks made on previous layer
                 self.pickLabel.config(fg="#FF0000")
-        
+        # elif self.pick_surf == "surface":
+        #     if self.pick_state == True:
 
     # addseg is a method to for user to generate picks
     def addseg(self, event):
@@ -235,20 +238,22 @@ class imPick(tk.Frame):
             self.pick_idx_1 = utils.find_nearest(self.data["dist"], event.xdata)
             # check if picking state is a go
             if self.pick_state == True:
+                if self.pick_surf == 'subsurface':
                 # make sure pick falls after previous pick
-                if (len(self.xln) >= 1) and (event.xdata <= self.xln[-1]):
-                    pass
-                else:
-                    if self.pick_surf == 'subsurface':
+                    if (len(self.xln) >= 1) and (event.xdata <= self.xln[-1]):
+                        pass
+                    else:
                         self.xln.append(event.xdata)
                         self.yln.append(event.ydata)
-                        # redraw pick quickly with blitting
                         self.pick.set_data(self.xln, self.yln)
-                    elif self.pick_surf == "surface":
+                elif self.pick_surf == "surface":
+                    if (len(self.xln_surf) >= 1) and (event.xdata <= self.xln_surf[-1]):
+                        pass
+                    else:
                         self.xln_surf.append(event.xdata)
                         self.yln_surf.append(event.ydata)
                         self.surf_pick.set_data(self.xln_surf, self.yln_surf)
-                    self.blit()
+                self.blit()
 
             # plot pick location to basemap
             if self.basemap and self.basemap.get_state() == 1:
@@ -256,33 +261,54 @@ class imPick(tk.Frame):
 
 
     # pick_interp is a method for cubic spline interpolation of twtt between pick locations
-    def pick_interp(self):
+    def pick_interp(self,surf = None):
         # if there are at least two picked points, interpolate
         try:
-            if len(self.xln) >= 2:
-                # cubic spline between picks
-                cs = CubicSpline(self.xln,self.yln)
-                # get the first pick x-position for current layer
-                pick_idx_0 = utils.find_nearest(self.data["dist"], self.xln[0])
-                # generate array between first and last pick indices on current layer
-                pick_idx = np.arange(pick_idx_0,self.pick_idx_1 + 1)
-                # add cubic spline output interpolation to pick dictionary
-                self.pick_dict["segment_" + str(self.pick_segment - 1)][pick_idx] = cs(self.data["dist"][pick_idx])
-                # add pick interpolation to saved pick list
-                self.xln_old.extend(self.data["dist"][pick_idx])
-                self.yln_old.extend(self.pick_dict["segment_" + str(self.pick_segment - 1)][pick_idx])
+            if surf == "subsurface":
+                if len(self.xln) >= 2:
+                    # cubic spline between picks
+                    cs = CubicSpline(self.xln,self.yln)
+                    # get the first pick x-position for current layer
+                    pick_idx_0 = utils.find_nearest(self.data["dist"], self.xln[0])
+                    # generate array between first and last pick indices on current layer
+                    pick_idx = np.arange(pick_idx_0,self.pick_idx_1 + 1)
+                    # add cubic spline output interpolation to pick dictionary
+                    self.pick_dict["segment_" + str(self.pick_segment - 1)][pick_idx] = cs(self.data["dist"][pick_idx])
+                    # add pick interpolation to saved pick list
+                    self.xln_old.extend(self.data["dist"][pick_idx])
+                    self.yln_old.extend(self.pick_dict["segment_" + str(self.pick_segment - 1)][pick_idx])
+
+
+            elif surf == "surface":
+                if len(self.xln_surf) >= 2:
+                    # cubic spline between surface picks
+                    cs = CubicSpline(self.xln_surf,self.yln_surf)
+                    # get the first pick x-position for current layer
+                    pick_idx_0 = utils.find_nearest(self.data["dist"], self.xln_surf[0])
+                    # generate array between first and last pick indices on current layer
+                    pick_idx = np.arange(pick_idx_0,self.pick_idx_1 + 1)
+                    # input cubic spline output surface twtt array
+                    self.data["twtt_surf"][pick_idx] = cs(self.data["dist"][pick_idx]) * 1e-6
 
         except Exception as err:
-            print(err)
-    
+            print("Pick interp error: " + str(err))
+
+
 
     # plot_picks is a method to remove current pick list and add saved picks to plot
-    def plot_picks(self):
-        # remove saved picks
-        del self.xln[:]
-        del self.yln[:]
-        self.pick.set_data(self.xln, self.yln)
-        self.saved_pick.set_offsets(np.c_[self.xln_old,self.yln_old])
+    def plot_picks(self, surf = None):
+        if surf == "subsurface":
+            # remove saved picks
+            del self.xln[:]
+            del self.yln[:]
+            self.pick.set_data(self.xln, self.yln)
+            self.saved_pick.set_offsets(np.c_[self.xln_old,self.yln_old])
+        elif surf == "surface":
+            del self.xln_surf[:]
+            del self.yln_surf[:]
+            self.surf.set_data([],[])
+            self.surf.set_data(self.data["dist"],self.data["twtt_surf"]*1e6)
+            
 
 
     def clear_picks(self):
@@ -481,6 +507,10 @@ class imPick(tk.Frame):
             self.ax.draw_artist(self.pick)
         if self.saved_pick:
             self.ax.draw_artist(self.saved_pick)
+        if self.surf_pick:
+            self.ax.draw_artist(self.surf_pick)
+        if self.surf:
+            self.ax.draw_artist(self.surf)
         self.fig.canvas.blit(self.ax.bbox)
 
 

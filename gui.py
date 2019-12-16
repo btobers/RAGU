@@ -111,7 +111,7 @@ class MainGUI(tk.Frame):
         # handle x-button closing of window
         self.parent.protocol("WM_DELETE_WINDOW", self.close_window)
 
-        # self.open_data()
+        self.open_data()
 
 
     # key is a method to handle UI keypress events
@@ -178,8 +178,8 @@ class MainGUI(tk.Frame):
     def open_data(self):
         temp_loadName = ""
         # select input file
-        temp_loadName = tk.filedialog.askopenfilename(initialdir = self.in_path,title = "Select file",filetypes = (("hd5f files", ".mat .h5"),("segy files", ".sgy"),("all files",".*")))
-        # temp_loadName = "/mnt/Swaps/MARS/targ/supl/UAF/2018/aug/export/20180817-222930.mat"
+        # temp_loadName = tk.filedialog.askopenfilename(initialdir = self.in_path,title = "Select file",filetypes = (("hd5f files", ".mat .h5"),("segy files", ".sgy"),("all files",".*")))
+        temp_loadName = "/mnt/Swaps/MARS/targ/supl/UAF/2018/aug/export/20180817-222930.mat"
         # if input selected, clear imPick canvas, ingest data and pass to imPick
         if temp_loadName:
             self.f_loadName = temp_loadName
@@ -226,8 +226,8 @@ class MainGUI(tk.Frame):
     def new_pick(self):
         if self.f_loadName:
             self.imPick.set_pickState(True,surf="subsurface")
-            self.imPick.pick_interp()
-            self.imPick.plot_picks()
+            self.imPick.pick_interp(surf = "subsurface")
+            self.imPick.plot_picks(surf = "subsurface")
             self.imPick.blit()
 
 
@@ -235,8 +235,8 @@ class MainGUI(tk.Frame):
     def stop_pick(self):
         if self.imPick.get_pickState() is True:
             self.imPick.set_pickState(False,surf="subsurface")
-            self.imPick.pick_interp()
-            self.imPick.plot_picks()
+            self.imPick.pick_interp(surf = "subsurface")
+            self.imPick.plot_picks(surf = "subsurface")
             self.imPick.blit()
 
 
@@ -282,7 +282,7 @@ class MainGUI(tk.Frame):
         if (tab == "wavePick") and (self.imPick.get_numPkLyrs() > 0):
             # set picking state to false
             self.imPick.set_pickState(False,surf="subsurface")
-            self.imPick.plot_picks()
+            self.imPick.plot_picks(surf = "subsurface")
             self.imPick.blit()
             # get pick layer from imPick and pass to wvPick
             self.wvPick.set_pickDict(self.imPick.get_pickDict())
@@ -290,9 +290,10 @@ class MainGUI(tk.Frame):
 
     def start_surf_pick(self):
         self.imPick.set_pickState(True,surf="surface")
-        pass
     def end_surf_pick(self):
-        self.imPick.pick_interp()
+        self.imPick.set_pickState(False,surf="surface")
+        self.imPick.pick_interp(surf = "surface")
+        self.imPick.plot_picks(surf = "surface")
         self.imPick.blit()
 
 
