@@ -49,13 +49,17 @@ class ingester:
         lon =  np.array(f["loc0"]["lon"]).flatten().astype(np.float64)
         lat =  np.array(f["loc0"]["lat"]).flatten().astype(np.float64)
         elev_air =  np.array(f["loc0"]["altM"]).flatten().astype(np.float64)
-        twtt_surf = np.zeros(num_trace)
+        twtt_surf = np.nan(num_trace)
         amp = np.array(f["proc0"])
         if "clutter0" in f.keys():
             clutter = np.array(f["clutter0"])
         else:
             clutter = np.ones(amp.shape)
         f.close()
+
+        # replace twtt_surf with nan's if no data
+        if not np.any(twtt_surf):
+            twtt_surf.fill(np.nan)
 
         # convert lon, lat, elev to navdat object of nav class
         wgs84_proj4 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
@@ -122,6 +126,10 @@ class ingester:
         if clutter.shape[0] == num_trace and clutter.shape[1] == num_sample:
             clutter = np.transpose(clutter)
 
+        # replace twtt_surf with nan's if no data
+        if not np.any(twtt_surf):
+            twtt_surf.fill(np.nan)
+
         # convert lon, lat, elev to navdat object of nav class
         wgs84_proj4 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
         navdat = nav()
@@ -135,7 +143,7 @@ class ingester:
             navdat.navdat[:,1] = utils.interp_array(lat)
         if len(np.unique(dist)) < num_trace:
             dist = utils.interp_array(dist)
-        
+      
         return {"dt": dt, "num_trace": num_trace, "num_sample": num_sample, "navdat": navdat, "twtt_surf": twtt_surf,"dist": dist, "amp": amp, "clutter": clutter} # other fields?
 
     def segypy_read(self, fpath):

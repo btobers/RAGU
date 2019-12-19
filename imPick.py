@@ -30,7 +30,14 @@ class imPick(tk.Frame):
         clutterRadio = tk.Radiobutton(infoFrame,text="Cluttergram", variable=self.im_status, value="clut",command=self.show_clut)
         clutterRadio.pack(side="left")
         
-        self.pickLabel = tk.Label(infoFrame, text="Pick Segment:\t0", fg="#d9d9d9")
+        deleteButton = tk.Button(infoFrame, text="Delete", command=self.delete_pkLayer).pack(side="right")
+        self.layerVar = tk.IntVar()
+        self.layers=[0]
+        self.layerMenu = tk.OptionMenu(infoFrame, self.layerVar, *self.layers)
+        self.layerMenu.pack(side="right",pady=0)
+        self.layerMenu["highlightthickness"]=0
+
+        self.pickLabel = tk.Label(toolbarFrame, text="Pick Segment:\t0", fg="#d9d9d9")
         self.pickLabel.pack(side="right")
 
         self.fig = mpl.figure.Figure()
@@ -207,6 +214,9 @@ class imPick(tk.Frame):
     def get_pickState(self):
         return self.pick_state
 
+    def get_pickSurf(self):
+        return self.pick_surf
+
 
     # set_pickState is a method to generate a new pick dictionary layer and plot the data
     def set_pickState(self, state, surf = None):
@@ -230,6 +240,7 @@ class imPick(tk.Frame):
                 self.pickLabel.config(fg="#FF0000")
         # elif self.pick_surf == "surface":
         #     if self.pick_state == True:
+
 
     # addseg is a method to for user to generate picks
     def addseg(self, event):
@@ -294,7 +305,6 @@ class imPick(tk.Frame):
             print("Pick interp error: " + str(err))
 
 
-
     # plot_picks is a method to remove current pick list and add saved picks to plot
     def plot_picks(self, surf = None):
         if surf == "subsurface":
@@ -306,7 +316,8 @@ class imPick(tk.Frame):
         elif surf == "surface":
             del self.xln_surf[:]
             del self.yln_surf[:]
-            self.surf.set_data([],[])
+            self.surf_pick.set_data(self.xln_surf, self.yln_surf)
+            self.surf.set_data(self.xln_surf,self.yln_surf)
             self.surf.set_data(self.data["dist"],self.data["twtt_surf"]*1e6)
             
 
@@ -329,48 +340,54 @@ class imPick(tk.Frame):
 
     def clear_last(self):
         # clear last pick
-        if len(self.xln) >= 1:
-            del self.xln[-1:]
-            del self.yln[-1:]
-            # reset self.pick, then blit
-            self.pick.set_data(self.xln, self.yln)
-            self.blit()
+        if self.pick_state == True:
+            if self.pick_surf == "subsurface" and len(self.xln) >= 1:
+                del self.xln[-1:]
+                del self.yln[-1:]
+                # reset self.pick, then blit
+                self.pick.set_data(self.xln, self.yln)
+                self.blit()
+
+            if self.pick_surf == "surface" and len(self.xln_surf) >= 1:
+                del self.xln_surf[-1:]
+                del self.yln_surf[-1:]
+                # reset self.pick, then blit
+                self.surf_pick.set_data(self.xln_surf, self.yln_surf)
+                self.blit()
+
+
 
 
     def delete_pkLayer(self):
-        # delete the most recent pick segment
-        if self.pick_state == True:
-            layer = self.pick_segment
-        else:
-            layer = self.pick_segment - 1
-        if (layer > 0) and (tk.messagebox.askokcancel("Warning", "Delete pick segment " + str(layer) + "?", icon = "warning") == True):
-            self.set_pickState(False)
-            # find first pick location for layer
-            pick_idx_0 = utils.find_nearest(np.asarray(self.xln_old), self.data["dist"][np.where(self.pick_dict["segment_" + str(self.pick_segment - 1)] != -1)[0][0]])
+        # delete selected pick segment
+        if (len(self.pick_dict) > 0) and (tk.messagebox.askokcancel("Warning", "Delete pick segment " + str(self.layerVar.get()) + "?", icon = "warning") == True):
+            self.set_pickState(False, surf = "subsurface")
+            self.pick_interp(surf = "subsurface")
+            self.plot_picks(surf = "subsurface")
+
+            if len(self.xln_old) > 0:
+                # find first pick location for layer
+                pick_idx_0 = utils.find_nearest(np.asarray(self.xln_old), self.data["dist"][np.where(self.pick_dict["segment_" + str(self.layerVar.get())] != -1)[0][0]])
+                # remove picks from list
+                del self.xln_old[-(len(self.xln_old) - pick_idx_0):]
+                del self.yln_old[-(len(self.yln_old) - pick_idx_0):]      
             # delete pick dict layer
-            del self.pick_dict["segment_" + str(self.pick_segment - 1)]
-            # remove picks from list
-            del self.xln_old[-(len(self.xln_old) - pick_idx_0):]
-            del self.yln_old[-(len(self.yln_old) - pick_idx_0):]      
+            del self.pick_dict["segment_" + str(self.layerVar.get())]
+
             # reset pick segment increment back one
             self.pick_segment -= 1
             self.pickLabel.config(text="Pick Segment:\t" + str(self.pick_segment - 1))
-            self.plot_picks()
+            self.plot_picks(surf = "subsurface")
             self.blit()
-        elif (layer == 0) and (len(self.xln + self.xln_old) > 0) and (tk.messagebox.askokcancel("Warning", "Delete pick segment " + str(layer) + "?", icon = "warning") == True):
-            self.set_pickState(False)
-            # if only one layer exists, clear all picks
-            # delete pick lists
-            del self.yln_old[:]
-            del self.xln_old[:]
-            # clear pick dictionary
-            self.pick_dict.clear()
-            # reset pick segment increment to 0
-            self.pick_segment = 0
-            self.pickLabel.config(text="Pick Segment:\t" + str(self.pick_segment))
-            self.plot_picks()
-            self.blit()
-            
+
+            # reorder pick layers
+            for _i in range(len(self.pick_dict)):
+                if _i >= self.layerVar.get():
+                    self.pick_dict["segment_" + str(_i)] = self.pick_dict["segment_" + str(_i + 1)]
+            del self.pick_dict[list(self.pick_dict.keys())[-1]]
+
+            self.update_option_menu()
+
 
     def show_data(self):
         # toggle to radar data
@@ -423,6 +440,16 @@ class imPick(tk.Frame):
         # redraw canvas
         self.fig.canvas.draw()
         self.im_status.set("clut")
+
+
+    # update the pick layer menu based on how many layers exist
+    def update_option_menu(self):
+            menu = self.layerMenu["menu"]
+            menu.delete(0, "end")
+            for _i in range(self.pick_segment):
+                menu.add_command(label=_i,
+                    command=tk._setit(self.layerVar,_i))
+
 
     def update_slider(self):
         self.ax_cmax.clear()
@@ -483,18 +510,25 @@ class imPick(tk.Frame):
         when the figure is resized, hide picks, draw everything,
         and update the background.
         """
+        if self.surf:
+            self.surf.set_visible(False)
+        if self.surf_pick:
+            self.surf_pick.set_visible(False)
+        if self.pick:
+            self.pick.set_visible(False)
         if self.saved_pick:
             self.pick.set_visible(False)
-            self.saved_pick.set_visible(False)
-            self.safe_draw()
-            self.axbg = self.dataCanvas.copy_from_bbox(self.ax.bbox)
+        self.safe_draw()
+        self.axbg = self.dataCanvas.copy_from_bbox(self.ax.bbox)
+        if self.surf:
+            self.surf.set_visible(True)
+        if self.surf_pick:
+            self.surf_pick.set_visible(True)
+        if self.pick:
             self.pick.set_visible(True)
-            self.saved_pick.set_visible(True)
-            self.blit()
-        else:
-            self.safe_draw()
-            self.axbg = self.dataCanvas.copy_from_bbox(self.ax.bbox)
-            self.blit()
+        if self.saved_pick:
+            self.pick.set_visible(True)
+        self.blit()
 
 
     def blit(self):

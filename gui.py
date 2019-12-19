@@ -55,12 +55,12 @@ class MainGUI(tk.Frame):
         subsurfacePickMenu = tk.Menu(pickMenu,tearoff=0)
 
         # subsurface pick menu items
-        subsurfacePickMenu.add_command(label="New     [Ctrl+N]", command=self.new_pick)
-        subsurfacePickMenu.add_command(label="Stop    [Escape]", command=self.stop_pick)
+        subsurfacePickMenu.add_command(label="New     [Ctrl+N]", command=self.start_subsurf_pick)
+        subsurfacePickMenu.add_command(label="Stop    [Escape]", command=self.end_subsurf_pick)
 
         # surface pick menu items
         surfacePickMenu.add_command(label="New", command=self.start_surf_pick)
-        surfacePickMenu.add_command(label="Stop", command=self.end_surf_pick)    
+        surfacePickMenu.add_command(label="Stop    [Escape]", command=self.end_surf_pick)    
 
         pickMenu.add_cascade(label="Surface", menu = surfacePickMenu)
         pickMenu.add_cascade(label="Subsurface", menu = subsurfacePickMenu)  
@@ -132,7 +132,7 @@ class MainGUI(tk.Frame):
 
         # Ctrl+N begin pick
         elif event.state & 4 and event.keysym == "n":
-            self.new_pick()
+            self.start_subsurf_pick()
 
         # Ctrl+Q close NOSEpick
         elif event.state & 4 and event.keysym == "q":
@@ -144,7 +144,8 @@ class MainGUI(tk.Frame):
 
         # Escape key to stop picking current layer
         elif event.keysym == "Escape":
-            self.stop_pick()
+            self.end_subsurf_pick()
+            self.end_surf_pick()
 
         # c key to clear all picks in imPick
         if event.keysym =="c":
@@ -154,10 +155,6 @@ class MainGUI(tk.Frame):
         # BackSpace to clear last pick 
         elif event.keysym =="BackSpace":
             self.imPick.clear_last()
-
-        # Delete key to remove most recent pick layer
-        elif event.keysym =="Delete":
-            self.imPick.delete_pkLayer()
 
         # Space key to toggle imPick between radar image and clutter
         elif event.keysym=="space":
@@ -204,7 +201,7 @@ class MainGUI(tk.Frame):
             self.f_saveName = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_pk",
                                 initialdir = self.out_path,title = "Save As",filetypes = (("comma-separated values","*.csv"),))
         if self.f_saveName:
-            self.stop_pick()
+            self.end_subsurf_pick()
             self.imPick.save(self.f_saveName)
     
 
@@ -222,21 +219,41 @@ class MainGUI(tk.Frame):
                 self.imPick.get_basemap(self.basemap)
 
 
-    # new_pick is a method which begins a new imPick pick layer
-    def new_pick(self):
+    # start_subsurf_pick is a method which begins a new imPick pick layer
+    def start_subsurf_pick(self):
         if self.f_loadName:
+            # end surface picking if currently active
+            self.end_surf_pick()
             self.imPick.set_pickState(True,surf="subsurface")
             self.imPick.pick_interp(surf = "subsurface")
             self.imPick.plot_picks(surf = "subsurface")
             self.imPick.blit()
 
 
-    # stop_pick is a method which terminates the current imPick pick layer
-    def stop_pick(self):
-        if self.imPick.get_pickState() is True:
+    # end_subsurf_pick is a method which terminates the current imPick pick layer
+    def end_subsurf_pick(self):
+        if (self.imPick.get_pickState() is True) and (self.imPick.get_pickSurf() == "subsurface"):
             self.imPick.set_pickState(False,surf="subsurface")
             self.imPick.pick_interp(surf = "subsurface")
             self.imPick.plot_picks(surf = "subsurface")
+            self.imPick.blit()
+            self.imPick.update_option_menu()
+
+
+    # start picking the surface
+    def start_surf_pick(self):
+        if self.f_loadName:
+            # end subsurface picking if currently active
+            self.end_subsurf_pick()
+            self.imPick.set_pickState(True,surf="surface")
+
+
+    # end surface picking
+    def end_surf_pick(self):
+        if (self.imPick.get_pickState() is True) and (self.imPick.get_pickSurf() == "surface"):
+            self.imPick.set_pickState(False,surf="surface")
+            self.imPick.pick_interp(surf = "surface")
+            self.imPick.plot_picks(surf = "surface")
             self.imPick.blit()
 
 
@@ -288,15 +305,6 @@ class MainGUI(tk.Frame):
             self.wvPick.set_pickDict(self.imPick.get_pickDict())
             self.wvPick.plot_wv()
 
-    def start_surf_pick(self):
-        self.imPick.set_pickState(True,surf="surface")
-    def end_surf_pick(self):
-        self.imPick.set_pickState(False,surf="surface")
-        self.imPick.pick_interp(surf = "surface")
-        self.imPick.plot_picks(surf = "surface")
-        self.imPick.blit()
-
-
 
     def help(self):
         # help message box
@@ -304,11 +312,11 @@ class MainGUI(tk.Frame):
         """Nearly Optimal Subsurface Extractor:
         \n\n1. File->Load to load data file
         \n2. Map->Open to load basemap
-        \n3. Pick->New to begin new pick layer 
+        \n3. Pick->Surface/Subsurface->New to begin new pick segment 
         \n4. Click along reflector surface to pick\n   horizon
         \n\t\u2022[backspace] to remove the last
-        \n\t\u2022[c] to remove all
-        \n5. Pick->Stop to end current pick segment
+        \n\t\u2022[c] to remove all subsurface picks
+        \n5. Pick->Surface/Subsurface->Stop to end current pick segment
         \n6. Radio buttons to toggle between radar\n   and clutter images
         \n7. File->Save to export picks
         \n8. File->Next to load next data file
@@ -321,13 +329,12 @@ class MainGUI(tk.Frame):
         """General:
         \n[Ctrl+o]\tOpen radar data file
         \n[Ctrl+m]\tOpen basemap window
-        \n[Ctrl+n]\tBegin new pick segment
-        \n[Escape]\tEnd current pick segment
+        \n[Ctrl+n]\tBegin new subsurface pick segment
+        \n[Escape]\tEnd current surface/subsurface pick segment
         \n[Spacebar]\tToggle between radar and clutter images
         \n[Ctrl+s]\tExport pick data
         \n[Right]\t\tOpen next file in directory
         \n[Ctrl+q]\tQuit NOSEpick
         \n\nPicking:
         \n[Backspace]\tRemove last pick event
-        \n[Delete]\tRemove current/ most recent pick segment
         \n[c]\t\tRemove all picked segments""")
