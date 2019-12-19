@@ -1,3 +1,4 @@
+###IMPORTS###
 import utils, basemap
 import h5py
 import numpy as np
@@ -8,6 +9,7 @@ mpl.use("TkAgg")
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from scipy.interpolate import CubicSpline
+
 
 class imPick(tk.Frame):
     # imPick is a class to pick horizons from a radar image
@@ -102,16 +104,6 @@ class imPick(tk.Frame):
         self.saved_pick = None
         self.surf_pick = None
         self.im_status.set("data")
-
-
-    # startup image to be loaded in the background prior to opening data
-    def start_im(self):
-        self.ax.set_visible(True)
-        self.ax.imshow(mpl.image.imread('lib/NOSEpick-01.png'))
-        self.ax.get_xaxis().set_ticks([])
-        self.ax.get_yaxis().set_ticks([])
-        self.dataCanvas._tkcanvas.pack()
-        self.dataCanvas.draw()
 
 
     # load calls ingest() on the data file and sets the datacanvas
@@ -238,8 +230,6 @@ class imPick(tk.Frame):
                     self.pick_segment += 1
                     # only advance pick segment if picks made on previous layer
                 self.pickLabel.config(fg="#FF0000")
-        # elif self.pick_surf == "surface":
-        #     if self.pick_state == True:
 
 
     # addseg is a method to for user to generate picks
@@ -321,7 +311,6 @@ class imPick(tk.Frame):
             self.surf.set_data(self.data["dist"],self.data["twtt_surf"]*1e6)
             
 
-
     def clear_picks(self):
         # clear all picks
         if len(self.xln + self.xln_old) > 0 and tk.messagebox.askokcancel("Warning", "Clear all picks?", icon = "warning") == True:
@@ -354,8 +343,6 @@ class imPick(tk.Frame):
                 # reset self.pick, then blit
                 self.surf_pick.set_data(self.xln_surf, self.yln_surf)
                 self.blit()
-
-
 
 
     def delete_pkLayer(self):
