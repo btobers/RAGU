@@ -149,7 +149,11 @@ class MainGUI(tk.Frame):
         # c key to clear all picks in imPick
         if event.keysym =="c":
             # clear the drawing of line segments
+            self.imPick.set_pickState(False,surf="subsurface")
             self.imPick.clear_picks()
+            self.imPick.plot_picks(surf = "subsurface")
+            self.imPick.blit()
+            self.imPick.update_option_menu()
 
         # BackSpace to clear last pick 
         elif event.keysym =="BackSpace":
@@ -227,6 +231,7 @@ class MainGUI(tk.Frame):
             self.imPick.pick_interp(surf = "subsurface")
             self.imPick.plot_picks(surf = "subsurface")
             self.imPick.blit()
+            self.imPick.update_option_menu()
 
 
     # end_subsurf_pick is a method which terminates the current imPick pick layer

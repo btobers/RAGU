@@ -313,7 +313,7 @@ class imPick(tk.Frame):
 
     def clear_picks(self):
         # clear all picks
-        if len(self.xln + self.xln_old) > 0 and tk.messagebox.askokcancel("Warning", "Clear all picks?", icon = "warning") == True:
+        if len(self.xln + self.xln_old) > 0 and tk.messagebox.askokcancel("Warning", "Clear all subsurface picks?", icon = "warning") == True:
             # delete pick lists
             del self.yln_old[:]
             del self.xln_old[:]
@@ -321,10 +321,7 @@ class imPick(tk.Frame):
             self.pick_dict.clear()
             # reset pick segment increment to 0
             self.pick_segment = 0
-            self.plot_picks()
-            self.set_pickState(False)
             self.pickLabel.config(text="Pick Segment:\t" + str(self.pick_segment))
-            self.blit()
 
 
     def clear_last(self):
@@ -348,32 +345,31 @@ class imPick(tk.Frame):
     def delete_pkLayer(self):
         # delete selected pick segment
         if (len(self.pick_dict) > 0) and (tk.messagebox.askokcancel("Warning", "Delete pick segment " + str(self.layerVar.get()) + "?", icon = "warning") == True):
-            self.set_pickState(False, surf = "subsurface")
-            self.pick_interp(surf = "subsurface")
-            self.plot_picks(surf = "subsurface")
-
-            if len(self.xln_old) > 0:
-                # find first pick location for layer
-                pick_idx_0 = utils.find_nearest(np.asarray(self.xln_old), self.data["dist"][np.where(self.pick_dict["segment_" + str(self.layerVar.get())] != -1)[0][0]])
-                # remove picks from list
-                del self.xln_old[-(len(self.xln_old) - pick_idx_0):]
-                del self.yln_old[-(len(self.yln_old) - pick_idx_0):]      
+            # find first pick location for segment
+            first_idx = utils.find_nearest(np.asarray(self.xln_old), self.data["dist"][np.where(self.pick_dict["segment_" + str(self.layerVar.get())] != -1)[0][0]])
+            # find last pick location for segment
+            last_idx = utils.find_nearest(np.asarray(self.xln_old), self.data["dist"][np.where(self.pick_dict["segment_" + str(self.layerVar.get())] != -1)[0][-1]])
+            # remove picks from plot list
+            del self.xln_old[first_idx:last_idx + 1]
+            del self.yln_old[first_idx:last_idx + 1]   
             # delete pick dict layer
             del self.pick_dict["segment_" + str(self.layerVar.get())]
 
-            # reset pick segment increment back one
+            self.saved_pick.set_offsets(np.c_[self.xln_old,self.yln_old])
+            
             self.pick_segment -= 1
-            self.pickLabel.config(text="Pick Segment:\t" + str(self.pick_segment - 1))
-            self.plot_picks(surf = "subsurface")
-            self.blit()
+            if self.pick_state == True:
+                self.pickLabel.config(text="Pick Segment:\t" + str(self.pick_segment))
+            elif self.pick_state == False:
+                self.pickLabel.config(text="Pick Segment:\t" + str(self.pick_segment - 1))    
 
             # reorder pick layers
-            for _i in range(len(self.pick_dict)):
-                if _i >= self.layerVar.get():
-                    self.pick_dict["segment_" + str(_i)] = self.pick_dict["segment_" + str(_i + 1)]
-            del self.pick_dict[list(self.pick_dict.keys())[-1]]
-
+            if self.layerVar.get() != len(self.pick_dict):
+                for _i in range(self.layerVar.get(), len(self.pick_dict)):
+                    self.pick_dict["segment_" + str(_i)] = np.copy(self.pick_dict["segment_" + str(_i + 1)])
+                del self.pick_dict["segment_" + str(_i + 1)]
             self.update_option_menu()
+            self.blit()
 
 
     def show_data(self):
