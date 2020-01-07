@@ -1,5 +1,5 @@
 """
-NOSEpick - currently in development stages
+NOSEpick - Nearly Optimal Subsurface Extractor
 created by: Brandon S. Tober and Michael S. Christoffersen
 date: 25JUN19
 last updated: 19SEP2019
@@ -20,11 +20,10 @@ import tkinter.ttk as ttk
 
 # MainGUI is the NOSEpick class which sets the gui interface and holds operating variables
 class MainGUI(tk.Frame):
-    def __init__(self, parent, in_path, out_path, map_path, *args, **kwargs):
+    def __init__(self, parent, in_path, map_path, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
         self.in_path = in_path
-        self.out_path = out_path
         self.map_path = map_path
         self.setup()
 
@@ -200,8 +199,9 @@ class MainGUI(tk.Frame):
     # save_loc is method to receieve the desired pick save location from user input
     def save_loc(self):
         if self.f_loadName and self.imPick.get_pickLen() > 0:
+            out_path = self.f_loadName[:-len("/".join(self.f_loadName.split("/")[-2:]))] + "picks"
             self.f_saveName = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_pk",
-                                initialdir = self.out_path,title = "Save As",filetypes = (("comma-separated values","*.csv"),))
+                                initialdir = out_path, title = "Save Picks",filetypes = (("comma-separated values","*.csv"),))
         if self.f_saveName:
             self.end_subsurf_pick()
             self.imPick.save(self.f_saveName)

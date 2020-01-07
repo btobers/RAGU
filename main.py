@@ -1,5 +1,5 @@
 """
-NOSEpick - currently in development stages
+NOSEpick - Nearly Optimal Subsurface Extractor
 created by: Brandon S. Tober and Michael S. Christoffersen
 date: 25JUN19
 last updated: 14NOV19
@@ -15,17 +15,14 @@ from tkinter import font
 
 # anomalocaris paths
 # in_path = "/mnt/Swaps/MARS/targ/supl/UAF/2018/"
-# out_path = "/home/anomalocaris/Desktop/"
 # map_path = "/mnt/Swaps/MARS/targ/supl/grid-AKDEM/"
 
 # colugo paths
 in_path = "/zippy/MARS/targ/supl/UAF/2019/hdf5/"
-out_path = "/zippy/btober/Desktop/"
 map_path = "/zippy/MARS/targ/supl/grid-AKDEM/"
 
 # beefmaser paths
 # in_path = "/media/anomalocaris/beefmaster/MARS/targ/supl/UAF/2019/hdf5/"
-# out_path = "/media/anomalocaris/beefmaster/MARS/targ/supl/UAF/2019/picks/"
 # map_path = "/media/anomalocaris/beefmaster/MARS/targ/supl/grid-AKDEM/"
 
 ### INITIALIZE ###
@@ -39,5 +36,5 @@ root.config(bg="#d9d9d9")
 img = tk.PhotoImage(file='lib/NosePick_ZOOM-01.png')
 root.tk.call('wm', 'iconphoto', root._w, img)
 # call the NOSEpickGUI class
-gui.MainGUI(root, in_path, out_path, map_path)
+gui.MainGUI(root, in_path, map_path)
 root.mainloop()
