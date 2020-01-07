@@ -19,7 +19,7 @@ from tkinter import font
 # map_path = "/mnt/Swaps/MARS/targ/supl/grid-AKDEM/"
 
 # colugo paths
-in_path = "/zippy/MARS/targ/supl/UAF/2018/aug/"
+in_path = "/zippy/MARS/targ/supl/UAF/2019/hdf5/"
 out_path = "/zippy/btober/Desktop/"
 map_path = "/zippy/MARS/targ/supl/grid-AKDEM/"
 

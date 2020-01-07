@@ -49,7 +49,7 @@ class ingester:
         lon =  np.array(f["loc0"]["lon"]).flatten().astype(np.float64)
         lat =  np.array(f["loc0"]["lat"]).flatten().astype(np.float64)
         elev_air =  np.array(f["loc0"]["altM"]).flatten().astype(np.float64)
-        twtt_surf = np.nan(num_trace)
+        twtt_surf = np.zeros(num_trace)         # needs to be updated once .las surface added to data files
         amp = np.array(f["proc0"])
         if "clutter0" in f.keys():
             clutter = np.array(f["clutter0"])

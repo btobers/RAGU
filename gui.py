@@ -110,7 +110,7 @@ class MainGUI(tk.Frame):
         # handle x-button closing of window
         self.parent.protocol("WM_DELETE_WINDOW", self.close_window)
 
-        # self.open_data()
+        self.open_data()
 
 
     # key is a method to handle UI keypress events
@@ -179,7 +179,6 @@ class MainGUI(tk.Frame):
         temp_loadName = ""
         # select input file
         temp_loadName = tk.filedialog.askopenfilename(initialdir = self.in_path,title = "Select file",filetypes = (("hd5f files", ".mat .h5"),("segy files", ".sgy"),("all files",".*")))
-        # temp_loadName = "/mnt/Swaps/MARS/targ/supl/UAF/2018/aug/export/20180817-222930.mat"
         # if input selected, clear imPick canvas, ingest data and pass to imPick
         if temp_loadName:
             self.f_loadName = temp_loadName

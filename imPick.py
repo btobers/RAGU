@@ -39,7 +39,7 @@ class imPick(tk.Frame):
         self.layerMenu.pack(side="right",pady=0)
         self.layerMenu["highlightthickness"]=0
 
-        self.pickLabel = tk.Label(infoFrame, text="Pick Segment:\t0", fg="#d9d9d9")#, font="-weight bold")
+        self.pickLabel = tk.Label(infoFrame, text="Subsurface Pick Segment:\t0", fg="#d9d9d9")#, font="-weight bold")
         self.pickLabel.pack(side="right")
 
         self.fig = mpl.figure.Figure()
@@ -76,7 +76,7 @@ class imPick(tk.Frame):
 
     # set_vars is a method to set imPick variables
     def set_vars(self):
-        self.pickLabel.config(text="Pick Segment:\t0", fg="#d9d9d9")
+        self.pickLabel.config(text="Subsurface Pick Segment:\t0", fg="#d9d9d9")
         self.data_imSwitch_flag = ""
         self.clut_imSwitch_flag = ""
         self.f_loadName = ""
@@ -222,7 +222,7 @@ class imPick(tk.Frame):
                 # if current layer has only one pick, remove
                 else:
                     self.clear_last()
-                self.pickLabel.config(text="Pick Segment:\t" + str(self.pick_segment), fg="#008000")  
+                self.pickLabel.config(text="Subsurface Pick Segment:\t" + str(self.pick_segment), fg="#008000")  
                 # initialize pick index and twtt dictionaries for current picking layer
                 self.pick_dict["segment_" + str(self.pick_segment)] = np.ones(self.data["num_trace"])*-1
             elif self.pick_state == False:
@@ -321,7 +321,7 @@ class imPick(tk.Frame):
             self.pick_dict.clear()
             # reset pick segment increment to 0
             self.pick_segment = 0
-            self.pickLabel.config(text="Pick Segment:\t" + str(self.pick_segment))
+            self.pickLabel.config(text="Subsurface Pick Segment:\t" + str(self.pick_segment))
 
 
     def clear_last(self):
@@ -359,9 +359,9 @@ class imPick(tk.Frame):
             
             self.pick_segment -= 1
             if self.pick_state == True:
-                self.pickLabel.config(text="Pick Segment:\t" + str(self.pick_segment))
+                self.pickLabel.config(text="Subsurface Pick Segment:\t" + str(self.pick_segment))
             elif self.pick_state == False:
-                self.pickLabel.config(text="Pick Segment:\t" + str(self.pick_segment - 1))    
+                self.pickLabel.config(text="Subsurface Pick Segment:\t" + str(self.pick_segment - 1))    
 
             # reorder pick layers
             if self.layerVar.get() != len(self.pick_dict):
