@@ -32,14 +32,14 @@ class imPick(tk.Frame):
         clutterRadio = tk.Radiobutton(infoFrame,text="Cluttergram", variable=self.im_status, value="clut",command=self.show_clut)
         clutterRadio.pack(side="left")
         
-        deleteButton = tk.Button(infoFrame, text="Delete", command=self.delete_pkLayer).pack(side="right")
+        deleteButton = tk.Button(toolbarFrame, text="Delete", command=self.delete_pkLayer).pack(side="right")
         self.layerVar = tk.IntVar()
         self.layers=[0]
-        self.layerMenu = tk.OptionMenu(infoFrame, self.layerVar, *self.layers)
+        self.layerMenu = tk.OptionMenu(toolbarFrame, self.layerVar, *self.layers)
         self.layerMenu.pack(side="right",pady=0)
         self.layerMenu["highlightthickness"]=0
 
-        self.pickLabel = tk.Label(toolbarFrame, text="Pick Segment:\t0", fg="#d9d9d9")
+        self.pickLabel = tk.Label(infoFrame, text="Pick Segment:\t0", fg="#d9d9d9")#, font="-weight bold")
         self.pickLabel.pack(side="right")
 
         self.fig = mpl.figure.Figure()

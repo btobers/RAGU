@@ -12,17 +12,16 @@ import tkinter as tk
 from tkinter import font
 
 ### USER SPECIFIED VARS ###
-# in_path = "/zippy/MARS/targ/supl/UAF/2018/aug/"
-# in_path = "/zippy/MARS/orig/supl/WISE/blocks/"
-# in_path = "/home/btober/Desktop/"
-# out_path = "/home/anomalocaris/Desktop"
-# out_path = "/home/btober/Desktop/"
+
 # anomalocaris paths
-in_path = "/mnt/Swaps/MARS/targ/supl/UAF/2018/"
-out_path = "/home/anomalocaris/Desktop/"
-map_path = "/mnt/Swaps/MARS/targ/supl/grid-AKDEM/"
+# in_path = "/mnt/Swaps/MARS/targ/supl/UAF/2018/"
+# out_path = "/home/anomalocaris/Desktop/"
+# map_path = "/mnt/Swaps/MARS/targ/supl/grid-AKDEM/"
 
 # colugo paths
+in_path = "/zippy/MARS/targ/supl/UAF/2018/aug/"
+out_path = "/zippy/btober/Desktop/"
+map_path = "/zippy/MARS/targ/supl/grid-AKDEM/"
 
 # beefmaser paths
 # in_path = "/media/anomalocaris/beefmaster/MARS/targ/supl/UAF/2019/hdf5/"
