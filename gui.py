@@ -184,10 +184,14 @@ class MainGUI(tk.Frame):
             self.imPick.clear_canvas()  
             self.imPick.set_vars()
             # ingest the data
+            # try:
             self.igst = ingester.ingester(self.f_loadName.split(".")[-1])
             self.data = self.igst.read(self.f_loadName)
             self.imPick.load(self.f_loadName, self.data)
             self.wvPick.set_data(self.data["amp"], self.data["dt"], self.data["num_sample"])
+            # except Exception as err:
+            #     print('Ingest Error: ' + str(err))
+            #     self.open_data()
 
         # pass basemap to imPick for plotting pick location
         if self.map_loadName:

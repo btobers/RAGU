@@ -127,9 +127,6 @@ class imPick(tk.Frame):
         Pow_data = np.power(self.data["amp"],2)
         # place data in dB for visualization
         self.dB_data = np.log(Pow_data)
-
-        # replace any negative infinity clutter values with nans
-        self.data["clutter"][np.where(self.data["clutter"] == -np.inf)] = np.NaN
         
         # get clutter data in dB for visualization
         # check if clutter data exists
@@ -139,10 +136,14 @@ class imPick(tk.Frame):
             if np.nanmax(np.abs(self.data["clutter"])) < 1:
                 Pow_clut = np.power(self.data["clutter"],2)
                 self.dB_clut = np.log(Pow_clut)
-                self.dB_clut[np.where(self.dB_clut == -np.inf)] = np.NaN
             # if in log space, leave as is
             else:
                 self.dB_clut = self.data["clutter"]
+            # replace any negative infinity clutter values with nan
+            try:
+                self.dB_clut[np.where(self.dB_clut == -np.inf)] = np.NaN
+            except:
+                pass
         # if no clutter data, use empty array
         else:
             self.dB_clut = self.data["clutter"]

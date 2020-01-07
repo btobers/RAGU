@@ -84,7 +84,6 @@ class ingester:
         # method to ingest .mat files. for older matlab files, scio works and h5py does not. for newer files, h5py works and scio does not 
         try:
             f = h5py.File(fpath, "r")
-
             dt = float(f["block"]["dt"][0])
             num_trace = int(f["block"]["num_trace"][0])
             num_sample = int(f["block"]["num_sample"][0])
@@ -102,7 +101,6 @@ class ingester:
         except:
             try:
                 f = scio.loadmat(fpath)
-
                 dt = float(f["block"]["dt"][0])
                 num_trace = int(f["block"]["num_trace"][0])
                 num_sample = int(f["block"]["num_sample"][0])
@@ -125,7 +123,7 @@ class ingester:
             amp = np.transpose(amp)  
         if clutter.shape[0] == num_trace and clutter.shape[1] == num_sample:
             clutter = np.transpose(clutter)
-
+        
         # replace twtt_surf with nan's if no data
         if not np.any(twtt_surf):
             twtt_surf.fill(np.nan)
