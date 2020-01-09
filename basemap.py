@@ -65,15 +65,15 @@ class basemap(tk.Tk):
                 self.map_toolbar.update()
                 self.map_dataCanvas._tkcanvas.pack()
                 # convert axes to kilometers
-                # self.map_xticks = self.map_fig_ax.get_xticks()*1e-3
-                # self.map_yticks = self.map_fig_ax.get_yticks()*1e-3
+                self.map_xticks = self.map_fig_ax.get_xticks()#*1e-3
+                self.map_yticks = self.map_fig_ax.get_yticks()#*1e-3
                 # shift xticks and yticks if zero is not at the lower left
-                # if minx != 0:
-                #     self.map_xticks = [x + abs(min(self.map_xticks)) for x in self.map_xticks] 
-                # if miny != 0:
-                #     self.map_yticks = [y + abs(min(self.map_yticks)) for y in self.map_yticks] 
-                # self.map_fig_ax.set_xticklabels(self.map_xticks)
-                # self.map_fig_ax.set_yticklabels(self.map_yticks)
+                if minx != 0:
+                    self.map_xticks = [x + abs(min(self.map_xticks)) for x in self.map_xticks] 
+                if miny != 0:
+                    self.map_yticks = [y + abs(min(self.map_yticks)) for y in self.map_yticks] 
+                self.map_fig_ax.set_xticklabels(self.map_xticks)
+                self.map_fig_ax.set_yticklabels(self.map_yticks)
                 self.map_dataCanvas.draw()
                 self.basemap_state = 1
                 self.draw_cid = self.map_fig.canvas.mpl_connect('draw_event', self.update_bg)

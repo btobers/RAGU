@@ -26,13 +26,6 @@ def savePick(f_saveName, data, pick_dict):
     pick_dict = pick_dict
 
     v_ice = 3e8/(np.sqrt(3.15))   # EM wave veloity in ice - for thickness calculation
-    # vars to hold info from pick locations
-    # lon = []
-    # lat = []
-    # elev_air = []
-    # twtt_surf = []
-    # twtt_bed = []
-    # thick = []
 
     lon = data["navdat"].navdat[:,0]
     lat = data["navdat"].navdat[:,1]
@@ -42,7 +35,6 @@ def savePick(f_saveName, data, pick_dict):
     thick = np.repeat(np.nan,lon.shape[0])
     elev_gnd = np.repeat(np.nan,lon.shape[0])
     elev_bed = np.repeat(np.nan,lon.shape[0])
-
 
     # iterate through pick_dict layers
     for _i in range(len(pick_dict)):
