@@ -290,6 +290,8 @@ class MainGUI(tk.Frame):
                 self.imPick.set_vars()
                 self.data = self.igst.read(self.f_loadName)
                 self.imPick.load(self.f_loadName, self.data)
+                self.wvPick.clear()
+                self.wvPick.set_vars()
 
 
                 if self.map_loadName and self.basemap.get_state() == 1:

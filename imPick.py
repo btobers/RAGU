@@ -120,6 +120,9 @@ class imPick(tk.Frame):
         self.ax_cmin.set_visible(True)
         self.reset_ax.set_visible(True)
 
+        # label axes    
+        self.ax.set(xlabel = "along-track distance [km]", ylabel = "two-way travel time [microsec.]")
+        
         # set figure title
         self.ax.set_title(os.path.splitext(self.f_loadName.split("/")[-1])[0])
 
@@ -188,9 +191,6 @@ class imPick(tk.Frame):
 
         # set clutter sim visibility to false
         self.im_clut.set_visible(False)
-
-        # label axes    
-        self.ax.set(xlabel = "along-track distance [km]", ylabel = "two-way travel time [microsec.]")
 
         # update the canvas
         self.dataCanvas._tkcanvas.pack()
