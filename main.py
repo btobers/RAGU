@@ -14,12 +14,12 @@ from tkinter import font
 ### USER SPECIFIED VARS ###
 
 # anomalocaris paths
-in_path = "/mnt/Swaps/MARS/targ/supl/UAF/2018/"
-map_path = "/mnt/Swaps/MARS/targ/supl/grid-AKDEM/"
+# in_path = "/mnt/Swaps/MARS/targ/supl/UAF/2018/"
+# map_path = "/mnt/Swaps/MARS/targ/supl/grid-AKDEM/"
 
 # # colugo paths
-# in_path = "/zippy/MARS/targ/supl/UAF/2017/aug/"
-# map_path = "/zippy/MARS/targ/supl/grid-AKDEM/"
+in_path = "/zippy/MARS/targ/supl/UAF/2017/aug/"
+map_path = "/zippy/MARS/targ/supl/grid-AKDEM/"
 
 # beefmaser paths
 # in_path = "/media/anomalocaris/beefmaster/MARS/targ/supl/UAF/2019/hdf5/"
