@@ -96,12 +96,14 @@ class MainGUI(tk.Frame):
         # bind tab change event to send pick data to wvPick if tab switched from imPick
         self.nb.bind("<<NotebookTabChanged>>", self.pick_opt)
 
+
         # initialize imPick
         self.imPick = imPick.imPick(self.imTab)
         self.imPick.set_vars()
 
         # initialize wvPick
         self.wvPick = wvPick.wvPick(self.wvTab)
+        self.wvPick.set_vars()
 
         # bind keypress events
         self.parent.bind("<Key>", self.key)

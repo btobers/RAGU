@@ -13,17 +13,7 @@ class wvPick(tk.Frame):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
 
-        # set up variables
-        self.winSize = tk.IntVar(value=20)
-        self.stepSize = tk.IntVar(value=50)
-        self.segmentVar = tk.IntVar()
-        self.segmentVar.trace('w', self.plot_wv)
-        self.trace = 0.
-        self.pick_dict = None
-        self.rePick = None
-        self.rePick_idx = {}        # dictionary of indeces of repicked traces for each segment
-        self.pick_idx0 = []         # list of start index for each pick segment
-
+    def setup(self):
         # set up frames
         infoFrame = tk.Frame(self.parent)
         infoFrame.pack(side="top",fill="both")
@@ -43,7 +33,7 @@ class wvPick(tk.Frame):
         tk.Label(infoFrame, text="\t").pack(side="left")
         interpButton = tk.Button(infoFrame, text="Interpolate", command=self.interpPicks, pady=0).pack(side="left")
         tk.Label(infoFrame, text="\t").pack(side="left")
-        interpButton = tk.Button(infoFrame, text="AutoPick", command=self.autoPick, pady=0).pack(side="left")
+        autoButton = tk.Button(infoFrame, text="AutoPick", command=self.autoPick, pady=0).pack(side="left")
         
         self.segments=[0]
         self.segmentMenu = tk.OptionMenu(infoFrame, self.segmentVar, *self.segments)
@@ -70,7 +60,18 @@ class wvPick(tk.Frame):
         # update the canvas
         self.dataCanvas._tkcanvas.pack()
         self.dataCanvas.draw()
-
+    
+    def set_vars(self):
+        # set up variables
+        self.winSize = tk.IntVar(value=20)
+        self.stepSize = tk.IntVar(value=50)
+        self.segmentVar = tk.IntVar()
+        self.segmentVar.trace('w', self.plot_wv)
+        self.trace = 0.
+        self.pick_dict = None
+        self.rePick = None
+        self.rePick_idx = {}        # dictionary of indeces of repicked traces for each segment
+        self.pick_idx0 = []         # list of start index for each pick segment
 
     # set_data is a method to receive the radar data
     def set_data(self, amp, dt, num_sample):
@@ -102,33 +103,34 @@ class wvPick(tk.Frame):
 
     # plot_wv is a method to draw the waveform on the datacanvas
     def plot_wv(self, *args):
-        self.ax.clear()
-        # self.segment = str(self.segmentVar.get())
+        if self.pick_dict:
+            self.ax.clear()
+            # self.segment = str(self.segmentVar.get())
 
-        # print(np.where(self.pick_dict["segment_" + self.segment] != -1.))
-        # print(np.where(self.pick_dict["segment_" + self.segment] != -1.)[0])
-        # traceNum = np.where(self.pick_dict["segment_" + self.segment] != -1.)[0][self.segment_trace]
-        # print(traceNum)
+            # print(np.where(self.pick_dict["segment_" + self.segment] != -1.))
+            # print(np.where(self.pick_dict["segment_" + self.segment] != -1.)[0])
+            # traceNum = np.where(self.pick_dict["segment_" + self.segment] != -1.)[0][self.segment_trace]
+            # print(traceNum)
 
-        # get sample index of pick for given trace
-        pick_idx = utils.find_nearest(self.sampleTime, (self.pick_dict["segment_" + str(self.segmentVar.get())][self.traceNum]*1e-6))
+            # get sample index of pick for given trace
+            pick_idx = utils.find_nearest(self.sampleTime, (self.pick_dict["segment_" + str(self.segmentVar.get())][self.traceNum]*1e-6))
 
-        self.ax.plot(self.data_dB[:,self.traceNum])
-        self.ax.axvline(x = pick_idx, color='r')
+            self.ax.plot(self.data_dB[:,self.traceNum])
+            self.ax.axvline(x = pick_idx, color='r')
 
-        self.ax.axis(xmin=int(pick_idx-100),xmax=int(pick_idx+100))
+            self.ax.axis(xmin=int(pick_idx-100),xmax=int(pick_idx+100))
 
-        self.dataCanvas.draw()
+            self.dataCanvas.draw()
 
     # step forward is a method to move backwards by the number of traces entered to stepSize
     def stepBackward(self):
-        if self.traceNum - self.stepSize.get() >= self.segment_trace_first[self.segmentVar.get()]:
+        if self.pick_dict and self.traceNum - self.stepSize.get() >= self.segment_trace_first[self.segmentVar.get()]:
             self.traceNum -= self.stepSize.get()
             self.plot_wv()
 
     # step forward is a method to move forward by the number of traces entered to stepSize
     def stepForward(self):
-        if self.traceNum + self.stepSize.get() <= self.segment_trace_last[self.segmentVar.get()]:
+        if self.pick_dict and self.traceNum + self.stepSize.get() <= self.segment_trace_last[self.segmentVar.get()]:
             self.traceNum += self.stepSize.get()
             self.plot_wv()
 
@@ -145,7 +147,7 @@ class wvPick(tk.Frame):
 
 
     def autoPick(self):
-        print('auto')
+        print('-----------\nauto pick still in development\n-----------')
 
 
     def manualPick(self, event):
@@ -165,13 +167,17 @@ class wvPick(tk.Frame):
 
     # interpPicks is a method to interpolate linearly between refined picks
     def interpPicks(self):
-        for _i in range(len(self.rePick_idx)):
-            if len(self.rePick_idx["segment_" + str(_i)]) >= 2:
-                # get indices where picks exist for pick segment
-                x = np.where(self.pick_dict["segment_" + str(_i)] != -1)[0]
-                # get indeces of repicked traces
-                xp = self.pick_idx0[_i] + self.rePick_idx["segment_" + str(_i)]
-                # get twtt values at repicked indices
-                fp = self.pick_dict["segment_" + str(_i)][xp]
-                # interpolate repicked values for segment
-                self.pick_dict["segment_" + str(_i)][x] = np.interp(x, xp, fp)                 
+        print('-----------\nwave pick interpolation still in development\n-----------')
+        # for _i in range(len(self.rePick_idx)):
+        #     if len(self.rePick_idx["segment_" + str(_i)]) >= 2:
+        #         # get indices where picks exist for pick segment
+        #         x = np.where(self.pick_dict["segment_" + str(_i)] != -1)[0]
+        #         # get indeces of repicked traces
+        #         xp = self.pick_idx0[_i] + self.rePick_idx["segment_" + str(_i)]
+        #         # get twtt values at repicked indices
+        #         fp = self.pick_dict["segment_" + str(_i)][xp]
+        #         # interpolate repicked values for segment
+        #         self.pick_dict["segment_" + str(_i)][x] = np.interp(x, xp, fp)            
+
+    # clear is a method to clear the wavePick tab and stored data when a new track is loaded
+    def clear(self):
