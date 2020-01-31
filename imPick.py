@@ -241,9 +241,9 @@ class imPick(tk.Frame):
             self.pick_idx_1 = utils.find_nearest(self.data["dist"], event.xdata)
             # check if picking state is a go
             if self.pick_state == True:
-                if (self.pick_surf == "subsurface") and (event.ydata > self.data["twtt_surf"][self.pick_idx_1]*1e6):
+                # restrict subsurface picks to fall below surface
+                if (self.pick_surf == "subsurface") and (event.ydata > self.data["twtt_surf"][self.pick_idx_1]*1e6) or (np.isnan(self.data["twtt_surf"][self.pick_idx_1])):
                 # make sure pick falls after previous pick
-
                     if (len(self.xln) >= 1) and (event.xdata <= self.xln[-1]):
                         pass
                     else:

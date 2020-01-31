@@ -41,7 +41,6 @@ class wvPick(tk.Frame):
         stepBackward = tk.Button(infoFrame, text="←", command = self.stepBackward, pady=0).pack(side="left")
         stepForward = tk.Button(infoFrame, text="→", command = self.stepForward, pady=0).pack(side="left")
         tk.Label(infoFrame, text="\t").pack(side="left")
-
         
         self.segments=[0]
         self.segmentMenu = tk.OptionMenu(infoFrame, self.segmentVar, *self.segments)
@@ -61,11 +60,13 @@ class wvPick(tk.Frame):
         self.toolbar.pack(side="left")
         # self.toolbar.update()
 
-        interpButton = tk.Button(interpFrame, text="Interpolate", command=self.interpPicks, pady=0).pack(side="right")
+        interpButton = tk.Button(interpFrame, text="interpolate", command=self.interpPicks, pady=0).pack(side="right")
         # autoButton = tk.Button(interpFrame, text="AutoPick", command=self.autoPick, pady=0).pack(side="right")
-        linearRadio = tk.Radiobutton(interpFrame, text="Linear", variable=self.interpType, value="linear")
+        linearRadio = tk.Radiobutton(interpFrame, text="linear", variable=self.interpType, value="linear")
         linearRadio.pack(side="right")
-        cubicRadio = tk.Radiobutton(interpFrame,text="Cubic Spline", variable=self.interpType, value="cubic")
+        sep = tk.ttk.Separator(interpFrame,orient="vertical")
+        sep.pack(side="right", fill="y", padx=4, pady=4)
+        cubicRadio = tk.Radiobutton(interpFrame,text="cubic spline", variable=self.interpType, value="cubic")
         cubicRadio.pack(side="right")
 
 
@@ -117,11 +118,13 @@ class wvPick(tk.Frame):
         # create lists of first and last picked trace number for each segment
         self.segment_trace_first = []
         self.segment_trace_last = []
+        # create list to hold current trace number for each layer
+        self.traceNum = []
         for _i in range(self.num_pkLyrs):
             picked_traces = np.where(self.pick_dict0["segment_" + str(_i)] != -1.)[0]
             self.segment_trace_first.append(picked_traces[0])
             self.segment_trace_last.append(picked_traces[-1])
-        self.traceNum = np.where(self.pick_dict0["segment_" + str(self.segmentVar.get())] != -1.)[0][0]
+            self.traceNum.append(np.where(self.pick_dict0["segment_" + str(_i)] != -1.)[0][0])
 
 
     # plot_wv is a method to draw the waveform on the datacanvas
@@ -137,10 +140,10 @@ class wvPick(tk.Frame):
         # print(traceNum)
 
         # get sample index of pick for given trace
-        pick_idx0 = utils.find_nearest(self.sampleTime, (self.pick_dict0["segment_" + str(self.segmentVar.get())][self.traceNum]*1e-6))
-        pick_idx1 = utils.find_nearest(self.sampleTime, (self.pick_dict1["segment_" + str(self.segmentVar.get())][self.traceNum]*1e-6))
+        pick_idx0 = utils.find_nearest(self.sampleTime, (self.pick_dict0["segment_" + str(self.segmentVar.get())][self.traceNum[self.segmentVar.get()]]*1e-6))
+        pick_idx1 = utils.find_nearest(self.sampleTime, (self.pick_dict1["segment_" + str(self.segmentVar.get())][self.traceNum[self.segmentVar.get()]]*1e-6))
 
-        self.ax.plot(self.data_dB[:,self.traceNum])
+        self.ax.plot(self.data_dB[:,self.traceNum[self.segmentVar.get()]])
         self.ax.axvline(x = pick_idx0, c="k")
 
         if pick_idx0 != pick_idx1:
@@ -153,16 +156,19 @@ class wvPick(tk.Frame):
 
     # step forward is a method to move backwards by the number of traces entered to stepSize
     def stepBackward(self):
-        if self.pick_dict1 and self.traceNum - self.stepSize.get() >= self.segment_trace_first[self.segmentVar.get()]:
-            self.traceNum -= self.stepSize.get()
+        if self.pick_dict1 and self.traceNum[self.segmentVar.get()] - self.stepSize.get() >= self.segment_trace_first[self.segmentVar.get()]:
+            self.traceNum[self.segmentVar.get()] -= self.stepSize.get()
             self.plot_wv()
 
 
     # step forward is a method to move forward by the number of traces entered to stepSize
     def stepForward(self):
-        if self.pick_dict1 and self.traceNum + self.stepSize.get() <= self.segment_trace_last[self.segmentVar.get()]:
-            self.traceNum += self.stepSize.get()
-            self.plot_wv()
+        if self.pick_dict1 and self.traceNum[self.segmentVar.get()] + self.stepSize.get() <= self.segment_trace_last[self.segmentVar.get()]:
+            self.traceNum[self.segmentVar.get()] += self.stepSize.get()
+        # if there are less traces left in the pick segment than the step size, move to the last trace in the segment
+        else:
+            self.traceNum[self.segmentVar.get()] = self.segment_trace_last[self.segmentVar.get()]
+        self.plot_wv()
 
 
     # update the pick segment menu based on how many segments exist
@@ -187,10 +193,10 @@ class wvPick(tk.Frame):
         # self.dataCanvas.draw()
 
         # append trace number to rePick_idx list to keep track of indeces for interpolation
-        if (len(self.rePick_idx["segment_" + str(self.segmentVar.get())]) == 0) or (self.rePick_idx["segment_" + str(self.segmentVar.get())][-1] != self.traceNum):
-            self.rePick_idx["segment_" + str(self.segmentVar.get())].append(self.traceNum)
-
-        self.pick_dict1["segment_" + str(self.segmentVar.get())][self.traceNum] = event.xdata*self.dt*1e6
+        if (len(self.rePick_idx["segment_" + str(self.segmentVar.get())]) == 0) or (self.rePick_idx["segment_" + str(self.segmentVar.get())][-1] != self.traceNum[self.segmentVar.get()]):
+            self.rePick_idx["segment_" + str(self.segmentVar.get())].append(self.traceNum[self.segmentVar.get()])
+        
+        self.pick_dict1["segment_" + str(self.segmentVar.get())][self.traceNum[self.segmentVar.get()]] = event.xdata*self.dt*1e6
 
         self.plot_wv()
 
@@ -216,12 +222,10 @@ class wvPick(tk.Frame):
                     # cubic spline between picks
                     rePick_idx = self.rePick_idx["segment_" + str(_i)]
                     cs = CubicSpline(rePick_idx, self.pick_dict1["segment_" + str(_i)][rePick_idx])
-                    # get the first pick x-position for current layer
-                    pick_idx_0 = utils.find_nearest(self.data["dist"], self.xln[0])
                     # generate array between first and last pick indices on current layer
-                    pick_idx = np.arange(pick_idx_0,self.pick_idx_1 + 1)
+                    interp_idx = np.where(self.pick_dict1["segment_" + str(_i)] != -1.)[0]
                     # add cubic spline output interpolation to pick dictionary
-                    self.pick_dict1["segment_" + str(_i)][pick_idx] = cs(self.data["dist"][pick_idx])
+                    self.pick_dict1["segment_" + str(_i)][interp_idx] = cs([interp_idx])
 
 
     # clear is a method to clear the wavePick tab and stored data when a new track is loaded
