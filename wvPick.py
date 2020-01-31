@@ -198,7 +198,6 @@ class wvPick(tk.Frame):
     def interpPicks(self):
         print('-----------\nwave pick interpolation still in development\n-----------')
         if self.interpType.get() == "linear":
-            print("linear")
             for _i in range(self.num_pkLyrs):
                 if len(self.rePick_idx["segment_" + str(_i)]) >= 2:
                     # get indices where picks exist for pick segment
@@ -212,7 +211,6 @@ class wvPick(tk.Frame):
 
 
         elif self.interpType.get() == "cubic":
-            print("cubic")
             for _i in range(self.num_pkLyrs):
                 if len(self.rePick_idx["segment_" + str(_i)]) >= 2:
                     # cubic spline between picks
