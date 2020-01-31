@@ -329,10 +329,10 @@ class MainGUI(tk.Frame):
         # determine which tab is active
         if (self.tab == "wavePick"):
             self.pick_opt()
-        elif (self.tab == "imagePick"):
-            # get updated pick_dict from wvPick and pass back to imPick
-            if not self.dict_compare():
-                self.imPick.set_pickDict(self.wvPick.get_pickDict())
+        # elif (self.tab == "imagePick"):
+        #     # get updated pick_dict from wvPick and pass back to imPick
+        #     if not self.dict_compare():
+        #         self.imPick.set_pickDict(self.wvPick.get_pickDict())
 
 
     # pick_opt is a method to load the wvPick optimization tools
@@ -341,13 +341,21 @@ class MainGUI(tk.Frame):
         self.end_subsurf_pick()
         self.end_surf_pick()
         # get pick dict from imPick and pass to wvPick
-        if not self.dict_compare():
+        # if not self.dict_compare():
+        if self.imPick.get_pickLen() > 0:
             self.wvPick.set_pickDict(self.imPick.get_pickDict())
             self.wvPick.plot_wv()
 
 
     def dict_compare(self):
-        return self.imPick.get_pickDict() == self.wvPick.get_pickDict()
+        print(self.imPick.get_pickDict())
+        print(self.wvPick.get_pickDict())
+        for _i in range(self.imPick.get_numPkLyrs()):
+            if self.imPick.get_pickDict()["segment_" + str(_i)] == self.wvPick.get_pickDict()["segment_" + str(_i)]:
+
+                return True
+            else:
+                pass
 
 
     def help(self):

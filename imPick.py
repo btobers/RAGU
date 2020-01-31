@@ -557,9 +557,9 @@ class imPick(tk.Frame):
         return len(self.xln + self.xln_old)
 
 
-    # # get_numPkLyrs is a method to return the number of picking layers which exist
-    # def get_numPkLyrs(self):
-    #     return len(self.pick_dict)
+    # get_numPkLyrs is a method to return the number of picking layers which exist
+    def get_numPkLyrs(self):
+        return len(self.pick_dict)
 
 
     # get_pickDict is a method to return the pick dictionary
@@ -568,9 +568,10 @@ class imPick(tk.Frame):
 
     
     # set_picDict is a method to update the pick dictionary based on wvPick pick updates
-    def set_pickDict(self, dict):
-        if dict != self.pick_dict:
-            self.pick_dict = dict
+    def set_pickDict(self, in_dict):
+        if in_dict != self.pick_dict:
+            print('set_pickDict')
+            self.pick_dict = in_dict
             # delete xln_old list to reset with new dictionary values for replotting
             del self.yln_old[:]
             for _i in range(len(self.pick_dict)):
