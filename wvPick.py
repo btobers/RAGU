@@ -25,7 +25,7 @@ class wvPick(tk.Frame):
         self.dataFrame = tk.Frame(self.parent)
         self.dataFrame.pack(side="bottom", fill="both", expand=1)
 
-        self.winSize = tk.IntVar(value=20)
+        self.winSize = tk.IntVar(value=50)
         self.stepSize = tk.IntVar(value=50)
         self.segmentVar = tk.IntVar()
         self.segmentVar.trace('w', self.plot_wv)
@@ -53,15 +53,16 @@ class wvPick(tk.Frame):
         self.fig.patch.set_facecolor("#d9d9d9")
         self.dataCanvas = FigureCanvasTkAgg(self.fig, self.parent)
         self.dataCanvas.get_tk_widget().pack(in_=self.dataFrame, side="bottom", fill="both", expand=1) 
-        self.click = self.fig.canvas.mpl_connect("button_press_event", self.manualPick)
-        
+        self.click = self.fig.canvas.mpl_connect("button_press_event", self.onpress)
+        self.unclick = self.fig.canvas.mpl_connect('button_release_event', self.onrelease)
+
         # add toolbar to plot
         self.toolbar = NavigationToolbar2Tk(self.dataCanvas, toolbarFrame)
         self.toolbar.pack(side="left")
         # self.toolbar.update()
 
         interpButton = tk.Button(interpFrame, text="interpolate", command=self.interpPicks, pady=0).pack(side="right")
-        # autoButton = tk.Button(interpFrame, text="AutoPick", command=self.autoPick, pady=0).pack(side="right")
+        autoButton = tk.Button(interpFrame, text="AutoPick", command=self.autoPick, pady=0).pack(side="right")
         linearRadio = tk.Radiobutton(interpFrame, text="linear", variable=self.interpType, value="linear")
         linearRadio.pack(side="right")
         sep = tk.ttk.Separator(interpFrame,orient="vertical")
@@ -144,12 +145,19 @@ class wvPick(tk.Frame):
         pick_idx1 = utils.find_nearest(self.sampleTime, (self.pick_dict1["segment_" + str(self.segmentVar.get())][self.traceNum[self.segmentVar.get()]]*1e-6))
 
         self.ax.plot(self.data_dB[:,self.traceNum[self.segmentVar.get()]])
-        self.ax.axvline(x = pick_idx0, c="k")
+        pick_0 = self.ax.axvline(x = pick_idx0, c="k", label="Initial Pick")
 
         if pick_idx0 != pick_idx1:
-            self.ax.axvline(x = pick_idx1, c="g", ls = "--")
+            pick_1 = self.ax.axvline(x = pick_idx1, c="g", ls = "--", label="Updated Pick")
+        
+        # save un-zoomed view to toolbar
+        self.toolbar.push_current()
 
-        self.ax.axis(xmin=int(pick_idx0-100),xmax=int(pick_idx0+100))
+        # zoom in
+        winSize = self.winSize.get()
+        self.ax.set(xlim=(int(pick_idx0-(winSize/2)),int(pick_idx0+(winSize/2))))
+
+        self.ax.legend()
 
         self.dataCanvas.draw()
 
@@ -163,11 +171,18 @@ class wvPick(tk.Frame):
 
     # step forward is a method to move forward by the number of traces entered to stepSize
     def stepForward(self):
-        if self.pick_dict1 and self.traceNum[self.segmentVar.get()] + self.stepSize.get() <= self.segment_trace_last[self.segmentVar.get()]:
+        newTrace = self.traceNum[self.segmentVar.get()] + self.stepSize.get()
+        lastTrace_seg = self.segment_trace_last[self.segmentVar.get()]
+        if self.pick_dict1 and newTrace <= lastTrace_seg:
             self.traceNum[self.segmentVar.get()] += self.stepSize.get()
         # if there are less traces left in the pick segment than the step size, move to the last trace in the segment
-        else:
-            self.traceNum[self.segmentVar.get()] = self.segment_trace_last[self.segmentVar.get()]
+        elif self.pick_dict1 and newTrace > lastTrace_seg:
+            if self.traceNum[self.segmentVar.get()] == lastTrace_seg:
+                if self.segmentVar.get() + 2 <= self.num_pkLyrs and tk.messagebox.askokcancel("Next Sement?","Finished optimization of current pick segment\n\tProceed to next segment?") == True:
+                    self.segmentVar.set(self.segmentVar.get() + 1) 
+            else:
+                self.traceNum[self.segmentVar.get()] = self.segment_trace_last[self.segmentVar.get()]
+       
         self.plot_wv()
 
 
@@ -182,15 +197,12 @@ class wvPick(tk.Frame):
 
     def autoPick(self):
         print('-----------\nauto pick still in development\n-----------')
+        self.segmentVar.set(self.segmentVar.get() + 1)
 
 
     def manualPick(self, event):
         if (not self.pick_dict0) or (event.inaxes != self.ax):
             return
-        # if self.rePick:
-        #     self.rePick.remove()
-        # self.rePick = self.ax.axvline(x=event.xdata, c="r", ls = ":")
-        # self.dataCanvas.draw()
 
         # append trace number to rePick_idx list to keep track of indeces for interpolation
         if (len(self.rePick_idx["segment_" + str(self.segmentVar.get())]) == 0) or (self.rePick_idx["segment_" + str(self.segmentVar.get())][-1] != self.traceNum[self.segmentVar.get()]):
@@ -226,6 +238,19 @@ class wvPick(tk.Frame):
                     interp_idx = np.where(self.pick_dict1["segment_" + str(_i)] != -1.)[0]
                     # add cubic spline output interpolation to pick dictionary
                     self.pick_dict1["segment_" + str(_i)][interp_idx] = cs([interp_idx])
+
+
+    # onpress gets the time of the button_press_event
+    def onpress(self,event):
+        self.time_onclick = time.time()
+
+
+    # onrelease calls addseg() if the time between the button press and release events
+    # is below a threshold so that segments aren't drawn while trying to zoom or pan
+    def onrelease(self,event):
+        if event.inaxes == self.ax:
+            if event.button == 1 and ((time.time() - self.time_onclick) < 0.25):
+                self.manualPick(event)
 
 
     # clear is a method to clear the wavePick tab and stored data when a new track is loaded

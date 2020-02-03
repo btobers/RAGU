@@ -329,10 +329,9 @@ class MainGUI(tk.Frame):
         # determine which tab is active
         if (self.tab == "wavePick"):
             self.pick_opt()
-        # elif (self.tab == "imagePick"):
-        #     # get updated pick_dict from wvPick and pass back to imPick
-        #     if not self.dict_compare():
-        #         self.imPick.set_pickDict(self.wvPick.get_pickDict())
+        elif (self.tab == "imagePick"):
+            # get updated pick_dict from wvPick and pass back to imPick
+            self.imPick.set_pickDict(self.wvPick.get_pickDict())
 
 
     # pick_opt is a method to load the wvPick optimization tools

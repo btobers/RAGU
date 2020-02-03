@@ -570,7 +570,7 @@ class imPick(tk.Frame):
     
     # set_picDict is a method to update the pick dictionary based on wvPick pick updates
     def set_pickDict(self, in_dict):
-        if in_dict != self.pick_dict:
+        if self.pick_dict:
             print('set_pickDict')
             self.pick_dict = in_dict
             # delete xln_old list to reset with new dictionary values for replotting
