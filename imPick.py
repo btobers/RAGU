@@ -283,8 +283,8 @@ class imPick(tk.Frame):
                     cs = CubicSpline(self.xln,self.yln)
                     # generate array between first and last pick indices on current layer
                     picks_idx_x = np.arange(self.xln[0],self.pick_idx_x + 1)
-                    # add cubic spline output interpolation to pick dictionary - round output to nearest integer for index of pick
-                    self.pick_dict["segment_" + str(self.pick_segment - 1)][picks_idx_x] = np.rint(cs([picks_idx_x]))
+                    # add cubic spline output interpolation to pick dictionary - force output to integer for index of pick
+                    self.pick_dict["segment_" + str(self.pick_segment - 1)][picks_idx_x] = cs([picks_idx_x]).astype(int)
                     # add pick interpolation to saved pick list
                     self.xln_old.extend(self.data["dist"][picks_idx_x])
                     self.yln_old.extend(self.pick_dict["segment_" + str(self.pick_segment - 1)][picks_idx_x]*self.data["dt"]*1e6)
@@ -296,8 +296,8 @@ class imPick(tk.Frame):
                     cs = CubicSpline(self.xln_surf,self.yln_surf)
                     # generate array between first and last pick indices on current layer
                     picks_idx_x = np.arange(self.xln_surf[0],self.pick_idx_x + 1)
-                    # input cubic spline output surface twtt array
-                    self.data["twtt_surf"][picks_idx_x] = np.rint(cs([picks_idx_x])) *self.data["dt"]
+                    # input cubic spline output surface twtt array - force output to integer for index of pick
+                    self.data["twtt_surf"][picks_idx_x] = cs([picks_idx_x]).astype(int) *self.data["dt"]
 
         except Exception as err:
             print("Pick interp error: " + str(err))

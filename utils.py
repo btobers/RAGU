@@ -21,29 +21,36 @@ def euclid_dist(nav):
 # a set of utility functions for NOSEpick GUI
 # need to clean up this entire utility at some point
 def savePick(f_saveName, data, pick_dict):
+    # f_saveName is the path for where the exported csv pick file should be saved [str]
+    # data is the data file structure [dict]
+    # pick_dict contains the subsurface pick indeces - each key is an array the length of the number of traces, with -1 where no picks were made [dict]
     f_saveName = f_saveName
     data = data
     pick_dict = pick_dict
 
     v_ice = 3e8/(np.sqrt(3.15))   # EM wave veloity in ice - for thickness calculation
 
-    lon = data["navdat"].navdat[:,0]
-    lat = data["navdat"].navdat[:,1]
-    elev_air = data["navdat"].navdat[:,2]
-    twtt_surf = data["twtt_surf"]
-    twtt_bed = np.repeat(np.nan,lon.shape[0])
-    thick = np.repeat(np.nan,lon.shape[0])
-    elev_gnd = np.repeat(np.nan,lon.shape[0])
-    elev_bed = np.repeat(np.nan,lon.shape[0])
+    trace = np.arange(data["num_trace"])            # array to hold trace number
+    lon = data["navdat"].navdat[:,0]                # array to hold longitude
+    lat = data["navdat"].navdat[:,1]                # array to hold latitude
+    elev_air = data["navdat"].navdat[:,2]           # array to hold aircraft elevation
+    twtt_surf = data["twtt_surf"]                   # array to hold twtt to surface below nadir position
+    pick_idx = np.repeat(np.nan,lon.shape[0])       # array to hold indeces of picks
+    twtt_bed = np.repeat(np.nan,lon.shape[0])       # array to hold twtt to pick indeces
+    thick = np.repeat(np.nan,lon.shape[0])          # array to hold derived thickness from picks
+    elev_gnd = np.repeat(np.nan,lon.shape[0])       # array to hold ground(surface) elevation
+    elev_bed = np.repeat(np.nan,lon.shape[0])       # array to hold derived bed elevation from picks
 
-    # iterate through pick_dict layers
+    # iterate through pick_dict layers adding data to export arrays
     for _i in range(len(pick_dict)):
-        pick_idx = np.where(pick_dict["segment_" + str(_i)] != -1)[0]
+        picked_traces = np.where(pick_dict["segment_" + str(_i)] != -1)[0]
 
-        twtt_bed[pick_idx] = pick_dict["segment_" + str(_i)][pick_idx[:]]*1e-6    # convert back to microseconds
+        pick_idx[picked_traces] = pick_dict["segment_" + str(_i)][picked_traces]
+
+        twtt_bed[picked_traces] = pick_dict["segment_" + str(_i)][picked_traces]*data["dt"]    # convert pick idx to twtt
 
         # calculate ice thickness - using twtt_bed and twtt_surf
-        thick[pick_idx] = ((((pick_dict["segment_" + str(_i)][pick_idx][:]*1e-6) - (data["twtt_surf"][pick_idx][:])) * v_ice) / 2)
+        thick[picked_traces] = ((((pick_dict["segment_" + str(_i)][picked_traces]*data["dt"]) - (data["twtt_surf"][picked_traces])) * v_ice) / 2)
 
     # calculate gnd elevation 
     elev_gnd = [a-(b*3e8/2) for a,b in zip(elev_air,twtt_surf)]
@@ -59,9 +66,9 @@ def savePick(f_saveName, data, pick_dict):
         elev_bed = np.repeat(np.nan,lon.shape[0])
 
     # combine the data into a matrix for export
-    dstack = np.column_stack((lon,lat,elev_air,elev_gnd,twtt_surf,twtt_bed,elev_bed,thick))
+    dstack = np.column_stack((trace,lon,lat,elev_air,elev_gnd,twtt_surf,pick_idx,twtt_bed,elev_bed,thick))
 
-    header = "lon,lat,elev_air,elev_gnd,twtt_surf,twtt_bed,elev_bed,thick"
+    header = "trace,lon,lat,elev_air,elev_gnd,twtt_surf,pick_idx,twtt_bed,elev_bed,thick"
     np.savetxt(f_saveName, dstack, delimiter=",", newline="\n", fmt="%s", header=header, comments="")
     print("Pick data exported: " + f_saveName)
 

@@ -223,8 +223,9 @@ class MainGUI(tk.Frame):
     def save_loc(self):
         if self.f_loadName and self.imPick.get_pickLen() > 0:
             out_path = self.f_loadName[:-len("/".join(self.f_loadName.split("/")[-2:]))] + "picks"
-            self.f_saveName = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_pk",
-                                initialdir = out_path, title = "Save Picks",filetypes = (("comma-separated values","*.csv"),))
+            # self.f_saveName = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_pk",
+            #                     initialdir = out_path, title = "Save Picks",filetypes = (("comma-separated values","*.csv"),))
+        self.f_saveName = "/home/btober/Desktop/test.csv"
         if self.f_saveName:
             self.end_surf_pick()
             self.end_subsurf_pick()
