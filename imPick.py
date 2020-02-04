@@ -322,6 +322,8 @@ class imPick(tk.Frame):
     def clear_picks(self):
         # clear all picks
         if len(self.xln + self.xln_old) > 0 and tk.messagebox.askokcancel("Warning", "Clear all subsurface picks?", icon = "warning") == True:
+            # set picking state to false
+            self.set_pickState(False,surf="subsurface")
             # delete pick lists
             del self.yln_old[:]
             del self.xln_old[:]
@@ -351,12 +353,13 @@ class imPick(tk.Frame):
 
 
     def delete_pkLayer(self):
-        # delete selected pick segment
+        # delete selected pick segment - this currently doesn't work perfectly for overlapping picks. pick layer will be removed from pick_dict
+        # however replotting on image may be incorrect
         if (len(self.pick_dict) > 0) and (tk.messagebox.askokcancel("Warning", "Delete pick segment " + str(self.layerVar.get()) + "?", icon = "warning") == True):
-            # find first pick location for segment
-            first_idx = utils.find_nearest(np.asarray(self.xln_old), self.data["dist"][np.where(self.pick_dict["segment_" + str(self.layerVar.get())] != -1)[0][0]])
-            # find last pick location for segment
-            last_idx = utils.find_nearest(np.asarray(self.xln_old), self.data["dist"][np.where(self.pick_dict["segment_" + str(self.layerVar.get())] != -1)[0][-1]])
+            # find first  and last pick location for segment
+            picks_idx = np.where(self.pick_dict["segment_" + str(self.layerVar.get())] != -1)[0]
+            first_idx = utils.find_nearest(np.asarray(self.xln_old), self.data["dist"][picks_idx][0])
+            last_idx = utils.find_nearest(np.asarray(self.xln_old), self.data["dist"][picks_idx][-1])
             # remove picks from plot list
             del self.xln_old[first_idx:last_idx + 1]
             del self.yln_old[first_idx:last_idx + 1]   
@@ -365,7 +368,9 @@ class imPick(tk.Frame):
 
             self.saved_pick.set_offsets(np.c_[self.xln_old,self.yln_old])
             
-            self.pick_segment -= 1
+            if self.pick_segment >=1:
+                self.pick_segment -= 1
+
             if self.pick_state == True:
                 self.pickLabel.config(text="Subsurface Pick Segment:\t" + str(self.pick_segment))
             elif self.pick_state == False:
@@ -581,8 +586,7 @@ class imPick(tk.Frame):
             del self.yln_old[:]
             for _i in range(len(self.pick_dict_opt)):
                 picked_traces = np.where(self.pick_dict_opt["segment_" + str(_i)] != -1.)[0]
-                self.yln_old.extend(self.pick_dict_opt["segment_" + str(_i)][picked_traces])
-
+                self.yln_old.extend(self.pick_dict_opt["segment_" + str(_i)][picked_traces]*1e6*self.data["dt"])
 
 
     # get_nav method returns the nav data       
@@ -612,7 +616,10 @@ class imPick(tk.Frame):
     # save is a method to receive the pick save location from gui and save using utils.save
     def save(self, f_saveName):
         self.f_saveName = f_saveName
-        utils.savePick(self.f_saveName, self.data, self.pick_dict)
+        if self.pick_dict_opt:
+            utils.savePick(self.f_saveName, self.data, self.pick_dict_opt)
+        else:
+            utils.savePick(self.f_saveName, self.data, self.pick_dict)
         # zoom out to full rgram extent to save pick image
         self.ax.set_xlim((self.data["dist"][0], self.data["dist"][-1]))
         self.ax.set_ylim((self.data["amp"].shape[0] * self.data["dt"] * 1e6, 0))

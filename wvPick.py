@@ -25,7 +25,7 @@ class wvPick(tk.Frame):
         self.dataFrame = tk.Frame(self.parent)
         self.dataFrame.pack(side="bottom", fill="both", expand=1)
 
-        self.winSize = tk.IntVar(value=40)
+        self.winSize = tk.IntVar(value=100)
         self.stepSize = tk.IntVar(value=10)
         self.segmentVar = tk.IntVar()
         self.segmentVar.trace('w', self.plot_wv)
@@ -141,8 +141,8 @@ class wvPick(tk.Frame):
         # print(traceNum)
 
         # get sample index of pick for given trace
-        pick_idx0 = utils.find_nearest(self.sampleTime, (self.pick_dict0["segment_" + str(self.segmentVar.get())][self.traceNum[self.segmentVar.get()]]*1e-6))
-        pick_idx1 = utils.find_nearest(self.sampleTime, (self.pick_dict1["segment_" + str(self.segmentVar.get())][self.traceNum[self.segmentVar.get()]]*1e-6))
+        pick_idx0 = self.pick_dict0["segment_" + str(self.segmentVar.get())][self.traceNum[self.segmentVar.get()]]
+        pick_idx1 = self.pick_dict1["segment_" + str(self.segmentVar.get())][self.traceNum[self.segmentVar.get()]]
 
         self.ax.plot(self.data_dB[:,self.traceNum[self.segmentVar.get()]])
         pick_0 = self.ax.axvline(x = pick_idx0, c="k", label="Initial Pick")
@@ -178,7 +178,7 @@ class wvPick(tk.Frame):
         # if there are less traces left in the pick segment than the step size, move to the last trace in the segment
         elif self.pick_dict1 and newTrace > lastTrace_seg:
             if self.traceNum[self.segmentVar.get()] == lastTrace_seg:
-                if self.segmentVar.get() + 2 <= self.num_pkLyrs and tk.messagebox.askokcancel("Next Sement?","Finished optimization of current pick segment\n\tProceed to next segment?") == True:
+                if self.segmentVar.get() + 2 <= self.num_pkLyrs and tk.messagebox.askokcancel("Next Sement","Finished optimization of current pick segment\n\tProceed to next segment?") == True:
                     self.segmentVar.set(self.segmentVar.get() + 1) 
             else:
                 self.traceNum[self.segmentVar.get()] = self.segment_trace_last[self.segmentVar.get()]
@@ -211,8 +211,8 @@ class wvPick(tk.Frame):
         if (len(self.rePick_idx["segment_" + str(self.segmentVar.get())]) == 0) or (self.rePick_idx["segment_" + str(self.segmentVar.get())][-1] != self.traceNum[self.segmentVar.get()]):
             self.rePick_idx["segment_" + str(self.segmentVar.get())].append(self.traceNum[self.segmentVar.get()])
         
-        self.pick_dict1["segment_" + str(self.segmentVar.get())][self.traceNum[self.segmentVar.get()]] = event.xdata*self.dt*1e6
-
+        self.pick_dict1["segment_" + str(self.segmentVar.get())][self.traceNum[self.segmentVar.get()]] = int(event.xdata)
+        
         self.plot_wv()
 
     # interpPicks is a method to interpolate linearly between refined picks
@@ -239,12 +239,10 @@ class wvPick(tk.Frame):
                     cs = CubicSpline(rePick_idx, self.pick_dict1["segment_" + str(_i)][rePick_idx])
                     # generate array between first and last pick indices on current layer
                     interp_idx = np.where(self.pick_dict1["segment_" + str(_i)] != -1.)[0]
+                    # generate array of indices between first and last optimized pick
+                    interp_idx = np.arange(rePick_idx[0],rePick_idx[-1] + 1)
                     # add cubic spline output interpolation to pick dictionary
-                    self.pick_dict1["segment_" + str(_i)][interp_idx] = cs([interp_idx])
-
-                    plt.plot(self.pick_dict0["segment_0"][interp_idx])
-                    plt.plot(self.pick_dict1["segment_0"][interp_idx])
-                    plt.show()
+                    self.pick_dict1["segment_" + str(_i)][interp_idx] = cs([interp_idx]).astype(int)
 
 
     # onpress gets the time of the button_press_event

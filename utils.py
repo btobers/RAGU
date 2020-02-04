@@ -1,10 +1,4 @@
-import ingester
 import numpy as np
-import pandas as pd
-from tkinter import filedialog, messagebox
-import matplotlib.pyplot as plt
-import sys
-from scipy.signal import savgol_filter
 
 # calculate total euclidian distance along a line
 def euclid_dist(nav):

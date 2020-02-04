@@ -160,7 +160,6 @@ class MainGUI(tk.Frame):
         # c key to clear all picks in imPick
         if event.keysym =="c":
             # clear the drawing of line segments
-            self.imPick.set_pickState(False,surf="subsurface")
             self.imPick.clear_picks()
             self.imPick.plot_picks(surf = "subsurface")
             self.imPick.blit()
@@ -223,9 +222,8 @@ class MainGUI(tk.Frame):
     def save_loc(self):
         if self.f_loadName and self.imPick.get_pickLen() > 0:
             out_path = self.f_loadName[:-len("/".join(self.f_loadName.split("/")[-2:]))] + "picks"
-            # self.f_saveName = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_pk",
-            #                     initialdir = out_path, title = "Save Picks",filetypes = (("comma-separated values","*.csv"),))
-        self.f_saveName = "/home/btober/Desktop/test.csv"
+            self.f_saveName = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_pk",
+                                initialdir = out_path, title = "Save Picks",filetypes = (("comma-separated values","*.csv"),))
         if self.f_saveName:
             self.end_surf_pick()
             self.end_subsurf_pick()
@@ -332,12 +330,10 @@ class MainGUI(tk.Frame):
             self.pick_opt()
         elif (self.tab == "imagePick"):
             # get updated pick_dict from wvPick and pass back to imPick
-            self.imPick.set_pickDict(self.wvPick.get_pickDict())
-            try:
+            if self.imPick.get_pickLen() > 0 and tk.messagebox.askokcancel("Tab Change","Import optimized picks to imagePick from wavePick?") == True:
+                self.imPick.set_pickDict(self.wvPick.get_pickDict())
                 self.imPick.plot_picks(surf = "subsurface")
                 self.imPick.blit()
-            except:
-                pass
 
 
     # pick_opt is a method to load the wvPick optimization tools
