@@ -85,6 +85,7 @@ class imPick(tk.Frame):
         self.dtype = "amp"
         self.press = False
         self.basemap = None
+        self.pick_surf = None
         self.pick_dict = {}
         self.pick_dict_opt = {}
         self.pick_idx = None
@@ -242,32 +243,34 @@ class imPick(tk.Frame):
     def addseg(self, event):
         if self.f_loadName:
             # find nearest index to event.xdata
-            self.pick_idx_x1 = utils.find_nearest(self.data["dist"], event.xdata)
+            self.pick_idx_x = utils.find_nearest(self.data["dist"], event.xdata)
             # round event.ydata to nearest index
-            pick_idx_y1 = int(round(event.ydata*1e-6/self.data["dt"]))
+            pick_idx_y = int(round(event.ydata*1e-6/self.data["dt"]))
             # check if picking state is a go
             if self.pick_state == True:
                 # restrict subsurface picks to fall below surface
-                if (self.pick_surf == "subsurface") and (event.ydata*1e-6 > self.data["twtt_surf"][self.pick_idx_x1]) or (np.isnan(self.data["twtt_surf"][self.pick_idx_x1])):
+                if (self.pick_surf == "subsurface") and ((event.ydata*1e-6 > self.data["twtt_surf"][self.pick_idx_x]) or (np.isnan(self.data["twtt_surf"][self.pick_idx_x]))):
                 # make sure pick falls after previous pick
-                    if (len(self.xln) >= 1) and (self.pick_idx_x1 <= self.xln[-1]):
+                    if (len(self.xln) >= 1) and (self.pick_idx_x <= self.xln[-1]):
                         pass
                     else:
-                        self.xln.append(self.pick_idx_x1)
-                        self.yln.append(pick_idx_y1)
-                        self.pick.set_data(self.xln, self.yln)
+                        self.xln.append(self.pick_idx_x)
+                        self.yln.append(pick_idx_y)
+                        # set self.pick data to plot pick on image
+                        self.pick.set_data(self.data["dist"][self.xln], self.sampleTime[self.yln]*1e6)
                 elif self.pick_surf == "surface":
-                    if (len(self.xln_surf) >= 1) and (self.pick_idx_x1 <= self.xln_surf[-1]):
+                    if (len(self.xln_surf) >= 1) and (self.pick_idx_x <= self.xln_surf[-1]):
                         pass
                     else:
-                        self.xln_surf.append(self.pick_idx_x1)
-                        self.yln_surf.append(pick_idx_y1)
-                        self.surf_pick.set_data(self.xln_surf, self.yln_surf)
+                        self.xln_surf.append(self.pick_idx_x)
+                        self.yln_surf.append(pick_idx_y)
+                        # set self.surf_pick data to plot pick on image
+                        self.surf_pick.set_data(self.data["dist"][self.xln_surf], self.sampleTime[self.yln_surf]*1e6)
                 self.blit()
 
             # plot pick location to basemap
             if self.basemap and self.basemap.get_state() == 1:
-                self.basemap.plot_idx(self.pick_idx_x1)
+                self.basemap.plot_idx(self.pick_idx_x)
 
 
     # pick_interp is a method for cubic spline interpolation of twtt between pick locations
@@ -278,27 +281,23 @@ class imPick(tk.Frame):
                 if len(self.xln) >= 2:
                     # cubic spline between picks
                     cs = CubicSpline(self.xln,self.yln)
-                    # get the first pick x-position for current layer
-                    pick_idx_x0 = utils.find_nearest(self.data["dist"], self.xln[0])
                     # generate array between first and last pick indices on current layer
-                    pick_idx = np.arange(pick_idx_x0,self.pick_idx_x1 + 1)
-                    # add cubic spline output interpolation to pick dictionary
-                    self.pick_dict["segment_" + str(self.pick_segment - 1)][pick_idx] = cs(self.data["dist"][pick_idx])
+                    picks_idx_x = np.arange(self.xln[0],self.pick_idx_x + 1)
+                    # add cubic spline output interpolation to pick dictionary - round output to nearest integer for index of pick
+                    self.pick_dict["segment_" + str(self.pick_segment - 1)][picks_idx_x] = np.rint(cs([picks_idx_x]))
                     # add pick interpolation to saved pick list
-                    self.xln_old.extend(self.data["dist"][pick_idx])
-                    self.yln_old.extend(self.pick_dict["segment_" + str(self.pick_segment - 1)][pick_idx])
+                    self.xln_old.extend(self.data["dist"][picks_idx_x])
+                    self.yln_old.extend(self.pick_dict["segment_" + str(self.pick_segment - 1)][picks_idx_x]*self.data["dt"]*1e6)
 
 
             elif surf == "surface":
                 if len(self.xln_surf) >= 2:
                     # cubic spline between surface picks
                     cs = CubicSpline(self.xln_surf,self.yln_surf)
-                    # get the first pick x-position for current layer
-                    pick_idx_x0 = utils.find_nearest(self.data["dist"], self.xln_surf[0])
                     # generate array between first and last pick indices on current layer
-                    pick_idx = np.arange(pick_idx_x0,self.pick_idx_x1 + 1)
+                    picks_idx_x = np.arange(self.xln_surf[0],self.pick_idx_x + 1)
                     # input cubic spline output surface twtt array
-                    self.data["twtt_surf"][pick_idx] = cs(self.data["dist"][pick_idx]) * 1e-6
+                    self.data["twtt_surf"][picks_idx_x] = np.rint(cs([picks_idx_x])) *self.data["dt"]
 
         except Exception as err:
             print("Pick interp error: " + str(err))
@@ -593,7 +592,7 @@ class imPick(tk.Frame):
 
     # get_idx is a method that reurns the trace index of a click event on the image
     def get_idx(self):
-        return self.pick_idx_x1
+        return self.pick_idx_x
 
 
     # set_im is a method to set which data is being displayed
