@@ -25,8 +25,8 @@ class wvPick(tk.Frame):
         self.dataFrame = tk.Frame(self.parent)
         self.dataFrame.pack(side="bottom", fill="both", expand=1)
 
-        self.winSize = tk.IntVar(value=50)
-        self.stepSize = tk.IntVar(value=50)
+        self.winSize = tk.IntVar(value=40)
+        self.stepSize = tk.IntVar(value=10)
         self.segmentVar = tk.IntVar()
         self.segmentVar.trace('w', self.plot_wv)
 
@@ -195,9 +195,12 @@ class wvPick(tk.Frame):
                 self.rePick_idx["segment_" + str(_i)] = []
 
 
+    # autoPick is a method to automatically optimize picks
     def autoPick(self):
         print('-----------\nauto pick still in development\n-----------')
-        self.segmentVar.set(self.segmentVar.get() + 1)
+        # for _i in range(self.num_pkLyrs):
+        #     x = np.where(self.pick_dict0["segment_" + str(_i)] != -1)[0]
+        #     self.pick_dict1["segment_" + str(_i)][x] = self.sampleTime[np.argmax(self.data_amp)]
 
 
     def manualPick(self, event):
@@ -238,6 +241,10 @@ class wvPick(tk.Frame):
                     interp_idx = np.where(self.pick_dict1["segment_" + str(_i)] != -1.)[0]
                     # add cubic spline output interpolation to pick dictionary
                     self.pick_dict1["segment_" + str(_i)][interp_idx] = cs([interp_idx])
+
+                    plt.plot(self.pick_dict0["segment_0"][interp_idx])
+                    plt.plot(self.pick_dict1["segment_0"][interp_idx])
+                    plt.show()
 
 
     # onpress gets the time of the button_press_event

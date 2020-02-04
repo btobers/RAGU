@@ -332,6 +332,11 @@ class MainGUI(tk.Frame):
         elif (self.tab == "imagePick"):
             # get updated pick_dict from wvPick and pass back to imPick
             self.imPick.set_pickDict(self.wvPick.get_pickDict())
+            try:
+                self.imPick.plot_picks(surf = "subsurface")
+                self.imPick.blit()
+            except:
+                pass
 
 
     # pick_opt is a method to load the wvPick optimization tools
