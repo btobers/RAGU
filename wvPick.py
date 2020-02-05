@@ -125,6 +125,8 @@ class wvPick(tk.Frame):
             self.segment_trace_first.append(picked_traces[0])
             self.segment_trace_last.append(picked_traces[-1])
             self.traceNum.append(np.where(self.pick_dict0["segment_" + str(_i)] != -1.)[0][0])
+        if not self.pick_dict0:
+            self.traceNum.append(int(0))
 
 
     # plot_wv is a method to draw the waveform on the datacanvas
@@ -134,49 +136,72 @@ class wvPick(tk.Frame):
         self.ax.set(xlabel = "sample", ylabel = "decibels")
 
         segment = self.segmentVar.get()
-        # get sample index of pick for given trace
-        pick_idx0 = self.pick_dict0["segment_" + str(self.segmentVar.get())][self.traceNum[segment]]
-        pick_idx1 = self.pick_dict1["segment_" + str(self.segmentVar.get())][self.traceNum[segment]]
 
         self.ax.plot(self.data_dB[:,self.traceNum[segment]])
-        self.ax.axvline(x = pick_idx0, c="k", label="Initial Pick")
 
-        if pick_idx0 != pick_idx1:
-            self.ax.axvline(x = pick_idx1, c="g", ls = "--", label="Updated Pick")
+        if self.pick_dict0:
+            # get sample index of pick for given trace
+            pick_idx0 = self.pick_dict0["segment_" + str(self.segmentVar.get())][self.traceNum[segment]]
+            pick_idx1 = self.pick_dict1["segment_" + str(self.segmentVar.get())][self.traceNum[segment]]
+
+            self.ax.axvline(x = pick_idx0, c="k", label="Initial Pick")
+
+            if pick_idx0 != pick_idx1:
+                self.ax.axvline(x = pick_idx1, c="g", ls = "--", label="Updated Pick")
         
-        # save un-zoomed view to toolbar
-        self.toolbar.push_current()
+            # save un-zoomed view to toolbar
+            self.toolbar.push_current()
 
-        # zoom in
-        winSize = self.winSize.get()
-        self.ax.set(xlim=(int(pick_idx0-(winSize/2)),int(pick_idx0+(winSize/2))))
+            # zoom in
+            winSize = self.winSize.get()
+            self.ax.set(xlim=(int(pick_idx0-(winSize/2)),int(pick_idx0+(winSize/2))))
 
-        self.ax.legend()
+            self.ax.legend()
 
         self.dataCanvas.draw()
 
 
     # step forward is a method to move backwards by the number of traces entered to stepSize
     def stepBackward(self):
-        if self.pick_dict1 and self.traceNum[self.segmentVar.get()] - self.stepSize.get() >= self.segment_trace_first[self.segmentVar.get()]:
-            self.traceNum[self.segmentVar.get()] -= self.stepSize.get()
-            self.plot_wv()
+        newTrace = self.traceNum[self.segmentVar.get()] - self.stepSize.get()
+        if self.pick_dict0:
+            firstTrace_seg = self.segment_trace_first[self.segmentVar.get()]
+            if newTrace >= firstTrace_seg:
+                self.traceNum[self.segmentVar.get()] -= self.stepSize.get()
+            elif newTrace < firstTrace_seg:
+                self.traceNum[self.segmentVar.get()] = firstTrace_seg
+
+        else:
+            if newTrace >= 0:
+                self.traceNum[0] -= self.stepSize.get()
+            elif newTrace < 0:
+                self.traceNum[0] = 0
+            
+        self.plot_wv()
 
 
     # step forward is a method to move forward by the number of traces entered to stepSize
     def stepForward(self):
         newTrace = self.traceNum[self.segmentVar.get()] + self.stepSize.get()
-        lastTrace_seg = self.segment_trace_last[self.segmentVar.get()]
-        if self.pick_dict1 and newTrace <= lastTrace_seg:
-            self.traceNum[self.segmentVar.get()] += self.stepSize.get()
-        # if there are less traces left in the pick segment than the step size, move to the last trace in the segment
-        elif self.pick_dict1 and newTrace > lastTrace_seg:
-            if self.traceNum[self.segmentVar.get()] == lastTrace_seg:
-                if self.segmentVar.get() + 2 <= self.num_pkLyrs and tk.messagebox.askokcancel("Next Sement","Finished optimization of current pick segment\n\tProceed to next segment?") == True:
-                    self.segmentVar.set(self.segmentVar.get() + 1) 
-            else:
-                self.traceNum[self.segmentVar.get()] = self.segment_trace_last[self.segmentVar.get()]
-       
+        if self.pick_dict0:
+            lastTrace_seg = self.segment_trace_last[self.segmentVar.get()]
+            if newTrace <= lastTrace_seg:
+                self.traceNum[self.segmentVar.get()] += self.stepSize.get()
+            # if there are less traces left in the pick segment than the step size, move to the last trace in the segment
+            elif newTrace > lastTrace_seg:
+                if self.traceNum[self.segmentVar.get()] == lastTrace_seg:
+                    if self.segmentVar.get() + 2 <= self.num_pkLyrs and tk.messagebox.askokcancel("Next Sement","Finished optimization of current pick segment\n\tProceed to next segment?") == True:
+                        self.segmentVar.set(self.segmentVar.get() + 1) 
+                else:
+                    self.traceNum[self.segmentVar.get()] = self.segment_trace_last[self.segmentVar.get()]
+        
+        else:
+            numTraces = self.data_dB.shape[1]
+            if newTrace <= numTraces:
+                self.traceNum[0] += self.stepSize.get()
+            elif newTrace > numTraces:
+                self.traceNum[0] = numTraces
+
         self.plot_wv()
 
 
@@ -191,6 +216,8 @@ class wvPick(tk.Frame):
 
     # autoPick is a method to automatically optimize picks
     def autoPick(self):
+        if (not self.pick_dict0):
+            return
         print('-----------\nauto pick still in development\n-----------')
         winSize = self.winSize.get()
         for _i in range(self.num_pkLyrs):
@@ -206,7 +233,6 @@ class wvPick(tk.Frame):
     def manualPick(self, event):
         if (not self.pick_dict0) or (event.inaxes != self.ax):
             return
-
         # append trace number to rePick_idx list to keep track of indeces for interpolation
         if (len(self.rePick_idx["segment_" + str(self.segmentVar.get())]) == 0) or (self.rePick_idx["segment_" + str(self.segmentVar.get())][-1] != self.traceNum[self.segmentVar.get()]):
             self.rePick_idx["segment_" + str(self.segmentVar.get())].append(self.traceNum[self.segmentVar.get()])
@@ -217,6 +243,8 @@ class wvPick(tk.Frame):
 
     # interpPicks is a method to interpolate linearly between refined picks
     def interpPicks(self):
+        if (not self.pick_dict0):
+            return
         print('-----------\nwave pick interpolation still in development\n-----------')
         if self.interpType.get() == "linear":
             for _i in range(self.num_pkLyrs):

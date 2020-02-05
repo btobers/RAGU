@@ -212,7 +212,7 @@ class MainGUI(tk.Frame):
             #     self.open_data()
 
         # pass basemap to imPick for plotting pick location
-        if self.map_loadName:
+        if self.map_loadName and self.basemap.get_state() == 1:
             self.basemap.clear_nav()
             self.basemap.set_nav(self.imPick.get_nav(), self.f_loadName)
             self.imPick.get_basemap(self.basemap)            
@@ -234,9 +234,11 @@ class MainGUI(tk.Frame):
 
     # map_loc is a method to get the desired basemap location and initialize
     def map_loc(self):
-        self.map_loadName = tk.filedialog.askopenfilename(initialdir = self.map_path, title = "Select basemap file", filetypes = (("GeoTIFF files","*.tif"),("all files","*.*")))
+        tmp_map_loadName = ""
+        tmp_map_loadName = tk.filedialog.askopenfilename(initialdir = self.map_path, title = "Select basemap file", filetypes = (("GeoTIFF files","*.tif"),("all files","*.*")))
             
-        if self.map_loadName:
+        if tmp_map_loadName:
+            self.map_loadName = tmp_map_loadName
             self.basemap = basemap.basemap(self.parent, self.map_loadName)
             self.basemap.map()
 
@@ -343,10 +345,9 @@ class MainGUI(tk.Frame):
         self.end_subsurf_pick()
         self.end_surf_pick()
         # get pick dict from imPick and pass to wvPick
-        # if not self.dict_compare():
-        if self.imPick.get_pickLen() > 0:
-            self.wvPick.set_pickDict(self.imPick.get_pickDict())
-            self.wvPick.plot_wv()
+        # if self.imPick.get_pickLen() > 0:
+        self.wvPick.set_pickDict(self.imPick.get_pickDict())
+        self.wvPick.plot_wv()
 
 
     def dict_compare(self, dict_imPick, dict_wvPick):

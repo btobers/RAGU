@@ -22,6 +22,8 @@ class basemap(tk.Tk):
         self.map_display.pack(side="bottom", fill="both", expand=1)
         # bind ctrl-q key to basemap_close()
         self.basemap_window.bind("<Control-q>", self.basemap_close)
+        # bind x-out to basemap_close()
+        self.basemap_window.protocol("WM_DELETE_WINDOW", self.basemap_close)
         self.pick_loc = None
         self.track = None
 
@@ -65,8 +67,8 @@ class basemap(tk.Tk):
                 self.map_toolbar.update()
                 self.map_dataCanvas._tkcanvas.pack()
                 # convert axes to kilometers
-                self.map_xticks = self.map_fig_ax.get_xticks()#*1e-3
-                self.map_yticks = self.map_fig_ax.get_yticks()#*1e-3
+                self.map_xticks = self.map_fig_ax.get_xticks()*1e-3
+                self.map_yticks = self.map_fig_ax.get_yticks()*1e-3
                 # shift xticks and yticks if zero is not at the lower left
                 if minx != 0:
                     self.map_xticks = [x + abs(min(self.map_xticks)) for x in self.map_xticks] 
@@ -115,7 +117,7 @@ class basemap(tk.Tk):
 
         
     # basemap_close is a method to close the basemap window
-    def basemap_close(self, event):
+    def basemap_close(self, event=None):
         self.basemap_window.destroy()
         self.basemap_state = 0
 
