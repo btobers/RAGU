@@ -205,13 +205,7 @@ class wvPick(tk.Frame):
                 # find argmax for window for given data trace in pick
                 max_idx = np.argmax(self.data_dB[int(y[_j] - (winSize/2)):int(y[_j] + (winSize/2)), x[_j]])
                 # add argmax index to pick_dict1 - account for window index shift
-                self.pick_dict1["segment_" + str(_i)][_j] = max_idx + int(y[_j] - (winSize/2))
-                # print(max_idx + int(y[_j] - (winSize/2)),self.pick_dict1["segment_" + str(_i)][_j],y[_j])
-            plt.plot(self.pick_dict0["segment_" + str(_i)][x])
-            plt.plot(self.pick_dict1["segment_" + str(_i)][x])
-            plt.show()
-
-
+                self.pick_dict1["segment_" + str(_i)][x[_j]] = max_idx + int(y[_j] - (winSize/2))
 
 
     def manualPick(self, event):
