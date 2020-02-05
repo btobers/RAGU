@@ -132,18 +132,13 @@ class wvPick(tk.Frame):
         # if self.pick_dict1:
         self.ax.clear()
         self.ax.set(xlabel = "sample", ylabel = "decibels")
-        # self.segment = str(self.segmentVar.get())
 
-        # print(np.where(self.pick_dict1["segment_" + self.segment] != -1.))
-        # print(np.where(self.pick_dict1["segment_" + self.segment] != -1.)[0])
-        # traceNum = np.where(self.pick_dict1["segment_" + self.segment] != -1.)[0][self.segment_trace]
-        # print(traceNum)
-
+        segment = self.segmentVar.get()
         # get sample index of pick for given trace
-        pick_idx0 = self.pick_dict0["segment_" + str(self.segmentVar.get())][self.traceNum[self.segmentVar.get()]]
-        pick_idx1 = self.pick_dict1["segment_" + str(self.segmentVar.get())][self.traceNum[self.segmentVar.get()]]
+        pick_idx0 = self.pick_dict0["segment_" + str(self.segmentVar.get())][self.traceNum[segment]]
+        pick_idx1 = self.pick_dict1["segment_" + str(self.segmentVar.get())][self.traceNum[segment]]
 
-        self.ax.plot(self.data_dB[:,self.traceNum[self.segmentVar.get()]])
+        self.ax.plot(self.data_dB[:,self.traceNum[segment]])
         self.ax.axvline(x = pick_idx0, c="k", label="Initial Pick")
 
         if pick_idx0 != pick_idx1:

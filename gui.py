@@ -330,8 +330,8 @@ class MainGUI(tk.Frame):
         if (self.tab == "wavePick"):
             self.pick_opt()
         elif (self.tab == "imagePick"):
-            # get updated pick_dict from wvPick and pass back to imPick
-            if self.imPick.get_pickLen() > 0 and tk.messagebox.askokcancel("Tab Change","Import optimized picks to imagePick from wavePick?") == True:
+            # get updated pick_dict from wvPick and pass back to imPick if dictionaries differ
+            if (self.imPick.get_pickLen() > 0) and (self.dict_compare(self.imPick.get_pickDict(),self.wvPick.get_pickDict()) == False) and (tk.messagebox.askokcancel("Tab Change","Import optimized picks to imagePick from wavePick?") == True):
                 self.imPick.set_pickDict(self.wvPick.get_pickDict())
                 self.imPick.plot_picks(surf = "subsurface")
                 self.imPick.blit()
@@ -349,15 +349,10 @@ class MainGUI(tk.Frame):
             self.wvPick.plot_wv()
 
 
-    def dict_compare(self):
-        print(self.imPick.get_pickDict())
-        print(self.wvPick.get_pickDict())
-        for _i in range(self.imPick.get_numPkLyrs()):
-            if self.imPick.get_pickDict()["segment_" + str(_i)] == self.wvPick.get_pickDict()["segment_" + str(_i)]:
-
-                return True
-            else:
-                pass
+    def dict_compare(self, dict_imPick, dict_wvPick):
+        for _i in range(len(dict_imPick)):
+            if not (np.array_equal(dict_imPick["segment_" + str(_i)] ,dict_wvPick["segment_" + str(_i)])):
+                return False
 
 
     def help(self):
