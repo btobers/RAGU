@@ -95,8 +95,7 @@ class wvPick(tk.Frame):
         self.data_amp = amp
         self.dt = dt
         self.num_sample = num_sample
-        # self.data_dB = 20*np.log10(amp)
-        self.data_dB = np.log(np.power(amp,2))
+        self.data_dB = 10*np.log10(np.power(amp,2))
         self.sampleTime = np.arange(0,self.num_sample+1)*self.dt
 
 
@@ -145,10 +144,10 @@ class wvPick(tk.Frame):
         pick_idx1 = self.pick_dict1["segment_" + str(self.segmentVar.get())][self.traceNum[self.segmentVar.get()]]
 
         self.ax.plot(self.data_dB[:,self.traceNum[self.segmentVar.get()]])
-        pick_0 = self.ax.axvline(x = pick_idx0, c="k", label="Initial Pick")
+        self.ax.axvline(x = pick_idx0, c="k", label="Initial Pick")
 
         if pick_idx0 != pick_idx1:
-            pick_1 = self.ax.axvline(x = pick_idx1, c="g", ls = "--", label="Updated Pick")
+            self.ax.axvline(x = pick_idx1, c="g", ls = "--", label="Updated Pick")
         
         # save un-zoomed view to toolbar
         self.toolbar.push_current()
@@ -198,9 +197,21 @@ class wvPick(tk.Frame):
     # autoPick is a method to automatically optimize picks
     def autoPick(self):
         print('-----------\nauto pick still in development\n-----------')
-        # for _i in range(self.num_pkLyrs):
-        #     x = np.where(self.pick_dict0["segment_" + str(_i)] != -1)[0]
-        #     self.pick_dict1["segment_" + str(_i)][x] = self.sampleTime[np.argmax(self.data_amp)]
+        winSize = self.winSize.get()
+        for _i in range(self.num_pkLyrs):
+            x = np.where(self.pick_dict0["segment_" + str(_i)] != -1)[0]
+            y = self.pick_dict0["segment_" + str(_i)][x]
+            for _j in range(len(x)):
+                # find argmax for window for given data trace in pick
+                max_idx = np.argmax(self.data_dB[int(y[_j] - (winSize/2)):int(y[_j] + (winSize/2)), x[_j]])
+                # add argmax index to pick_dict1 - account for window index shift
+                self.pick_dict1["segment_" + str(_i)][_j] = max_idx + int(y[_j] - (winSize/2))
+                # print(max_idx + int(y[_j] - (winSize/2)),self.pick_dict1["segment_" + str(_i)][_j],y[_j])
+            plt.plot(self.pick_dict0["segment_" + str(_i)][x])
+            plt.plot(self.pick_dict1["segment_" + str(_i)][x])
+            plt.show()
+
+
 
 
     def manualPick(self, event):

@@ -297,7 +297,7 @@ class imPick(tk.Frame):
                     # generate array between first and last pick indices on current layer
                     picks_idx_x = np.arange(self.xln_surf[0],self.pick_idx_x + 1)
                     # input cubic spline output surface twtt array - force output to integer for index of pick
-                    self.data["twtt_surf"][picks_idx_x] = cs([picks_idx_x]).astype(int) *self.data["dt"]
+                    self.data["twtt_surf"][picks_idx_x] = cs([picks_idx_x]).astype(int)*self.data["dt"]
 
         except Exception as err:
             print("Pick interp error: " + str(err))

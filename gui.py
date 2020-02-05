@@ -311,6 +311,7 @@ class MainGUI(tk.Frame):
                 self.imPick.load(self.f_loadName, self.data)
                 self.wvPick.clear()
                 self.wvPick.set_vars()
+                self.wvPick.set_data(self.data["amp"], self.data["dt"], self.data["num_sample"])
 
 
                 if self.map_loadName and self.basemap.get_state() == 1:

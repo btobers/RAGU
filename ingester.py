@@ -49,8 +49,8 @@ class ingester:
         lon =  np.array(f["loc0"]["lon"]).flatten().astype(np.float64)
         lat =  np.array(f["loc0"]["lat"]).flatten().astype(np.float64)
         elev_air =  np.array(f["loc0"]["altM"]).flatten().astype(np.float64)
-        twtt_surf = np.zeros(num_trace)         # needs to be updated once .las surface added to data files
-        amp = np.array(f["proc0"])
+        twtt_surf = np.zeros(num_trace).astype(np.float64)         # needs to be updated once .las surface added to data files
+        amp = np.array(f["proc0"]).astype(np.float64)
         if "clutter0" in f.keys():
             clutter = np.array(f["clutter0"])
         else:
@@ -91,7 +91,7 @@ class ingester:
             lon = np.array(f["block"]["lon"]).flatten()
             lat = np.array(f["block"]["lat"]).flatten()
             elev_air = np.array(f["block"]["elev_air"]).flatten()
-            twtt_surf = np.array(f["block"]["twtt_surf"]).flatten()
+            twtt_surf = np.array(f["block"]["twtt_surf"]).flatten().astype(np.float64)
             amp = np.array(f["block"]["amp"])
             clutter = np.array(f["block"]["clutter"])
             f.close()
@@ -108,7 +108,7 @@ class ingester:
                 lon = f["block"]["lon"][0][0].flatten()
                 lat = f["block"]["lat"][0][0].flatten()
                 elev_air = f["block"]["elev_air"][0][0].flatten()
-                twtt_surf = f["block"]["twtt_surf"][0][0].flatten()
+                twtt_surf = f["block"]["twtt_surf"][0][0].flatten().astype(np.float64)
                 amp = f["block"]["amp"][0][0]
                 clutter = f["block"]["clutter"][0][0]
                 if dist[2] - dist[1] > 1e-2:
