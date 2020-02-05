@@ -91,12 +91,18 @@ class wvPick(tk.Frame):
 
 
     # set_data is a method to receive the radar data
-    def set_data(self, amp, dt, num_sample):
-        self.data_amp = amp
-        self.dt = dt
-        self.num_sample = num_sample
-        self.data_dB = 10*np.log10(np.power(amp,2))
+    def set_data(self, data):
+        self.dt = data["dt"]
+        self.num_sample = data["num_sample"]
+        self.data_dB = 10*np.log10(np.power(data["amp"],2))
         self.sampleTime = np.arange(0,self.num_sample+1)*self.dt
+        self.num_trace = data["num_trace"]
+        self.surf_idx = data["twtt_surf"] / self.dt
+
+
+    def set_surf(self,twtt_surf):
+        self.surf_idx = twtt_surf / self.dt
+        print(self.surf_idx)
 
 
     # get_pickDict is a method to return the pick dictionary
@@ -137,17 +143,22 @@ class wvPick(tk.Frame):
 
         segment = self.segmentVar.get()
 
-        self.ax.plot(self.data_dB[:,self.traceNum[segment]])
+        surf = self.surf_idx[self.traceNum[segment]]
+
+        self.ax.plot(self.data_dB[:,self.traceNum[segment]], label="trace: " + str(int(self.traceNum[segment] + 1)) + "/" + str(int(self.num_trace)))
+
+        if not np.isnan(surf):
+            self.ax.axvline(x = surf, c='c', label="surface")
 
         if self.pick_dict0:
             # get sample index of pick for given trace
             pick_idx0 = self.pick_dict0["segment_" + str(self.segmentVar.get())][self.traceNum[segment]]
             pick_idx1 = self.pick_dict1["segment_" + str(self.segmentVar.get())][self.traceNum[segment]]
 
-            self.ax.axvline(x = pick_idx0, c="k", label="Initial Pick")
+            self.ax.axvline(x = pick_idx0, c="k", label="initial pick")
 
             if pick_idx0 != pick_idx1:
-                self.ax.axvline(x = pick_idx1, c="g", ls = "--", label="Updated Pick")
+                self.ax.axvline(x = pick_idx1, c="g", ls = "--", label="updated pick")
         
             # save un-zoomed view to toolbar
             self.toolbar.push_current()
@@ -156,7 +167,7 @@ class wvPick(tk.Frame):
             winSize = self.winSize.get()
             self.ax.set(xlim=(int(pick_idx0-(winSize/2)),int(pick_idx0+(winSize/2))))
 
-            self.ax.legend()
+        self.ax.legend()
 
         self.dataCanvas.draw()
 
@@ -196,11 +207,14 @@ class wvPick(tk.Frame):
                     self.traceNum[self.segmentVar.get()] = self.segment_trace_last[self.segmentVar.get()]
         
         else:
-            numTraces = self.data_dB.shape[1]
+            numTraces = self.num_trace
             if newTrace <= numTraces:
                 self.traceNum[0] += self.stepSize.get()
             elif newTrace > numTraces:
-                self.traceNum[0] = numTraces
+                if self.traceNum[0] == numTraces - 1:
+                    return
+                else:
+                    self.traceNum[0] = numTraces - 1
 
         self.plot_wv()
 

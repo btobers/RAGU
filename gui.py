@@ -2,7 +2,7 @@
 NOSEpick - Nearly Optimal Subsurface Extractor
 created by: Brandon S. Tober and Michael S. Christoffersen
 date: 25JUN19
-last updated: 19SEP2019
+last updated: 05FEB20
 environment requirements in nose_env.yml
 """
 
@@ -60,6 +60,7 @@ class MainGUI(tk.Frame):
         # surface pick menu items
         surfacePickMenu.add_command(label="New", command=self.start_surf_pick)
         surfacePickMenu.add_command(label="Stop    [Escape]", command=self.end_surf_pick)    
+        surfacePickMenu.add_command(label="Clear", command=lambda: self.clear(surf = "surface"))    
 
         pickMenu.add_cascade(label="Surface", menu = surfacePickMenu)
         pickMenu.add_cascade(label="Subsurface", menu = subsurfacePickMenu)  
@@ -160,12 +161,7 @@ class MainGUI(tk.Frame):
         # c key to clear all picks in imPick
         if event.keysym =="c":
             # clear the drawing of line segments
-            self.imPick.clear_picks()
-            self.imPick.plot_picks(surf = "subsurface")
-            self.imPick.blit()
-            self.imPick.update_option_menu()
-            self.wvPick.set_vars()
-            self.wvPick.clear()
+            self.clear(surf = "subsurface")
             
         # BackSpace to clear last pick 
         elif event.keysym =="BackSpace":
@@ -205,7 +201,7 @@ class MainGUI(tk.Frame):
             self.imPick.load(self.f_loadName, self.data)
             self.wvPick.set_vars()
             self.wvPick.clear()
-            self.wvPick.set_data(self.data["amp"], self.data["dt"], self.data["num_sample"])
+            self.wvPick.set_data(self.data)
 
             # except Exception as err:
             #     print('Ingest Error: ' + str(err))
@@ -285,6 +281,8 @@ class MainGUI(tk.Frame):
             self.imPick.pick_interp(surf = "surface")
             self.imPick.plot_picks(surf = "surface")
             self.imPick.blit()
+            # pass updated surface pick to wvPick
+            self.wvPick.set_surf(self.data["twtt_surf"])
 
 
     # next_loc is a method to get the filename of the next data file in the directory then call imPick.load()
@@ -313,7 +311,7 @@ class MainGUI(tk.Frame):
                 self.imPick.load(self.f_loadName, self.data)
                 self.wvPick.clear()
                 self.wvPick.set_vars()
-                self.wvPick.set_data(self.data["amp"], self.data["dt"], self.data["num_sample"])
+                self.wvPick.set_data(self.data)
 
 
                 if self.map_loadName and self.basemap.get_state() == 1:
@@ -341,11 +339,10 @@ class MainGUI(tk.Frame):
 
     # pick_opt is a method to load the wvPick optimization tools
     def pick_opt(self):
-        # end any state to false
+        # end any picking
         self.end_subsurf_pick()
         self.end_surf_pick()
         # get pick dict from imPick and pass to wvPick
-        # if self.imPick.get_pickLen() > 0:
         self.wvPick.set_pickDict(self.imPick.get_pickDict())
         self.wvPick.plot_wv()
 
@@ -354,6 +351,21 @@ class MainGUI(tk.Frame):
         for _i in range(len(dict_imPick)):
             if not (np.array_equal(dict_imPick["segment_" + str(_i)] ,dict_wvPick["segment_" + str(_i)])):
                 return False
+
+
+    def clear(self, surf = None):
+        if self.f_loadName:
+            if (surf == "surface") and (tk.messagebox.askokcancel("Warning", "Clear all surface picks?", icon = "warning") == True):
+                self.imPick.clear_picks(surf = "surface")
+                self.imPick.plot_picks(surf = "surface")
+                self.imPick.blit()
+            elif (surf == "subsurface") and (tk.messagebox.askokcancel("Warning", "Clear all subsurface picks?", icon = "warning") == True):
+                self.imPick.clear_picks(surf = "subsurface")
+                self.imPick.plot_picks(surf = "subsurface")
+                self.imPick.blit()
+                self.imPick.update_option_menu()
+                self.wvPick.set_vars()
+                self.wvPick.clear()
 
 
     def help(self):
@@ -383,8 +395,8 @@ class MainGUI(tk.Frame):
         \n[Escape]\tEnd current surface/subsurface pick segment
         \n[Spacebar]\tToggle between radar and clutter images
         \n[Ctrl+s]\tExport pick data
-        \n[Right]\t\tOpen next file in directory
+        \n[→]\t\tOpen next file in directory
         \n[Ctrl+q]\tQuit NOSEpick
         \n\nPicking:
         \n[Backspace]\tRemove last pick event
-        \n[c]\t\tRemove all picked segments""")
+        \n[c]\t\tRemove all picked subsurface segments""")

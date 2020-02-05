@@ -2,7 +2,7 @@
 NOSEpick - Nearly Optimal Subsurface Extractor
 created by: Brandon S. Tober and Michael S. Christoffersen
 date: 25JUN19
-last updated: 14NOV19
+last updated: 05FEB20
 environment requirements in nose_env.yml
 """
 

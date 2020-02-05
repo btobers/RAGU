@@ -110,7 +110,7 @@ class imPick(tk.Frame):
 
 
     # load calls ingest() on the data file and sets the datacanvas
-    def load(self,f_loadName, data):
+    def load(self, f_loadName, data):
         self.f_loadName = f_loadName
         print('----------------------------------------')
         print("Loading: " + self.f_loadName)
@@ -319,19 +319,22 @@ class imPick(tk.Frame):
             self.surf.set_data(self.data["dist"],self.data["twtt_surf"]*1e6)
             
 
-    def clear_picks(self):
+    def clear_picks(self, surf = None):
         # clear all picks
-        if len(self.xln + self.xln_old) > 0 and tk.messagebox.askokcancel("Warning", "Clear all subsurface picks?", icon = "warning") == True:
-            # set picking state to false
-            self.set_pickState(False,surf="subsurface")
-            # delete pick lists
-            del self.yln_old[:]
-            del self.xln_old[:]
-            # clear pick dictionary
-            self.pick_dict.clear()
-            # reset pick segment increment to 0
-            self.pick_segment = 0
-            self.pickLabel.config(text="Subsurface Pick Segment:\t" + str(self.pick_segment))
+        if surf == "subsurface":
+            if len(self.xln + self.xln_old) > 0:
+                # set picking state to false
+                self.set_pickState(False,surf="subsurface")
+                # delete pick lists
+                del self.yln_old[:]
+                del self.xln_old[:]
+                # clear pick dictionary
+                self.pick_dict.clear()
+                # reset pick segment increment to 0
+                self.pick_segment = 0
+                self.pickLabel.config(text="Subsurface Pick Segment:\t" + str(self.pick_segment))
+        elif surf == "surface":
+            self.data["twtt_surf"].fill(np.nan)
 
 
     def clear_last(self):
@@ -341,14 +344,14 @@ class imPick(tk.Frame):
                 del self.xln[-1:]
                 del self.yln[-1:]
                 # reset self.pick, then blit
-                self.pick.set_data(self.xln, self.yln)
+                self.pick.set_data(self.data["dist"][self.xln], self.sampleTime[self.yln]*1e6)
                 self.blit()
 
             if self.pick_surf == "surface" and len(self.xln_surf) >= 1:
                 del self.xln_surf[-1:]
                 del self.yln_surf[-1:]
                 # reset self.pick, then blit
-                self.surf_pick.set_data(self.xln_surf, self.yln_surf)
+                self.surf_pick.set_data(self.data["dist"][self.xln_surf], self.sampleTime[self.yln_surf]*1e6)
                 self.blit()
 
 
