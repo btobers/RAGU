@@ -40,45 +40,60 @@ class ingester:
             exit(1)
 
     def h5py_read(self, fpath):
-        # method to ingest 2019+ data exported as .h5 files
-        f = h5py.File(fpath, "r")
-        crs = f["loc0"].attrs["CRS"]
-        dt = float(1/(f["rx0"].attrs["fsHz"]))
-        num_trace = f["rx0"].attrs["numTraces"]
-        num_sample = f["rx0"].attrs["samplesPerTrace"]
-        lon =  np.array(f["loc0"]["lon"]).flatten().astype(np.float64)
-        lat =  np.array(f["loc0"]["lat"]).flatten().astype(np.float64)
-        elev_air =  np.array(f["loc0"]["altM"]).flatten().astype(np.float64)
-        twtt_surf = np.zeros(num_trace).astype(np.float64)         # needs to be updated once .las surface added to data files
-        amp = np.array(f["proc0"]).astype(np.float64)
-        if "clutter0" in f.keys():
-            clutter = np.array(f["clutter0"])
+        # method to ingest OIB-AK radar .h5 data format - all data should soon be in this format
+        f = h5py.File(fpath, "r")                               # read in .h5 file
+
+        # pull necessary raw group data
+        fs = f["raw/rx0/"].attrs["samplingFrequency-Hz"]        # sampling frequency, Hz
+        num_trace = f["raw/rx0"].attrs["numTrace"]              # number of traces in rgram
+        num_sample = f["raw/rx0"].attrs["samplesPerTrace"]      # samples per trace in rgram
+
+        # pull necessary ext group data - use more precise Larsen nav data pulled from Trimble
+        lon =  np.array(f["ext/nav0"]["lon"]).astype(np.float64)
+        lat =  np.array(f["ext/nav0"]["lat"]).astype(np.float64)
+        elev_air =  np.array(f["ext/nav0"]["altM"]).astype(np.float64)
+        crs = f["ext/nav0"].attrs["CRS"].decode("utf-8") 
+
+        if "surf0" in f["ext"].keys():
+            elev_surf = np.array(f["ext/surf0"])                # surface elevation from lidar, averaged over radar first fresnel zone per trace (see code within /zippy/MARS/code/xped/hfProc/ext)
+        else:
+            elev_surf = np.repeat(np.nan, num_trace)
+
+        # pull necessary drv group data
+        amp = np.array(f["drv/proc0"])                          # pulse compressed amplitude array
+        if "clutter0" in f["drv"].keys():
+            clutter = np.array(f["drv/clutter0"])               # simulated clutter array
         else:
             clutter = np.ones(amp.shape)
+
         f.close()
 
-        # replace twtt_surf with nan's if no data
-        if not np.any(twtt_surf):
-            twtt_surf.fill(np.nan)
-
         # convert lon, lat, elev to navdat object of nav class
-        wgs84_proj4 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
-        navdat = nav()
-        navdat.csys = wgs84_proj4
-        navdat.navdat = np.column_stack((lon,lat,elev_air))
+        if "wgs" in crs.lower(): 
+            nav0_proj4 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+        else:
+            print("Unknown nav coordinate reference system")
+            sys.exit()
+            
+        nav0 = nav()
+        nav0.csys = nav0_proj4
+        nav0.navdat = np.column_stack((lon,lat,elev_air))
 
         # create dist array if new .h5 data - convert nav to meters then find cumulative euclidian distance
         ak_nad83_proj4 = "+proj=aea +lat_1=55 +lat_2=65 +lat_0=50 +lon_0=-154 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs" 
-        navdat_transform = navdat.transform(ak_nad83_proj4)
-        dist = utils.euclid_dist(navdat_transform)
+        nav0_xform = nav0.transform(ak_nad83_proj4)
+        dist = utils.euclid_dist(nav0_xform)
 
         # interpolate nav data if not unique location for each trace
         if len(np.unique(lon)) < num_trace:
-            navdat.navdat[:,0] = utils.interp_array(lon)
-            navdat.navdat[:,1] = utils.interp_array(lat)
+            nav0.navdat[:,0] = utils.interp_array(lon)
+            nav0.navdat[:,1] = utils.interp_array(lat)
             dist = utils.interp_array(dist)
+
+        twtt_surf = 2*elev_surf/3e8
+        dt = 1/fs
         
-        return {"dt": dt, "num_trace": num_trace, "num_sample": num_sample, "navdat": navdat, "twtt_surf": twtt_surf,"dist": dist, "amp": amp, "clutter": clutter} # other fields?
+        return {"dt": dt, "num_trace": num_trace, "num_sample": num_sample, "navdat": nav0, "twtt_surf": twtt_surf,"dist": dist, "amp": amp, "clutter": clutter} # other fields?
 
     def mat_read(self,fpath):
         # method to ingest .mat files. for older matlab files, scio works and h5py does not. for newer files, h5py works and scio does not 

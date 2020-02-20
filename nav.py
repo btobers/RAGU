@@ -33,7 +33,7 @@ class nav:
     # Transforms a Pointlist to another coordinate system, can read Proj4 format
     # and WKT
 
-    navdat = self.copy()
+    nav = self.copy()
 
     source = osr.SpatialReference()  
     target = osr.SpatialReference()  
@@ -41,9 +41,9 @@ class nav:
     # Deciding whether the coordinate systems are Proj4 or WKT
     sc0 = self.csys[0]
     if(sc0 == 'G' or sc0 == 'P'):
-      source.ImportFromWkt(navdat.csys)
+      source.ImportFromWkt(nav.csys)
     else:
-      source.ImportFromProj4(navdat.csys)
+      source.ImportFromProj4(nav.csys)
 
     tc0 = targ[0]
     if(tc0 == 'G' or tc0 == 'P'):
@@ -55,17 +55,18 @@ class nav:
       print(targ)
       sys.exit()
 
-    navdat_xform = np.zeros(navdat.navdat.shape)
+    nav_xform = np.zeros(nav.navdat.shape)
 
     # The actual transformation
     transform = osr.CoordinateTransformation(source, target)
     xform = transform.TransformPoint
 
-    for _i in range(navdat.navdat.shape[0]):      
-      navdat_xform[_i,:] = np.asarray(xform(navdat.navdat[_i,0],navdat.navdat[_i,1],navdat.navdat[_i,2]))
-    navdat.navdat = navdat_xform
-    navdat.csys = targ
-    return navdat
+    for _i in range(nav.navdat.shape[0]):  
+      nav_xform[_i,:] = np.asarray(xform(nav.navdat[_i,0],nav.navdat[_i,1],nav.navdat[_i,2]))
+
+    nav.navdat = nav_xform
+    nav.csys = targ
+    return nav
 
 def transformPt(nav, in_csys, out_csys):
   # Transforms a point to another coordinate system, can read Proj4 format
@@ -73,6 +74,6 @@ def transformPt(nav, in_csys, out_csys):
 
   # The actual transformation
   transform = osr.CoordinateTransformation(in_csys, out_csys)
-  npt = transform.TransformPoint(nav[:,0],nav[:,1]) # x, y, z data list
+  npt = transform.TransformPoint(nav[:,0],nav[:,1], nav[:,2]) # x, y, z data list
 
   return npt
