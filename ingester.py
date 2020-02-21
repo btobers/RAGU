@@ -68,7 +68,7 @@ class ingester:
 
         f.close()
 
-        # convert lon, lat, elev to navdat object of nav class
+        # convert lon, lat, elev to nav object of nav class
         if "wgs" in crs.lower(): 
             nav0_proj4 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
         else:
@@ -90,10 +90,11 @@ class ingester:
             nav0.navdat[:,1] = utils.interp_array(lat)
             dist = utils.interp_array(dist)
 
+        # create twtt_surf array from elev_surf
         twtt_surf = 2*elev_surf/3e8
         dt = 1/fs
         
-        return {"dt": dt, "num_trace": num_trace, "num_sample": num_sample, "navdat": nav0, "twtt_surf": twtt_surf,"dist": dist, "amp": amp, "clutter": clutter} # other fields?
+        return {"dt": dt, "num_trace": num_trace, "num_sample": num_sample, "navdat": nav0, "elev_surf": elev_surf, "twtt_surf": twtt_surf,"dist": dist, "amp": amp, "clutter": clutter} # other fields?
 
     def mat_read(self,fpath):
         # method to ingest .mat files. for older matlab files, scio works and h5py does not. for newer files, h5py works and scio does not 
