@@ -49,15 +49,10 @@ class basemap(tk.Tk):
                     print('gt[2]:ax '+ gt[2] + '\ngt[4]: ' + gt[4])
                     return
                 # get image corner locations
-                self.minx0 = gt[0]
-                self.miny0 = gt[3]  + height*gt[5] 
-                self.maxx0 = gt[0]  + width*gt[1]
-                self.maxy0 = gt[3] 
-                # shift corners to be greater than zero and convert to km
-                minx = 0
-                miny = 0
-                maxx = int((self.maxx0 + np.abs(self.minx0))*1e-3)
-                maxy = int((self.maxy0 + np.abs(self.miny0))*1e-3)
+                minx = gt[0]
+                miny = gt[3]  + height*gt[5] 
+                maxx = gt[0]  + width*gt[1]
+                maxy = gt[3] 
                 # show basemap figure in basemap window
                 self.map_fig = mpl.figure.Figure()
                 self.map_fig.patch.set_facecolor(self.parent.cget('bg'))
@@ -65,7 +60,8 @@ class basemap(tk.Tk):
                 # if using rgb image, make sure the proper shape
                 if self.basemap_im.shape[0] == 3 or self.basemap_im.shape[0] == 4:
                     self.basemap_im = np.dstack([self.basemap_im[0,:,:],self.basemap_im[1,:,:],self.basemap_im[2,:,:]])
-                self.map_fig_ax.imshow(self.basemap_im, cmap="terrain", aspect="auto", extent=[minx, maxx, miny, maxy])
+                # display image in km
+                self.map_fig_ax.imshow(self.basemap_im, cmap="terrain", aspect="auto", extent=[int(minx*1e-3), int(maxx*1e-3), int(miny*1e-3), int(maxy*1e-3)])
                 self.map_fig_ax.set(xlabel = "x [km]", ylabel = "y [km]")
                 self.map_dataCanvas = FigureCanvasTkAgg(self.map_fig, self.basemap_window)
                 self.map_dataCanvas.get_tk_widget().pack(in_=self.map_display, side="bottom", fill="both", expand=1)
@@ -77,7 +73,6 @@ class basemap(tk.Tk):
                 self.map_dataCanvas.draw()
                 self.basemap_state = 1
                 self.draw_cid = self.map_fig.canvas.mpl_connect('draw_event', self.update_bg)
-
                 
             except Exception as err:
                 print("basemap load error: " + str(err))
@@ -90,9 +85,7 @@ class basemap(tk.Tk):
         if self.basemap_state == 1:
             # transform navdat to csys of geotiff   
             self.nav_transform = self.navdat.transform(self.basemap_proj)   
-            # shift nav x and y data according to image corners, convert to km
-            self.nav_transform.navdat[:,0] = self.nav_transform.navdat[:,0] + np.abs(self.minx0)
-            self.nav_transform.navdat[:,1] = self.nav_transform.navdat[:,1] + np.abs(self.miny0)
+            # convert to km
             self.nav_transform.navdat = self.nav_transform.navdat * 1e-3
             # plot lat, lon atop basemap im
             self.track, = self.map_fig_ax.plot(self.nav_transform.navdat[:,0],self.nav_transform.navdat[:,1],"k")
