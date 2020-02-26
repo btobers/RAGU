@@ -26,6 +26,7 @@ class basemap(tk.Tk):
         self.basemap_window.protocol("WM_DELETE_WINDOW", self.basemap_close)
         self.pick_loc = None
         self.track = None
+        self.basemap_state = 0
 
     # map is a method to plot the basemap in the basemap window
     def map(self):
@@ -57,7 +58,7 @@ class basemap(tk.Tk):
                 self.map_fig.patch.set_facecolor(self.parent.cget('bg'))
                 self.map_fig_ax = self.map_fig.add_subplot(111)
                 # if using rgb image, make sure the proper shape
-                if self.basemap_im.shape[0] == 3:
+                if self.basemap_im.shape[0] == 3 or self.basemap_im.shape[0] == 4:
                     self.basemap_im = np.dstack([self.basemap_im[0,:,:],self.basemap_im[1,:,:],self.basemap_im[2,:,:]])
                 self.map_fig_ax.imshow(self.basemap_im, cmap="terrain", aspect="auto", extent=[minx, maxx, miny, maxy])
                 self.map_fig_ax.set(xlabel = "x [km]", ylabel = "y [km]")
