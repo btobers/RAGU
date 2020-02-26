@@ -49,10 +49,15 @@ class basemap(tk.Tk):
                     print('gt[2]:ax '+ gt[2] + '\ngt[4]: ' + gt[4])
                     return
                 # get image corner locations
-                minx = gt[0]
-                miny = gt[3]  + height*gt[5] 
-                maxx = gt[0]  + width*gt[1]
-                maxy = gt[3] 
+                self.minx0 = gt[0]
+                self.miny0 = gt[3]  + height*gt[5] 
+                self.maxx0 = gt[0]  + width*gt[1]
+                self.maxy0 = gt[3] 
+                # shift corners to be greater than zero and convert to km
+                minx = 0
+                miny = 0
+                maxx = int((self.maxx0 + np.abs(self.minx0))*1e-3)
+                maxy = int((self.maxy0 + np.abs(self.miny0))*1e-3)
                 # show basemap figure in basemap window
                 self.map_fig = mpl.figure.Figure()
                 self.map_fig.patch.set_facecolor(self.parent.cget('bg'))
@@ -65,18 +70,10 @@ class basemap(tk.Tk):
                 self.map_dataCanvas = FigureCanvasTkAgg(self.map_fig, self.basemap_window)
                 self.map_dataCanvas.get_tk_widget().pack(in_=self.map_display, side="bottom", fill="both", expand=1)
                 self.map_toolbar = NavigationToolbar2Tk(self.map_dataCanvas, self.basemap_window)
-                self.map_toolbar.update()
+                # self.map_toolbar.update()
+                # save un-zoomed view to toolbar
+                self.map_toolbar.push_current()
                 self.map_dataCanvas._tkcanvas.pack()
-                # convert axes to kilometers
-                self.map_xticks = self.map_fig_ax.get_xticks()*1e-3
-                self.map_yticks = self.map_fig_ax.get_yticks()*1e-3
-                # shift xticks and yticks if zero is not at the lower left
-                if minx != 0:
-                    self.map_xticks = [x + abs(min(self.map_xticks)) for x in self.map_xticks] 
-                if miny != 0:
-                    self.map_yticks = [y + abs(min(self.map_yticks)) for y in self.map_yticks] 
-                self.map_fig_ax.set_xticklabels(self.map_xticks)
-                self.map_fig_ax.set_yticklabels(self.map_yticks)
                 self.map_dataCanvas.draw()
                 self.basemap_state = 1
                 self.draw_cid = self.map_fig.canvas.mpl_connect('draw_event', self.update_bg)
@@ -92,11 +89,15 @@ class basemap(tk.Tk):
         self.navdat = navdat
         if self.basemap_state == 1:
             # transform navdat to csys of geotiff   
-            self.nav_transform = self.navdat.transform(self.basemap_proj)    
+            self.nav_transform = self.navdat.transform(self.basemap_proj)   
+            # shift nav x and y data according to image corners, convert to km
+            self.nav_transform.navdat[:,0] = self.nav_transform.navdat[:,0] + np.abs(self.minx0)
+            self.nav_transform.navdat[:,1] = self.nav_transform.navdat[:,1] + np.abs(self.miny0)
+            self.nav_transform.navdat = self.nav_transform.navdat * 1e-3
             # plot lat, lon atop basemap im
             self.track, = self.map_fig_ax.plot(self.nav_transform.navdat[:,0],self.nav_transform.navdat[:,1],"k")
-            # zoom in to 100 km from track on all sides
-            self.map_fig_ax.axis([(np.amin(self.nav_transform.navdat[:,0])- 100000),(np.amax(self.nav_transform.navdat[:,0])+ 100000),(np.amin(self.nav_transform.navdat[:,1])- 100000),(np.amax(self.nav_transform.navdat[:,1])+ 100000)])
+            # zoom in to 10 km from track on all sides
+            self.map_fig_ax.axis([(np.amin(self.nav_transform.navdat[:,0])- 100),(np.amax(self.nav_transform.navdat[:,0])+ 100),(np.amin(self.nav_transform.navdat[:,1])- 100),(np.amax(self.nav_transform.navdat[:,1])+ 100)])
             # annotate each end of the track
             self.track_start, = self.map_fig_ax.plot(self.nav_transform.navdat[0,0],self.nav_transform.navdat[0,1],'go',label='start')
             self.track_end, = self.map_fig_ax.plot(self.nav_transform.navdat[-1,0],self.nav_transform.navdat[-1,1],'ro',label='end')
