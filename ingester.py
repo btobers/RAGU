@@ -54,8 +54,9 @@ class ingester:
         elev_air =  np.array(f["ext/nav0"]["altM"]).astype(np.float64)
         crs = f["ext/nav0"].attrs["CRS"].decode("utf-8") 
 
-        if "surf0" in f["ext"].keys():
-            elev_surf = np.array(f["ext/surf0"])                # surface elevation from lidar, averaged over radar first fresnel zone per trace (see code within /zippy/MARS/code/xped/hfProc/ext)
+        if "srf0" in f["ext"].keys():
+            elev_surf = np.array(f["ext/srf0"])                # surface elevation from lidar, averaged over radar first fresnel zone per trace (see code within /zippy/MARS/code/xped/hfProc/ext)
+            twtt_surf = np.array(f["drv/pick"]["twtt_surf"])
         else:
             elev_surf = np.repeat(np.nan, num_trace)
 
@@ -90,10 +91,8 @@ class ingester:
             nav0.navdat[:,1] = utils.interp_array(lat)
             dist = utils.interp_array(dist)
 
-        # create twtt_surf array from elev_surf
-        twtt_surf = 2*elev_surf/3e8
         dt = 1/fs
-        
+
         return {"dt": dt, "num_trace": num_trace, "num_sample": num_sample, "navdat": nav0, "elev_surf": elev_surf, "twtt_surf": twtt_surf,"dist": dist, "amp": amp, "clutter": clutter} # other fields?
 
     def mat_read(self,fpath):

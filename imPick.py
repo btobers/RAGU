@@ -157,7 +157,6 @@ class imPick(tk.Frame):
         else:
             self.dB_clut = self.data["clutter"]
             
-
         # cut off data at 10th percentile to avoid extreme outliers - round down
         self.mindB_data = np.floor(np.nanpercentile(self.dB_data,10))
         self.mindB_clut = np.floor(np.nanpercentile(self.dB_clut,10))
