@@ -44,7 +44,7 @@ class ingester:
         f = h5py.File(fpath, "r")                               # read in .h5 file
 
         # pull necessary raw group data
-        fs = f["raw/rx0/"].attrs["samplingFrequency-Hz"]       # sampling frequency, Hz
+        fs = f["raw/rx0/"].attrs["samplingFrequency-Hz"]        # sampling frequency, Hz
         num_trace = f["raw/rx0"].attrs["numTrace"]              # number of traces in rgram
         num_sample = f["raw/rx0"].attrs["samplesPerTrace"]      # samples per trace in rgram
 
@@ -59,9 +59,10 @@ class ingester:
             twtt_surf = np.array(f["drv/pick"]["twtt_surf"])
         else:
             elev_surf = np.repeat(np.nan, num_trace)
+            twtt_surf = np.repeat(np.nan, num_trace)
 
         # pull necessary drv group data
-        amp = np.array(f["drv/proc0"])                          # pulse compressed amplitude array
+        amp = np.abs(np.array(f["drv/proc0"]))                  # pulse compressed amplitude array
         if "clutter0" in f["drv"].keys():
             clutter = np.array(f["drv/clutter0"])               # simulated clutter array
         else:
