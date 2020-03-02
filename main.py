@@ -2,7 +2,7 @@
 NOSEpick - Nearly Optimal Subsurface Extractor
 created by: Brandon S. Tober and Michael S. Christoffersen
 date: 25JUN19
-last updated: 05FEB20
+last updated: 29FEB20
 environment requirements in nose_env.yml
 """
 
@@ -19,7 +19,7 @@ from tkinter import font
 
 # colugo paths
 in_path = "/zippy/MARS/targ/supl/UAF/2019/hdf5/"
-map_path = "/zippy/MARS/targ/supl/grid-AKDEM/"
+map_path = "/zippy/MARS/orig/supl/gis/projects/qgis/UAF/"
 
 # beefmaser paths
 # in_path = "/media/anomalocaris/beefmaster/MARS/targ/supl/UAF/2019/hdf5/"

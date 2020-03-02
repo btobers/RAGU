@@ -107,7 +107,7 @@ class basemap(tk.Tk):
             # plot pick location on basemap
             if self.pick_loc:
                 self.pick_loc.remove()
-            self.pick_loc = self.map_fig_ax.scatter(self.nav_transform.navdat[idx,0],self.nav_transform.navdat[idx,1],c="w",marker="x",zorder=3)
+            self.pick_loc = self.map_fig_ax.scatter(self.nav_transform.navdat[idx,0],self.nav_transform.navdat[idx,1],c="b",marker="D",zorder=3)
             self.blit()
 
         

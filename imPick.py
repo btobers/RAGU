@@ -140,19 +140,20 @@ class imPick(tk.Frame):
         # get clutter data in dB for visualization
         # check if clutter data exists
         if np.any(self.data["clutter"]):
-            # check if clutter data is storede in linear space or log space - lin space should have values less than 1
+            # check if clutter data is stored in linear space or log space - lin space should have values less than 1
             # if in lin space, convert to dB
             if np.nanmax(np.abs(self.data["clutter"])) < 1:
                 Pow_clut = np.power(self.data["clutter"],2)
+                Pow_clut[np.where(Pow_clut == 0)] = np.NaN      # avoid -inf values in dB data
                 self.dB_clut = np.log(Pow_clut)
             # if in log space, leave as is
             else:
                 self.dB_clut = self.data["clutter"]
-            # replace any negative infinity clutter values with nan
-            try:
-                self.dB_clut[np.where(self.dB_clut == -np.inf)] = np.NaN
-            except:
-                pass
+            # # replace any negative infinity clutter values with nan
+            # try:
+            #     self.dB_clut[np.where(self.dB_clut == -np.inf)] = np.NaN
+            # except:
+            #     pass
         # if no clutter data, use empty array
         else:
             self.dB_clut = self.data["clutter"]
