@@ -102,7 +102,6 @@ class wvPick(tk.Frame):
 
     def set_surf(self,twtt_surf):
         self.surf_idx = twtt_surf / self.dt
-        print(self.surf_idx)
 
 
     # get_pickDict is a method to return the pick dictionary

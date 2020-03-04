@@ -33,14 +33,14 @@ class imPick(tk.Frame):
         clutterRadio.pack(side="left")
         
         deleteButton = tk.Button(toolbarFrame, text="Delete", command=self.delete_pkLayer).pack(side="right")
-        # editButton = tk.Button(toolbarFrame, text="Edit", command=self.edit_pkLayer).pack(side="right")
+
         self.layerVar = tk.IntVar()
-        self.layers=[0]
+        self.layers=[None]
         self.layerMenu = tk.OptionMenu(toolbarFrame, self.layerVar, *self.layers)
         self.layerMenu.pack(side="right",pady=0)
         self.layerMenu["highlightthickness"]=0
 
-        self.pickLabel = tk.Label(infoFrame, text="Subsurface Pick Segment:\t0", fg="#d9d9d9")#, font="-weight bold")
+        self.pickLabel = tk.Label(infoFrame)#, text="Subsurface Pick Segment:\t0", fg="#d9d9d9")
         self.pickLabel.pack(side="right")
 
         self.fig = mpl.figure.Figure()
@@ -77,7 +77,7 @@ class imPick(tk.Frame):
 
     # set_vars is a method to set imPick variables
     def set_vars(self):
-        self.pickLabel.config(text="Subsurface Pick Segment:\t0", fg="#d9d9d9")
+        # self.pickLabel.config(text="Subsurface Pick Segment:\t0", fg="#d9d9d9")
         self.data_imSwitch_flag = ""
         self.clut_imSwitch_flag = ""
         self.f_loadName = ""
@@ -229,14 +229,20 @@ class imPick(tk.Frame):
                 # if current layer has only one pick, remove
                 else:
                     self.clear_last()
-                self.pickLabel.config(text="Subsurface Pick Segment:\t" + str(self.pick_segment), fg="#008000")  
+                self.pickLabel.config(text="Subsurface Pick Segment " + str(self.pick_segment) + ":\t Active", fg="red")
                 # initialize pick index and twtt dictionaries for current picking layer
                 self.pick_dict["segment_" + str(self.pick_segment)] = np.ones(self.data["num_trace"])*-1
             elif self.pick_state == False:
                 if len(self.xln) >=  2:
                     self.pick_segment += 1
                     # only advance pick segment if picks made on previous layer
-                self.pickLabel.config(fg="#FF0000")
+                self.pickLabel.config(text="Subsurface Pick Segment " + str(self.pick_segment - 1) + ":\t Inactive", fg="black")
+        elif self.pick_surf == "surface":
+            if self.pick_state == True:
+                self.pickLabel.config(text="Surface Pick Segment:\t Active", fg="red")
+            elif self.pick_state == False:
+                self.pickLabel.config(text="Surface Pick Segment:\t Inactive", fg="black")
+
 
 
     # addseg is a method to for user to generate picks
@@ -332,7 +338,8 @@ class imPick(tk.Frame):
                 self.pick_dict.clear()
                 # reset pick segment increment to 0
                 self.pick_segment = 0
-                self.pickLabel.config(text="Subsurface Pick Segment:\t" + str(self.pick_segment))
+                self.pickLabel.config(fg="#d9d9d9")
+                self.layerVar.set(self.pick_segment)
         elif surf == "surface":
             self.data["twtt_surf"].fill(np.nan)
 
@@ -359,38 +366,43 @@ class imPick(tk.Frame):
         # delete selected pick segment - this currently doesn't work perfectly for overlapping picks. pick layer will be removed from pick_dict
         # however replotting on image may be incorrect
         if (len(self.pick_dict) > 0) and (tk.messagebox.askokcancel("Warning", "Delete pick segment " + str(self.layerVar.get()) + "?", icon = "warning") == True):
-            # find first  and last pick location for segment
-            picks_idx = np.where(self.pick_dict["segment_" + str(self.layerVar.get())] != -1)[0]
-            first_idx = utils.find_nearest(np.asarray(self.xln_old), self.data["dist"][picks_idx][0])
-            last_idx = utils.find_nearest(np.asarray(self.xln_old), self.data["dist"][picks_idx][-1])
-            # remove picks from plot list
-            del self.xln_old[first_idx:last_idx + 1]
-            del self.yln_old[first_idx:last_idx + 1]   
-            # delete pick dict layer
-            del self.pick_dict["segment_" + str(self.layerVar.get())]
+            # if picking active and only one segment exists, clear all picks
+            if (self.pick_state == True) and (len(self.pick_dict) == 1):
+                self.clear_picks(surf = "subsurface")
+                self.plot_picks(surf = "subsurface") 
+            else:
+                # find first  and last pick location for segment
+                picks_idx = np.where(self.pick_dict["segment_" + str(self.layerVar.get())] != -1)[0]
+                first_idx = utils.find_nearest(np.asarray(self.xln_old), self.data["dist"][picks_idx][0])
+                last_idx = utils.find_nearest(np.asarray(self.xln_old), self.data["dist"][picks_idx][-1])
+                # remove picks from plot list
+                del self.xln_old[first_idx:last_idx + 1]
+                del self.yln_old[first_idx:last_idx + 1]   
+                # delete pick dict layer
+                del self.pick_dict["segment_" + str(self.layerVar.get())]
 
-            self.saved_pick.set_offsets(np.c_[self.xln_old,self.yln_old])
-            
-            if self.pick_segment >=1:
-                self.pick_segment -= 1
+                self.saved_pick.set_offsets(np.c_[self.xln_old,self.yln_old])
+                
+                if self.pick_segment >=1:
+                    self.pick_segment -= 1 
 
-            if self.pick_state == True:
-                self.pickLabel.config(text="Subsurface Pick Segment:\t" + str(self.pick_segment))
-            elif self.pick_state == False:
-                self.pickLabel.config(text="Subsurface Pick Segment:\t" + str(self.pick_segment - 1))    
+                # reorder pick layers
+                if self.layerVar.get() != len(self.pick_dict):
+                    for _i in range(self.layerVar.get(), len(self.pick_dict)):
+                        self.pick_dict["segment_" + str(_i)] = np.copy(self.pick_dict["segment_" + str(_i + 1)])
+                    del self.pick_dict["segment_" + str(_i + 1)]
 
-            # reorder pick layers
-            if self.layerVar.get() != len(self.pick_dict):
-                for _i in range(self.layerVar.get(), len(self.pick_dict)):
-                    self.pick_dict["segment_" + str(_i)] = np.copy(self.pick_dict["segment_" + str(_i + 1)])
-                del self.pick_dict["segment_" + str(_i + 1)]
+                if self.pick_state == True:
+                    self.pickLabel.config(text="Subsurface Pick Segment " + str(self.pick_segment) + ":\t Active", fg="red")
+                elif self.pick_state == False:
+                    if self.pick_segment >= 1:
+                        self.pickLabel.config(text="Subsurface Pick Segment " + str(self.pick_segment - 1) + ":\t Inactive", fg="black")   
+                    else:
+                        self.pickLabel.config(text="Subsurface Pick Segment " + str(self.pick_segment) + ":\t Inactive", fg="#d9d9d9")
+                self.layerVar.set(0)
             self.update_option_menu()
             self.blit()
 
-    # def edit_pkLayer(self):
-    #     # edit the selected pick layer
-    #     if (len(self.pick_dict) > 0):
-    #         print("----------\npick layer editing is currently in development - remove pick layer and repick for now.\n----------")
 
     def show_data(self):
         # toggle to radar data

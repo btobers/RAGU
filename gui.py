@@ -359,9 +359,10 @@ class MainGUI(tk.Frame):
                 self.imPick.clear_picks(surf = "surface")
                 self.imPick.plot_picks(surf = "surface")
                 self.imPick.blit()
-            elif (surf == "subsurface") and (tk.messagebox.askokcancel("Warning", "Clear all subsurface picks?", icon = "warning") == True):
+            elif (self.imPick.get_pickLen() > 0) and (surf == "subsurface") and (tk.messagebox.askokcancel("Warning", "Clear all subsurface picks?", icon = "warning") == True):
                 self.imPick.clear_picks(surf = "subsurface")
                 self.imPick.plot_picks(surf = "subsurface")
+                self.imPick.update_bg()
                 self.imPick.blit()
                 self.imPick.update_option_menu()
                 self.wvPick.set_vars()

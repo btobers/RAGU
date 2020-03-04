@@ -90,7 +90,7 @@ class basemap(tk.Tk):
             # plot lat, lon atop basemap im
             self.track, = self.map_fig_ax.plot(self.nav_transform.navdat[:,0],self.nav_transform.navdat[:,1],"k")
             # zoom in to 10 km from track on all sides
-            self.map_fig_ax.axis([(np.amin(self.nav_transform.navdat[:,0])- 100),(np.amax(self.nav_transform.navdat[:,0])+ 100),(np.amin(self.nav_transform.navdat[:,1])- 100),(np.amax(self.nav_transform.navdat[:,1])+ 100)])
+            self.map_fig_ax.axis([(np.amin(self.nav_transform.navdat[:,0])- 15),(np.amax(self.nav_transform.navdat[:,0])+ 15),(np.amin(self.nav_transform.navdat[:,1])- 15),(np.amax(self.nav_transform.navdat[:,1])+ 15)])
             # annotate each end of the track
             self.track_start, = self.map_fig_ax.plot(self.nav_transform.navdat[0,0],self.nav_transform.navdat[0,1],'go',label='start')
             self.track_end, = self.map_fig_ax.plot(self.nav_transform.navdat[-1,0],self.nav_transform.navdat[-1,1],'ro',label='end')
