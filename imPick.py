@@ -181,6 +181,10 @@ class imPick(tk.Frame):
         self.im_clut  = self.ax.imshow(self.dB_clut, cmap="gray", aspect="auto", extent=[self.data["dist"][0], 
                         self.data["dist"][-1], self.data["amp"].shape[0] * self.data["dt"] * 1e6, 0])
 
+        # instantiate a secondary axes that shares the same x-axis and shows approximate depth
+        secaxy = self.ax.secondary_yaxis('right', functions=(utils.twtt2depth, utils.depth2twtt))
+        secaxy.set_ylabel("approx. subradar distance [km] ($\epsilon_{r}$ = 3.15)")
+
         # the first time the amplitude image is loaded, update colormap to cut off values below 10th percentile
         self.im_data.set_clim([self.mindB_data, self.maxdB_data])
         self.im_clut.set_clim([self.mindB_clut, self.maxdB_clut])
@@ -640,8 +644,19 @@ class imPick(tk.Frame):
         self.ax.set_ylim((self.data["amp"].shape[0] * self.data["dt"] * 1e6, 0))
         if self.im_status.get() =="clut":
             self.show_data()
-        extent = self.ax.get_window_extent().transformed(self.fig.dpi_scale_trans.inverted())
-        utils.exportIm(self.f_saveName, self.fig, extent)
+        # extent = self.ax.get_window_extent().transformed(self.fig.dpi_scale_trans.inverted())
+        # temporarily turn sliders to invisible for saving image
+        self.ax_cmax.set_visible(False)
+        self.ax_cmin.set_visible(False)
+        self.reset_ax.set_visible(False)
+        w,h = self.fig.get_size_inches()    # get pre-save figure size
+        self.fig.set_size_inches((21,7))    # set figsize to wide aspect ratio
+        utils.exportIm(self.f_saveName, self.fig)
+        # return figsize to intial values and make sliders visible again
+        self.fig.set_size_inches((w,h))
+        self.ax_cmax.set_visible(True)
+        self.ax_cmin.set_visible(True)
+        self.reset_ax.set_visible(True)
         self.update_bg()
 
 

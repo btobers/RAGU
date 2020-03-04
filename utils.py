@@ -99,6 +99,18 @@ def interp_array(array):
 # export the pick image
 # need to figure out a better way to set extent so that it's not screen specific
 # also need to hold back image from being displayed in app temporarily when saved
-def exportIm(fname, fig, extent):
-    fig.savefig(fname.rstrip(".csv") + ".png", dpi = 500, bbox_inches=extent.expanded(1.07, 1.1), facecolor = "#d9d9d9")
+def exportIm(fname, fig, extent=None):
+    fig.savefig(fname.rstrip(".csv") + ".png", dpi = 500, bbox_inches='tight', pad_inches = 0.05, transparent=True)# facecolor = "#d9d9d9")
     print("Pick image exported: " + fname.rstrip(".csv") + ".png")
+
+# twtt2depth function
+def twtt2depth(a, eps=3.15):
+    v = 3e8/np.sqrt(eps)
+    depth = a*1e-6*v/(2*1000)           # convert input twtt to seconds, then return distance in km
+    return depth
+
+# depth2twtt function
+def depth2twtt(a, eps=3.15):
+    v = 3e8/np.sqrt(eps)
+    twtt = a*2*1e3*1e6/v                # convert input depth to meters, then return twtt in microseconds
+    return twtt
