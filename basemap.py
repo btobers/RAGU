@@ -32,7 +32,7 @@ class basemap(tk.Tk):
     def map(self):
         # pull track up on dem basemap
         if self.map_loadName:
-            print("Loading Basemap: ", self.map_loadName)
+            print("Loading Basemap: ", self.map_loadName.split("/")[-1])
             try:
                 # open geotiff and convert coordinate systems to get lat long of image extent
                 self.basemap_ds = gdal.Open(self.map_loadName)              # open raster

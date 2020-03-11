@@ -77,7 +77,6 @@ class imPick(tk.Frame):
 
     # set_vars is a method to set imPick variables
     def set_vars(self):
-        # self.pickLabel.config(text="Subsurface Pick Segment:\t0", fg="#d9d9d9")
         self.data_imSwitch_flag = ""
         self.clut_imSwitch_flag = ""
         self.f_loadName = ""
@@ -107,13 +106,14 @@ class imPick(tk.Frame):
         self.saved_pick = None
         self.surf_pick = None
         self.im_status.set("data")
+        self.pickLabel.config(fg="#d9d9d9")
 
 
     # load calls ingest() on the data file and sets the datacanvas
     def load(self, f_loadName, data):
         self.f_loadName = f_loadName
         print('----------------------------------------')
-        print("Loading: " + self.f_loadName)
+        print("Loading: " + self.f_loadName.split("/")[-1])
         # receive the data
         self.data = data
 
@@ -176,9 +176,9 @@ class imPick(tk.Frame):
         self.dataCanvas.get_tk_widget().pack(in_=self.dataFrame, side="bottom", fill="both", expand=1) 
              
         # display image data for radargram and clutter sim
-        self.im_data  = self.ax.imshow(self.dB_data, cmap="gray", aspect="auto", extent=[self.data["dist"][0], 
+        self.im_data  = self.ax.imshow(self.dB_data, cmap="Greys_r", aspect="auto", extent=[self.data["dist"][0], 
                         self.data["dist"][-1], self.data["amp"].shape[0] * self.data["dt"] * 1e6, 0])
-        self.im_clut  = self.ax.imshow(self.dB_clut, cmap="gray", aspect="auto", extent=[self.data["dist"][0], 
+        self.im_clut  = self.ax.imshow(self.dB_clut, cmap="Greys_r", aspect="auto", extent=[self.data["dist"][0], 
                         self.data["dist"][-1], self.data["amp"].shape[0] * self.data["dt"] * 1e6, 0])
 
         # instantiate a secondary axes that shares the same x-axis and shows approximate depth
@@ -571,7 +571,7 @@ class imPick(tk.Frame):
     def nextSave_warning(self):
         # check if picks have been made and saved
         if len(self.xln + self.xln_old) > 0 and self.f_saveName == "":
-            if tk.messagebox.askokcancel("Warning", "Load next track without saving picks?", icon = "warning") == True:
+            if tk.messagebox.askyesno("Warning", "Load next track without saving picks?", icon = "warning") == True:
                 return True
         else: 
             return True
