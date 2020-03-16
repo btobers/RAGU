@@ -27,20 +27,27 @@ class imPick(tk.Frame):
 
         self.im_status = tk.StringVar()
         # add radio buttons for toggling between radargram and clutter-sim
-        radarRadio = tk.Radiobutton(infoFrame, text="Radargram", variable=self.im_status, value="data",command=self.show_data)
+        radarRadio = tk.Radiobutton(infoFrame, text="radargram", variable=self.im_status, value="data",command=self.show_data)
         radarRadio.pack(side="left")
-        clutterRadio = tk.Radiobutton(infoFrame,text="Cluttergram", variable=self.im_status, value="clut",command=self.show_clut)
+        clutterRadio = tk.Radiobutton(infoFrame,text="cluttergram", variable=self.im_status, value="clut",command=self.show_clut)
         clutterRadio.pack(side="left")
         
-        deleteButton = tk.Button(toolbarFrame, text="Delete", command=self.delete_pkLayer).pack(side="right")
+        deleteButton = tk.Button(infoFrame, text="delete", command=self.delete_pkLayer).pack(side="right")
 
         self.layerVar = tk.IntVar()
         self.layers=[None]
-        self.layerMenu = tk.OptionMenu(toolbarFrame, self.layerVar, *self.layers)
+        self.layerMenu = tk.OptionMenu(infoFrame, self.layerVar, *self.layers)
         self.layerMenu.pack(side="right",pady=0)
         self.layerMenu["highlightthickness"]=0
 
-        self.pickLabel = tk.Label(infoFrame)#, text="Subsurface Pick Segment:\t0", fg="#d9d9d9")
+        # add radio buttons for toggling pick visibility
+        self.pick_vis = tk.BooleanVar()
+        tk.Label(infoFrame, text=" ").pack(side="right")
+        tk.Radiobutton(infoFrame,text="off", variable=self.pick_vis, value=False, command=self.hide_picks).pack(side="right")
+        tk.Radiobutton(infoFrame,text="on", variable=self.pick_vis, value=True, command=self.show_picks).pack(side="right")
+        tk.Label(infoFrame, text="pick visibility:").pack(side="right")
+
+        self.pickLabel = tk.Label(toolbarFrame)#, text="Subsurface Pick Segment:\t0", fg="#d9d9d9")
         self.pickLabel.pack(side="right")
 
         self.fig = mpl.figure.Figure()
@@ -106,6 +113,7 @@ class imPick(tk.Frame):
         self.saved_pick = None
         self.surf_pick = None
         self.im_status.set("data")
+        self.pick_vis.set(True)
         self.pickLabel.config(fg="#d9d9d9")
 
 
@@ -461,6 +469,19 @@ class imPick(tk.Frame):
         self.im_status.set("clut")
 
 
+    # pick_vis is a method to toggle the visibility of picks
+    def show_picks(self):
+        self.show_artists()
+        self.safe_draw()
+        self.fig.canvas.blit(self.ax.bbox)
+
+
+    def hide_picks(self):
+        self.hide_artists()
+        self.safe_draw()
+        self.fig.canvas.blit(self.ax.bbox)
+
+
     # update the pick layer menu based on how many layers exist
     def update_option_menu(self):
             menu = self.layerMenu["menu"]
@@ -524,11 +545,7 @@ class imPick(tk.Frame):
         self.draw_cid = canvas.mpl_connect('draw_event', self.update_bg)
 
 
-    def update_bg(self, event=None):
-        """
-        when the figure is resized, hide picks, draw everything,
-        and update the background.
-        """
+    def hide_artists(self):
         if self.surf:
             self.surf.set_visible(False)
         if self.surf_pick:
@@ -536,9 +553,10 @@ class imPick(tk.Frame):
         if self.pick:
             self.pick.set_visible(False)
         if self.saved_pick:
-            self.pick.set_visible(False)
-        self.safe_draw()
-        self.axbg = self.dataCanvas.copy_from_bbox(self.ax.bbox)
+            self.saved_pick.set_visible(False)
+
+
+    def show_artists(self):
         if self.surf:
             self.surf.set_visible(True)
         if self.surf_pick:
@@ -546,7 +564,18 @@ class imPick(tk.Frame):
         if self.pick:
             self.pick.set_visible(True)
         if self.saved_pick:
-            self.pick.set_visible(True)
+            self.saved_pick.set_visible(True)
+
+            
+    def update_bg(self, event=None):
+        """
+        when the figure is resized, hide picks, draw everything,
+        and update the background.
+        """
+        self.hide_artists()
+        self.safe_draw()
+        self.axbg = self.dataCanvas.copy_from_bbox(self.ax.bbox)
+        self.show_artists()
         self.blit()
 
 

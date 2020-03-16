@@ -22,8 +22,8 @@ in_path = "/zippy/MARS/targ/supl/UAF/2019/hdf5/"
 map_path = "/zippy/MARS/orig/supl/gis/projects/qgis/UAF/"
 
 # beefmaser paths
-# in_path = "/media/anomalocaris/beefmaster/MARS/targ/supl/UAF/2019/hdf5/"
-# map_path = "/media/anomalocaris/beefmaster/MARS/targ/supl/grid-AKDEM/"
+#in_path = "/media/btober/beefmaster/MARS/targ/supl/UAF/2019/hdf5/"
+#map_path = "/media/btober/beefmaster/MARS/orig/supl/gis/projects/qgis/UAF/"
 
 ### INITIALIZE ###
 root = tk.Tk()
