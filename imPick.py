@@ -143,17 +143,17 @@ class imPick(tk.Frame):
         # calculate power of data
         Pow_data = np.power(self.data["amp"],2)
         # place data in dB for visualization
-        self.dB_data = np.log(Pow_data)
+        self.dB_data = np.log10(Pow_data)
         
         # get clutter data in dB for visualization
         # check if clutter data exists
         if np.any(self.data["clutter"]):
             # check if clutter data is stored in linear space or log space - lin space should have values less than 1
             # if in lin space, convert to dB
-            if np.nanmax(np.abs(self.data["clutter"])) < 1:
+            if (np.nanmax(np.abs(self.data["clutter"])) < 1) or ("2012" in self.f_loadName):
                 Pow_clut = np.power(self.data["clutter"],2)
                 Pow_clut[np.where(Pow_clut == 0)] = np.NaN      # avoid -inf values in dB data
-                self.dB_clut = np.log(Pow_clut)
+                self.dB_clut = np.log10(Pow_clut)
             # if in log space, leave as is
             else:
                 self.dB_clut = self.data["clutter"]
@@ -172,7 +172,9 @@ class imPick(tk.Frame):
         
         self.maxdB_data = np.nanmax(self.dB_data)
         self.maxdB_clut = np.nanmax(self.dB_clut)
-        # self.maxdB_clut = np.floor(np.nanpercentile(self.dB_clut,90))
+        if ("2012" in self.f_loadName):
+            self.maxdB_clut = np.floor(np.nanpercentile(self.dB_clut,90))
+
         # print(self.mindB_data,self.maxdB_data)
         # print(self.mindB_clut,self.maxdB_clut)
 
