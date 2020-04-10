@@ -4,7 +4,7 @@ from nav import *
 import utils
 import matplotlib.pyplot as plt
 import scipy.io as scio
-import sys
+import sys,os
 # from segpy.reader import create_reader
 
 
@@ -16,7 +16,7 @@ class ingester:
         # ftype is a string specifying filetype
         # valid options -
         # hdf5, mat, segy
-        valid_types = ["h5", "mat", "sgy"] # can add more to this
+        valid_types = ["h5", "mat", "sgy", "img"] # can add more to this
         if (ftype not in valid_types):
             print("Invalid file type specifier")
             print("Valid file types:")
@@ -35,12 +35,16 @@ class ingester:
             return self.mat_read(fpath)
         elif (self.ftype == "sgy"):
             return self.segypy_read(fpath)
+        elif (self.ftype == "img"):
+            return self.sharad_read(fpath)
         else:
             print("File reader for format {} not built yet".format(self.ftype))
             exit(1)
 
     def h5py_read(self, fpath):
         # method to ingest OIB-AK radar .h5 data format - all data should soon be in this format
+        print('----------------------------------------')
+        print("Loading: " + fpath.split("/")[-1])
         f = h5py.File(fpath, "r")                               # read in .h5 file
 
         # pull necessary raw group data
@@ -167,3 +171,41 @@ class ingester:
         #     seg_y_dataset = create_reader(segy_in_file, endian='>')  # Non-standard Rev 1 little-endian
         #     print(seg_y_dataset.num_traces())
         sys.exit()
+
+    def sharad_read(self, fpath):
+        # convert binary .img PDS RGRAM to numpy array
+        # reshape array with 3600 lines
+        fname = fpath.split("/")[-1]
+        dtype = np.dtype('float32')     
+        rgram = open(fpath, 'rb') 
+        amp = np.fromfile(rgram, dtype)     
+        l = len(amp)
+        num_sample = 3600
+        num_trace = int(len(amp)/num_sample)
+        amp = amp.reshape(num_sample,num_trace)
+
+        # open geom nav file for rgram
+        geom_path = fpath.replace("rgram","geom").replace("img","tab")
+
+        nav_file = np.genfromtxt(geom_path, delimiter = ',', dtype = str)
+
+        # get necessary data from image file and geom
+        dt = .0375e-6                                                       # sampling interval for 3600 real-values voltage samples
+        lon = nav_file[:,3].astype(np.float64)
+        lat = nav_file[:,2].astype(np.float64)
+        elev_air = nav_file[:,5].astype(np.float64) - nav_file[:,4].astype(np.float64)       # [km]
+
+        elev_surf = np.zeros(num_trace)
+        elev_surf.fill(np.nan)
+        twtt_surf = np.zeros(num_trace)
+        twtt_surf.fill(np.nan)
+        dist = np.arange(num_trace)
+
+        # create nav object to hold lon, lat, elev
+        nav0 = nav()
+        nav0.csys = "+proj=longlat +a=3396190 +b=3376200 +no_defs"
+        nav0.navdat = np.column_stack((lon,lat,elev_air))
+
+        clutter = np.ones(amp.shape)
+
+        return {"dt": dt, "num_trace": num_trace, "num_sample": num_sample, "navdat": nav0, "elev_surf": elev_surf, "twtt_surf": twtt_surf,"dist": dist, "amp": amp, "clutter": clutter} # other fields?

@@ -188,7 +188,7 @@ class MainGUI(tk.Frame):
     def open_data(self):
         temp_loadName = ""
         # select input file
-        temp_loadName = tk.filedialog.askopenfilename(initialdir = self.in_path,title = "Select file",filetypes = (("hd5f files", ".mat .h5"),("segy files", ".sgy"),("all files",".*")))
+        temp_loadName = tk.filedialog.askopenfilename(initialdir = self.in_path,title = "Select file",filetypes = (("hd5f files", ".mat .h5"),("segy files", ".sgy"),("image file", ".img"),("all files",".*")))
         # if input selected, clear imPick canvas, ingest data and pass to imPick
         if temp_loadName:
             self.f_loadName = temp_loadName
@@ -198,11 +198,17 @@ class MainGUI(tk.Frame):
             # try:
             self.igst = ingester.ingester(self.f_loadName.split(".")[-1])
             self.data = self.igst.read(self.f_loadName)
-            self.imPick.load(self.f_loadName, self.data)
-            self.wvPick.set_vars()
-            self.wvPick.clear()
-            self.wvPick.set_data(self.data)
 
+            # check for file errors
+            if np.any(self.data["dist"]):
+                self.imPick.load(self.f_loadName, self.data)
+                self.wvPick.set_vars()
+                self.wvPick.clear()
+                self.wvPick.set_data(self.data)
+            
+            else: 
+                print("Data file error, trying another!")
+                self.open_data()
             # except Exception as err:
             #     print('Ingest Error: ' + str(err))
             #     self.open_data()

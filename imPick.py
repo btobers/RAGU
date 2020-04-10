@@ -120,8 +120,7 @@ class imPick(tk.Frame):
     # load calls ingest() on the data file and sets the datacanvas
     def load(self, f_loadName, data):
         self.f_loadName = f_loadName
-        print('----------------------------------------')
-        print("Loading: " + self.f_loadName.split("/")[-1])
+        
         # receive the data
         self.data = data
 
