@@ -186,7 +186,6 @@ class MainGUI(tk.Frame):
 
     # open_data is a gui method which has the user select and input data file - then passed to imPick.load()
     def open_data(self):
-        temp_loadName = ""
         # select input file
         temp_loadName = tk.filedialog.askopenfilename(initialdir = self.in_path,title = "Select file",filetypes = (("hd5f files", ".mat .h5"),("segy files", ".sgy"),("image file", ".img"),("all files",".*")))
         # if input selected, clear imPick canvas, ingest data and pass to imPick

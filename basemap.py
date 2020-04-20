@@ -61,7 +61,7 @@ class basemap(tk.Tk):
                 if self.basemap_im.shape[0] == 3 or self.basemap_im.shape[0] == 4:
                     self.basemap_im = np.dstack([self.basemap_im[0,:,:],self.basemap_im[1,:,:],self.basemap_im[2,:,:]])
                 # display image in km
-                self.map_fig_ax.imshow(self.basemap_im, cmap="terrain", aspect="auto", extent=[int(minx*1e-3), int(maxx*1e-3), int(miny*1e-3), int(maxy*1e-3)])
+                self.map_fig_ax.imshow(self.basemap_im, cmap="Greys_r", aspect="auto", extent=[int(minx*1e-3), int(maxx*1e-3), int(miny*1e-3), int(maxy*1e-3)])
                 self.map_fig_ax.set(xlabel = "x [km]", ylabel = "y [km]")
                 self.map_dataCanvas = FigureCanvasTkAgg(self.map_fig, self.basemap_window)
                 self.map_dataCanvas.get_tk_widget().pack(in_=self.map_display, side="bottom", fill="both", expand=1)

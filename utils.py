@@ -1,4 +1,5 @@
 import numpy as np
+import sys
 
 # calculate total euclidian distance along a line
 def euclid_dist(nav):
@@ -106,11 +107,27 @@ def exportIm(fname, fig, extent=None):
 # twtt2depth function
 def twtt2depth(a, eps=3.15):
     v = 3e8/np.sqrt(eps)
-    depth = a*1e-6*v/(2*1000)           # convert input twtt to seconds, then return distance in km
+    depth = a*v/(2*1000)           # convert input twtt to distance in km
     return depth
 
 # depth2twtt function
 def depth2twtt(a, eps=3.15):
     v = 3e8/np.sqrt(eps)
-    twtt = a*2*1e3*1e6/v                # convert input depth to meters, then return twtt in microseconds
+    twtt = a*2*1e3/v                # convert input depth to meters, then return twtt
     return twtt
+
+# make_format formats the two imPick axes so that cursor positions are reported
+def make_format(current, other):
+    # current and other are axes
+    def format_coord(x, y):
+        # x, y are data coordinates
+        # convert to display coords
+        display_coord = current.transData.transform((x,y))
+        inv = other.transData.inverted()
+        # convert back to data coords with respect to ax
+        ax_coord = inv.transform(display_coord)
+        # coords = [ax_coord, (x, y)]
+        # return ('trace,sample: {:<40}'
+        #         .format(*['({:.3f}, {:.3f})'.format(ax_coord[0],ax_coord[1])]))#                x, y) for x,y in ax_coord]))
+        return (ax_coord[0],ax_coord[1])
+    return format_coord

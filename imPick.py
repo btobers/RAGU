@@ -7,6 +7,7 @@ import sys,os,time,copy
 import matplotlib as mpl
 mpl.use("TkAgg")
 import matplotlib.pyplot as plt
+from matplotlib.widgets import Cursor
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from scipy.interpolate import CubicSpline
 
@@ -58,8 +59,7 @@ class imPick(tk.Frame):
         self.toolbar = NavigationToolbar2Tk(self.dataCanvas, toolbarFrame)
         self.toolbar.update()
         self.click = self.fig.canvas.mpl_connect("button_press_event", self.onpress)
-        self.unclick = self.fig.canvas.mpl_connect('button_release_event', self.onrelease)
-
+        self.unclick = self.fig.canvas.mpl_connect("button_release_event", self.onrelease)
 
         # add axes for colormap sliders and reset button - leave invisible until data loaded
         self.ax_cmax = self.fig.add_axes([0.95, 0.55, 0.01, 0.30])
@@ -69,17 +69,46 @@ class imPick(tk.Frame):
         self.reset_ax = self.fig.add_axes([0.935, 0.11, 0.04, 0.03])
         self.reset_ax.set_visible(False)
         self.ax = self.fig.add_subplot(111)
+
+        # initiate a twin axis that shows twtt
+        self.secaxy0 = self.ax.twinx()
+        self.secaxy0.yaxis.set_ticks_position("left")
+        self.secaxy0.yaxis.set_label_position("left")
+        self.secaxy0.spines["left"].set_position(("outward", 52))
+        self.secaxy0.set_ylabel("two-way travel time [microsec.]")
+
+        # initiate a twin axis that shares the same x-axis and shows approximate depth
+        self.secaxy1 = self.ax.twinx()
+        self.secaxy1.yaxis.set_ticks_position("right")
+        self.secaxy1.yaxis.set_label_position("right")
+        self.secaxy1.set_ylabel("approx. subradar distance [km] ($\epsilon_{r}$ = 3.15)")
+
+        # initiate a twin axis that shows along-track distance
+        self.secaxx = self.ax.twiny()
+        self.secaxx.xaxis.set_ticks_position("bottom")
+        self.secaxx.xaxis.set_label_position("bottom")
+        self.secaxx.spines["bottom"].set_position(("outward", 42))
+        self.secaxx.set_xlabel("along-track distance [km]")
+
+        # set zorder of secondary axes to be behind main axis (self.ax)
+        self.secaxx.set_zorder(-100)
+        self.secaxy0.set_zorder(-100)
+        self.secaxy1.set_zorder(-100)
+
+        # self.cursor = Cursor(self.ax, useblit=False, horizOn=True, vertOn=True, color="r", lw="0.5")
+
         self.ax.set_visible(False)
 
         # connect xlim_change with event to update image background for blitting
-        # self.ax.callbacks.connect('xlim_changed', self.update_bg)
-        self.draw_cid = self.fig.canvas.mpl_connect('draw_event', self.update_bg)
+        self.draw_cid = self.fig.canvas.mpl_connect("draw_event", self.update_bg)
 
         # create colormap sliders and reset button - initialize for data image
-        self.s_cmin = mpl.widgets.Slider(self.ax_cmin, 'min', 0, 1, orientation="vertical")
-        self.s_cmax = mpl.widgets.Slider(self.ax_cmax, 'max', 0, 1, orientation="vertical")
-        self.cmap_reset_button = mpl.widgets.Button(self.reset_ax, 'Reset', color="lightgoldenrodyellow")
+        self.s_cmin = mpl.widgets.Slider(self.ax_cmin, "min", 0, 1, orientation="vertical")
+        self.s_cmax = mpl.widgets.Slider(self.ax_cmax, "max", 0, 1, orientation="vertical")
+        self.cmap_reset_button = mpl.widgets.Button(self.reset_ax, "reset", color="lightgoldenrodyellow")
         self.cmap_reset_button.on_clicked(self.cmap_reset)
+
+        
 
 
     # set_vars is a method to set imPick variables
@@ -124,20 +153,16 @@ class imPick(tk.Frame):
         # receive the data
         self.data = data
 
-        # create sample time array 
-        self.sampleTime = np.arange(0,self.data["num_sample"]+1)*self.data["dt"]
-
+        self.ax.set_title(os.path.splitext(self.f_loadName.split("/")[-1])[0])
         # set scalebar axes now that data displayed
         self.ax.set_visible(True)
         self.ax_cmax.set_visible(True)
         self.ax_cmin.set_visible(True)
         self.reset_ax.set_visible(True)
-
-        # label axes    
-        self.ax.set(xlabel = "along-track distance [km]", ylabel = "two-way travel time [microsec.]")
         
         # set figure title
         self.ax.set_title(os.path.splitext(self.f_loadName.split("/")[-1])[0])
+        self.ax.set(xlabel = "trace", ylabel = "sample")
 
         # calculate power of data
         Pow_data = np.power(self.data["amp"],2)
@@ -177,24 +202,15 @@ class imPick(tk.Frame):
         # print(self.mindB_data,self.maxdB_data)
         # print(self.mindB_clut,self.maxdB_clut)
 
-        self.surf, = self.ax.plot(self.data["dist"],self.data["twtt_surf"]*1e6,"c")     # line for twtt surface
-        self.pick, = self.ax.plot([],[],"rx")                                    # empty line for current pick
-        self.saved_pick = self.ax.scatter([],[],c="g",marker=".",s=8,linewidth=0)   # empty line for saved pick
-        self.surf_pick, = self.ax.plot([],[],"mx")
-
         self.dataCanvas.get_tk_widget().pack(in_=self.dataFrame, side="bottom", fill="both", expand=1) 
-             
+
         # display image data for radargram and clutter sim
-        self.im_data  = self.ax.imshow(self.dB_data, cmap="Greys_r", aspect="auto", extent=[self.data["dist"][0], 
-                        self.data["dist"][-1], self.data["amp"].shape[0] * self.data["dt"] * 1e6, 0])
-        self.im_clut  = self.ax.imshow(self.dB_clut, cmap="Greys_r", aspect="auto", extent=[self.data["dist"][0], 
-                        self.data["dist"][-1], self.data["amp"].shape[0] * self.data["dt"] * 1e6, 0])
+        self.im_data  = self.ax.imshow(self.dB_data, cmap="Greys_r", aspect="auto", extent=[self.data["trace"][0], 
+                        self.data["trace"][-1], self.data["sample"][-1], self.data["sample"][0]])
+        self.im_clut  = self.ax.imshow(self.dB_clut, cmap="Greys_r", aspect="auto", extent=[self.data["trace"][0], 
+                        self.data["trace"][-1], self.data["sample"][-1], self.data["sample"][0]])
 
-        # instantiate a secondary axes that shares the same x-axis and shows approximate depth
-        secaxy = self.ax.secondary_yaxis('right', functions=(utils.twtt2depth, utils.depth2twtt))
-        secaxy.set_ylabel("approx. subradar distance [km] ($\epsilon_{r}$ = 3.15)")
-
-        # the first time the amplitude image is loaded, update colormap to cut off values below 10th percentile
+        # update colormaps
         self.im_data.set_clim([self.mindB_data, self.maxdB_data])
         self.im_clut.set_clim([self.mindB_clut, self.maxdB_clut])
 
@@ -211,12 +227,24 @@ class imPick(tk.Frame):
         # set clutter sim visibility to false
         self.im_clut.set_visible(False)
 
+        # plot lidar surface
+        self.surf, = self.ax.plot(self.data["trace"], self.data["surf_idx"],"c")
+
+        self.pick, = self.ax.plot([],[],"rx")                                       # empty line for current pick segment
+        self.saved_pick = self.ax.scatter([],[],c="g",marker=".",s=8,linewidth=0)   # empty line for saved pick
+        self.surf_pick, = self.ax.plot([],[],"mx")                                  # empty line for surface pick segment
+        
+        # set axes extents
+        self.set_axes()
+
         # update the canvas
         self.dataCanvas._tkcanvas.pack()
         self.dataCanvas.draw()
 
         # save background
         self.update_bg()
+
+        # self.cursor = Cursor(self.ax, useblit=False, horizOn=True, vertOn=True, color="r", lw="0.5")
 
         # update toolbar to save axes extents
         self.toolbar.update()
@@ -262,34 +290,42 @@ class imPick(tk.Frame):
     def addseg(self, event):
         if self.f_loadName:
             # find nearest index to event.xdata
-            self.pick_idx_x = utils.find_nearest(self.data["dist"], event.xdata)
+            # self.pick_idx_x = utils.find_nearest(self.data["dist"], event.xdata)
+
+            # store pick trace idx as integer
+            self.pick_trace = int(event.xdata)
+
+            # store pick sample idx as integer
+            pick_sample = int(event.ydata)
+
             # round event.ydata to nearest index
-            pick_idx_y = int(round(event.ydata*1e-6/self.data["dt"]))
+            # pick_idx_y = int(round(event.ydata*1e-6/self.data["dt"]))
+
             # check if picking state is a go
             if self.pick_state == True:
                 # restrict subsurface picks to fall below surface
-                if (self.pick_surf == "subsurface") and ((event.ydata*1e-6 > self.data["twtt_surf"][self.pick_idx_x]) or (np.isnan(self.data["twtt_surf"][self.pick_idx_x]))):
+                if (self.pick_surf == "subsurface") and ((pick_sample > self.data["surf_idx"][self.pick_trace]) or (np.isnan(self.data["surf_idx"][self.pick_trace]))):
                 # make sure pick falls after previous pick
-                    if (len(self.xln) >= 1) and (self.pick_idx_x <= self.xln[-1]):
+                    if (len(self.xln) >= 1) and (self.pick_trace <= self.xln[-1]):
                         pass
                     else:
-                        self.xln.append(self.pick_idx_x)
-                        self.yln.append(pick_idx_y)
+                        self.xln.append(self.pick_trace)
+                        self.yln.append(pick_sample)
                         # set self.pick data to plot pick on image
-                        self.pick.set_data(self.data["dist"][self.xln], self.sampleTime[self.yln]*1e6)
+                        self.pick.set_data(self.xln, self.yln)
                 elif self.pick_surf == "surface":
-                    if (len(self.xln_surf) >= 1) and (self.pick_idx_x <= self.xln_surf[-1]):
+                    if (len(self.xln_surf) >= 1) and (self.pick_trace <= self.xln_surf[-1]):
                         pass
                     else:
-                        self.xln_surf.append(self.pick_idx_x)
-                        self.yln_surf.append(pick_idx_y)
+                        self.xln_surf.append(self.pick_trace)
+                        self.yln_surf.append(pick_sample)
                         # set self.surf_pick data to plot pick on image
-                        self.surf_pick.set_data(self.data["dist"][self.xln_surf], self.sampleTime[self.yln_surf]*1e6)
+                        self.surf_pick.set_data(self.xln_surf, self.yln_surf)
                 self.blit()
 
             # plot pick location to basemap
             if self.basemap and self.basemap.get_state() == 1:
-                self.basemap.plot_idx(self.pick_idx_x)
+                self.basemap.plot_idx(self.pick_trace)
 
 
     # pick_interp is a method for cubic spline interpolation of twtt between pick locations
@@ -301,12 +337,12 @@ class imPick(tk.Frame):
                     # cubic spline between picks
                     cs = CubicSpline(self.xln,self.yln)
                     # generate array between first and last pick indices on current layer
-                    picks_idx_x = np.arange(self.xln[0],self.pick_idx_x + 1)
+                    picked_traces = np.arange(self.xln[0],self.pick_trace + 1)
                     # add cubic spline output interpolation to pick dictionary - force output to integer for index of pick
-                    self.pick_dict["segment_" + str(self.pick_segment - 1)][picks_idx_x] = cs([picks_idx_x]).astype(int)
+                    self.pick_dict["segment_" + str(self.pick_segment - 1)][picked_traces] = cs([picked_traces]).astype(int)
                     # add pick interpolation to saved pick list
-                    self.xln_old.extend(self.data["dist"][picks_idx_x])
-                    self.yln_old.extend(self.pick_dict["segment_" + str(self.pick_segment - 1)][picks_idx_x]*self.data["dt"]*1e6)
+                    self.xln_old.extend(picked_traces)
+                    self.yln_old.extend(self.pick_dict["segment_" + str(self.pick_segment - 1)][picked_traces])
 
 
             elif surf == "surface":
@@ -314,9 +350,9 @@ class imPick(tk.Frame):
                     # cubic spline between surface picks
                     cs = CubicSpline(self.xln_surf,self.yln_surf)
                     # generate array between first and last pick indices on current layer
-                    picks_idx_x = np.arange(self.xln_surf[0],self.pick_idx_x + 1)
+                    picked_traces = np.arange(self.xln_surf[0],self.pick_trace + 1)
                     # input cubic spline output surface twtt array - force output to integer for index of pick
-                    self.data["twtt_surf"][picks_idx_x] = cs([picks_idx_x]).astype(int)*self.data["dt"]
+                    self.data["surf_idx"][picked_traces] = cs([picked_traces]).astype(int)
 
         except Exception as err:
             print("Pick interp error: " + str(err))
@@ -335,7 +371,7 @@ class imPick(tk.Frame):
             del self.yln_surf[:]
             self.surf_pick.set_data(self.xln_surf, self.yln_surf)
             self.surf.set_data(self.xln_surf,self.yln_surf)
-            self.surf.set_data(self.data["dist"],self.data["twtt_surf"]*1e6)
+            # self.surf.set_data(self.data["dist"],self.data["surf_idx"])
             
 
     def clear_picks(self, surf = None):
@@ -354,7 +390,7 @@ class imPick(tk.Frame):
                 self.pickLabel.config(fg="#d9d9d9")
                 self.layerVar.set(self.pick_segment)
         elif surf == "surface":
-            self.data["twtt_surf"].fill(np.nan)
+            self.data["surf_idx"].fill(np.nan)
 
 
     def clear_last(self):
@@ -364,19 +400,19 @@ class imPick(tk.Frame):
                 del self.xln[-1:]
                 del self.yln[-1:]
                 # reset self.pick, then blit
-                self.pick.set_data(self.data["dist"][self.xln], self.sampleTime[self.yln]*1e6)
+                self.pick.set_data(self.xln, self.yln)
                 self.blit()
 
             if self.pick_surf == "surface" and len(self.xln_surf) >= 1:
                 del self.xln_surf[-1:]
                 del self.yln_surf[-1:]
                 # reset self.pick, then blit
-                self.surf_pick.set_data(self.data["dist"][self.xln_surf], self.sampleTime[self.yln_surf]*1e6)
+                self.surf_pick.set_data(self.xln_surf, self.yln_surf)
                 self.blit()
 
 
     def delete_pkLayer(self):
-        # delete selected pick segment - this currently doesn't work perfectly for overlapping picks. pick layer will be removed from pick_dict
+        # delete selected pick segment - this currently doesn"t work perfectly for overlapping picks. pick layer will be removed from pick_dict
         # however replotting on image may be incorrect
         if (len(self.pick_dict) > 0) and (tk.messagebox.askokcancel("Warning", "Delete pick segment " + str(self.layerVar.get()) + "?", icon = "warning") == True):
             # if picking active and only one segment exists, clear all picks
@@ -495,8 +531,8 @@ class imPick(tk.Frame):
     def update_slider(self):
         self.ax_cmax.clear()
         self.ax_cmin.clear()
-        self.s_cmin.__init__(self.ax_cmin, 'min', valmin=self.s_cmin.valmin, valmax=self.s_cmin.valmax, valinit=self.s_cmin.valinit, orientation="vertical")
-        self.s_cmax.__init__(self.ax_cmax, 'max', valmin=self.s_cmax.valmin, valmax=self.s_cmax.valmax, valinit=self.s_cmax.valinit, orientation="vertical")
+        self.s_cmin.__init__(self.ax_cmin, "min", valmin=self.s_cmin.valmin, valmax=self.s_cmin.valmax, valinit=self.s_cmin.valinit, orientation="vertical")
+        self.s_cmax.__init__(self.ax_cmax, "max", valmin=self.s_cmax.valmin, valmax=self.s_cmax.valmax, valinit=self.s_cmax.valinit, orientation="vertical")
         self.s_cmin.on_changed(self.cmap_update)
         self.s_cmax.on_changed(self.cmap_update)
 
@@ -543,7 +579,7 @@ class imPick(tk.Frame):
         canvas = self.fig.canvas
         canvas.mpl_disconnect(self.draw_cid)
         canvas.draw()
-        self.draw_cid = canvas.mpl_connect('draw_event', self.update_bg)
+        self.draw_cid = canvas.mpl_connect("draw_event", self.update_bg)
 
 
     def hide_artists(self):
@@ -609,8 +645,14 @@ class imPick(tk.Frame):
 
     # clear_canvas is a method to clear the data canvas and figures to reset app
     def clear_canvas(self):
+        # clearing individual axis objects seems to keep a history of these objects and causes axis limit issues when opening new track
         self.ax.cla()
-
+        # for _i in self.ax.lines:
+        #     self.ax.lines.remove(_i)
+        # for _i in self.ax.images:
+        #     self.ax.images.remove(_i)
+        # for _i in self.ax.collections:
+        #     self.ax.collections.remove(_i)
 
     # get_pickLen is a method to return the length of existing picks
     def get_pickLen(self):
@@ -636,6 +678,17 @@ class imPick(tk.Frame):
             for _i in range(len(self.pick_dict_opt)):
                 picked_traces = np.where(self.pick_dict_opt["segment_" + str(_i)] != -1.)[0]
                 self.yln_old.extend(self.pick_dict_opt["segment_" + str(_i)][picked_traces]*1e6*self.data["dt"])
+
+
+    def set_axes(self):
+        self.ax.set_xlim((self.data["trace"][0], self.data["trace"][-1]))
+        self.ax.set_ylim((self.data["sample"][-1],self.data["sample"][0]))
+        # update twtt and depth (subradar dist.)
+        self.secaxy0.set_ylim(self.data["sample_time"][-1]*1e6, self.data["sample_time"][0]*1e6)
+        self.secaxy1.set_ylim(utils.twtt2depth(self.data["sample_time"][-1]), utils.twtt2depth(self.data["sample_time"][0]))
+
+        # update along-track distance
+        self.secaxx.set_xlim(self.data["dist"][0], self.data["dist"][-1])
 
 
     # get_nav method returns the nav data       
@@ -670,11 +723,11 @@ class imPick(tk.Frame):
         else:
             utils.savePick(self.f_saveName, self.data, self.pick_dict)
         # zoom out to full rgram extent to save pick image
-        self.ax.set_xlim((self.data["dist"][0], self.data["dist"][-1]))
-        self.ax.set_ylim((self.data["amp"].shape[0] * self.data["dt"] * 1e6, 0))
+        self.set_axes()
         if self.im_status.get() =="clut":
             self.show_data()
-        # extent = self.ax.get_window_extent().transformed(self.fig.dpi_scale_trans.inverted())
+        # self.update_bg()
+        # self.blit()
         # temporarily turn sliders to invisible for saving image
         self.ax_cmax.set_visible(False)
         self.ax_cmin.set_visible(False)
@@ -696,7 +749,7 @@ class imPick(tk.Frame):
 
 
     # onrelease calls addseg() if the time between the button press and release events
-    # is below a threshold so that segments aren't drawn while trying to zoom or pan
+    # is below a threshold so that segments are not drawn while trying to zoom or pan
     def onrelease(self,event):
         if event.inaxes == self.ax:
             if event.button == 1 and ((time.time() - self.time_onclick) < 0.25):

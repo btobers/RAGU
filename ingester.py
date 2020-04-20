@@ -98,7 +98,15 @@ class ingester:
 
         dt = 1/fs
 
-        return {"dt": dt, "num_trace": num_trace, "num_sample": num_sample, "navdat": nav0, "elev_surf": elev_surf, "twtt_surf": twtt_surf,"dist": dist, "amp": amp, "clutter": clutter} # other fields?
+        trace = np.arange(num_trace)
+        sample = np.arange(num_sample)
+        # create sample time array 
+        sample_time = np.arange(num_sample)*dt
+
+        # get indices of twtt_surf
+        surf_idx = np.rint(twtt_surf/dt)
+
+        return {"dt": dt, "num_trace": num_trace, "trace": trace, "num_sample": num_sample, "sample": sample, "sample_time": sample_time, "navdat": nav0, "elev_surf": elev_surf, "twtt_surf": twtt_surf, "surf_idx": surf_idx, "dist": dist, "amp": amp, "clutter": clutter} # other fields?
 
     def mat_read(self,fpath):
         # method to ingest .mat files. for older matlab files, scio works and h5py does not. for newer files, h5py works and scio does not 
@@ -195,17 +203,29 @@ class ingester:
         lat = nav_file[:,2].astype(np.float64)
         elev_air = nav_file[:,5].astype(np.float64) - nav_file[:,4].astype(np.float64)       # [km]
 
-        elev_surf = np.zeros(num_trace)
-        elev_surf.fill(np.nan)
-        twtt_surf = np.zeros(num_trace)
-        twtt_surf.fill(np.nan)
+        elev_surf = np.repeat(np.nan, num_trace)
+
         dist = np.arange(num_trace)
+
+        twtt_surf = np.repeat(np.nan, num_trace)
 
         # create nav object to hold lon, lat, elev
         nav0 = nav()
         nav0.csys = "+proj=longlat +a=3396190 +b=3376200 +no_defs"
         nav0.navdat = np.column_stack((lon,lat,elev_air))
 
+        # create dist array - convert nav to meters then find cumulative euclidian distance
+        mars_equidistant_proj4 = "+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=180 +x_0=0 +y_0=0 +a=3396190 +b=3396190 +units=m +no_defs" 
+        nav0_xform = nav0.transform(mars_equidistant_proj4)
+        dist = utils.euclid_dist(nav0_xform)
+
         clutter = np.ones(amp.shape)
 
-        return {"dt": dt, "num_trace": num_trace, "num_sample": num_sample, "navdat": nav0, "elev_surf": elev_surf, "twtt_surf": twtt_surf,"dist": dist, "amp": amp, "clutter": clutter} # other fields?
+        trace = np.arange(num_trace)
+        sample = np.arange(num_sample)
+        # create sample time array 
+        sample_time = np.arange(num_sample)*dt
+
+        # get indices of twtt_surf
+        surf_idx = np.rint(twtt_surf/dt)
+        return {"dt": dt, "num_trace": num_trace, "trace": trace, "num_sample": num_sample, "sample": sample, "sample_time": sample_time, "navdat": nav0, "elev_surf": elev_surf, "twtt_surf": twtt_surf, "surf_idx": surf_idx, "dist": dist, "amp": amp, "clutter": clutter} # other fields?
