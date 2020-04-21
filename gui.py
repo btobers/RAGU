@@ -32,7 +32,11 @@ class MainGUI(tk.Frame):
     def setup(self):
         self.f_loadName = ""
         self.f_saveName = ""
-        self.map_loadName = "" 
+        self.map_loadName = ""
+
+        self.userName = tk.StringVar(value="btober")
+        self.eps = tk.DoubleVar(value=3.15)
+        self.figSize = tk.StringVar(value="21,7")
 
         # generate menubar
         menubar = tk.Menu(self.parent)
@@ -47,6 +51,7 @@ class MainGUI(tk.Frame):
         fileMenu.add_command(label="Open    [Ctrl+O]", command=self.open_data)
         fileMenu.add_command(label="Save    [Ctrl+S]", command=self.save_loc)
         fileMenu.add_command(label="Next     [Right]", command=self.next_loc)
+        fileMenu.add_command(label="Settings", command=self.settings)
         fileMenu.add_command(label="Exit    [Ctrl+Q]", command=self.close_window)
 
         # pick menu subitems
@@ -187,7 +192,7 @@ class MainGUI(tk.Frame):
     # open_data is a gui method which has the user select and input data file - then passed to imPick.load()
     def open_data(self):
         # select input file
-        temp_loadName = tk.filedialog.askopenfilename(initialdir = self.in_path,title = "Select file",filetypes = (("hd5f files", ".mat .h5"),("segy files", ".sgy"),("image file", ".img"),("all files",".*")))
+        temp_loadName = tk.filedialog.askopenfilename(initialdir = self.in_path,title = "Select file",filetypes = (("all files",".*"),("hd5f files", ".mat .h5"),("segy files", ".sgy"),("image file", ".img")))
         # if input selected, clear imPick canvas, ingest data and pass to imPick
         if temp_loadName:
             self.f_loadName = temp_loadName
@@ -200,7 +205,7 @@ class MainGUI(tk.Frame):
 
             # check for file errors
             if np.any(self.data["dist"]):
-                self.imPick.load(self.f_loadName, self.data)
+                self.imPick.load(self.f_loadName, self.data, self.eps.get())
                 self.wvPick.set_vars()
                 self.wvPick.clear()
                 self.wvPick.set_data(self.data)
@@ -230,7 +235,7 @@ class MainGUI(tk.Frame):
             self.end_subsurf_pick()
             # get updated pick_dict from wvPick and pass back to imPick
             self.imPick.set_pickDict(self.wvPick.get_pickDict())
-            self.imPick.save(self.f_saveName)
+            self.imPick.save(self.f_saveName, self.figSize.get())
     
 
     # map_loc is a method to get the desired basemap location and initialize
@@ -372,6 +377,53 @@ class MainGUI(tk.Frame):
                 self.imPick.update_option_menu()
                 self.wvPick.set_vars()
                 self.wvPick.clear()
+
+    def settings(self):
+        settingsWindow = tk.Toplevel(self.parent)
+
+        row = tk.Frame(settingsWindow)
+        row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+        lab = tk.Label(row, width=25, text="user", anchor='w')
+        lab.pack(side=tk.LEFT)
+        self.userEnt = tk.Entry(row,textvariable=self.userName)
+        self.userEnt.pack(side=tk.RIGHT, expand=tk.YES, fill=tk.X)
+
+        row = tk.Frame(settingsWindow)
+        row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+        lab = tk.Label(row, width=25, text="dielectric const.", anchor='w')
+        lab.pack(side=tk.LEFT)
+        self.epsEnt = tk.Entry(row,textvariable=self.eps)
+        self.epsEnt.pack(side=tk.RIGHT, expand=tk.YES, fill=tk.X)
+
+        row = tk.Frame(settingsWindow)
+        row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+        lab = tk.Label(row, width=25, text="export fig. size [w,h]", anchor='w')
+        lab.pack(side=tk.LEFT)
+        self.figEnt = tk.Entry(row,textvariable=self.figSize)
+        self.figEnt.pack(side=tk.RIGHT, expand=tk.YES, fill=tk.X)
+        
+        b1 = tk.Button(settingsWindow, text='save',
+                    command=self.updateSettings)
+        b1.pack(side=tk.LEFT, padx=5, pady=5)
+        b2 = tk.Button(settingsWindow, text='close', command=settingsWindow.destroy)
+        b2.pack(side=tk.LEFT, padx=5, pady=5)
+
+
+    def updateSettings(self):
+        self.userName.set(self.userEnt.get())
+        self.figSize.set(self.figEnt.get())
+        try:
+            float(self.epsEnt.get())
+            self.eps.set(self.epsEnt.get())
+        except:
+            self.eps.set(3.15)
+
+        # make sure fig size is of correct format
+        if len(self.figSize.get().split(",")) != 2:
+            self.figSize.set("21,7")
+        
+        # pass updated dielectric to imPick
+        self.imPick.set_axes(self.eps.get())
 
 
     def help(self):

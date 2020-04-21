@@ -81,7 +81,6 @@ class imPick(tk.Frame):
         self.secaxy1 = self.ax.twinx()
         self.secaxy1.yaxis.set_ticks_position("right")
         self.secaxy1.yaxis.set_label_position("right")
-        self.secaxy1.set_ylabel("approx. subradar distance [km] ($\epsilon_{r}$ = 3.15)")
 
         # initiate a twin axis that shows along-track distance
         self.secaxx = self.ax.twiny()
@@ -109,8 +108,6 @@ class imPick(tk.Frame):
         self.cmap_reset_button.on_clicked(self.cmap_reset)
 
         
-
-
     # set_vars is a method to set imPick variables
     def set_vars(self):
         self.data_imSwitch_flag = ""
@@ -147,7 +144,7 @@ class imPick(tk.Frame):
 
 
     # load calls ingest() on the data file and sets the datacanvas
-    def load(self, f_loadName, data):
+    def load(self, f_loadName, data, eps):
         self.f_loadName = f_loadName
         
         # receive the data
@@ -235,7 +232,7 @@ class imPick(tk.Frame):
         self.surf_pick, = self.ax.plot([],[],"mx")                                  # empty line for surface pick segment
         
         # set axes extents
-        self.set_axes()
+        self.set_axes(eps)
 
         # update the canvas
         self.dataCanvas._tkcanvas.pack()
@@ -680,15 +677,21 @@ class imPick(tk.Frame):
                 self.yln_old.extend(self.pick_dict_opt["segment_" + str(_i)][picked_traces]*1e6*self.data["dt"])
 
 
-    def set_axes(self):
+    def set_axes(self, eps):
         self.ax.set_xlim((self.data["trace"][0], self.data["trace"][-1]))
         self.ax.set_ylim((self.data["sample"][-1],self.data["sample"][0]))
+
+        # xmin, xmax = self.ax.get_ylim()
+        # ymin, ymax = self.ax.get_ylim()
         # update twtt and depth (subradar dist.)
         self.secaxy0.set_ylim(self.data["sample_time"][-1]*1e6, self.data["sample_time"][0]*1e6)
-        self.secaxy1.set_ylim(utils.twtt2depth(self.data["sample_time"][-1]), utils.twtt2depth(self.data["sample_time"][0]))
+        self.secaxy1.set_ylim(utils.twtt2depth(self.data["sample_time"][-1],eps), utils.twtt2depth(self.data["sample_time"][0],eps))
+        self.secaxy1.set_ylabel("approx. subradar distance [km] ($\epsilon_{}$ = {}".format("r",eps))
 
         # update along-track distance
         self.secaxx.set_xlim(self.data["dist"][0], self.data["dist"][-1])
+
+        self.dataCanvas.draw()
 
 
     # get_nav method returns the nav data       
@@ -716,7 +719,7 @@ class imPick(tk.Frame):
 
 
     # save is a method to receive the pick save location from gui and save using utils.save
-    def save(self, f_saveName):
+    def save(self, f_saveName, figSize):
         self.f_saveName = f_saveName
         if self.pick_dict_opt:
             utils.savePick(self.f_saveName, self.data, self.pick_dict_opt)
@@ -733,7 +736,7 @@ class imPick(tk.Frame):
         self.ax_cmin.set_visible(False)
         self.reset_ax.set_visible(False)
         w,h = self.fig.get_size_inches()    # get pre-save figure size
-        self.fig.set_size_inches((21,7))    # set figsize to wide aspect ratio
+        self.fig.set_size_inches((figSize))    # set figsize to wide aspect ratio
         utils.exportIm(self.f_saveName, self.fig)
         # return figsize to intial values and make sliders visible again
         self.fig.set_size_inches((w,h))
