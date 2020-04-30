@@ -146,6 +146,9 @@ class ingester:
                 print("ingest Error: " + str(err))
                 pass
 
+        print('----------------------------------------')
+        print("Loading: " + fpath.split("/")[-1])
+        
         # transpose amp and clutter if flipped
         if amp.shape[0] == num_trace and amp.shape[1] == num_sample:
             amp = np.transpose(amp)  
@@ -156,21 +159,34 @@ class ingester:
         if not np.any(twtt_surf):
             twtt_surf.fill(np.nan)
 
+        # calculate surface elevation 
+        elev_surf = elev_air - twtt_surf*3e8/2
+
+        
         # convert lon, lat, elev to navdat object of nav class
         wgs84_proj4 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
-        navdat = nav()
-        navdat.csys = wgs84_proj4
-        navdat.navdat = np.column_stack((lon,lat,elev_air))
+        nav0 = nav()
+        nav0.csys = wgs84_proj4
+        nav0.navdat = np.column_stack((lon,lat,elev_air))
 
         # interpolate nav data if not unique location for each trace
         if len(np.unique(lon)) < num_trace:
-            navdat.navdat[:,0] = utils.interp_array(lon)
+            nav0.navdat[:,0] = utils.interp_array(lon)
         if len(np.unique(lat)) < num_trace:
-            navdat.navdat[:,1] = utils.interp_array(lat)
+            nav0.navdat[:,1] = utils.interp_array(lat)
         if len(np.unique(dist)) < num_trace:
             dist = utils.interp_array(dist)
-      
-        return {"dt": dt, "num_trace": num_trace, "num_sample": num_sample, "navdat": navdat, "twtt_surf": twtt_surf,"dist": dist, "amp": amp, "clutter": clutter} # other fields?
+
+
+        trace = np.arange(num_trace)
+        sample = np.arange(num_sample)
+        # create sample time array 
+        sample_time = np.arange(num_sample)*dt
+
+        # get indices of twtt_surf
+        surf_idx = np.rint(twtt_surf/dt)
+
+        return {"dt": dt, "num_trace": num_trace, "trace": trace, "num_sample": num_sample, "sample": sample, "sample_time": sample_time, "navdat": nav0, "elev_surf": elev_surf, "twtt_surf": twtt_surf, "surf_idx": surf_idx, "dist": dist, "amp": amp, "clutter": clutter} # other fields?
 
     def segypy_read(self, fpath):
         # method to ingest .sgy data

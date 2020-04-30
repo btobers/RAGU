@@ -719,14 +719,14 @@ class imPick(tk.Frame):
 
 
     # save is a method to receive the pick save location from gui and save using utils.save
-    def save(self, f_saveName, figSize):
+    def save(self, f_saveName, eps, figSize):
         self.f_saveName = f_saveName
         if self.pick_dict_opt:
             utils.savePick(self.f_saveName, self.data, self.pick_dict_opt)
         else:
             utils.savePick(self.f_saveName, self.data, self.pick_dict)
         # zoom out to full rgram extent to save pick image
-        self.set_axes()
+        self.set_axes(eps)
         if self.im_status.get() =="clut":
             self.show_data()
         # self.update_bg()
@@ -736,7 +736,7 @@ class imPick(tk.Frame):
         self.ax_cmin.set_visible(False)
         self.reset_ax.set_visible(False)
         w,h = self.fig.get_size_inches()    # get pre-save figure size
-        self.fig.set_size_inches((figSize))    # set figsize to wide aspect ratio
+        self.fig.set_size_inches((float(figSize[0]),float(figSize[1])))    # set figsize to wide aspect ratio
         utils.exportIm(self.f_saveName, self.fig)
         # return figsize to intial values and make sliders visible again
         self.fig.set_size_inches((w,h))

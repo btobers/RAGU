@@ -228,6 +228,8 @@ class MainGUI(tk.Frame):
     def save_loc(self):
         if self.f_loadName and self.imPick.get_pickLen() > 0:
             out_path = self.f_loadName[:-len("/".join(self.f_loadName.split("/")[-2:]))] + "picks"
+            if self.f_loadName.endswith(".mat"):
+                out_path = self.f_loadName[:-len("/".join(self.f_loadName.split("/")[-3:]))] + "picks"
             self.f_saveName = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_pk",
                                 initialdir = out_path, title = "Save Picks",filetypes = (("comma-separated values","*.csv"),))
         if self.f_saveName:
@@ -235,7 +237,7 @@ class MainGUI(tk.Frame):
             self.end_subsurf_pick()
             # get updated pick_dict from wvPick and pass back to imPick
             self.imPick.set_pickDict(self.wvPick.get_pickDict())
-            self.imPick.save(self.f_saveName, self.figSize.get())
+            self.imPick.save(self.f_saveName, self.eps.get(), self.figSize.get().split(","))
     
 
     # map_loc is a method to get the desired basemap location and initialize
@@ -318,7 +320,7 @@ class MainGUI(tk.Frame):
                 self.imPick.clear_canvas()
                 self.imPick.set_vars()
                 self.data = self.igst.read(self.f_loadName)
-                self.imPick.load(self.f_loadName, self.data)
+                self.imPick.load(self.f_loadName, self.data, self.eps.get())
                 self.wvPick.clear()
                 self.wvPick.set_vars()
                 self.wvPick.set_data(self.data)
@@ -378,6 +380,7 @@ class MainGUI(tk.Frame):
                 self.wvPick.set_vars()
                 self.wvPick.clear()
 
+
     def settings(self):
         settingsWindow = tk.Toplevel(self.parent)
 
@@ -419,7 +422,13 @@ class MainGUI(tk.Frame):
             self.eps.set(3.15)
 
         # make sure fig size is of correct format
-        if len(self.figSize.get().split(",")) != 2:
+        size = self.figSize.get().split(",")
+        if len(size) != 2:
+            self.figSize.set("21,7")
+        try:
+            float(size[0])
+            float(size[1])
+        except:
             self.figSize.set("21,7")
         
         # pass updated dielectric to imPick
