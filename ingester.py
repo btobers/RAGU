@@ -103,6 +103,9 @@ class ingester:
         # create sample time array 
         sample_time = np.arange(num_sample)*dt
 
+        # replace potential erroneous twtt_surf values with nan
+        twtt_surf[np.logical_or((twtt_surf > sample_time[-1]),(twtt_surf <= sample_time[1]))] = np.nan
+        
         # get indices of twtt_surf
         surf_idx = np.rint(twtt_surf/dt)
 
@@ -182,6 +185,9 @@ class ingester:
         sample = np.arange(num_sample)
         # create sample time array 
         sample_time = np.arange(num_sample)*dt
+
+        # replace potential erroneous twtt_surf values with nan
+        twtt_surf[np.logical_or((twtt_surf > sample_time[-1]),(twtt_surf <= sample_time[1]))] = np.nan
 
         # get indices of twtt_surf
         surf_idx = np.rint(twtt_surf/dt)

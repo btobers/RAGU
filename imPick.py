@@ -225,10 +225,10 @@ class imPick(tk.Frame):
         self.im_clut.set_visible(False)
 
         # plot lidar surface
-        self.surf, = self.ax.plot(self.data["trace"], self.data["surf_idx"],"c")
+        self.surf, = self.ax.plot(self.data["trace"], self.data["surf_idx"],"c_",markersize=4)
 
         self.pick, = self.ax.plot([],[],"rx")                                       # empty line for current pick segment
-        self.saved_pick = self.ax.scatter([],[],c="g",marker=".",s=8,linewidth=0)   # empty line for saved pick
+        self.saved_pick, = self.ax.plot([],[],"g_",markersize=4)#",marker="_",s=12)   # empty line for saved pick
         self.surf_pick, = self.ax.plot([],[],"mx")                                  # empty line for surface pick segment
         
         # set axes extents
@@ -362,13 +362,13 @@ class imPick(tk.Frame):
             del self.xln[:]
             del self.yln[:]
             self.pick.set_data(self.xln, self.yln)
-            self.saved_pick.set_offsets(np.c_[self.xln_old,self.yln_old])
+            # self.saved_pick.set_offsets(np.c_[self.xln_old,self.yln_old])
+            self.saved_pick.set_data(self.xln_old,self.yln_old)
         elif surf == "surface":
             del self.xln_surf[:]
             del self.yln_surf[:]
             self.surf_pick.set_data(self.xln_surf, self.yln_surf)
-            self.surf.set_data(self.xln_surf,self.yln_surf)
-            # self.surf.set_data(self.data["dist"],self.data["surf_idx"])
+            self.surf.set_data(self.data["trace"], self.data["surf_idx"])
             
 
     def clear_picks(self, surf = None):
@@ -419,15 +419,16 @@ class imPick(tk.Frame):
             else:
                 # find first  and last pick location for segment
                 picks_idx = np.where(self.pick_dict["segment_" + str(self.layerVar.get())] != -1)[0]
-                first_idx = utils.find_nearest(np.asarray(self.xln_old), self.data["dist"][picks_idx][0])
-                last_idx = utils.find_nearest(np.asarray(self.xln_old), self.data["dist"][picks_idx][-1])
+                first_idx = utils.find_nearest(np.asarray(self.xln_old), self.data["trace"][picks_idx][0])
+                last_idx = utils.find_nearest(np.asarray(self.xln_old), self.data["trace"][picks_idx][-1])
                 # remove picks from plot list
                 del self.xln_old[first_idx:last_idx + 1]
                 del self.yln_old[first_idx:last_idx + 1]   
                 # delete pick dict layer
                 del self.pick_dict["segment_" + str(self.layerVar.get())]
 
-                self.saved_pick.set_offsets(np.c_[self.xln_old,self.yln_old])
+                # self.saved_pick.set_offsets(np.c_[self.xln_old,self.yln_old])
+                self.saved_pick.set_data(self.xln_old,self.yln_old)
                 
                 if self.pick_segment >=1:
                     self.pick_segment -= 1 
@@ -447,7 +448,7 @@ class imPick(tk.Frame):
                         self.pickLabel.config(text="Subsurface Pick Segment " + str(self.pick_segment) + ":\t Inactive", fg="#d9d9d9")
                 self.layerVar.set(0)
             self.update_option_menu()
-            self.blit()
+            self.update_bg()
 
 
     def show_data(self):

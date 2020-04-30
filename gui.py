@@ -136,10 +136,15 @@ class MainGUI(tk.Frame):
         elif event.state & 4 and event.keysym == "m":
             self.map_loc()
 
-        # Ctrl+N begin pick
+        # Ctrl+N begin subsurface pick
         elif event.state & 4 and event.keysym == "n":
             if self.tab == "imagePick":
                 self.start_subsurf_pick()
+
+        # Ctrl+Shift+N begin surface pick
+        elif event.state & 5 == 5 and event.keysym == "N":
+            if self.tab == "imagePick":
+                self.start_surf_pick()
 
         # Ctrl+Q close NOSEpick
         elif event.state & 4 and event.keysym == "q":
@@ -326,10 +331,12 @@ class MainGUI(tk.Frame):
                 self.wvPick.set_data(self.data)
 
 
+                # if basemap open, update. Only do this if line is longer than certain threshold to now waste time
                 if self.map_loadName and self.basemap.get_state() == 1:
-                    self.basemap.clear_nav()
-                    self.basemap.set_nav(self.data["navdat"], self.f_loadName)
-                    self.imPick.get_basemap(self.basemap)
+                    if self.data["dist"][-1] > 5:
+                        self.basemap.clear_nav()
+                        self.basemap.set_nav(self.data["navdat"], self.f_loadName)
+                        self.imPick.get_basemap(self.basemap)
 
             else:
                 print("Note: " + self.f_loadName.split("/")[-1] + " is the last file in " + file_path + "*." + self.f_loadName.split(".")[-1])
@@ -459,6 +466,7 @@ class MainGUI(tk.Frame):
         \n[Ctrl+o]\tOpen radar data file
         \n[Ctrl+m]\tOpen basemap window
         \n[Ctrl+n]\tBegin new subsurface pick segment
+        \n[Ctrl+Shift+n]\tBegin new surface pick segment
         \n[Escape]\tEnd current surface/subsurface pick segment
         \n[Spacebar]\tToggle between radar and clutter images
         \n[Ctrl+s]\tExport pick data
