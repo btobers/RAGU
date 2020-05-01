@@ -10,12 +10,15 @@ environment requirements in nose_env.yml
 import gui
 import tkinter as tk
 from tkinter import font
+import os
 
 ### USER SPECIFIED VARS ###
 
 # relative paths
 in_path = "/"
 map_path = "/"
+# NOSEpick code path
+os.chdir("/mnt/Swaps/MARS/code/supl/UAF/NOSEpick/")
 
 ### INITIALIZE ###
 root = tk.Tk()

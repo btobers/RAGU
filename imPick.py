@@ -340,6 +340,7 @@ class imPick(tk.Frame):
                     # add pick interpolation to saved pick list
                     self.xln_old.extend(picked_traces)
                     self.yln_old.extend(self.pick_dict["segment_" + str(self.pick_segment - 1)][picked_traces])
+                    
 
 
             elif surf == "surface":
@@ -350,6 +351,8 @@ class imPick(tk.Frame):
                     picked_traces = np.arange(self.xln_surf[0],self.pick_trace + 1)
                     # input cubic spline output surface twtt array - force output to integer for index of pick
                     self.data["surf_idx"][picked_traces] = cs([picked_traces]).astype(int)
+                    # update twtt_surf
+                    self.data["twtt_surf"][picked_traces] = cs([picked_traces]).astype(int)*self.data["dt"]
 
         except Exception as err:
             print("Pick interp error: " + str(err))
