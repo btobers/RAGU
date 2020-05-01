@@ -24,6 +24,7 @@ class MainGUI(tk.Frame):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
         self.in_path = in_path
+        self.home_dir = in_path
         self.map_path = map_path
         self.setup()
 
@@ -48,27 +49,35 @@ class MainGUI(tk.Frame):
         helpMenu = tk.Menu(menubar, tearoff=0)
 
         # file menu items
-        fileMenu.add_command(label="Open    [Ctrl+O]", command=self.open_data)
-        fileMenu.add_command(label="Save    [Ctrl+S]", command=self.save_loc)
-        fileMenu.add_command(label="Next     [Right]", command=self.next_loc)
-        fileMenu.add_command(label="Settings", command=self.settings)
-        fileMenu.add_command(label="Exit    [Ctrl+Q]", command=self.close_window)
+        fileMenu.add_command(label="open       [ctrl+o]", command=self.open_data)
+        fileMenu.add_command(label="save       [ctrl+s]", command=self.save_loc)
+        fileMenu.add_command(label="next        [right]", command=self.next_loc)
+
+        # settings submenu
+        settingsMenu = tk.Menu(fileMenu,tearoff=0)
+        settingsMenu.add_command(label="preferences", command=self.settings)
+        settingsMenu.add_command(label="set working directory", command=self.set_home)
+
+        fileMenu.add_cascade(label="settings", menu = settingsMenu)
+
+        fileMenu.add_command(label="exit       [ctrl+q]", command=self.close_window)
 
         # pick menu subitems
         surfacePickMenu = tk.Menu(pickMenu,tearoff=0)
         subsurfacePickMenu = tk.Menu(pickMenu,tearoff=0)
 
         # subsurface pick menu items
-        subsurfacePickMenu.add_command(label="New     [Ctrl+N]", command=self.start_subsurf_pick)
-        subsurfacePickMenu.add_command(label="Stop    [Escape]", command=self.end_subsurf_pick)
+        subsurfacePickMenu.add_command(label="new     [ctrl+n]", command=self.start_subsurf_pick)
+        subsurfacePickMenu.add_command(label="stop    [escape]", command=self.end_subsurf_pick)
+        subsurfacePickMenu.add_command(label="clear        [c]", command=lambda: self.clear(surf = "subsurface"))    
 
         # surface pick menu items
-        surfacePickMenu.add_command(label="New", command=self.start_surf_pick)
-        surfacePickMenu.add_command(label="Stop    [Escape]", command=self.end_surf_pick)    
-        surfacePickMenu.add_command(label="Clear", command=lambda: self.clear(surf = "surface"))    
+        surfacePickMenu.add_command(label="new  [ctrl+shift+n]", command=self.start_surf_pick)
+        surfacePickMenu.add_command(label="stop       [escape]", command=self.end_surf_pick)    
+        surfacePickMenu.add_command(label="clear", command=lambda: self.clear(surf = "surface"))    
 
-        pickMenu.add_cascade(label="Surface", menu = surfacePickMenu)
-        pickMenu.add_cascade(label="Subsurface", menu = subsurfacePickMenu)  
+        pickMenu.add_cascade(label="surface", menu = surfacePickMenu)
+        pickMenu.add_cascade(label="subsurface", menu = subsurfacePickMenu)  
 
         # pickMenu.add_separator()
         # pickMenu.add_command(label="Optimize", command=self.nb.select(wav))
@@ -81,10 +90,10 @@ class MainGUI(tk.Frame):
         helpMenu.add_command(label="Keyboard Shortcuts", command=self.shortcuts)
 
         # add items to menubar
-        menubar.add_cascade(label="File", menu=fileMenu)
-        menubar.add_cascade(label="Pick", menu=pickMenu)
-        menubar.add_cascade(label="Map", menu=mapMenu)
-        menubar.add_cascade(label="Help", menu=helpMenu)
+        menubar.add_cascade(label="file", menu=fileMenu)
+        menubar.add_cascade(label="pick", menu=pickMenu)
+        menubar.add_cascade(label="map", menu=mapMenu)
+        menubar.add_cascade(label="help", menu=helpMenu)
         
         # add the menubar to the window
         self.parent.config(menu=menubar)
@@ -117,7 +126,7 @@ class MainGUI(tk.Frame):
         # handle x-button closing of window
         self.parent.protocol("WM_DELETE_WINDOW", self.close_window)
 
-        self.open_data()
+        self.set_home()
 
 
     # key is a method to handle UI keypress events
@@ -194,10 +203,17 @@ class MainGUI(tk.Frame):
             self.parent.destroy()
 
 
+    # set_home is a method to set the session home directory
+    def set_home(self):
+        self.home_dir = tk.filedialog.askdirectory(title="root directory",
+                                       initialdir=self.home_dir,
+                                       mustexist=True)
+
+
     # open_data is a gui method which has the user select and input data file - then passed to imPick.load()
     def open_data(self):
         # select input file
-        temp_loadName = tk.filedialog.askopenfilename(initialdir = self.in_path,title = "Select file",filetypes = (("all files",".*"),("hd5f files", ".mat .h5"),("segy files", ".sgy"),("image file", ".img")))
+        temp_loadName = tk.filedialog.askopenfilename(initialdir = self.home_dir,title = "select file",filetypes = (("all files",".*"),("hd5f files", ".mat .h5"),("segy files", ".sgy"),("image file", ".img")))
         # if input selected, clear imPick canvas, ingest data and pass to imPick
         if temp_loadName:
             self.f_loadName = temp_loadName
