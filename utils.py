@@ -51,7 +51,7 @@ def savePick(f_saveName, data, pick_dict):
     elev_gnd = [a-(b*3e8/2) for a,b in zip(elev_air,twtt_surf)]
 
     # calculate bed elevation
-    elev_bed = [a-b for a,b in zip(elev_air,thick)]
+    elev_bed = [a-b for a,b in zip(elev_gnd,thick)]
 
     # if twtt_surf not in data, replace values for twtt_surf, elev_gnd, elev_bed, and thick with NaN's to be recalculated later
     if not np.any(data["twtt_surf"]):
