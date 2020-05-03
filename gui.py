@@ -192,6 +192,9 @@ class MainGUI(tk.Frame):
             if self.tab == "imagePick":
                 self.imPick.set_im()
 
+        # h key to set axes limits to home extent
+        elif event.keysym=="h":
+            self.imPick.set_axes(self.eps.get())
 
     # close_window is a gui method to exit NOSEpick
     def close_window(self):

@@ -22,8 +22,8 @@ def savePick(f_saveName, data, pick_dict):
     f_saveName = f_saveName
     data = data
     pick_dict = pick_dict
-
-    v_ice = 3e8/(np.sqrt(3.15))   # EM wave veloity in ice - for thickness calculation
+    c = 299792458               # Speed of light at STP
+    v_ice = c/(np.sqrt(3.15))   # EM wave veloity in ice - for thickness calculation
 
     trace = np.arange(data["num_trace"])            # array to hold trace number
     lon = data["navdat"].navdat[:,0]                # array to hold longitude
@@ -48,7 +48,7 @@ def savePick(f_saveName, data, pick_dict):
         thick[picked_traces] = ((((pick_dict["segment_" + str(_i)][picked_traces]*data["dt"]) - (data["twtt_surf"][picked_traces])) * v_ice) / 2)
 
     # calculate gnd elevation 
-    elev_gnd = [a-(b*3e8/2) for a,b in zip(elev_air,twtt_surf)]
+    elev_gnd = [a-(b*c/2) for a,b in zip(elev_air,twtt_surf)]
 
     # calculate bed elevation
     elev_bed = [a-b for a,b in zip(elev_gnd,thick)]
