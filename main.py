@@ -18,7 +18,7 @@ import os
 in_path = "/"
 map_path = "/"
 # NOSEpick code path
-os.chdir("/home/btober/Documents/NOSEpick/")
+os.chdir("/mnt/Swaps/MARS/code/supl/UAF/NOSEpick/")
 
 ### INITIALIZE ###
 root = tk.Tk()
