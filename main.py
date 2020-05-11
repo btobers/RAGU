@@ -15,7 +15,7 @@ import os
 ### USER SPECIFIED VARS ###
 
 # relative paths
-in_path = "/"
+in_path = "/media/btober/beefmaster/MARS/targ/supl/"
 map_path = "/"
 # NOSEpick code path
 os.chdir("/mnt/Swaps/MARS/code/supl/UAF/NOSEpick/")

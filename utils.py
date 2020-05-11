@@ -23,7 +23,7 @@ def savePick(f_saveName, data, pick_dict):
     data = data
     pick_dict = pick_dict
     c = 299792458               # Speed of light at STP
-    v_ice = c/(np.sqrt(3.15))   # EM wave veloity in ice - for thickness calculation
+    v = c/(np.sqrt(3.15))       # EM wave veloity in ice - for thickness calculation
 
     trace = np.arange(data["num_trace"])            # array to hold trace number
     lon = data["navdat"].navdat[:,0]                # array to hold longitude
@@ -45,7 +45,7 @@ def savePick(f_saveName, data, pick_dict):
         twtt_bed[picked_traces] = pick_dict["segment_" + str(_i)][picked_traces]*data["dt"]    # convert pick idx to twtt
 
         # calculate ice thickness - using twtt_bed and twtt_surf
-        thick[picked_traces] = ((((pick_dict["segment_" + str(_i)][picked_traces]*data["dt"]) - (data["twtt_surf"][picked_traces])) * v_ice) / 2)
+        thick[picked_traces] = ((((pick_dict["segment_" + str(_i)][picked_traces]*data["dt"]) - (data["twtt_surf"][picked_traces])) * v) / 2)
 
     # calculate gnd elevation 
     elev_gnd = [a-(b*c/2) for a,b in zip(elev_air,twtt_surf)]
@@ -73,6 +73,7 @@ def find_nearest(array,value):
     idx = (np.abs(array-value)).argmin()
     return idx
 
+
 # interp array is a function which linearly interpolates over an array of data between unique values
 def interp_array(array):
     # initialize list of xp and fp coordinates for np.interp
@@ -96,7 +97,8 @@ def interp_array(array):
     # interpolate over array
     array_interp = np.interp(x, xp, fp)
     return array_interp
-    
+
+
 # export the pick image
 # need to figure out a better way to set extent so that it's not screen specific
 # also need to hold back image from being displayed in app temporarily when saved
@@ -104,14 +106,18 @@ def exportIm(fname, fig, extent=None):
     fig.savefig(fname.rstrip(".csv") + ".png", dpi = 500, bbox_inches='tight', pad_inches = 0.05, transparent=True)# facecolor = "#d9d9d9")
     print("Pick image exported: " + fname.rstrip(".csv") + ".png")
 
+
 # twtt2depth function
 def twtt2depth(a, eps=3.15):
-    v = 3e8/np.sqrt(eps)
-    depth = a*v/(2*1000)           # convert input twtt to distance in km
+    c = 299792458                   # Speed of light at STP
+    v = c/np.sqrt(eps)
+    depth = a*v/(2*1000)            # convert input twtt to distance in km
     return depth
+
 
 # depth2twtt function
 def depth2twtt(a, eps=3.15):
-    v = 3e8/np.sqrt(eps)
+    c = 299792458                   # Speed of light at STP
+    v = c/np.sqrt(eps)
     twtt = a*2*1e3/v                # convert input depth to meters, then return twtt
     return twtt
