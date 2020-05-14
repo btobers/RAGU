@@ -54,11 +54,18 @@ class ingester:
         num_trace = f["raw/rx0"].attrs["numTrace"]              # number of traces in rgram
         num_sample = f["raw/rx0"].attrs["samplesPerTrace"]      # samples per trace in rgram
 
-        # pull necessary ext group data - use more precise Larsen nav data pulled from Trimble
-        lon =  np.array(f["ext/nav0"]["lon"]).astype(np.float64)
-        lat =  np.array(f["ext/nav0"]["lat"]).astype(np.float64)
-        elev_air =  np.array(f["ext/nav0"]["altM"]).astype(np.float64)
-        crs = f["ext/nav0"].attrs["CRS"].decode("utf-8") 
+        if "nav0" in f["ext"].keys():
+            # pull necessary ext group data - use more precise Larsen nav data pulled from Trimble
+            lon =  np.array(f["ext/nav0"]["lon"]).astype(np.float64)
+            lat =  np.array(f["ext/nav0"]["lat"]).astype(np.float64)
+            elev_air =  np.array(f["ext/nav0"]["altM"]).astype(np.float64)
+            crs = f["ext/nav0"].attrs["CRS"].decode("utf-8") 
+        else:
+            # pull raw loc0 nav data
+            lon =  np.array(f["ext/loc0"]["lon"]).astype(np.float64)
+            lat =  np.array(f["ext/loc0"]["lat"]).astype(np.float64)
+            elev_air =  np.array(f["ext/loc0"]["altM"]).astype(np.float64)
+            crs = f["ext/loc0"].attrs["CRS"].decode("utf-8")             
 
         if "srf0" in f["ext"].keys():
             elev_surf = np.array(f["ext/srf0"])                # surface elevation from lidar, averaged over radar first fresnel zone per trace (see code within /zippy/MARS/code/xped/hfProc/ext)

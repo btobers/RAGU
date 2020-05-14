@@ -15,10 +15,10 @@ import os
 ### USER SPECIFIED VARS ###
 
 # relative paths
-in_path = "/media/btober/beefmaster/MARS/targ/supl/"
-map_path = "/"
+in_path = "/zippy/MARS/targ/supl/"
+map_path = "/zippy/MARS/orig/supl/gis/projects/qgis/UAF/"
 # NOSEpick code path
-os.chdir("/mnt/Swaps/MARS/code/supl/UAF/NOSEpick/")
+os.chdir("/home/btober/Documents/NOSEpick/")
 
 ### INITIALIZE ###
 root = tk.Tk()
