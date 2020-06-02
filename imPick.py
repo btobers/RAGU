@@ -115,7 +115,6 @@ class imPick(tk.Frame):
         self.f_loadName = ""
         self.f_saveName = ""
         self.dtype = "amp"
-        self.press = False
         self.basemap = None
         self.pick_surf = None
         self.pick_dict = {}
@@ -138,6 +137,7 @@ class imPick(tk.Frame):
         self.pick = None
         self.saved_pick = None
         self.surf_pick = None
+        self.surf_pickFlag = False
         self.im_status.set("data")
         self.pick_vis.set(True)
         self.pickLabel.config(fg="#d9d9d9")
@@ -318,6 +318,7 @@ class imPick(tk.Frame):
                         self.yln_surf.append(pick_sample)
                         # set self.surf_pick data to plot pick on image
                         self.surf_pick.set_data(self.xln_surf, self.yln_surf)
+                        self.surf_pickFlag = True
                 self.blit()
 
             # plot pick location to basemap
@@ -339,8 +340,7 @@ class imPick(tk.Frame):
                     self.pick_dict["segment_" + str(self.pick_segment - 1)][picked_traces] = cs([picked_traces]).astype(int)
                     # add pick interpolation to saved pick list
                     self.xln_old.extend(picked_traces)
-                    self.yln_old.extend(self.pick_dict["segment_" + str(self.pick_segment - 1)][picked_traces])
-                    
+                    self.yln_old.extend(self.pick_dict["segment_" + str(self.pick_segment - 1)][picked_traces])                    
 
 
             elif surf == "surface":
@@ -385,12 +385,14 @@ class imPick(tk.Frame):
                 del self.xln_old[:]
                 # clear pick dictionary
                 self.pick_dict.clear()
+                self.pick_dict_opt.clear()
                 # reset pick segment increment to 0
                 self.pick_segment = 0
                 self.pickLabel.config(fg="#d9d9d9")
                 self.layerVar.set(self.pick_segment)
         elif surf == "surface":
             self.data["surf_idx"].fill(np.nan)
+            self.surf_pickFlag = False
 
 
     def clear_last(self):
@@ -409,6 +411,8 @@ class imPick(tk.Frame):
                 # reset self.pick, then blit
                 self.surf_pick.set_data(self.xln_surf, self.yln_surf)
                 self.blit()
+                if len(self.xln_surf) == 0:
+                    self.surf_pickFlag = False
 
 
     def delete_pkLayer(self):
@@ -637,7 +641,7 @@ class imPick(tk.Frame):
     # nextSave_warning is a method which checks if picks exist or if the user would like to discard existing picks before moving to the next track
     def nextSave_warning(self):
         # check if picks have been made and saved
-        if len(self.xln + self.xln_old) > 0 and self.f_saveName == "":
+        if ((self.get_subsurfPickFlag() == True) or (self.surf_pickFlag == True)) and (self.f_saveName == ""):
             if tk.messagebox.askyesno("Warning", "Load next track without saving picks?", icon = "warning") == True:
                 return True
         else: 
@@ -655,9 +659,18 @@ class imPick(tk.Frame):
         # for _i in self.ax.collections:
         #     self.ax.collections.remove(_i)
 
-    # get_pickLen is a method to return the length of existing picks
-    def get_pickLen(self):
-        return len(self.xln + self.xln_old)
+
+    # get_subsurfPickFlag is a method which returns true if manual subsurface picks exist, and false otherwise   
+    def get_subsurfPickFlag(self):
+        if len(self.xln + self.xln_old) > 0:
+            return True
+        else:
+            return False
+
+
+    # get_surfPickFlag is a method which returns true if manual surface picks exist, and false otherwise
+    def get_surfPickFlag(self):
+        return self.surf_pickFlag
 
 
     # get_numPkLyrs is a method to return the number of picking layers which exist

@@ -25,22 +25,23 @@ def savePick(f_saveName, data, pick_dict):
     c = 299792458               # Speed of light at STP
     v = c/(np.sqrt(3.15))       # EM wave veloity in ice - for thickness calculation
 
-    trace = np.arange(data["num_trace"])            # array to hold trace number
-    lon = data["navdat"].navdat[:,0]                # array to hold longitude
-    lat = data["navdat"].navdat[:,1]                # array to hold latitude
-    elev_air = data["navdat"].navdat[:,2]           # array to hold aircraft elevation
-    twtt_surf = data["twtt_surf"]                   # array to hold twtt to surface below nadir position
-    pick_idx = np.repeat(np.nan,lon.shape[0])       # array to hold indeces of picks
-    twtt_bed = np.repeat(np.nan,lon.shape[0])       # array to hold twtt to pick indeces
-    thick = np.repeat(np.nan,lon.shape[0])          # array to hold derived thickness from picks
-    elev_gnd = np.repeat(np.nan,lon.shape[0])       # array to hold ground(surface) elevation
-    elev_bed = np.repeat(np.nan,lon.shape[0])       # array to hold derived bed elevation from picks
+    trace = np.arange(data["num_trace"])                # array to hold trace number
+    lon = data["navdat"].navdat[:,0]                    # array to hold longitude
+    lat = data["navdat"].navdat[:,1]                    # array to hold latitude
+    elev_air = data["navdat"].navdat[:,2]               # array to hold aircraft elevation
+    surf_idx = data["surf_idx"]                      # array to hold index of surface from either manual picks, or altimetry dataset
+    twtt_surf = data["twtt_surf"]                       # array to hold twtt to surface below nadir position
+    subsurf_idx_pk = np.repeat(np.nan,lon.shape[0])     # array to hold indeces of picks
+    twtt_bed = np.repeat(np.nan,lon.shape[0])           # array to hold twtt to pick indeces
+    thick = np.repeat(np.nan,lon.shape[0])              # array to hold derived thickness from picks
+    elev_gnd = np.repeat(np.nan,lon.shape[0])           # array to hold ground(surface) elevation
+    elev_bed = np.repeat(np.nan,lon.shape[0])           # array to hold derived bed elevation from picks
 
     # iterate through pick_dict layers adding data to export arrays
     for _i in range(len(pick_dict)):
         picked_traces = np.where(pick_dict["segment_" + str(_i)] != -1)[0]
 
-        pick_idx[picked_traces] = pick_dict["segment_" + str(_i)][picked_traces]
+        subsurf_idx_pk[picked_traces] = pick_dict["segment_" + str(_i)][picked_traces]
 
         twtt_bed[picked_traces] = pick_dict["segment_" + str(_i)][picked_traces]*data["dt"]    # convert pick idx to twtt
 
@@ -61,9 +62,9 @@ def savePick(f_saveName, data, pick_dict):
         elev_bed = np.repeat(np.nan,lon.shape[0])
 
     # combine the data into a matrix for export
-    dstack = np.column_stack((trace,lon,lat,elev_air,elev_gnd,twtt_surf,pick_idx,twtt_bed,elev_bed,thick))
+    dstack = np.column_stack((trace,lon,lat,elev_air,elev_gnd,surf_idx,twtt_surf,subsurf_idx_pk,twtt_bed,elev_bed,thick))
 
-    header = "trace,lon,lat,elev_air,elev_gnd,twtt_surf,pick_idx,twtt_bed,elev_bed,thick"
+    header = "trace,lon,lat,elev_air,elev_gnd,surf_idx,twtt_surf,subsurf_idx_pk,twtt_bed,elev_bed,thick"
     np.savetxt(f_saveName, dstack, delimiter=",", newline="\n", fmt="%s", header=header, comments="")
     print("Pick data exported: " + f_saveName)
 

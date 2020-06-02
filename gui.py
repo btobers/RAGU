@@ -199,7 +199,7 @@ class MainGUI(tk.Frame):
     # close_window is a gui method to exit NOSEpick
     def close_window(self):
         # check if picks have been made and saved
-        if self.imPick.get_pickLen() > 0 and self.f_saveName == "":
+        if ((self.imPick.get_subsurfPickFlag() == True) or (self.imPick.get_surfPickFlag == True)) and (self.f_saveName == ""):
             if tk.messagebox.askokcancel("Warning", "Exit NOSEpick without saving picks?", icon = "warning") == True:
                 self.parent.destroy()
         else:
@@ -250,7 +250,7 @@ class MainGUI(tk.Frame):
 
     # save_loc is method to receieve the desired pick save location from user input
     def save_loc(self):
-        if self.f_loadName and self.imPick.get_pickLen() > 0:
+        if (self.f_loadName) and ((self.imPick.get_subsurfPickFlag() == True) or (self.imPick.get_surfPickFlag() == True)):
             out_path = self.f_loadName[:-len("/".join(self.f_loadName.split("/")[-2:]))] + "picks"
             if self.f_loadName.endswith(".mat"):
                 out_path = self.f_loadName[:-len("/".join(self.f_loadName.split("/")[-3:]))] + "picks"
@@ -369,7 +369,7 @@ class MainGUI(tk.Frame):
             self.pick_opt()
         elif (self.tab == "imagePick"):
             # get updated pick_dict from wvPick and pass back to imPick if dictionaries differ
-            if (self.imPick.get_pickLen() > 0) and (self.dict_compare(self.imPick.get_pickDict(),self.wvPick.get_pickDict()) == False) and (tk.messagebox.askyesno("Tab Change","Import optimized picks to imagePick from wavePick?") == True):
+            if (self.imPick.get_subsurfPickFlag() == True) and (self.dict_compare(self.imPick.get_pickDict(),self.wvPick.get_pickDict()) == False) and (tk.messagebox.askyesno("Tab Change","Import optimized picks to imagePick from wavePick?") == True):
                 self.imPick.set_pickDict(self.wvPick.get_pickDict())
                 self.imPick.plot_picks(surf = "subsurface")
                 self.imPick.blit()
@@ -397,7 +397,7 @@ class MainGUI(tk.Frame):
                 self.imPick.clear_picks(surf = "surface")
                 self.imPick.plot_picks(surf = "surface")
                 self.imPick.blit()
-            elif (self.imPick.get_pickLen() > 0) and (surf == "subsurface") and (tk.messagebox.askokcancel("Warning", "Clear all subsurface picks?", icon = "warning") == True):
+            elif (self.imPick.get_subsurfPickFlag() == True) and (surf == "subsurface") and (tk.messagebox.askokcancel("Warning", "Clear all subsurface picks?", icon = "warning") == True):
                 self.imPick.clear_picks(surf = "subsurface")
                 self.imPick.plot_picks(surf = "subsurface")
                 self.imPick.update_bg()
