@@ -16,7 +16,7 @@ import os
 
 # relative paths
 in_path = "/zippy/MARS/targ/supl/"
-map_path = "/zippy/MARS/orig/supl/gis/projects/qgis/UAF/"
+map_path = "/home/btober/Desktop/OIB-AK_qgis/"
 # NOSEpick code path
 os.chdir("/home/btober/Documents/NOSEpick/")
 

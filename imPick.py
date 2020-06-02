@@ -678,7 +678,7 @@ class imPick(tk.Frame):
             del self.yln_old[:]
             for _i in range(len(self.pick_dict_opt)):
                 picked_traces = np.where(self.pick_dict_opt["segment_" + str(_i)] != -1.)[0]
-                self.yln_old.extend(self.pick_dict_opt["segment_" + str(_i)][picked_traces]*1e6*self.data["dt"])
+                self.yln_old.extend(self.pick_dict_opt["segment_" + str(self.pick_segment - 1)][picked_traces])
 
 
     def set_axes(self, eps):
