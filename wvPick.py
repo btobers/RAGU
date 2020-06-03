@@ -16,12 +16,16 @@ class wvPick(tk.Frame):
         self.parent = parent
 
         # set up frames
-        infoFrame = tk.Frame(self.parent, highlightbackground="black", highlightthickness=1)
-        infoFrame.pack(side="top",fill="both")
+        infoFrame = tk.Frame(self.parent)
+        infoFrame.pack(side="top",fill="both",anchor="center")
         toolbarFrame = tk.Frame(infoFrame)
         toolbarFrame.pack(side="bottom",fill="both")
         interpFrame = tk.Frame(toolbarFrame, highlightbackground="black", highlightthickness=1)
         interpFrame.pack(side="right",fill="both")
+        subsurf_interpFrame = tk.Frame(interpFrame, highlightbackground="black", highlightthickness=1)
+        subsurf_interpFrame.pack(side="right",fill="both")     
+        surf_interpFrame = tk.Frame(interpFrame, highlightbackground="black", highlightthickness=1)
+        surf_interpFrame.pack(side="right",fill="both")   
         self.dataFrame = tk.Frame(self.parent)
         self.dataFrame.pack(side="bottom", fill="both", expand=1)
 
@@ -30,16 +34,16 @@ class wvPick(tk.Frame):
         self.segmentVar = tk.IntVar()
         self.segmentVar.trace('w', self.plot_wv)
 
-        self.interpType = tk.StringVar()
+        self.subsurf_interpType = tk.StringVar()
 
         # infoFrame exists for options to be added based on optimization needs
-        windowLabel = tk.Label(infoFrame, text = "window size [#samples]").pack(side="left")
-        windowEntry = tk.Entry(infoFrame, textvariable=self.winSize, width = 5).pack(side="left")
-        stepLabel = tk.Label(infoFrame, text = "\tstep size [#traces]").pack(side="left")
-        stepEntry = tk.Entry(infoFrame, textvariable=self.stepSize, width = 5).pack(side="left")
+        tk.Label(infoFrame, text = "window size [#samples]").pack(side="left")
+        tk.Entry(infoFrame, textvariable=self.winSize, width = 5).pack(side="left")
+        tk.Label(infoFrame, text = "\tstep size [#traces]").pack(side="left")
+        tk.Entry(infoFrame, textvariable=self.stepSize, width = 5).pack(side="left")
         tk.Label(infoFrame, text="\t").pack(side="left")
-        stepBackward = tk.Button(infoFrame, text="←", command = self.stepBackward, pady=0).pack(side="left")
-        stepForward = tk.Button(infoFrame, text="→", command = self.stepForward, pady=0).pack(side="left")
+        tk.Button(infoFrame, text="←", command = self.stepBackward, pady=0).pack(side="left")
+        tk.Button(infoFrame, text="→", command = self.stepForward, pady=0).pack(side="left")
         tk.Label(infoFrame, text="\t").pack(side="left")
         
         self.segments=[0]
@@ -61,14 +65,16 @@ class wvPick(tk.Frame):
         self.toolbar.pack(side="left")
         # self.toolbar.update()
 
-        interpButton = tk.Button(interpFrame, text="interpolate", command=self.interpPicks, pady=0).pack(side="right")
-        autoButton = tk.Button(interpFrame, text="AutoPick", command=self.autoPick, pady=0).pack(side="right")
-        linearRadio = tk.Radiobutton(interpFrame, text="linear", variable=self.interpType, value="linear")
-        linearRadio.pack(side="right")
-        sep = tk.ttk.Separator(interpFrame,orient="vertical")
-        sep.pack(side="right", fill="y", padx=4, pady=4)
-        cubicRadio = tk.Radiobutton(interpFrame,text="cubic spline", variable=self.interpType, value="cubic")
-        cubicRadio.pack(side="right")
+        tk.Label(surf_interpFrame, text = "surface pick optimization").pack(side="top")
+        tk.Button(surf_interpFrame, text="auto-pick", command=self.surf_autoPick, pady=0).pack()
+
+
+        tk.Label(subsurf_interpFrame, text = "subsurface pick optimization").pack(side="top")
+        tk.Button(subsurf_interpFrame, text="auto-pick", command=self.subsurf_autoPick, pady=0).pack(side="right")
+        tk.Button(subsurf_interpFrame, text="interpolate", command=self.subsurf_interpPicks, pady=0).pack(side="right")
+        tk.Radiobutton(subsurf_interpFrame, text="linear", variable=self.subsurf_interpType, value="linear").pack(side="right")
+        tk.ttk.Separator(subsurf_interpFrame,orient="vertical").pack(side="right", fill="y", padx=4, pady=4)
+        tk.Radiobutton(subsurf_interpFrame,text="cubic spline", variable=self.subsurf_interpType, value="cubic").pack(side="right")
 
 
         # create the figure axes
@@ -87,7 +93,7 @@ class wvPick(tk.Frame):
         self.pick_dict1 = {}
         self.rePick = None
         self.rePick_idx = {}        # dictionary of indeces of repicked traces for each segment
-        self.interpType.set("cubic")
+        self.subsurf_interpType.set("cubic")
 
 
     # set_data is a method to receive the radar data
@@ -97,11 +103,17 @@ class wvPick(tk.Frame):
         self.data_dB = 10*np.log10(np.power(data["amp"],2))
         self.sampleTime = np.arange(0,self.num_sample+1)*self.dt
         self.num_trace = data["num_trace"]
-        self.surf_idx = data["twtt_surf"] / self.dt
+        self.surf_idx = data["surf_idx"]
 
 
-    def set_surf(self,twtt_surf):
-        self.surf_idx = twtt_surf / self.dt
+    # set_surf is a method to set the surface index along in the case that a manual surface pick is made in the imPick tab after ingest
+    def set_surf(self,surf_idx):
+        self.surf_idx = surf_idx
+
+    
+    # get_surf is a method to return the optimized surface pick indices
+    def get_surf(self):
+        return self.surf_idx
 
 
     # get_pickDict is a method to return the pick dictionary
@@ -138,7 +150,7 @@ class wvPick(tk.Frame):
     def plot_wv(self, *args):
         # if self.pick_dict1:
         self.ax.clear()
-        self.ax.set(xlabel = "sample", ylabel = "decibels")
+        self.ax.set(xlabel = "sample", ylabel = "power [dB]")
 
         segment = self.segmentVar.get()
 
@@ -154,7 +166,7 @@ class wvPick(tk.Frame):
             pick_idx0 = self.pick_dict0["segment_" + str(self.segmentVar.get())][self.traceNum[segment]]
             pick_idx1 = self.pick_dict1["segment_" + str(self.segmentVar.get())][self.traceNum[segment]]
 
-            self.ax.axvline(x = pick_idx0, c="k", label="initial pick")
+            self.ax.axvline(x = pick_idx0, c="k", label="initial subsurface pick")
 
             if pick_idx0 != pick_idx1:
                 self.ax.axvline(x = pick_idx1, c="g", ls = "--", label="updated pick")
@@ -171,7 +183,7 @@ class wvPick(tk.Frame):
         self.dataCanvas.draw()
 
 
-    # step forward is a method to move backwards by the number of traces entered to stepSize
+    # stepBackward is a method to move backwards by the number of traces entered to stepSize
     def stepBackward(self):
         newTrace = self.traceNum[self.segmentVar.get()] - self.stepSize.get()
         if self.pick_dict0:
@@ -190,7 +202,7 @@ class wvPick(tk.Frame):
         self.plot_wv()
 
 
-    # step forward is a method to move forward by the number of traces entered to stepSize
+    # stepForward is a method to move forward by the number of traces entered to stepSize
     def stepForward(self):
         newTrace = self.traceNum[self.segmentVar.get()] + self.stepSize.get()
         if self.pick_dict0:
@@ -218,7 +230,7 @@ class wvPick(tk.Frame):
         self.plot_wv()
 
 
-    # update the pick segment menu based on how many segments exist
+    # update_option_menu is a method to update the pick segment menu based on how many segments exist
     def update_option_menu(self):
             menu = self.segmentMenu["menu"]
             menu.delete(0, "end")
@@ -227,8 +239,24 @@ class wvPick(tk.Frame):
                 self.rePick_idx["segment_" + str(_i)] = []
 
 
-    # autoPick is a method to automatically optimize picks
-    def autoPick(self):
+    # surf_autoPick is a method to automatically optimize surface picks by selecting the maximul amplitude sample within the specified window around existing surf_idx
+    def surf_autoPick(self):
+        if (not np.any(self.surf_idx)):
+            return
+        print('-----------\nauto pick still in development\n-----------')
+        winSize = self.winSize.get()
+        x = np.argwhere(~np.isnan(self.surf_idx))
+        y = self.surf_idx[x]
+        for _i in range(len(x)):
+            # find argmax for window for given data trace in pick
+            max_idx = np.argmax(self.data_dB[int(y[_i] - (winSize/2)):int(y[_i] + (winSize/2)), x[_i]])
+            # add argmax index to pick_dict1 - account for window index shift
+            self.surf_idx[x[_i]] = max_idx + int(y[_i] - (winSize/2))
+        self.plot_wv()
+
+
+    # subsurf_autoPick is a method to automatically optimize subsurface picks by selecting the maximul amplitude sample within the specified window around existing picks
+    def subsurf_autoPick(self):
         if (not self.pick_dict0):
             return
         print('-----------\nauto pick still in development\n-----------')
@@ -244,6 +272,7 @@ class wvPick(tk.Frame):
         self.plot_wv()
 
 
+    # manualPick is a method to manually adjust existing picks by clicking along the displayed waveform
     def manualPick(self, event):
         if (not self.pick_dict0) or (event.inaxes != self.ax):
             return
@@ -255,12 +284,13 @@ class wvPick(tk.Frame):
         
         self.plot_wv()
 
-    # interpPicks is a method to interpolate linearly between refined picks
-    def interpPicks(self):
+
+    # interpPicks is a method to interpolate between manually refined subsurface picks
+    def subsurf_interpPicks(self):
         if (not self.pick_dict0):
             return
         print('-----------\nwave pick interpolation still in development\n-----------')
-        if self.interpType.get() == "linear":
+        if self.subsurf_interpType.get() == "linear":
             for _i in range(self.num_pkLyrs):
                 if len(self.rePick_idx["segment_" + str(_i)]) >= 2:
                     # get indices where picks exist for pick segment
@@ -273,7 +303,7 @@ class wvPick(tk.Frame):
                     self.pick_dict1["segment_" + str(_i)][x] = np.interp(x, xp, fp)            
 
 
-        elif self.interpType.get() == "cubic":
+        elif self.subsurf_interpType.get() == "cubic":
             for _i in range(self.num_pkLyrs):
                 if len(self.rePick_idx["segment_" + str(_i)]) >= 2:
                     # cubic spline between picks

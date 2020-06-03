@@ -126,7 +126,8 @@ class MainGUI(tk.Frame):
         # handle x-button closing of window
         self.parent.protocol("WM_DELETE_WINDOW", self.close_window)
 
-        self.set_home()
+        # self.set_home()
+        self.open_data()
 
 
     # key is a method to handle UI keypress events
@@ -317,8 +318,6 @@ class MainGUI(tk.Frame):
             self.imPick.pick_interp(surf = "surface")
             self.imPick.plot_picks(surf = "surface")
             self.imPick.blit()
-            # pass updated surface pick to wvPick
-            self.wvPick.set_surf(self.data["twtt_surf"])
 
 
     # next_loc is a method to get the filename of the next data file in the directory then call imPick.load()
@@ -366,13 +365,16 @@ class MainGUI(tk.Frame):
         self.tab = event.widget.tab(selection, "text")
         # determine which tab is active
         if (self.tab == "wavePick"):
-            self.pick_opt()
+            if self.f_loadName:
+                self.pick_opt()
         elif (self.tab == "imagePick"):
-            # get updated pick_dict from wvPick and pass back to imPick if dictionaries differ
+            # get updated pick_dict and surf_idx from wvPick and pass back to imPick if dictionaries differ
             if (self.imPick.get_subsurfPickFlag() == True) and (self.dict_compare(self.imPick.get_pickDict(),self.wvPick.get_pickDict()) == False) and (tk.messagebox.askyesno("Tab Change","Import optimized picks to imagePick from wavePick?") == True):
                 self.imPick.set_pickDict(self.wvPick.get_pickDict())
                 self.imPick.plot_picks(surf = "subsurface")
-                self.imPick.blit()
+            elif (self.imPick.get_surfPickFlag() == True):
+                self.imPick.plot_picks(surf = "surface")
+            self.imPick.blit()
 
 
     # pick_opt is a method to load the wvPick optimization tools
@@ -385,6 +387,7 @@ class MainGUI(tk.Frame):
         self.wvPick.plot_wv()
 
 
+    # dict_compare is a method to compare the subsurface pick dictionaries from wvPick and imPick to determine if updates have been made
     def dict_compare(self, dict_imPick, dict_wvPick):
         for _i in range(len(dict_imPick)):
             if not (np.array_equal(dict_imPick["segment_" + str(_i)] ,dict_wvPick["segment_" + str(_i)])):
