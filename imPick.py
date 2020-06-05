@@ -260,22 +260,28 @@ class imPick(tk.Frame):
     def set_pickState(self, state, surf = None):
         self.pick_state = state
         self.pick_surf = surf
+
         if self.pick_surf == "subsurface":
             if self.pick_state == True:
                 # if a layer was already being picked, advance the pick segment count to begin new layer
                 if len(self.xln) >= 2:
                     self.pick_segment += 1
-                # if current layer has only one pick, remove
+                # if current subsurface pick layer has only one pick, remove
                 else:
                     self.clear_last()
                 self.pickLabel.config(text="subsurface pick segment " + str(self.pick_segment) + ":\t active", fg="red")
                 # initialize pick index and twtt dictionaries for current picking layer
                 self.pick_dict["segment_" + str(self.pick_segment)] = np.ones(self.data["num_trace"])*-1
+
             elif self.pick_state == False:
                 if len(self.xln) >=  2:
                     self.pick_segment += 1
-                    # only advance pick segment if picks made on previous layer
-                self.pickLabel.config(text="subsurface pick segment " + str(self.pick_segment - 1) + ":\t inactive", fg="black")
+                    self.pickLabel.config(text="subsurface pick segment " + str(self.pick_segment - 1) + ":\t inactive", fg="black")
+                # if surface pick layer has only one pick, remove
+                else:
+                    self.clear_last()
+                    self.pickLabel.config(text="subsurface pick segment " + str(self.pick_segment) + ":\t inactive", fg="black")
+
         elif self.pick_surf == "surface":
             if self.pick_state == True:
                 self.pickLabel.config(text="surface pick segment:\t active", fg="red")
@@ -419,7 +425,7 @@ class imPick(tk.Frame):
     def delete_pkLayer(self):
         # delete selected pick segment - this currently doesn"t work perfectly for overlapping picks. pick layer will be removed from pick_dict
         # however replotting on image may be incorrect
-        if (len(self.pick_dict) > 0) and (tk.messagebox.askokcancel("Warning", "Delete pick segment " + str(self.layerVar.get()) + "?", icon = "warning") == True):
+        if (len(self.pick_dict) > 0) and (tk.messagebox.askokcancel("warning", "delete pick segment " + str(self.layerVar.get()) + "?", icon = "warning") == True):
             # if picking active and only one segment exists, clear all picks
             if (self.pick_state == True) and (len(self.pick_dict) == 1):
                 self.clear_picks(surf = "subsurface")

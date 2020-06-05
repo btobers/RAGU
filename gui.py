@@ -127,7 +127,7 @@ class MainGUI(tk.Frame):
         self.parent.protocol("WM_DELETE_WINDOW", self.close_window)
 
         # self.set_home()
-        self.open_data()
+        # self.open_data()
 
 
     # key is a method to handle UI keypress events
@@ -236,7 +236,7 @@ class MainGUI(tk.Frame):
                 self.wvPick.set_data(self.data)
             
             else: 
-                print("Data file error, trying another!")
+                print("data file error, trying another!")
                 self.open_data()
             # except Exception as err:
             #     print('Ingest Error: ' + str(err))
@@ -256,7 +256,7 @@ class MainGUI(tk.Frame):
             if self.f_loadName.endswith(".mat"):
                 out_path = self.f_loadName[:-len("/".join(self.f_loadName.split("/")[-3:]))] + "picks"
             self.f_saveName = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_pk",
-                                initialdir = out_path, title = "Save Picks",filetypes = (("comma-separated values","*.csv"),))
+                                initialdir = out_path, title = "save picks",filetypes = (("comma-separated values","*.csv"),))
         if self.f_saveName:
             self.end_surf_pick()
             self.end_subsurf_pick()
@@ -268,7 +268,7 @@ class MainGUI(tk.Frame):
     # map_loc is a method to get the desired basemap location and initialize
     def map_loc(self):
         tmp_map_loadName = ""
-        tmp_map_loadName = tk.filedialog.askopenfilename(initialdir = self.map_path, title = "Select basemap file", filetypes = (("GeoTIFF files","*.tif"),("all files","*.*")))
+        tmp_map_loadName = tk.filedialog.askopenfilename(initialdir = self.map_path, title = "select basemap file", filetypes = (("geotiff files","*.tif"),("all files","*.*")))
             
         if tmp_map_loadName:
             self.map_loadName = tmp_map_loadName
@@ -396,11 +396,11 @@ class MainGUI(tk.Frame):
 
     def clear(self, surf = None):
         if self.f_loadName:
-            if (surf == "surface") and (tk.messagebox.askokcancel("Warning", "Clear all surface picks?", icon = "warning") == True):
+            if (surf == "surface") and (tk.messagebox.askokcancel("warning", "clear all surface picks?", icon = "warning") == True):
                 self.imPick.clear_picks(surf = "surface")
                 self.imPick.plot_picks(surf = "surface")
                 self.imPick.blit()
-            elif (self.imPick.get_subsurfPickFlag() == True) and (surf == "subsurface") and (tk.messagebox.askokcancel("Warning", "Clear all subsurface picks?", icon = "warning") == True):
+            elif (self.imPick.get_subsurfPickFlag() == True) and (surf == "subsurface") and (tk.messagebox.askokcancel("warning", "clear all subsurface picks?", icon = "warning") == True):
                 self.imPick.clear_picks(surf = "subsurface")
                 self.imPick.plot_picks(surf = "subsurface")
                 self.imPick.update_bg()
@@ -466,34 +466,34 @@ class MainGUI(tk.Frame):
 
     def help(self):
         # help message box
-        tk.messagebox.showinfo("Instructions",
-        """Nearly Optimal Subsurface Extractor:
-        \n\n1. File->Load to load data file
-        \n2. Map->Open to load basemap
-        \n3. Pick->Surface/Subsurface->New to begin new pick segment 
-        \n4. Click along reflector surface to pick\n   horizon
+        tk.messagebox.showinfo("instructions",
+        """---nearly optimal subsurface extractor---
+        \n\n1. file->load to load data file
+        \n2. map->open to load basemap
+        \n3. pick->surface/subsurface->new to begin\n   new pick segment 
+        \n4. click along reflector surface to pick\n   horizon
         \n\t\u2022[backspace] to remove the last
-        \n\t\u2022[c] to remove all subsurface picks
-        \n5. Pick->Surface/Subsurface->Stop to end current pick segment
-        \n6. Radio buttons to toggle between radar\n   and clutter images
-        \n7. File->Save to export picks
-        \n8. File->Next to load next data file
-        \n9. File->Quit to exit application""")
+        \n\t\u2022[c] to remove all subsurface\n\t picks
+        \n5. pick->surface/subsurface->stop to end\n   current pick segment
+        \n6. radio buttons to toggle between radar\n   and clutter images
+        \n7. file->save to export picks
+        \n8. file->next to load next data file
+        \n9. file->quit to exit application""")
 
 
     def shortcuts(self):
         # shortcut list
-        tk.messagebox.showinfo("Keyboard Shortcuts",
-        """General:
-        \n[Ctrl+o]\tOpen radar data file
-        \n[Ctrl+m]\tOpen basemap window
-        \n[Ctrl+n]\tBegin new subsurface pick segment
-        \n[Ctrl+Shift+n]\tBegin new surface pick segment
-        \n[Escape]\tEnd current surface/subsurface pick segment
-        \n[Spacebar]\tToggle between radar and clutter images
-        \n[Ctrl+s]\tExport pick data
-        \n[→]\t\tOpen next file in directory
-        \n[Ctrl+q]\tQuit NOSEpick
-        \n\nPicking:
-        \n[Backspace]\tRemove last pick event
-        \n[c]\t\tRemove all picked subsurface segments""")
+        tk.messagebox.showinfo("keyboard shortcuts",
+        """---general---
+        \n[ctrl+o]\topen radar data file
+        \n[ctrl+m]\topen basemap window
+        \n[spacebar]\ttoggle between radar and\n\t\tclutter images
+        \n[ctrl+s]\texport pick data
+        \n[→]\t\topen next file in\n\t\tworking directory
+        \n[ctrl+q]\tquit NOSEpick
+        \n\n---picking---
+        \n[ctrl+n]\tbegin new subsurface pick\n\t\tsegment
+        \n[ctrl+shift+n]\tbegin new surface pick\n\t\tsegment
+        \n[escape]\tend current surface/\n\t\tsubsurface pick segment
+        \n[backspace]\tremove last pick event
+        \n[c]\t\tremove all picked\n\t\tsubsurface segments""")
