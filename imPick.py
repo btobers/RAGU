@@ -32,24 +32,25 @@ class imPick(tk.Frame):
         radarRadio.pack(side="left")
         clutterRadio = tk.Radiobutton(infoFrame,text="cluttergram", variable=self.im_status, value="clut",command=self.show_clut)
         clutterRadio.pack(side="left")
-        
+        tk.ttk.Separator(infoFrame,orient="vertical").pack(side="left", fill="both", padx=10, pady=4)
+
+        # add radio buttons for toggling pick visibility
+        self.pick_vis = tk.BooleanVar()
+        tk.Label(infoFrame, text="pick visibility: ").pack(side="left")
+        tk.Radiobutton(infoFrame,text="on", variable=self.pick_vis, value=True, command=self.show_picks).pack(side="left")
+        tk.Radiobutton(infoFrame,text="off", variable=self.pick_vis, value=False, command=self.hide_picks).pack(side="left")
+
         deleteButton = tk.Button(infoFrame, text="delete", command=self.delete_pkLayer).pack(side="right")
 
         self.layerVar = tk.IntVar()
         self.layers=[None]
         self.layerMenu = tk.OptionMenu(infoFrame, self.layerVar, *self.layers)
         self.layerMenu.pack(side="right",pady=0)
-        self.layerMenu["highlightthickness"]=0
+        # self.layerMenu["highlightthickness"]=0
 
-        # add radio buttons for toggling pick visibility
-        self.pick_vis = tk.BooleanVar()
-        tk.Label(infoFrame, text=" ").pack(side="right")
-        tk.Radiobutton(infoFrame,text="off", variable=self.pick_vis, value=False, command=self.hide_picks).pack(side="right")
-        tk.Radiobutton(infoFrame,text="on", variable=self.pick_vis, value=True, command=self.show_picks).pack(side="right")
-        tk.Label(infoFrame, text="pick visibility:").pack(side="right")
-
-        self.pickLabel = tk.Label(toolbarFrame)#, text="Subsurface Pick Segment:\t0", fg="#d9d9d9")
+        self.pickLabel = tk.Label(toolbarFrame, font= "Verdana 10")#, text="subsurface pick segment:\t0", fg="#d9d9d9")
         self.pickLabel.pack(side="right")
+        tk.Label(toolbarFrame, text="\t").pack(side="right")
 
         self.fig = mpl.figure.Figure()
         self.fig.patch.set_facecolor("#d9d9d9")
@@ -267,19 +268,19 @@ class imPick(tk.Frame):
                 # if current layer has only one pick, remove
                 else:
                     self.clear_last()
-                self.pickLabel.config(text="Subsurface Pick Segment " + str(self.pick_segment) + ":\t Active", fg="red")
+                self.pickLabel.config(text="subsurface pick segment " + str(self.pick_segment) + ":\t active", fg="red")
                 # initialize pick index and twtt dictionaries for current picking layer
                 self.pick_dict["segment_" + str(self.pick_segment)] = np.ones(self.data["num_trace"])*-1
             elif self.pick_state == False:
                 if len(self.xln) >=  2:
                     self.pick_segment += 1
                     # only advance pick segment if picks made on previous layer
-                self.pickLabel.config(text="Subsurface Pick Segment " + str(self.pick_segment - 1) + ":\t Inactive", fg="black")
+                self.pickLabel.config(text="subsurface pick segment " + str(self.pick_segment - 1) + ":\t inactive", fg="black")
         elif self.pick_surf == "surface":
             if self.pick_state == True:
-                self.pickLabel.config(text="Surface Pick Segment:\t Active", fg="red")
+                self.pickLabel.config(text="surface pick segment:\t active", fg="red")
             elif self.pick_state == False:
-                self.pickLabel.config(text="Surface Pick Segment:\t Inactive", fg="black")
+                self.pickLabel.config(text="surface pick segment:\t inactive", fg="black")
 
 
 
@@ -447,12 +448,12 @@ class imPick(tk.Frame):
                     del self.pick_dict["segment_" + str(_i + 1)]
 
                 if self.pick_state == True:
-                    self.pickLabel.config(text="Subsurface Pick Segment " + str(self.pick_segment) + ":\t Active", fg="red")
+                    self.pickLabel.config(text="subsurface pick segment " + str(self.pick_segment) + ":\t active", fg="red")
                 elif self.pick_state == False:
                     if self.pick_segment >= 1:
-                        self.pickLabel.config(text="Subsurface Pick Segment " + str(self.pick_segment - 1) + ":\t Inactive", fg="black")   
+                        self.pickLabel.config(text="subsurface pick segment " + str(self.pick_segment - 1) + ":\t inactive", fg="black")   
                     else:
-                        self.pickLabel.config(text="Subsurface Pick Segment " + str(self.pick_segment) + ":\t Inactive", fg="#d9d9d9")
+                        self.pickLabel.config(text="subsurface pick segment " + str(self.pick_segment) + ":\t inactive", fg="#d9d9d9")
                 self.layerVar.set(0)
             self.update_option_menu()
             self.update_bg()

@@ -83,11 +83,11 @@ class MainGUI(tk.Frame):
         # pickMenu.add_command(label="Optimize", command=self.nb.select(wav))
 
         # map menu items
-        mapMenu.add_command(label="Open     [Ctrl+M]", command=self.map_loc)
+        mapMenu.add_command(label="open     [Ctrl+M]", command=self.map_loc)
 
         # help menu items
-        helpMenu.add_command(label="Instructions", command=self.help)
-        helpMenu.add_command(label="Keyboard Shortcuts", command=self.shortcuts)
+        helpMenu.add_command(label="instructions", command=self.help)
+        helpMenu.add_command(label="keyboard shortcuts", command=self.shortcuts)
 
         # add items to menubar
         menubar.add_cascade(label="file", menu=fileMenu)
