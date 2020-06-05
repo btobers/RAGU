@@ -41,6 +41,7 @@ Also need to find a way to render images faster when toggling between radar data
 
 ### Desktop Shortcut
 If desired, pyshorcuts can be used to create a desktop shortcut:
+
 If not already installed, install pyshortcuts:
 ```
 $ pip install pyshortcuts
