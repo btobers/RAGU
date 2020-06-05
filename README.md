@@ -13,7 +13,7 @@ NOSEpick is an open source GUI package developed to interpret radar sounding dat
 - *basemap.py* handles the basemap portion of the app
 - *nav.py* handles navigation data and nav coordinate transformations
 - *utils.py* contains a set of utility functions utilized by the app
-- *nose_env.yml* contains the dependencies to run the app
+- *nose_env.yml* contains list of the dependencies
 
 To create a conda environment with the required dependencies, run the following command:
 ```
@@ -47,7 +47,7 @@ If not already installed, install pyshortcuts:
 $ pip install pyshortcuts
 ```
 
-Use pyshortcuts to setup desktop shortcut (make sure NOSEpick conda environment is activated - named 'nose' by default):
+Use pyshortcuts to setup desktop shortcut (make sure NOSEpick conda environment is activated - 'nose' by default):
 ```
 $ conda activate nose
 (nose)$ pyshortcut -n NOSEpick -i ~/NOSEpick/lib/NOSEpick.ico ~/NOSEpick/main.py
