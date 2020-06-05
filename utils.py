@@ -15,21 +15,18 @@ def euclid_dist(nav):
 
 # a set of utility functions for NOSEpick GUI
 # need to clean up this entire utility at some point
-def savePick(f_saveName, data, pick_dict):
+def savePick(f_saveName, data, pick_dict, eps):
     # f_saveName is the path for where the exported csv pick file should be saved [str]
     # data is the data file structure [dict]
     # pick_dict contains the subsurface pick indeces - each key is an array the length of the number of traces, with -1 where no picks were made [dict]
-    f_saveName = f_saveName
-    data = data
-    pick_dict = pick_dict
     c = 299792458               # Speed of light at STP
-    v = c/(np.sqrt(3.15))       # EM wave veloity in ice - for thickness calculation
+    v = c/(np.sqrt(eps))        # EM wave veloity in ice - for thickness calculation
 
     trace = np.arange(data["num_trace"])                # array to hold trace number
     lon = data["navdat"].navdat[:,0]                    # array to hold longitude
     lat = data["navdat"].navdat[:,1]                    # array to hold latitude
     elev_air = data["navdat"].navdat[:,2]               # array to hold aircraft elevation
-    surf_idx = data["surf_idx"]                      # array to hold index of surface from either manual picks, or altimetry dataset
+    surf_idx = data["surf_idx"]                         # array to hold index of surface from either manual picks, or altimetry dataset
     twtt_surf = data["twtt_surf"]                       # array to hold twtt to surface below nadir position
     subsurf_idx_pk = np.repeat(np.nan,lon.shape[0])     # array to hold indeces of picks
     twtt_bed = np.repeat(np.nan,lon.shape[0])           # array to hold twtt to pick indeces

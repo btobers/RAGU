@@ -746,9 +746,9 @@ class imPick(tk.Frame):
     def save(self, f_saveName, eps, figSize):
         self.f_saveName = f_saveName
         if self.pick_dict_opt:
-            utils.savePick(self.f_saveName, self.data, self.pick_dict_opt)
+            utils.savePick(self.f_saveName, self.data, self.pick_dict_opt, eps)
         else:
-            utils.savePick(self.f_saveName, self.data, self.pick_dict)
+            utils.savePick(self.f_saveName, self.data, self.pick_dict, eps)
         # zoom out to full rgram extent to save pick image
         self.set_axes(eps)
         if self.im_status.get() =="clut":
