@@ -23,8 +23,9 @@ $ conda env create -f nose_env.yml
 ## Running NOSEpick
 Prior to running NOSEpick, set appropriate data paths in *main.py*
 
-To run NOSEpick:
+To run NOSEpick (first activate NOSEpick anaconda environment - 'nose' by default):
 ```
+$ conda activate nose
 (nose)$ python main.py
 ```
 
@@ -37,3 +38,16 @@ $ python3 main.py
 NOSEpick is still in development, but is in operable standing for interpreting certain datasets.
 Plans for the future are to complete the wvPick optimization tools, as well as add ingesters for additional datasets. So far, the thought is to add a ingester for PulsEKKO data, GSSI, Mala, and SHARAD. A segy ingester is in the works.
 Also need to find a way to render images faster when toggling between radar data and clutter, zooming/resetting the view. This can possible be done by down-sampling the data based on the zoom.
+
+### Desktop Shortcut
+If desired, pyshorcuts can be used to create a desktop shortcut:
+If not already installed, install pyshortcuts:
+```
+$ pip install pyshortcuts
+```
+
+Use pyshortcuts to setup desktop shortcut (make sure NOSEpick conda environment is activated - named 'nose' by default):
+```
+$ conda activate nose
+(nose)$ pyshortcut -n NOSEpick -i ~/NOSEpick/lib/NOSEpick.ico ~/NOSEpick/main.py
+```
