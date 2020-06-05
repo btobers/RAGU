@@ -28,7 +28,7 @@ w, h = root.winfo_screenwidth(), root.winfo_screenheight()
 root.geometry("%dx%d+0+0" % (.5*w, .5*h))
 root.title("NOSEpick")
 root.config(bg="#d9d9d9")
-img = tk.PhotoImage(file='lib/NosePick_ZOOM-01.png')
+img = tk.PhotoImage(file='lib/NOSEpick_zoom.png')
 root.tk.call('wm', 'iconphoto', root._w, img)
 # call the NOSEpickGUI class
 gui.MainGUI(root, in_path, map_path)
