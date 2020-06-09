@@ -1,5 +1,5 @@
 import numpy as np
-import sys
+import sys, h5py, fnmatch
 
 # calculate total euclidian distance along a line
 def euclid_dist(nav):
@@ -15,7 +15,7 @@ def euclid_dist(nav):
 
 # a set of utility functions for NOSEpick GUI
 # need to clean up this entire utility at some point
-def savePick(f_saveName, data, pick_dict, eps):
+def savePick(fpath, f_saveName, data, pick_dict, eps):
     # f_saveName is the path for where the exported csv pick file should be saved [str]
     # data is the data file structure [dict]
     # pick_dict contains the subsurface pick indeces - each key is an array the length of the number of traces, with -1 where no picks were made [dict]
@@ -64,6 +64,15 @@ def savePick(f_saveName, data, pick_dict, eps):
     header = "trace,lon,lat,elev_air,elev_gnd,surf_idx,twtt_surf,subsurf_idx_pk,twtt_bed,elev_bed,thick"
     np.savetxt(f_saveName, dstack, delimiter=",", newline="\n", fmt="%s", header=header, comments="")
     print("Pick data exported: " + f_saveName)
+
+    # reopen hdf5 file to save pick twtt_bed as dataset within ["drv/pick"]
+    f = h5py.File(fpath, "a") 
+    num_picks = len(fnmatch.filter(f["drv/pick"].keys(), "twtt_subsurf*"))
+    # save the new subsurface pick to the hdf5 file
+    twtt_subsurf_pick = f["drv"]["pick"].require_dataset("twtt_subsurf" + str(num_picks), data=twtt_bed, shape=twtt_bed.shape, dtype=np.float32)
+    twtt_subsurf_pick.attrs.create("Unit", np.string_("Seconds"))
+    twtt_subsurf_pick.attrs.create("Source", np.string_("Manual pick"))
+    f.close()
 
 
 def find_nearest(array,value):

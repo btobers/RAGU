@@ -43,45 +43,67 @@ class ingester:
             exit(1)
 
 
+    ###method to ingest OIB-AK radar .h5 data format###
     def h5py_read(self, fpath):
-        # method to ingest OIB-AK radar .h5 data format - all data should soon be in this format
         print('----------------------------------------')
         print("Loading: " + fpath.split("/")[-1])
-        f = h5py.File(fpath, "r")                               # read in .h5 file
+        # read in .h5 file
+        f = h5py.File(fpath, "r")                               
+
 
         # pull necessary raw group data
         fs = f["raw/rx0/"].attrs["samplingFrequency-Hz"]        # sampling frequency, Hz
         num_trace = f["raw/rx0"].attrs["numTrace"]              # number of traces in rgram
         num_sample = f["raw/rx0"].attrs["samplesPerTrace"]      # samples per trace in rgram
 
+
+        # pull necessary ext group nav data - use more precise Larsen nav data pulled from Trimble if available
         if "nav0" in f["ext"].keys():
-            # pull necessary ext group data - use more precise Larsen nav data pulled from Trimble
             lon =  np.array(f["ext/nav0"]["lon"]).astype(np.float64)
             lat =  np.array(f["ext/nav0"]["lat"]).astype(np.float64)
             elev_air =  np.array(f["ext/nav0"]["altM"]).astype(np.float64)
             crs = f["ext/nav0"].attrs["CRS"].decode("utf-8") 
+        # pull raw loc0 nav data if Larsen nav DNE
         else:
-            # pull raw loc0 nav data
             lon =  np.array(f["raw/loc0"]["lon"]).astype(np.float64)
             lat =  np.array(f["raw/loc0"]["lat"]).astype(np.float64)
             elev_air =  np.array(f["raw/loc0"]["altM"]).astype(np.float64)
             crs = f["raw/loc0"].attrs["CRS"].decode("utf-8")             
 
+
+        # pull lidar surface elevation and twtt_surf pick if possible
         if "srf0" in f["ext"].keys():
             elev_surf = np.array(f["ext/srf0"])                # surface elevation from lidar, averaged over radar first fresnel zone per trace (see code within /zippy/MARS/code/xped/hfProc/ext)
-            twtt_surf = np.array(f["drv/pick"]["twtt_surf"])
+            # twtt_surf = np.array(f["drv/pick"]["twtt_surf"])
+        # create empty arrays to hold surface elevation and twtt otherwise
         else:
             elev_surf = np.repeat(np.nan, num_trace)
-            twtt_surf = np.repeat(np.nan, num_trace)
+            # twtt_surf = np.repeat(np.nan, num_trace)
+
 
         # pull necessary drv group data
         amp = np.abs(np.array(f["drv/proc0"]))                  # pulse compressed amplitude array
         if "clutter0" in f["drv"].keys():
             clutter = np.array(f["drv/clutter0"])               # simulated clutter array
         else:
-            clutter = np.ones(amp.shape)
+            clutter = np.ones(amp.shape)                        # empty clutter array if no sim exists
+        
 
-        f.close()
+        # read in any existing picks
+        pick = {}
+        num_picks = len(list(f["drv/pick"].keys()))
+        if num_picks > 0:
+            
+            pick["twtt_surf"] = np.array(f["drv/pick"]["twtt_surf"])
+            # iterate through any existing subsurface pick layers to import
+            for _i in range(num_picks - 1):
+                pick["twtt_subsurf" + str(_i)] = np.array(f["drv/pick"]["twtt_subsurf" + str(_i)])
+        else:
+            pick["twtt_surf"] = np.repeat(np.nan, num_trace)
+
+
+        f.close()                                               # close the file
+
 
         # convert lon, lat, elev to nav object of nav class
         if "wgs" in crs.lower(): 
@@ -107,23 +129,23 @@ class ingester:
         if len(np.unique(dist)) < num_trace:
             dist = utils.interp_array(dist)
 
-        dt = 1/fs
 
+        dt = 1/fs
         trace = np.arange(num_trace)
         sample = np.arange(num_sample)
-        # create sample time array 
         sample_time = np.arange(num_sample)*dt
+
 
         # replace potential erroneous twtt_surf values with nan
         # get indices where twtt_surf is not nan
-        idx = np.logical_not(np.isnan(twtt_surf))
-        twtt_surf[np.where(twtt_surf[idx] > sample_time[-1])[0]] = np.nan
-        twtt_surf[np.where(twtt_surf[idx] <= sample_time[1])[0]] = np.nan
+        idx = np.logical_not(np.isnan(pick["twtt_surf"]))
+        pick["twtt_surf"][np.where(pick["twtt_surf"][idx] > sample_time[-1])[0]] = np.nan
+        pick["twtt_surf"][np.where(pick["twtt_surf"][idx] <= sample_time[1])[0]] = np.nan
         
         # get indices of twtt_surf
-        surf_idx = np.rint(twtt_surf/dt)
+        surf_idx = np.rint(pick["twtt_surf"]/dt)
 
-        return {"dt": dt, "num_trace": num_trace, "trace": trace, "num_sample": num_sample, "sample": sample, "sample_time": sample_time, "navdat": nav0, "elev_surf": elev_surf, "twtt_surf": twtt_surf, "surf_idx": surf_idx, "dist": dist, "amp": amp, "clutter": clutter} # other fields?
+        return {"dt": dt, "num_trace": num_trace, "trace": trace, "num_sample": num_sample, "sample": sample, "sample_time": sample_time, "navdat": nav0, "elev_surf": elev_surf, "twtt_surf": pick["twtt_surf"], "pick": pick, "surf_idx": surf_idx, "dist": dist, "amp": amp, "clutter": clutter} # other fields?
 
 
     def mat_read(self,fpath):
