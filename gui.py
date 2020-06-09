@@ -369,7 +369,7 @@ class MainGUI(tk.Frame):
                 self.pick_opt()
         elif (self.tab == "imagePick"):
             # get updated pick_dict and surf_idx from wvPick and pass back to imPick if dictionaries differ
-            if (self.imPick.get_subsurfPickFlag() == True) and (self.dict_compare(self.imPick.get_pickDict(),self.wvPick.get_pickDict()) == False) and (tk.messagebox.askyesno("Tab Change","Import optimized picks to imagePick from wavePick?") == True):
+            if (self.imPick.get_subsurfPickFlag() == True) and (self.dict_compare(self.imPick.get_pickDict(),self.wvPick.get_pickDict()) == False) and (tk.messagebox.askyesno("tab change","import optimized picks to imagePick from wavePick?") == True):
                 self.imPick.set_pickDict(self.wvPick.get_pickDict())
                 self.imPick.plot_picks(surf = "subsurface")
             elif (self.imPick.get_surfPickFlag() == True):

@@ -3,7 +3,7 @@ import utils, basemap
 import h5py
 import numpy as np
 import tkinter as tk
-import sys,os,time,copy
+import sys,os,time,copy,fnmatch
 import matplotlib as mpl
 mpl.use("TkAgg")
 import matplotlib.pyplot as plt
@@ -231,6 +231,11 @@ class imPick(tk.Frame):
         self.pick, = self.ax.plot([],[],"rx")                                       # empty line for current pick segment
         self.saved_pick, = self.ax.plot([],[],"g_",markersize=4)#",marker="_",s=12)   # empty line for saved pick
         self.surf_pick, = self.ax.plot([],[],"mx")                                  # empty line for surface pick segment
+
+        # plot any imported picks if desired
+        if (self.data["num_importedPicks"] > 0) and (tk.messagebox.askyesno("plot picks","would you like to display previous picks?") == True):
+            for _i in range(self.data["num_importedPicks"]):
+                self.ax.plot(utils.twtt2sample(self.data["pick"]["twtt_subsurf" + str(_i)], self.data["dt"]), "b", markersize=4)
         
         # set axes extents
         self.set_axes(eps)
@@ -595,25 +600,29 @@ class imPick(tk.Frame):
 
 
     def hide_artists(self):
-        if self.surf:
-            self.surf.set_visible(False)
-        if self.surf_pick:
-            self.surf_pick.set_visible(False)
-        if self.pick:
-            self.pick.set_visible(False)
-        if self.saved_pick:
-            self.saved_pick.set_visible(False)
+        for _i in self.ax.lines:
+            _i.set_visible(False)
+        # if self.surf:
+        #     self.surf.set_visible(False)
+        # if self.surf_pick:
+        #     self.surf_pick.set_visible(False)
+        # if self.pick:
+        #     self.pick.set_visible(False)
+        # if self.saved_pick:
+        #     self.saved_pick.set_visible(False)
 
 
     def show_artists(self):
-        if self.surf:
-            self.surf.set_visible(True)
-        if self.surf_pick:
-            self.surf_pick.set_visible(True)
-        if self.pick:
-            self.pick.set_visible(True)
-        if self.saved_pick:
-            self.saved_pick.set_visible(True)
+        for _i in self.ax.lines:
+            _i.set_visible(True)
+        # if self.surf:
+        #     self.surf.set_visible(True)
+        # if self.surf_pick:
+        #     self.surf_pick.set_visible(True)
+        # if self.pick:
+        #     self.pick.set_visible(True)
+        # if self.saved_pick:
+        #     self.saved_pick.set_visible(True)
 
             
     def update_bg(self, event=None):
@@ -634,14 +643,16 @@ class imPick(tk.Frame):
         "axbg" artists.
         """
         self.fig.canvas.restore_region(self.axbg)
-        if self.pick:
-            self.ax.draw_artist(self.pick)
-        if self.saved_pick:
-            self.ax.draw_artist(self.saved_pick)
-        if self.surf_pick:
-            self.ax.draw_artist(self.surf_pick)
-        if self.surf:
-            self.ax.draw_artist(self.surf)
+        # if self.pick:
+        #     self.ax.draw_artist(self.pick)
+        # if self.saved_pick:
+        #     self.ax.draw_artist(self.saved_pick)
+        # if self.surf_pick:
+        #     self.ax.draw_artist(self.surf_pick)
+        # if self.surf:
+        #     self.ax.draw_artist(self.surf)
+        for _i in self.ax.lines:
+            self.ax.draw_artist(_i)
         self.fig.canvas.blit(self.ax.bbox)
 
 

@@ -4,7 +4,7 @@ from nav import *
 import utils
 import matplotlib.pyplot as plt
 import scipy.io as scio
-import sys,os
+import sys,os,fnmatch
 # from segpy.reader import create_reader
 
 
@@ -91,16 +91,16 @@ class ingester:
 
         # read in any existing picks
         pick = {}
-        num_picks = len(list(f["drv/pick"].keys()))
-        if num_picks > 0:
-            
+        if "twtt_surf" in f["drv/pick"].keys():
             pick["twtt_surf"] = np.array(f["drv/pick"]["twtt_surf"])
-            # iterate through any existing subsurface pick layers to import
-            for _i in range(num_picks - 1):
-                pick["twtt_subsurf" + str(_i)] = np.array(f["drv/pick"]["twtt_subsurf" + str(_i)])
         else:
             pick["twtt_surf"] = np.repeat(np.nan, num_trace)
-
+        #  determine how many subsurface pick layers exist in the file - read each in as a numpy array to the pick dictionary
+        num_importedPicks = len(fnmatch.filter(f["drv/pick"].keys(), "twtt_subsurf*"))
+        if num_importedPicks > 0:
+            # iterate through any existing subsurface pick layers to import
+            for _i in range(num_importedPicks):
+                pick["twtt_subsurf" + str(_i)] = np.array(f["drv/pick"]["twtt_subsurf" + str(_i)])
 
         f.close()                                               # close the file
 
@@ -143,9 +143,9 @@ class ingester:
         pick["twtt_surf"][np.where(pick["twtt_surf"][idx] <= sample_time[1])[0]] = np.nan
         
         # get indices of twtt_surf
-        surf_idx = np.rint(pick["twtt_surf"]/dt)
+        surf_idx = utils.twtt2sample(pick["twtt_surf"], dt)
 
-        return {"dt": dt, "num_trace": num_trace, "trace": trace, "num_sample": num_sample, "sample": sample, "sample_time": sample_time, "navdat": nav0, "elev_surf": elev_surf, "twtt_surf": pick["twtt_surf"], "pick": pick, "surf_idx": surf_idx, "dist": dist, "amp": amp, "clutter": clutter} # other fields?
+        return {"dt": dt, "num_trace": num_trace, "trace": trace, "num_sample": num_sample, "sample": sample, "sample_time": sample_time, "navdat": nav0, "elev_surf": elev_surf, "twtt_surf": pick["twtt_surf"], "pick": pick, "surf_idx": surf_idx, "dist": dist, "amp": amp, "clutter": clutter, "num_importedPicks": num_importedPicks} # other fields?
 
 
     def mat_read(self,fpath):

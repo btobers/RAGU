@@ -71,7 +71,7 @@ def savePick(fpath, f_saveName, data, pick_dict, eps):
     # save the new subsurface pick to the hdf5 file
     twtt_subsurf_pick = f["drv"]["pick"].require_dataset("twtt_subsurf" + str(num_picks), data=twtt_bed, shape=twtt_bed.shape, dtype=np.float32)
     twtt_subsurf_pick.attrs.create("Unit", np.string_("Seconds"))
-    twtt_subsurf_pick.attrs.create("Source", np.string_("Manual pick"))
+    twtt_subsurf_pick.attrs.create("Source", np.string_("Manual pick layer"))
     f.close()
 
 
@@ -128,3 +128,13 @@ def depth2twtt(a, eps=3.15):
     v = c/np.sqrt(eps)
     twtt = a*2*1e3/v                # convert input depth to meters, then return twtt
     return twtt
+
+# twtt2sample
+def twtt2sample(array, dt):
+    sample_array = np.rint(array / dt)
+    return sample_array
+
+# sample2twtt
+def sample2twtt(array, dt):
+    twtt_array = array * dt
+    return twtt_array
