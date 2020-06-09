@@ -127,7 +127,7 @@ class MainGUI(tk.Frame):
         self.parent.protocol("WM_DELETE_WINDOW", self.close_window)
 
         # self.set_home()
-        # self.open_data()
+        self.open_data()
 
 
     # key is a method to handle UI keypress events
@@ -222,7 +222,7 @@ class MainGUI(tk.Frame):
         if temp_loadName:
             self.f_loadName = temp_loadName
             self.imPick.clear_canvas()  
-            self.imPick.set_vars()
+            # self.imPick.set_vars()
             # ingest the data
             # try:
             self.igst = ingester.ingester(self.f_loadName.split(".")[-1])
@@ -231,6 +231,7 @@ class MainGUI(tk.Frame):
             # check for file errors
             if np.any(self.data["dist"]):
                 self.imPick.load(self.f_loadName, self.data, self.eps.get())
+                self.imPick.set_vars()
                 self.wvPick.set_vars()
                 self.wvPick.clear()
                 self.wvPick.set_data(self.data)

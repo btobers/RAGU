@@ -128,8 +128,8 @@ class imPick(tk.Frame):
         self.clut_cmin = None
         self.clut_cmax = None
         # empty fields for picks
-        self.xln_old = []
-        self.yln_old = []
+        self.xln_old = np.array(())
+        self.yln_old = np.array(())
         self.xln = []
         self.yln = []
         self.xln_surf = []
@@ -166,7 +166,11 @@ class imPick(tk.Frame):
         Pow_data = np.power(self.data["amp"],2)
         # place data in dB for visualization
         self.dB_data = np.log10(Pow_data)
-        
+
+        # initialize arrays to hold saved picks
+        self.xln_old = np.repeat(np.nan, self.data["num_trace"])
+        self.yln_old = np.repeat(np.nan, self.data["num_trace"])
+
         # get clutter data in dB for visualization
         # check if clutter data exists
         if np.any(self.data["clutter"]):
@@ -226,17 +230,17 @@ class imPick(tk.Frame):
         self.im_clut.set_visible(False)
 
         # plot lidar surface
-        self.surf, = self.ax.plot(self.data["trace"], self.data["surf_idx"],"c_",markersize=4)
+        self.surf, = self.ax.plot(self.data["trace"], self.data["surf_idx"],"c")
 
         self.pick, = self.ax.plot([],[],"rx")                                       # empty line for current pick segment
-        self.saved_pick, = self.ax.plot([],[],"g_",markersize=4)#",marker="_",s=12)   # empty line for saved pick
+        self.saved_pick, = self.ax.plot([],[],"g")                                  # empty line for saved pick
         self.surf_pick, = self.ax.plot([],[],"mx")                                  # empty line for surface pick segment
 
         # plot any imported picks if desired
         if (self.data["num_importedPicks"] > 0) and (tk.messagebox.askyesno("plot picks","would you like to display previous picks?") == True):
             for _i in range(self.data["num_importedPicks"]):
-                self.ax.plot(utils.twtt2sample(self.data["pick"]["twtt_subsurf" + str(_i)], self.data["dt"]), "b", markersize=4)
-        
+                self.ax.plot(utils.twtt2sample(self.data["pick"]["twtt_subsurf" + str(_i)], self.data["dt"]), "b")
+
         # set axes extents
         self.set_axes(eps)
 
@@ -350,9 +354,11 @@ class imPick(tk.Frame):
                     picked_traces = np.arange(self.xln[0],self.pick_trace + 1)
                     # add cubic spline output interpolation to pick dictionary - force output to integer for index of pick
                     self.pick_dict["segment_" + str(self.pick_segment - 1)][picked_traces] = cs([picked_traces]).astype(int)
-                    # add pick interpolation to saved pick list
-                    self.xln_old.extend(picked_traces)
-                    self.yln_old.extend(self.pick_dict["segment_" + str(self.pick_segment - 1)][picked_traces])                    
+                    # add pick interpolation to saved pick array
+                    self.xln_old[picked_traces] = picked_traces
+                    self.yln_old[picked_traces] = self.pick_dict["segment_" + str(self.pick_segment - 1)][picked_traces]
+                    # self.xln_old.extend(picked_traces)
+                    # self.yln_old.extend(self.pick_dict["segment_" + str(self.pick_segment - 1)][picked_traces])                    
 
 
             elif surf == "surface":
@@ -680,7 +686,7 @@ class imPick(tk.Frame):
 
     # get_subsurfPickFlag is a method which returns true if manual subsurface picks exist, and false otherwise   
     def get_subsurfPickFlag(self):
-        if len(self.xln + self.xln_old) > 0:
+        if len(self.xln) + np.count_nonzero(~np.isnan(self.xln_old)) > 0:
             return True
         else:
             return False
