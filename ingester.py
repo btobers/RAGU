@@ -71,7 +71,7 @@ class ingester:
             crs = f["raw/loc0"].attrs["CRS"].decode("utf-8")             
 
 
-        # pull lidar surface elevatio if possible
+        # pull lidar surface elevation if possible
         if "srf0" in f["ext"].keys():
             elev_surf = np.array(f["ext/srf0"])                # surface elevation from lidar, averaged over radar first fresnel zone per trace (see code within /zippy/MARS/code/xped/hfProc/ext)
         # create empty arrays to hold surface elevation and twtt otherwise

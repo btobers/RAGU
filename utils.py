@@ -11,7 +11,7 @@ def euclid_dist(nav):
     # convert to km
     dist = dist*1e-3
 
-    return dist  
+    return dist
 
 
 # a set of utility functions for NOSEpick GUI

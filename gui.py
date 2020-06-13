@@ -226,13 +226,14 @@ class MainGUI(tk.Frame):
             self.imPick.set_vars()
             self.imPick.update_option_menu()
             # ingest the data
-            # try:
             self.igst = ingester.ingester(self.f_loadName.split(".")[-1])
             self.data = self.igst.read(self.f_loadName)
 
             # check for file errors
             if np.any(self.data["dist"]):
-                self.imPick.load(self.f_loadName, self.data, self.eps.get())
+                self.imPick.load(self.f_loadName, self.data)
+                self.imPick.set_axes(self.eps.get())
+                self.imPick.update_bg()
                 self.wvPick.set_vars()
                 self.wvPick.clear()
                 self.wvPick.set_data(self.data)
@@ -240,9 +241,6 @@ class MainGUI(tk.Frame):
             else: 
                 print("data file error, trying another!")
                 self.open_data()
-            # except Exception as err:
-            #     print('Ingest Error: ' + str(err))
-            #     self.open_data()
 
         # pass basemap to imPick for plotting pick location
         if self.map_loadName and self.basemap.get_state() == 1:
@@ -352,11 +350,12 @@ class MainGUI(tk.Frame):
                 self.imPick.set_vars()
                 self.imPick.update_option_menu()
                 self.data = self.igst.read(self.f_loadName)
-                self.imPick.load(self.f_loadName, self.data, self.eps.get())
+                self.imPick.load(self.f_loadName, self.data)
+                self.imPick.set_axes(self.eps.get())
+                self.imPick.update_bg()
                 self.wvPick.clear()
                 self.wvPick.set_vars()
                 self.wvPick.set_data(self.data)
-
 
                 # if basemap open, update. Only do this if line is longer than certain threshold to now waste time
                 if self.map_loadName and self.basemap.get_state() == 1:
@@ -399,7 +398,7 @@ class MainGUI(tk.Frame):
     # dict_compare is a method to compare the subsurface pick dictionaries from wvPick and imPick to determine if updates have been made
     def dict_compare(self, dict_imPick, dict_wvPick):
         for _i in range(len(dict_imPick)):
-            if not (np.array_equal(dict_imPick["segment_" + str(_i)] ,dict_wvPick["segment_" + str(_i)])):
+            if not (np.array_equal(dict_imPick[str(_i)] ,dict_wvPick[str(_i)])):
                 return False
 
 
