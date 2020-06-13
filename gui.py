@@ -70,6 +70,7 @@ class MainGUI(tk.Frame):
         subsurfacePickMenu.add_command(label="new     [ctrl+n]", command=self.start_subsurf_pick)
         subsurfacePickMenu.add_command(label="stop    [escape]", command=self.end_subsurf_pick)
         subsurfacePickMenu.add_command(label="clear        [c]", command=lambda: self.clear(surf = "subsurface"))    
+        subsurfacePickMenu.add_command(label="clear file", command=self.delete_datafilePicks)            
 
         # surface pick menu items
         surfacePickMenu.add_command(label="new  [ctrl+shift+n]", command=self.start_surf_pick)
@@ -201,7 +202,7 @@ class MainGUI(tk.Frame):
     def close_window(self):
         # check if picks have been made and saved
         if ((self.imPick.get_subsurfPickFlag() == True) or (self.imPick.get_surfPickFlag == True)) and (self.f_saveName == ""):
-            if tk.messagebox.askokcancel("Warning", "Exit NOSEpick without saving picks?", icon = "warning") == True:
+            if tk.messagebox.askokcancel("Warning", "exit NOSEpick without saving picks?", icon = "warning") == True:
                 self.parent.destroy()
         else:
             self.parent.destroy()
@@ -223,6 +224,7 @@ class MainGUI(tk.Frame):
             self.f_loadName = temp_loadName
             self.imPick.clear_canvas()  
             self.imPick.set_vars()
+            self.imPick.update_option_menu()
             # ingest the data
             # try:
             self.igst = ingester.ingester(self.f_loadName.split(".")[-1])
@@ -289,6 +291,9 @@ class MainGUI(tk.Frame):
             self.imPick.set_pickState(True,surf="subsurface")
             self.imPick.pick_interp(surf = "subsurface")
             self.imPick.plot_picks(surf = "subsurface")
+            # add pick annotations
+            self.imPick.add_pickLabels()
+            self.imPick.update_bg()
             self.imPick.blit()
             self.imPick.update_option_menu()
 
@@ -299,6 +304,9 @@ class MainGUI(tk.Frame):
             self.imPick.set_pickState(False,surf="subsurface")
             self.imPick.pick_interp(surf = "subsurface")
             self.imPick.plot_picks(surf = "subsurface")
+            # add pick annotations
+            self.imPick.add_pickLabels()
+            self.imPick.update_bg()
             self.imPick.blit()
             self.imPick.update_option_menu()
 
@@ -342,6 +350,7 @@ class MainGUI(tk.Frame):
                 self.f_loadName = file_list[file_index]
                 self.imPick.clear_canvas()
                 self.imPick.set_vars()
+                self.imPick.update_option_menu()
                 self.data = self.igst.read(self.f_loadName)
                 self.imPick.load(self.f_loadName, self.data, self.eps.get())
                 self.wvPick.clear()
@@ -394,6 +403,7 @@ class MainGUI(tk.Frame):
                 return False
 
 
+    # clear is a method to clear all picks
     def clear(self, surf = None):
         if self.f_loadName:
             if (surf == "surface") and (tk.messagebox.askokcancel("warning", "clear all surface picks?", icon = "warning") == True):
@@ -408,6 +418,16 @@ class MainGUI(tk.Frame):
                 self.imPick.update_option_menu()
                 self.wvPick.set_vars()
                 self.wvPick.clear()
+
+
+    # delete_datafilePicks is a method to clear subsurface picks saved to the data file
+    def delete_datafilePicks(self):
+            if (self.data["num_file_pick_lyr"] > 0) and (tk.messagebox.askokcancel("warning", "delte data file subsurface picks?", icon = "warning") == True):
+                self.imPick.remove_imported_picks()
+                self.imPick.update_bg()
+                self.imPick.blit()
+                utils.delete_savedPicks(self.f_loadName, self.data["num_file_pick_lyr"])
+                self.data["num_file_pick_lyr"] = 0
 
 
     def settings(self):

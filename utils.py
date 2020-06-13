@@ -1,5 +1,6 @@
 import numpy as np
-import sys, h5py, fnmatch
+import tkinter as tk
+import sys, h5py
 
 # calculate total euclidian distance along a line
 def euclid_dist(nav):
@@ -15,10 +16,12 @@ def euclid_dist(nav):
 
 # a set of utility functions for NOSEpick GUI
 # need to clean up this entire utility at some point
-def savePick(fpath, f_saveName, data, pick_dict, eps):
+def savePick(fpath, f_saveName, data, subsurf_pick_dict, eps):
+    # fpath is the data file path [str]
     # f_saveName is the path for where the exported csv pick file should be saved [str]
     # data is the data file structure [dict]
-    # pick_dict contains the subsurface pick indeces - each key is an array the length of the number of traces, with -1 where no picks were made [dict]
+    # subsurf_pick_dict contains the subsurface pick indeces - each key is an array the length of the number of traces, with np.nan where no picks were made [dict]
+    # eps is a value for the dielectric constant used to calculate ice thickness based on EM wave speed [float]
     c = 299792458               # Speed of light at STP
     v = c/(np.sqrt(eps))        # EM wave veloity in ice - for thickness calculation
 
@@ -34,16 +37,16 @@ def savePick(fpath, f_saveName, data, pick_dict, eps):
     elev_gnd = np.repeat(np.nan,lon.shape[0])           # array to hold ground(surface) elevation
     elev_bed = np.repeat(np.nan,lon.shape[0])           # array to hold derived bed elevation from picks
 
-    # iterate through pick_dict layers adding data to export arrays
-    for _i in range(len(pick_dict)):
-        picked_traces = np.where(pick_dict["segment_" + str(_i)] != -1)[0]
+    # iterate through subsurf_pick_dict layers adding data to export arrays
+    for _i in range(len(subsurf_pick_dict)):
+        picked_traces = np.where(~np.isnan(subsurf_pick_dict[str(_i)]))[0]
 
-        subsurf_idx_pk[picked_traces] = pick_dict["segment_" + str(_i)][picked_traces]
+        subsurf_idx_pk[picked_traces] = subsurf_pick_dict[str(_i)][picked_traces]
 
-        twtt_bed[picked_traces] = pick_dict["segment_" + str(_i)][picked_traces]*data["dt"]    # convert pick idx to twtt
+        twtt_bed[picked_traces] = subsurf_pick_dict[str(_i)][picked_traces]*data["dt"]    # convert pick idx to twtt
 
         # calculate ice thickness - using twtt_bed and twtt_surf
-        thick[picked_traces] = ((((pick_dict["segment_" + str(_i)][picked_traces]*data["dt"]) - (data["twtt_surf"][picked_traces])) * v) / 2)
+        thick[picked_traces] = ((((subsurf_pick_dict[str(_i)][picked_traces]*data["dt"]) - (data["twtt_surf"][picked_traces])) * v) / 2)
 
     # calculate gnd elevation 
     elev_gnd = [a-(b*c/2) for a,b in zip(elev_air,twtt_surf)]
@@ -58,20 +61,36 @@ def savePick(fpath, f_saveName, data, pick_dict, eps):
         elev_gnd = np.repeat(np.nan,lon.shape[0])
         elev_bed = np.repeat(np.nan,lon.shape[0])
 
-    # combine the data into a matrix for export
-    dstack = np.column_stack((trace,lon,lat,elev_air,elev_gnd,surf_idx,twtt_surf,subsurf_idx_pk,twtt_bed,elev_bed,thick))
+    try:
+        # combine the data into a matrix for export
+        dstack = np.column_stack((trace,lon,lat,elev_air,elev_gnd,surf_idx,twtt_surf,subsurf_idx_pk,twtt_bed,elev_bed,thick))
 
-    header = "trace,lon,lat,elev_air,elev_gnd,surf_idx,twtt_surf,subsurf_idx_pk,twtt_bed,elev_bed,thick"
-    np.savetxt(f_saveName, dstack, delimiter=",", newline="\n", fmt="%s", header=header, comments="")
-    print("Pick data exported: " + f_saveName)
+        header = "trace,lon,lat,elev_air,elev_gnd,surf_idx,twtt_surf,subsurf_idx_pk,twtt_bed,elev_bed,thick"
+        np.savetxt(f_saveName, dstack, delimiter=",", newline="\n", fmt="%s", header=header, comments="")
 
-    # reopen hdf5 file to save pick twtt_bed as dataset within ["drv/pick"]
-    f = h5py.File(fpath, "a") 
-    num_picks = len(fnmatch.filter(f["drv/pick"].keys(), "twtt_subsurf*"))
-    # save the new subsurface pick to the hdf5 file
-    twtt_subsurf_pick = f["drv"]["pick"].require_dataset("twtt_subsurf" + str(num_picks), data=twtt_bed, shape=twtt_bed.shape, dtype=np.float32)
-    twtt_subsurf_pick.attrs.create("Unit", np.string_("Seconds"))
-    twtt_subsurf_pick.attrs.create("Source", np.string_("Manual pick layer"))
+        # reopen hdf5 file to save pick twtt_bed as dataset within ["drv/pick"]
+        f = h5py.File(fpath, "a") 
+        num_file_pick_lyr = data["num_file_pick_lyr"]
+        # save the new subsurface pick to the hdf5 file - determine whther to overwrite or append
+        if (num_file_pick_lyr > 0) and (tk.messagebox.askyesno("overwrite/append","overwrite most recent picks previously saved to file (no to append as new subsurface pick layer)?") == True):
+            del f["drv/pick"]["twtt_subsurf" + str(num_file_pick_lyr - 1)]
+            twtt_subsurf_pick = f["drv"]["pick"].require_dataset("twtt_subsurf" + str(num_file_pick_lyr - 1), data=twtt_bed, shape=twtt_bed.shape, dtype=np.float32)
+        else:
+            twtt_subsurf_pick = f["drv"]["pick"].require_dataset("twtt_subsurf" + str(num_file_pick_lyr), data=twtt_bed, shape=twtt_bed.shape, dtype=np.float32)
+
+        twtt_subsurf_pick.attrs.create("Unit", np.string_("Seconds"))
+        twtt_subsurf_pick.attrs.create("Source", np.string_("Manual pick layer"))
+        f.close()
+        print("picks exported successfully")
+
+    except Exception as err:
+        print("picks export error:" + str(err))
+
+
+def delete_savedPicks(fpath, num_file_pick_lyr):
+    f =  h5py.File(fpath, "a")
+    for _i in range(num_file_pick_lyr):
+        del f["drv/pick"]["twtt_subsurf" + str(_i)]
     f.close()
 
 
@@ -111,7 +130,6 @@ def interp_array(array):
 # also need to hold back image from being displayed in app temporarily when saved
 def exportIm(fname, fig, extent=None):
     fig.savefig(fname.rstrip(".csv") + ".png", dpi = 500, bbox_inches='tight', pad_inches = 0.05, transparent=True)# facecolor = "#d9d9d9")
-    print("Pick image exported: " + fname.rstrip(".csv") + ".png")
 
 
 # twtt2depth function

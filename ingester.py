@@ -71,14 +71,12 @@ class ingester:
             crs = f["raw/loc0"].attrs["CRS"].decode("utf-8")             
 
 
-        # pull lidar surface elevation and twtt_surf pick if possible
+        # pull lidar surface elevatio if possible
         if "srf0" in f["ext"].keys():
             elev_surf = np.array(f["ext/srf0"])                # surface elevation from lidar, averaged over radar first fresnel zone per trace (see code within /zippy/MARS/code/xped/hfProc/ext)
-            # twtt_surf = np.array(f["drv/pick"]["twtt_surf"])
         # create empty arrays to hold surface elevation and twtt otherwise
         else:
             elev_surf = np.repeat(np.nan, num_trace)
-            # twtt_surf = np.repeat(np.nan, num_trace)
 
 
         # pull necessary drv group data
@@ -95,11 +93,12 @@ class ingester:
             pick["twtt_surf"] = np.array(f["drv/pick"]["twtt_surf"])
         else:
             pick["twtt_surf"] = np.repeat(np.nan, num_trace)
+            
         #  determine how many subsurface pick layers exist in the file - read each in as a numpy array to the pick dictionary
-        num_importedPicks = len(fnmatch.filter(f["drv/pick"].keys(), "twtt_subsurf*"))
-        if num_importedPicks > 0:
+        num_file_pick_lyr = len(fnmatch.filter(f["drv/pick"].keys(), "twtt_subsurf*"))
+        if num_file_pick_lyr > 0:
             # iterate through any existing subsurface pick layers to import
-            for _i in range(num_importedPicks):
+            for _i in range(num_file_pick_lyr):
                 pick["twtt_subsurf" + str(_i)] = np.array(f["drv/pick"]["twtt_subsurf" + str(_i)])
 
         f.close()                                               # close the file
@@ -145,7 +144,7 @@ class ingester:
         # get indices of twtt_surf
         surf_idx = utils.twtt2sample(pick["twtt_surf"], dt)
 
-        return {"dt": dt, "num_trace": num_trace, "trace": trace, "num_sample": num_sample, "sample": sample, "sample_time": sample_time, "navdat": nav0, "elev_surf": elev_surf, "twtt_surf": pick["twtt_surf"], "pick": pick, "surf_idx": surf_idx, "dist": dist, "amp": amp, "clutter": clutter, "num_importedPicks": num_importedPicks} # other fields?
+        return {"dt": dt, "num_trace": num_trace, "trace": trace, "num_sample": num_sample, "sample": sample, "sample_time": sample_time, "navdat": nav0, "elev_surf": elev_surf, "twtt_surf": pick["twtt_surf"], "pick": pick, "surf_idx": surf_idx, "dist": dist, "amp": amp, "clutter": clutter, "num_file_pick_lyr": num_file_pick_lyr} # other fields?
 
 
     def mat_read(self,fpath):
