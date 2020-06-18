@@ -104,8 +104,6 @@ class ingester:
             pick["twtt_surf"] = np.array(f["drv/pick"]["twtt_surf"])
         else:
             pick["twtt_surf"] = np.repeat(np.nan, num_trace)
-
-        pick["twtt_surf"] = np.repeat(np.nan, num_trace)
             
         #  determine how many subsurface pick layers exist in the file - read each in as a numpy array to the pick dictionary
         num_file_pick_lyr = len(fnmatch.filter(f["drv/pick"].keys(), "twtt_subsurf*"))
