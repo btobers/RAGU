@@ -29,13 +29,9 @@ def savePick(fpath, f_saveName, data, subsurf_pick_dict, eps):
     lon = data["navdat"].navdat[:,0]                    # array to hold longitude
     lat = data["navdat"].navdat[:,1]                    # array to hold latitude
     elev_air = data["navdat"].navdat[:,2]               # array to hold aircraft elevation
-    surf_idx = data["surf_idx"]                         # array to hold index of surface from either manual picks, or altimetry dataset
-    twtt_surf = data["twtt_surf"]                       # array to hold twtt to surface below nadir position
+    twtt_surf = data["pick"]["twtt_surf"]               # array to hold twtt to surface below nadir position
+    surf_idx = data["surf_idx"]                         # array to hold surface index
     subsurf_idx_pk = np.repeat(np.nan,lon.shape[0])     # array to hold indeces of picks
-    twtt_bed = np.repeat(np.nan,lon.shape[0])           # array to hold twtt to pick indeces
-    thick = np.repeat(np.nan,lon.shape[0])              # array to hold derived thickness from picks
-    elev_gnd = np.repeat(np.nan,lon.shape[0])           # array to hold ground(surface) elevation
-    elev_bed = np.repeat(np.nan,lon.shape[0])           # array to hold derived bed elevation from picks
 
     # iterate through subsurf_pick_dict layers adding data to export arrays
     for _i in range(len(subsurf_pick_dict)):
@@ -43,23 +39,17 @@ def savePick(fpath, f_saveName, data, subsurf_pick_dict, eps):
 
         subsurf_idx_pk[picked_traces] = subsurf_pick_dict[str(_i)][picked_traces]
 
-        twtt_bed[picked_traces] = subsurf_pick_dict[str(_i)][picked_traces]*data["dt"]    # convert pick idx to twtt
+    # convert pick idx to twtt
+    twtt_bed = subsurf_idx_pk * data["dt"]    
 
-        # calculate ice thickness - using twtt_bed and twtt_surf
-        thick[picked_traces] = ((((subsurf_pick_dict[str(_i)][picked_traces]*data["dt"]) - (data["twtt_surf"][picked_traces])) * v) / 2)
+    # calculate ice thickness
+    thick = (((twtt_bed - twtt_surf) * v) / 2)
 
     # calculate gnd elevation 
-    elev_gnd = [a-(b*c/2) for a,b in zip(elev_air,twtt_surf)]
+    elev_gnd = elev_air - ((twtt_surf * c) / 2)
 
     # calculate bed elevation
-    elev_bed = [a-b for a,b in zip(elev_gnd,thick)]
-
-    # if twtt_surf not in data, replace values for twtt_surf, elev_gnd, elev_bed, and thick with NaN's to be recalculated later
-    if not np.any(data["twtt_surf"]):
-        twtt_surf = np.repeat(np.nan,lon.shape[0])
-        thick = np.repeat(np.nan,lon.shape[0])
-        elev_gnd = np.repeat(np.nan,lon.shape[0])
-        elev_bed = np.repeat(np.nan,lon.shape[0])
+    elev_bed = elev_gnd - thick
 
     try:
         # combine the data into a matrix for export

@@ -18,7 +18,7 @@ class ingester:
         # hdf5, mat, segy
         valid_types = ["h5", "mat", "sgy", "img"] # can add more to this
         if (ftype not in valid_types):
-            print("Invalid file type specifier")
+            print("Invalid file type specifier: '" + ftype + "'")
             print("Valid file types:")
             print(valid_types)
             exit(1)
@@ -50,6 +50,17 @@ class ingester:
         # read in .h5 file
         f = h5py.File(fpath, "r")                               
 
+        # h5 radar data group structure        
+        # |-raw
+        # |  |-rx0
+        # |  |-loc0
+        # |-ext
+        # |  |-nav0
+        # |  |-srf0
+        # |-drv
+        # |  |-proc0
+        # |  |-clutter0
+        # |  |-pick
 
         # pull necessary raw group data
         fs = f["raw/rx0/"].attrs["samplingFrequency-Hz"]        # sampling frequency, Hz
@@ -93,6 +104,8 @@ class ingester:
             pick["twtt_surf"] = np.array(f["drv/pick"]["twtt_surf"])
         else:
             pick["twtt_surf"] = np.repeat(np.nan, num_trace)
+
+        pick["twtt_surf"] = np.repeat(np.nan, num_trace)
             
         #  determine how many subsurface pick layers exist in the file - read each in as a numpy array to the pick dictionary
         num_file_pick_lyr = len(fnmatch.filter(f["drv/pick"].keys(), "twtt_subsurf*"))
@@ -144,12 +157,11 @@ class ingester:
         # get indices of twtt_surf
         surf_idx = utils.twtt2sample(pick["twtt_surf"], dt)
 
-        return {"dt": dt, "num_trace": num_trace, "trace": trace, "num_sample": num_sample, "sample": sample, "sample_time": sample_time, "navdat": nav0, "elev_surf": elev_surf, "twtt_surf": pick["twtt_surf"], "pick": pick, "surf_idx": surf_idx, "dist": dist, "amp": amp, "clutter": clutter, "num_file_pick_lyr": num_file_pick_lyr} # other fields?
+        return {"dt": dt, "num_trace": num_trace, "trace": trace, "num_sample": num_sample, "sample": sample, "sample_time": sample_time, "navdat": nav0, "elev_surf": elev_surf, "pick": pick, "surf_idx": surf_idx, "dist": dist, "amp": amp, "clutter": clutter, "num_file_pick_lyr": num_file_pick_lyr} # other fields?
 
 
     def mat_read(self,fpath):
         # method to ingest .mat files. for older matlab files, scio works and h5py does not. for newer files, h5py works and scio does not 
-        c = 299792458               # Speed of light at STP
         try:
             f = h5py.File(fpath, "r")
             dt = float(f["block"]["dt"][0])
