@@ -38,6 +38,8 @@ class MainGUI(tk.Frame):
         self.userName = tk.StringVar(value="btober")
         self.eps = tk.DoubleVar(value=3.15)
         self.figSize = tk.StringVar(value="21,7")
+        self.debugState = tk.BooleanVar()
+        self.debugState.set(False)
 
         # generate menubar
         menubar = tk.Menu(self.parent)
@@ -111,7 +113,6 @@ class MainGUI(tk.Frame):
 
         # bind tab change event to send pick data to wvPick if tab switched from imPick
         self.nb.bind("<<NotebookTabChanged>>", self.tab_change)
-
 
         # initialize imPick
         self.imPick = imPick.imPick(self.imTab)
@@ -452,6 +453,13 @@ class MainGUI(tk.Frame):
         lab.pack(side=tk.LEFT)
         self.figEnt = tk.Entry(row,textvariable=self.figSize)
         self.figEnt.pack(side=tk.RIGHT, expand=tk.YES, fill=tk.X)
+
+        row = tk.Frame(settingsWindow)
+        row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+        lab = tk.Label(row, width=25, text="degub mode", anchor='w')
+        lab.pack(side=tk.LEFT)
+        tk.Radiobutton(row,text="on", variable=self.debugState, value=True).pack(side="left")
+        tk.Radiobutton(row,text="off", variable=self.debugState, value=False).pack(side="left")
         
         b1 = tk.Button(settingsWindow, text='save',
                     command=self.updateSettings)
@@ -481,6 +489,9 @@ class MainGUI(tk.Frame):
         
         # pass updated dielectric to imPick
         self.imPick.set_axes(self.eps.get())
+
+        # pass updated debug state to imPick
+        self.imPick.set_debugState(self.debugState.get())
 
 
     def help(self):

@@ -165,7 +165,13 @@ class imPick(tk.Frame):
         self.im_status.set("data")
         self.pick_vis.set(True)
         self.pick_ann_vis.set(False)
+        self.debugState = False
         self.pickLabel.config(fg="#d9d9d9")
+
+
+    # get debug state from gui settings
+    def set_debugState(self, debugState):
+        self.debugState = debugState
 
 
     # load calls ingest() on the data file and sets the datacanvas
@@ -341,6 +347,10 @@ class imPick(tk.Frame):
             # pass pick trace location to basemap
             if self.basemap and self.basemap.get_state() == 1:
                 self.basemap.plot_idx(self.pick_trace)
+
+            # if in debug state, print pick info
+            if self.debugState == True:
+                utils.print_pickInfo(self.data, self.pick_trace, pick_sample)
 
 
     # pick_interp is a method for cubic spline interpolation of twtt between pick locations

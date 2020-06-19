@@ -2,6 +2,7 @@ import numpy as np
 import tkinter as tk
 import sys, h5py
 
+
 # calculate total euclidian distance along a line
 def euclid_dist(nav):
     dist = np.zeros(nav.navdat.shape[0])
@@ -30,6 +31,7 @@ def savePick(fpath, f_saveName, data, subsurf_pick_dict, eps):
     lat = data["navdat"].navdat[:,1]                    # array to hold latitude
     elev_air = data["navdat"].navdat[:,2]               # array to hold aircraft elevation
     twtt_surf = data["pick"]["twtt_surf"]               # array to hold twtt to surface below nadir position
+    elev_gnd = data["elev_gnd"]                         # array to hold ground elevation beneath aircraft sampled from lidar pointcloud
     surf_idx = data["surf_idx"]                         # array to hold surface index
     subsurf_idx_pk = np.repeat(np.nan,lon.shape[0])     # array to hold indeces of picks
 
@@ -45,8 +47,8 @@ def savePick(fpath, f_saveName, data, subsurf_pick_dict, eps):
     # calculate ice thickness
     thick = (((twtt_bed - twtt_surf) * v) / 2)
 
-    # calculate gnd elevation 
-    elev_gnd = elev_air - ((twtt_surf * c) / 2)
+    # # calculate gnd elevation 
+    # elev_gnd = elev_air - ((twtt_surf * c) / 2)
 
     # calculate bed elevation
     elev_bed = elev_gnd - thick
@@ -137,12 +139,32 @@ def depth2twtt(a, eps=3.15):
     twtt = a*2*1e3/v                # convert input depth to meters, then return twtt
     return twtt
 
+
 # twtt2sample
 def twtt2sample(array, dt):
     sample_array = np.rint(array / dt)
     return sample_array
 
+
 # sample2twtt
 def sample2twtt(array, dt):
     twtt_array = array * dt
     return twtt_array
+
+
+def print_pickInfo(data, trace, sample):
+    c = 299792458               # Speed of light at STP
+    v = c/(np.sqrt(3.15))        # EM wave veloity in ice - for thickness calculation
+
+    fields = ["trace","sample","elev_air","twtt_surf","elev_gnd","twtt_bed","elev_bed","thick"]
+
+    elev_air = data["navdat"].navdat[trace,2]
+    twtt_surf = data["pick"]["twtt_surf"][trace]
+    elev_gnd = data["elev_gnd"][trace]
+    twtt_bed = sample * data["dt"]
+    thick = (((twtt_bed - twtt_surf) * v) / 2)
+    elev_bed = elev_gnd - thick
+
+    print(*fields, sep="\t")
+    print("%d\t%d\t%8.4f\t%8.4e\t%8.4f\t%8.4e\t%8.4f\t%8.4f" % (trace,sample,elev_air,twtt_surf,elev_gnd,twtt_bed,elev_bed,thick))
+    print()

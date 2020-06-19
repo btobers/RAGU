@@ -81,14 +81,12 @@ class ingester:
             elev_air =  np.array(f["raw/loc0"]["altM"]).astype(np.float64)
             crs = f["raw/loc0"].attrs["CRS"].decode("utf-8")             
 
-
         # pull lidar surface elevation if possible
         if "srf0" in f["ext"].keys():
-            elev_surf = np.array(f["ext/srf0"])                # surface elevation from lidar, averaged over radar first fresnel zone per trace (see code within /zippy/MARS/code/xped/hfProc/ext)
+            elev_gnd = np.array(f["ext/srf0"])                # surface elevation from lidar, averaged over radar first fresnel zone per trace (see code within /zippy/MARS/code/xped/hfProc/ext)
         # create empty arrays to hold surface elevation and twtt otherwise
         else:
-            elev_surf = np.repeat(np.nan, num_trace)
-
+            elev_gnd = np.repeat(np.nan, num_trace)
 
         # pull necessary drv group data
         amp = np.abs(np.array(f["drv/proc0"]))                  # pulse compressed amplitude array
@@ -97,7 +95,6 @@ class ingester:
         else:
             clutter = np.ones(amp.shape)                        # empty clutter array if no sim exists
         
-
         # read in any existing picks
         pick = {}
         if "twtt_surf" in f["drv/pick"].keys():
@@ -113,7 +110,6 @@ class ingester:
                 pick["twtt_subsurf" + str(_i)] = np.array(f["drv/pick"]["twtt_subsurf" + str(_i)])
 
         f.close()                                               # close the file
-
 
         # convert lon, lat, elev to nav object of nav class
         if "wgs" in crs.lower(): 
@@ -155,7 +151,7 @@ class ingester:
         # get indices of twtt_surf
         surf_idx = utils.twtt2sample(pick["twtt_surf"], dt)
 
-        return {"dt": dt, "num_trace": num_trace, "trace": trace, "num_sample": num_sample, "sample": sample, "sample_time": sample_time, "navdat": nav0, "elev_surf": elev_surf, "pick": pick, "surf_idx": surf_idx, "dist": dist, "amp": amp, "clutter": clutter, "num_file_pick_lyr": num_file_pick_lyr} # other fields?
+        return {"dt": dt, "num_trace": num_trace, "trace": trace, "num_sample": num_sample, "sample": sample, "sample_time": sample_time, "navdat": nav0, "elev_gnd": elev_gnd, "pick": pick, "surf_idx": surf_idx, "dist": dist, "amp": amp, "clutter": clutter, "num_file_pick_lyr": num_file_pick_lyr} # other fields?
 
 
     def mat_read(self,fpath):
@@ -205,7 +201,7 @@ class ingester:
             twtt_surf.fill(np.nan)
 
         # calculate surface elevation 
-        elev_surf = elev_air - twtt_surf*c/2
+        elev_gnd = elev_air - twtt_surf*c/2
         
         # convert lon, lat, elev to navdat object of nav class
         wgs84_proj4 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
@@ -240,7 +236,7 @@ class ingester:
         # get indices of twtt_surf
         surf_idx = np.rint(twtt_surf/dt)
 
-        return {"dt": dt, "num_trace": num_trace, "trace": trace, "num_sample": num_sample, "sample": sample, "sample_time": sample_time, "navdat": nav0, "elev_surf": elev_surf, "twtt_surf": twtt_surf, "surf_idx": surf_idx, "dist": dist, "amp": amp, "clutter": clutter} # other fields?
+        return {"dt": dt, "num_trace": num_trace, "trace": trace, "num_sample": num_sample, "sample": sample, "sample_time": sample_time, "navdat": nav0, "elev_gnd": elev_gnd, "twtt_surf": twtt_surf, "surf_idx": surf_idx, "dist": dist, "amp": amp, "clutter": clutter} # other fields?
 
 
     def segypy_read(self, fpath):
@@ -275,7 +271,7 @@ class ingester:
         lat = nav_file[:,2].astype(np.float64)
         elev_air = nav_file[:,5].astype(np.float64) - nav_file[:,4].astype(np.float64)       # [km]
 
-        elev_surf = np.repeat(np.nan, num_trace)
+        elev_gnd = np.repeat(np.nan, num_trace)
 
         dist = np.arange(num_trace)
 
@@ -300,4 +296,4 @@ class ingester:
 
         # get indices of twtt_surf
         surf_idx = np.rint(twtt_surf/dt)
-        return {"dt": dt, "num_trace": num_trace, "trace": trace, "num_sample": num_sample, "sample": sample, "sample_time": sample_time, "navdat": nav0, "elev_surf": elev_surf, "twtt_surf": twtt_surf, "surf_idx": surf_idx, "dist": dist, "amp": amp, "clutter": clutter} # other fields?
+        return {"dt": dt, "num_trace": num_trace, "trace": trace, "num_sample": num_sample, "sample": sample, "sample_time": sample_time, "navdat": nav0, "elev_gnd": elev_gnd, "twtt_surf": twtt_surf, "surf_idx": surf_idx, "dist": dist, "amp": amp, "clutter": clutter} # other fields?
