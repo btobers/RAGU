@@ -297,3 +297,10 @@ class ingester:
         # get indices of twtt_surf
         surf_idx = np.rint(twtt_surf/dt)
         return {"dt": dt, "num_trace": num_trace, "trace": trace, "num_sample": num_sample, "sample": sample, "sample_time": sample_time, "navdat": nav0, "elev_gnd": elev_gnd, "twtt_surf": twtt_surf, "surf_idx": surf_idx, "dist": dist, "amp": amp, "clutter": clutter} # other fields?
+
+    
+# load_picks is a method to load picks from a csv file
+def load_picks(path):
+    dat = np.genfromtxt(path, delimiter=",", dtype = None, names = True)
+    twtt_bed = dat["twtt_bed"]
+    return twtt_bed

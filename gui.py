@@ -52,8 +52,10 @@ class MainGUI(tk.Frame):
 
         # file menu items
         fileMenu.add_command(label="open       [ctrl+o]", command=self.open_data)
-        fileMenu.add_command(label="save       [ctrl+s]", command=self.save_loc)
+        fileMenu.add_command(label="load picks", command=self.load_picks)
         fileMenu.add_command(label="next        [right]", command=self.next_loc)
+        fileMenu.add_command(label="save       [ctrl+s]", command=self.save_loc)
+
 
         # settings submenu
         settingsMenu = tk.Menu(fileMenu,tearoff=0)
@@ -367,6 +369,15 @@ class MainGUI(tk.Frame):
 
             else:
                 print("Note: " + self.f_loadName.split("/")[-1] + " is the last file in " + file_path + "*." + self.f_loadName.split(".")[-1])
+
+
+    # load_picks is a method to load and plot picks saved to a csv file
+    def load_picks(self):
+        if self.f_loadName:
+            tmp_loadName = tk.filedialog.askopenfilename(initialdir = self.home_dir, title = "load picks", filetypes = (("comma separated value", "*.csv"),))
+            if tmp_loadName:
+                twtt_bed = ingester.load_picks(path=tmp_loadName)
+                self.imPick.plot_bed(utils.twtt2sample(twtt_bed, self.data["dt"]))
 
 
     def tab_change(self, event):

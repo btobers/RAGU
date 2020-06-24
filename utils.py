@@ -86,6 +86,16 @@ def delete_savedPicks(fpath, num_file_pick_lyr):
     f.close()
 
 
+# list_insert is a function to return the element at which to insert a new item to a sorted list
+def list_insert_idx(list, n): 
+    # search for the position 
+    for i in range(len(list)): 
+        if list[i] > n: 
+            index = i 
+            break
+    return index
+
+
 def find_nearest(array,value):
     # return index in array with value closest to the passed value
     idx = (np.abs(array-value)).argmin()

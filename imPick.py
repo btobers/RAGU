@@ -255,7 +255,7 @@ class imPick(tk.Frame):
         # plot any imported picks if desired
         if (self.data["num_file_pick_lyr"] > 0) and (tk.messagebox.askyesno("display picks","display existing data file picks?") == True):
             for _i in range(self.data["num_file_pick_lyr"]):
-                self.ax.plot(utils.twtt2sample(self.data["pick"]["twtt_subsurf" + str(_i)], self.data["dt"]), label=str(_i))
+                self.plot_bed(utils.twtt2sample(self.data["pick"]["twtt_subsurf" + str(_i)], self.data["dt"]), lbl=str(_i))
 
         # update the canvas
         self.dataCanvas._tkcanvas.pack()
@@ -323,25 +323,49 @@ class imPick(tk.Frame):
             if self.pick_state == True:
                 # restrict subsurface picks to fall below surface
                 if (self.pick_surf == "subsurface") and ((pick_sample > self.data["surf_idx"][self.pick_trace]) or (np.isnan(self.data["surf_idx"][self.pick_trace]))):
-                # make sure pick falls after previous pick
-                    if (len(self.xln_subsurf) >= 1) and (self.pick_trace <= self.xln_subsurf[-1]):
-                        pass
+                    # if pick falls before previous pix, prepend to pick list
+                    if (len(self.xln_subsurf) >= 1) and (self.pick_trace < self.xln_subsurf[0]):
+                        self.xln_subsurf.insert(0, self.pick_trace)
+                        self.yln_subsurf.insert(0, pick_sample)
+
+                    # if pick falls in between previous picks, insert in proper location of pick list
+                    elif (len(self.xln_subsurf) >= 1) and (self.pick_trace > self.xln_subsurf[0]) and (self.pick_trace < self.xln_subsurf[-1]):
+                        # find proper index to add new pick 
+                        idx = utils.list_insert_idx(self.xln_subsurf, self.pick_trace)   
+                        self.xln_subsurf = self.xln_subsurf[:idx] + [self.pick_trace] + self.xln_subsurf[idx:] 
+                        self.yln_subsurf = self.yln_subsurf[:idx] + [pick_sample] + self.yln_subsurf[idx:] 
+
+                    # else append new pick to end of pick list
                     else:
                         self.xln_subsurf.append(self.pick_trace)
                         self.yln_subsurf.append(pick_sample)
-                        # set self.pick data to plot pick on image
-                        self.tmp_subsurf_ln.set_data(self.xln_subsurf, self.yln_subsurf)
+
+                    # set self.pick data to plot pick on image
+                    self.tmp_subsurf_ln.set_data(self.xln_subsurf, self.yln_subsurf)
 
                 elif self.pick_surf == "surface":
-                    if (len(self.xln_surf) >= 1) and (self.pick_trace <= self.xln_surf[-1]):
-                        pass
+                    # if pick falls before previous pix, prepend to pick list
+                    if (len(self.xln_surf) >= 1) and (self.pick_trace < self.xln_surf[0]):
+                        self.xln_surf.insert(0, self.pick_trace)
+                        self.yln_surf.insert(0, pick_sample)
+
+                    # if pick falls in between previous picks, insert in proper location of pick list
+                    elif (len(self.xln_surf) >= 1) and (self.pick_trace > self.xln_surf[0]) and (self.pick_trace < self.xln_surf[-1]):
+                        # find proper index to add new pick 
+                        idx = utils.list_insert_idx(self.xln_surf, self.pick_trace)   
+                        self.xln_surf = self.xln_surf[:idx] + [self.pick_trace] + self.xln_surf[idx:] 
+                        self.yln_surf = self.yln_surf[:idx] + [pick_sample] + self.yln_surf[idx:] 
+
+                    # else append new pick to end of pick list
                     else:
                         self.xln_surf.append(self.pick_trace)
                         self.yln_surf.append(pick_sample)
-                        # set self.tmp_surf_ln data to plot pick on image
-                        self.tmp_surf_ln.set_data(self.xln_surf, self.yln_surf)
-                        # Set surf_pickFlag to True to show that a surface pick has been made
-                        self.surf_pickFlag = True
+
+                    # set self.tmp_surf_ln data to plot pick on image
+                    self.tmp_surf_ln.set_data(self.xln_surf, self.yln_surf)
+                    # Set surf_pickFlag to True to show that a surface pick has been made
+                    self.surf_pickFlag = True
+
                 self.blit()
 
             # pass pick trace location to basemap
@@ -362,7 +386,7 @@ class imPick(tk.Frame):
                     # cubic spline between picks
                     cs = CubicSpline(self.xln_subsurf, self.yln_subsurf)
                     # generate array between first and last pick indices on current layer
-                    picked_traces = np.arange(self.xln_subsurf[0],self.pick_trace + 1)
+                    picked_traces = np.arange(self.xln_subsurf[0], self.xln_subsurf[-1] + 1)
                     sample = cs(picked_traces).astype(int)
                     # add cubic spline output interpolation to pick dictionary - force output to integer for index of pick
                     if self.edit_flag == True:
@@ -382,7 +406,7 @@ class imPick(tk.Frame):
                     # cubic spline between surface picks
                     cs = CubicSpline(self.xln_surf,self.yln_surf)
                     # generate array between first and last pick indices on current layer
-                    picked_traces = np.arange(self.xln_surf[0],self.pick_trace + 1)
+                    picked_traces = np.arange(self.xln_surf[0], self.xln_surf[-1] + 1)
                     sample = cs(picked_traces).astype(int)
                     # input cubic spline output surface twtt array - force output to integer for index of pick
                     self.data["surf_idx"][picked_traces] = sample
@@ -400,7 +424,7 @@ class imPick(tk.Frame):
             del self.xln_subsurf[:]
             del self.yln_subsurf[:]
             self.tmp_subsurf_ln.set_data(self.xln_subsurf, self.yln_subsurf)
-            self.saved_subsurf_ln.set_data(self.xln_subsurf_saved,self.yln_subsurf_saved)
+            self.saved_subsurf_ln.set_data(self.xln_subsurf_saved, self.yln_subsurf_saved)
 
         elif surf == "surface":
             # remove temporary picks
@@ -639,6 +663,11 @@ class imPick(tk.Frame):
         # redraw canvas
         self.fig.canvas.draw()
         self.im_status.set("clut")
+
+
+    # plot_bed is a method to plot bed picks
+    def plot_bed(self, sample_array, lbl=None):
+        self.ax.plot(sample_array, label=lbl)
 
 
     # pick_vis is a method to toggle the visibility of picks
