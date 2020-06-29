@@ -47,9 +47,6 @@ def savePick(fpath, f_saveName, data, subsurf_pick_dict, eps):
     # calculate ice thickness
     thick = (((twtt_bed - twtt_surf) * v) / 2)
 
-    # # calculate gnd elevation 
-    # elev_gnd = elev_air - ((twtt_surf * c) / 2)
-
     # calculate bed elevation
     elev_bed = elev_gnd - thick
 
@@ -64,7 +61,7 @@ def savePick(fpath, f_saveName, data, subsurf_pick_dict, eps):
         f = h5py.File(fpath, "a") 
         num_file_pick_lyr = data["num_file_pick_lyr"]
         # save the new subsurface pick to the hdf5 file - determine whther to overwrite or append
-        if (num_file_pick_lyr > 0) and (tk.messagebox.askyesno("overwrite/append","overwrite most recent picks previously saved to file (no to append as new subsurface pick layer)?") == True):
+        if (num_file_pick_lyr > 0) and (tk.messagebox.askyesno("overwrite picks","overwrite most recent subsurface picks previously exported to data file (no to append as new subsurface pick layer)?") == True):
             del f["drv/pick"]["twtt_subsurf" + str(num_file_pick_lyr - 1)]
             twtt_subsurf_pick = f["drv"]["pick"].require_dataset("twtt_subsurf" + str(num_file_pick_lyr - 1), data=twtt_bed, shape=twtt_bed.shape, dtype=np.float32)
         else:

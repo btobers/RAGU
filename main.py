@@ -15,8 +15,7 @@ import os
 ### USER SPECIFIED VARS ###
 
 # relative paths
-# in_path = "/media/btober/beefmaster/MARS/targ/supl/UAF/2019/hdf5/"
-in_path = "/home/btober/Documents/"
+in_path = "/media/btober/beefmaster/MARS/targ/supl/UAF/2018/hdf5/"
 map_path = "/home/btober/Documents/OIB-AK_qgis/"
 # NOSEpick code path
 os.chdir("/home/btober/Documents/NOSEpick/")
