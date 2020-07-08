@@ -25,9 +25,9 @@ $ conda env create -f nose_env.yml
 ```
     
 ## Running NOSEpick
-Prior to running NOSEpick, set appropriate data paths in *main.py*
+Prior to running NOSEpick, set appropriate data paths in *config.py*
 
-To run NOSEpick (first activate NOSEpick anaconda environment - 'nose' by default):
+To run NOSEpick, first activate NOSEpick anaconda environment - 'nose' by default:
 ```
 $ conda activate nose
 (nose)$ python main.py
