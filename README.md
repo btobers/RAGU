@@ -3,7 +3,8 @@ Nearly Optimal Subsurface Extractor GUI
 
 Authors: Brandon Tober and Michael Christoffersen
 
-<img src="lib/NOSEpick.png" height="200"> 
+<img src="lib/NOSEpick.png" height="200">
+NOSEpick logo designed by Eric Petersen
 
 ## Description
 NOSEpick is an open source GUI package developed to interpret radar sounding data, written in Python 3. This was originally developed to work with NASA's Operation IceBridge Alaska radar sounding data. 
