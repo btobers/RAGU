@@ -7,18 +7,14 @@ environment requirements in nose_env.yml
 """
 
 ### IMPORTS ###
+from config import *
 import gui
 import tkinter as tk
 from tkinter import font
 import os
 
-### USER SPECIFIED VARS ###
-
-# relative paths
-in_path = "/media/btober/beefmaster/MARS/targ/supl/UAF/2018/hdf5/"
-map_path = "/home/btober/Documents/OIB-AK_qgis/"
-# NOSEpick code path
-os.chdir("/home/btober/Documents/NOSEpick/")
+# change dir to NOSEpick code directory 
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 ### INITIALIZE ###
 root = tk.Tk()

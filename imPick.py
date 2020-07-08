@@ -194,32 +194,37 @@ class imPick(tk.Frame):
 
         # calculate power of data
         Pow_data = np.power(self.data["amp"],2)
-        # place data in dB for visualization
+        # place data
         self.dB_data = np.log10(Pow_data)
 
         # initialize arrays to hold saved picks
-        self.xln_subsurf_saved = np.repeat(np.nan, self.data["num_trace"])
-        self.yln_subsurf_saved = np.repeat(np.nan, self.data["num_trace"])
+        self.xln_subsurf_saved = np.repeat(np.nan, self.data["trace"][-1] + 1)
+        self.yln_subsurf_saved = np.repeat(np.nan, self.data["trace"][-1] + 1)
 
-        # get clutter data in dB for visualization
+        # get clutter data in dB
         # check if clutter data is stored in linear space or log space - lin space should have values less than 1
         # if in lin space, convert to dB
         if (np.nanmax(np.abs(self.data["clutter"])) < 1) or (~np.all(self.data["clutter"] == 1)) or ("2012" in self.f_loadName):
+            # calculate power (squared amplitude)
             Pow_clut = np.power(self.data["clutter"],2)
-            Pow_clut[np.where(Pow_clut == 0)] = np.NaN      # avoid -inf values in dB data
+            # replace zero power values with nan
+            Pow_clut[Pow_clut == 0] = np.NaN
+            # dB it
             self.dB_clut = np.log10(Pow_clut)
         # if in log space, leave as is
         else:
             self.dB_clut = self.data["clutter"]
-            
+
         # cut off data at 10th percentile to avoid extreme outliers - round down
         self.mindB_data = np.floor(np.nanpercentile(self.dB_data,10))
         self.mindB_clut = np.floor(np.nanpercentile(self.dB_clut,10))
-        
         self.maxdB_data = np.nanmax(self.dB_data)
         self.maxdB_clut = np.nanmax(self.dB_clut)
         # if ("2012" in self.f_loadName):
         #     self.maxdB_clut = np.floor(np.nanpercentile(self.dB_clut,90))
+
+        # reset samples missing clutter sim data to small negative value for color scale consistency
+        self.dB_clut[np.isnan(self.dB_clut)] = -9999
 
         self.dataCanvas.get_tk_widget().pack(in_=self.dataFrame, side="bottom", fill="both", expand=1) 
 
@@ -253,7 +258,7 @@ class imPick(tk.Frame):
         self.tmp_subsurf_ln, = self.ax.plot(self.xln_subsurf,self.yln_subsurf,"rx")                 # empty line for current pick segment
 
         # plot any imported picks if desired
-        if (self.data["num_file_pick_lyr"] > 0) and (tk.messagebox.askyesno("display picks","display existing data file picks?") == True):
+        if ("num_file_pick_lyr" in self.data) and (self.data["num_file_pick_lyr"] > 0) and (tk.messagebox.askyesno("display picks","display existing data file picks?") == True):
             for _i in range(self.data["num_file_pick_lyr"]):
                 self.plot_bed(utils.twtt2sample(self.data["pick"]["twtt_subsurf" + str(_i)], self.data["dt"]), lbl=str(_i))
 
@@ -290,7 +295,7 @@ class imPick(tk.Frame):
                     self.clear_last()
                 self.pickLabel.config(text="subsurface pick segment " + str(self.pick_segment) + ":\t active", fg="red")
                 # initialize pick index and twtt dictionaries for current picking layer
-                self.pick_subsurf_idx[str(self.pick_segment)] = np.repeat(np.nan, self.data["num_trace"])
+                self.pick_subsurf_idx[str(self.pick_segment)] = np.repeat(np.nan, self.data["trace"][-1] + 1)
 
             elif self.pick_state == False and self.edit_flag == False:
                 if len(self.xln_subsurf) >=  2:

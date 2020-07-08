@@ -4,7 +4,7 @@ from nav import *
 import utils
 import matplotlib.pyplot as plt
 import scipy.io as scio
-import sys,os,fnmatch
+import sys,os,fnmatch,struct
 # from segpy.reader import create_reader
 
 
@@ -18,7 +18,7 @@ class ingester:
         # hdf5, mat, segy
         valid_types = ["h5", "mat", "sgy", "img"] # can add more to this
         if (ftype not in valid_types):
-            print("Invalid file type specifier: '" + ftype + "'")
+            print("Invalid file type specifier: "" + ftype + """)
             print("Valid file types:")
             print(valid_types)
             exit(1)
@@ -45,7 +45,7 @@ class ingester:
 
     ###method to ingest OIB-AK radar .h5 data format###
     def h5py_read(self, fpath):
-        print('----------------------------------------')
+        print("----------------------------------------")
         print("Loading: " + fpath.split("/")[-1])
         # read in .h5 file
         f = h5py.File(fpath, "r")                               
@@ -156,6 +156,7 @@ class ingester:
 
     def mat_read(self,fpath):
         # method to ingest .mat files. for older matlab files, scio works and h5py does not. for newer files, h5py works and scio does not 
+        c = 299792458               # Speed of light at STP
         try:
             f = h5py.File(fpath, "r")
             dt = float(f["block"]["dt"][0])
@@ -187,7 +188,7 @@ class ingester:
                 print("ingest Error: " + str(err))
                 pass
 
-        print('----------------------------------------')
+        print("----------------------------------------")
         print("Loading: " + fpath.split("/")[-1])
         
         # transpose amp and clutter if flipped
@@ -196,13 +197,17 @@ class ingester:
         if clutter.shape[0] == num_trace and clutter.shape[1] == num_sample:
             clutter = np.transpose(clutter)
         
-        # replace twtt_surf with nan's if no data
+        # replace twtt_surf with nan"s if no data
         if not np.any(twtt_surf):
             twtt_surf.fill(np.nan)
 
         # calculate surface elevation 
         elev_gnd = elev_air - twtt_surf*c/2
         
+        # create dictionary to hold picks
+        pick = {}
+        pick["twtt_surf"] = twtt_surf
+
         # convert lon, lat, elev to navdat object of nav class
         wgs84_proj4 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
         nav0 = nav()
@@ -236,46 +241,57 @@ class ingester:
         # get indices of twtt_surf
         surf_idx = np.rint(twtt_surf/dt)
 
-        return {"dt": dt, "num_trace": num_trace, "trace": trace, "num_sample": num_sample, "sample": sample, "sample_time": sample_time, "navdat": nav0, "elev_gnd": elev_gnd, "twtt_surf": twtt_surf, "surf_idx": surf_idx, "dist": dist, "amp": amp, "clutter": clutter} # other fields?
+
+        return {"dt": dt, "num_trace": num_trace, "trace": trace, "num_sample": num_sample, "sample": sample, "sample_time": sample_time, "navdat": nav0, "elev_gnd": elev_gnd, "pick": pick, "surf_idx": surf_idx, "dist": dist, "amp": amp, "clutter": clutter} # other fields?
 
 
     def segypy_read(self, fpath):
         # method to ingest .sgy data
-        # with open(fpath, 'rb') as segy_in_file:
+        # with open(fpath, "rb") as segy_in_file:
         #     # The seg_y_dataset is a lazy-reader, so keep the file open throughout.
-        #     seg_y_dataset = create_reader(segy_in_file, endian='>')  # Non-standard Rev 1 little-endian
+        #     seg_y_dataset = create_reader(segy_in_file, endian=">")  # Non-standard Rev 1 little-endian
         #     print(seg_y_dataset.num_traces())
         sys.exit()
 
 
     def sharad_read(self, fpath):
+        print("----------------------------------------")
+        print("Loading: " + fpath.split("/")[-1])
         # convert binary .img PDS RGRAM to numpy array
         # reshape array with 3600 lines
-        fname = fpath.split("/")[-1]
-        dtype = np.dtype('float32')     
-        rgram = open(fpath, 'rb') 
-        amp = np.fromfile(rgram, dtype)     
+        dtype = np.dtype("float32")     
+        with open(fpath, "rb") as f:
+            amp = np.fromfile(f, dtype)     
         l = len(amp)
         num_sample = 3600
         num_trace = int(len(amp)/num_sample)
         amp = amp.reshape(num_sample,num_trace)
+        
+        # convert binary .img clutter sim product to numpy array
+        with open(fpath.replace("rgram","geom_combined"), "rb") as f:
+            clutter = np.fromfile(f, dtype)   
+        clutter = clutter.reshape(num_sample,num_trace)
 
         # open geom nav file for rgram
         geom_path = fpath.replace("rgram","geom").replace("img","tab")
 
-        nav_file = np.genfromtxt(geom_path, delimiter = ',', dtype = str)
+        nav_file = np.genfromtxt(geom_path, delimiter = ",", dtype = str)
 
         # get necessary data from image file and geom
-        dt = .0375e-6                                                       # sampling interval for 3600 real-values voltage samples
+        dt = .0375e-6                                                                           # sampling interval for 3600 real-values voltage samples
         lon = nav_file[:,3].astype(np.float64)
         lat = nav_file[:,2].astype(np.float64)
-        elev_air = nav_file[:,5].astype(np.float64) - nav_file[:,4].astype(np.float64)       # [km]
+        elev_air = nav_file[:,5].astype(np.float64) - nav_file[:,4].astype(np.float64)          # [km]
 
         elev_gnd = np.repeat(np.nan, num_trace)
 
         dist = np.arange(num_trace)
 
         twtt_surf = np.repeat(np.nan, num_trace)
+
+        # create dictionary to hold picks
+        pick = {}
+        pick["twtt_surf"] = twtt_surf
 
         # create nav object to hold lon, lat, elev
         nav0 = nav()
@@ -287,8 +303,6 @@ class ingester:
         nav0_xform = nav0.transform(mars_equidistant_proj4)
         dist = utils.euclid_dist(nav0_xform)
 
-        clutter = np.ones(amp.shape)
-
         trace = np.arange(num_trace)
         sample = np.arange(num_sample)
         # create sample time array 
@@ -296,7 +310,7 @@ class ingester:
 
         # get indices of twtt_surf
         surf_idx = np.rint(twtt_surf/dt)
-        return {"dt": dt, "num_trace": num_trace, "trace": trace, "num_sample": num_sample, "sample": sample, "sample_time": sample_time, "navdat": nav0, "elev_gnd": elev_gnd, "twtt_surf": twtt_surf, "surf_idx": surf_idx, "dist": dist, "amp": amp, "clutter": clutter} # other fields?
+        return {"dt": dt, "num_trace": num_trace, "trace": trace, "num_sample": num_sample, "sample": sample, "sample_time": sample_time, "navdat": nav0, "elev_gnd": elev_gnd, "pick": pick, "surf_idx": surf_idx, "dist": dist, "amp": amp, "clutter": clutter} # other fields?
 
     
 # load_picks is a method to load picks from a csv file
