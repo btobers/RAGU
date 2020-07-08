@@ -8,6 +8,7 @@ Authors: Brandon Tober and Michael Christoffersen
 ## Description
 NOSEpick is an open source GUI package developed to interpret radar sounding data, written in Python 3. This was originally developed to work with NASA's Operation IceBridge Alaska radar sounding data. 
 - *main.py* is run to begin the NOSEpick app
+- *config.py* contains user-specified configuration file paths necessary to run the NOSEpick app
 - *gui.py* initializes the graphical user-interface tools and sets up the app
 - *ingester.py* is used to ingest radar data
 - *imPick.py* handles the image picking portion of the app
