@@ -96,11 +96,8 @@ class wvPick(tk.Frame):
 
     # set_data is a method to receive the radar data
     def set_data(self, data):
-        self.dt = data["dt"]
-        self.num_sample = data["num_sample"]
         self.data_dB = 10*np.log10(np.power(data["amp"],2))
-        self.sampleTime = np.arange(0,self.num_sample+1)*self.dt
-        self.num_trace = data["num_trace"]
+        self.num_trace = data["trace"][1] + 1
         self.surf_idx = data["surf_idx"]
 
 

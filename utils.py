@@ -1,6 +1,7 @@
 import numpy as np
 import tkinter as tk
 import sys, h5py
+from constants import *
 
 
 # calculate total euclidian distance along a line
@@ -23,8 +24,7 @@ def savePick(fpath, f_saveName, data, subsurf_pick_dict, eps):
     # data is the data file structure [dict]
     # subsurf_pick_dict contains the subsurface pick indeces - each key is an array the length of the number of traces, with np.nan where no picks were made [dict]
     # eps is a value for the dielectric constant used to calculate ice thickness based on EM wave speed [float]
-    c = 299792458               # Speed of light at STP
-    v = c/(np.sqrt(eps))        # EM wave veloity in ice - for thickness calculation
+    v = C/(np.sqrt(eps))        # EM wave veloity in ice - for thickness calculation
 
     trace = np.arange(data["num_trace"])                # array to hold trace number
     lon = data["navdat"].navdat[:,0]                    # array to hold longitude
@@ -133,17 +133,15 @@ def exportIm(fname, fig, extent=None):
 
 # twtt2depth function
 def twtt2depth(a, eps=3.15):
-    c = 299792458                   # Speed of light at STP
-    v = c/np.sqrt(eps)
-    depth = a*v/(2*1000)            # convert input twtt to distance in km
+    v = C/np.sqrt(eps)
+    depth = a*v/(2)            # convert input twtt to distance in km
     return depth
 
 
 # depth2twtt function
 def depth2twtt(a, eps=3.15):
-    c = 299792458                   # Speed of light at STP
-    v = c/np.sqrt(eps)
-    twtt = a*2*1e3/v                # convert input depth to meters, then return twtt
+    v = C/np.sqrt(eps)
+    twtt = a*2/v                # convert input depth to meters, then return twtt
     return twtt
 
 
@@ -160,8 +158,7 @@ def sample2twtt(array, dt):
 
 
 def print_pickInfo(data, trace, sample):
-    c = 299792458               # Speed of light at STP
-    v = c/(np.sqrt(3.15))        # EM wave veloity in ice - for thickness calculation
+    v = C/(np.sqrt(3.15))        # EM wave veloity in ice - for thickness calculation
 
     fields = ["trace","sample","elev_air","twtt_surf","elev_gnd","twtt_bed","elev_bed","thick"]
 

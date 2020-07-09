@@ -194,7 +194,8 @@ class imPick(tk.Frame):
 
         # calculate power of data
         Pow_data = np.power(self.data["amp"],2)
-        # place data
+
+        # dB it
         self.dB_data = np.log10(Pow_data)
 
         # initialize arrays to hold saved picks
@@ -223,7 +224,8 @@ class imPick(tk.Frame):
         # if ("2012" in self.f_loadName):
         #     self.maxdB_clut = np.floor(np.nanpercentile(self.dB_clut,90))
 
-        # reset samples missing clutter sim data to small negative value for color scale consistency
+        # reset samples missing data to small negative value for color scale consistency
+        self.dB_data[np.isnan(self.dB_data)] = -9999
         self.dB_clut[np.isnan(self.dB_clut)] = -9999
 
         self.dataCanvas.get_tk_widget().pack(in_=self.dataFrame, side="bottom", fill="both", expand=1) 
@@ -834,17 +836,20 @@ class imPick(tk.Frame):
                 self.yln_subsurf_saved[picked_traces] = self.pick_subsurf_idx_opt[str(self.pick_segment - 1)][picked_traces]
 
 
-    def set_axes(self, eps):
+    def set_axes(self, eps, cmap):
         self.ax.set_xlim((self.data["trace"][0], self.data["trace"][-1]))
         self.ax.set_ylim((self.data["sample"][-1],self.data["sample"][0]))
 
         # update twtt and depth (subradar dist.)
-        self.secaxy0.set_ylim(self.data["sample_time"][-1]*1e6, self.data["sample_time"][0]*1e6)
-        self.secaxy1.set_ylim(utils.twtt2depth(self.data["sample_time"][-1],eps), utils.twtt2depth(self.data["sample_time"][0],eps))
-        self.secaxy1.set_ylabel("approx. subradar distance [km] ($\epsilon_{}$ = {}".format("r",eps))
+        self.secaxy0.set_ylim(self.data["sample"][-1]*self.data["dt"]*1e6, self.data["sample"][0]*self.data["dt"]*1e6)
+        self.secaxy1.set_ylim(utils.twtt2depth(self.data["sample"][-1]*self.data["dt"],eps), utils.twtt2depth(self.data["sample"][0]*self.data["dt"],eps))
+        self.secaxy1.set_ylabel("approx. subradar distance [m] ($\epsilon_{}$ = {}".format("r",eps))
 
         # update along-track distance
         self.secaxx.set_xlim(self.data["dist"][0], self.data["dist"][-1])
+
+        self.im_data.set_cmap(cmap)
+        self.im_clut.set_cmap(cmap)
 
         self.dataCanvas.draw()
 

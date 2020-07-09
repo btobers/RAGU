@@ -38,6 +38,7 @@ class MainGUI(tk.Frame):
         self.userName = tk.StringVar(value="btober")
         self.eps = tk.DoubleVar(value=3.15)
         self.figSize = tk.StringVar(value="21,7")
+        self.cmap = tk.StringVar(value="Greys_r")
         self.debugState = tk.BooleanVar()
         self.debugState.set(False)
 
@@ -235,7 +236,7 @@ class MainGUI(tk.Frame):
             # check for file errors
             if np.any(self.data["dist"]):
                 self.imPick.load(self.f_loadName, self.data)
-                self.imPick.set_axes(self.eps.get())
+                self.imPick.set_axes(self.eps.get(), self.cmap.get())
                 self.imPick.update_bg()
                 self.wvPick.set_vars()
                 self.wvPick.clear()
@@ -467,16 +468,26 @@ class MainGUI(tk.Frame):
 
         row = tk.Frame(settingsWindow)
         row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+        lab = tk.Label(row, width=25, text="cmap", anchor='w')
+        lab.pack(side=tk.LEFT)
+        tk.Radiobutton(row,text="greys_r", variable=self.cmap, value="Greys_r").pack(side="top",anchor="w")
+        tk.Radiobutton(row,text="gray", variable=self.cmap, value="gray").pack(side="top",anchor="w")
+        tk.Radiobutton(row,text="seismic", variable=self.cmap, value="seismic").pack(side="top",anchor="w")
+
+        row = tk.Frame(settingsWindow)
+        row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
         lab = tk.Label(row, width=25, text="degub mode", anchor='w')
         lab.pack(side=tk.LEFT)
         tk.Radiobutton(row,text="on", variable=self.debugState, value=True).pack(side="left")
         tk.Radiobutton(row,text="off", variable=self.debugState, value=False).pack(side="left")
-        
-        b1 = tk.Button(settingsWindow, text='save',
+
+        row = tk.Frame(settingsWindow)
+        row.pack(side=tk.TOP, anchor='c')
+        b1 = tk.Button(row, text='save',
                     command=self.updateSettings)
-        b1.pack(side=tk.LEFT, padx=5, pady=5)
-        b2 = tk.Button(settingsWindow, text='close', command=settingsWindow.destroy)
-        b2.pack(side=tk.LEFT, padx=5, pady=5)
+        b1.pack(side="left")
+        b2 = tk.Button(row, text='close', command=settingsWindow.destroy)
+        b2.pack(side="left")
 
 
     def updateSettings(self):
@@ -499,7 +510,7 @@ class MainGUI(tk.Frame):
             self.figSize.set("21,7")
         
         # pass updated dielectric to imPick
-        self.imPick.set_axes(self.eps.get())
+        self.imPick.set_axes(self.eps.get(), self.cmap.get())
 
         # pass updated debug state to imPick
         self.imPick.set_debugState(self.debugState.get())

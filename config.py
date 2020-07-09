@@ -10,6 +10,7 @@ environment requirements in nose_env.yml
 
 # input data path
 in_path = "/media/btober/beefmaster/MARS/targ/supl/"        
+in_path = "/home/btober/Downloads/"
 
 # input basemap path
 map_path = "/home/btober/Documents/OIB-AK_qgis/"

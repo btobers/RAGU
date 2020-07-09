@@ -1,6 +1,7 @@
 import h5py
 import numpy as np
 from nav import *
+import readgssi
 import utils
 import matplotlib.pyplot as plt
 import scipy.io as scio
@@ -16,14 +17,14 @@ class ingester:
         # ftype is a string specifying filetype
         # valid options -
         # hdf5, mat, segy
-        valid_types = ["h5", "mat", "sgy", "img"] # can add more to this
-        if (ftype not in valid_types):
-            print("Invalid file type specifier: "" + ftype + """)
+        valid_types = ["h5", "mat", "sgy", "dzt", "img"] # can add more to this
+        if (ftype.lower() not in valid_types):
+            print("Invalid file type specifier: " + ftype)
             print("Valid file types:")
             print(valid_types)
             exit(1)
 
-        self.ftype = ftype
+        self.ftype = ftype.lower()
 
 
     def read(self, fpath):
@@ -36,6 +37,8 @@ class ingester:
             return self.mat_read(fpath)
         elif (self.ftype == "sgy"):
             return self.segypy_read(fpath)
+        elif (self.ftype == "dzt"):
+            return self.gssi_read(fpath)
         elif (self.ftype == "img"):
             return self.sharad_read(fpath)
         else:
@@ -43,7 +46,7 @@ class ingester:
             exit(1)
 
 
-    ###method to ingest OIB-AK radar .h5 data format###
+    ### method to ingest OIB-AK radar .h5 data format ###
     def h5py_read(self, fpath):
         print("----------------------------------------")
         print("Loading: " + fpath.split("/")[-1])
@@ -135,28 +138,24 @@ class ingester:
         if len(np.unique(dist)) < num_trace:
             dist = utils.interp_array(dist)
 
-
         dt = 1/fs
         trace = np.arange(num_trace)
         sample = np.arange(num_sample)
-        sample_time = np.arange(num_sample)*dt
-
 
         # replace potential erroneous twtt_surf values with nan
         # get indices where twtt_surf is not nan
         idx = np.logical_not(np.isnan(pick["twtt_surf"]))
-        pick["twtt_surf"][np.where(pick["twtt_surf"][idx] > sample_time[-1])[0]] = np.nan
-        pick["twtt_surf"][np.where(pick["twtt_surf"][idx] <= sample_time[1])[0]] = np.nan
+        pick["twtt_surf"][np.where(pick["twtt_surf"][idx] > sample[-1]*dt)[0]] = np.nan
+        pick["twtt_surf"][np.where(pick["twtt_surf"][idx] <= sample[1]*dt)[0]] = np.nan
         
         # get indices of twtt_surf
         surf_idx = utils.twtt2sample(pick["twtt_surf"], dt)
 
-        return {"dt": dt, "num_trace": num_trace, "trace": trace, "num_sample": num_sample, "sample": sample, "sample_time": sample_time, "navdat": nav0, "elev_gnd": elev_gnd, "pick": pick, "surf_idx": surf_idx, "dist": dist, "amp": amp, "clutter": clutter, "num_file_pick_lyr": num_file_pick_lyr} # other fields?
+        return {"dt": dt, "trace": trace, "sample": sample, "navdat": nav0, "elev_gnd": elev_gnd, "pick": pick, "surf_idx": surf_idx, "dist": dist, "amp": amp, "clutter": clutter, "num_file_pick_lyr": num_file_pick_lyr} # other fields?
 
 
+    # method to ingest .mat files. for older matlab files, scio works and h5py does not. for newer files, h5py works and scio does not 
     def mat_read(self,fpath):
-        # method to ingest .mat files. for older matlab files, scio works and h5py does not. for newer files, h5py works and scio does not 
-        c = 299792458               # Speed of light at STP
         try:
             f = h5py.File(fpath, "r")
             dt = float(f["block"]["dt"][0])
@@ -202,7 +201,7 @@ class ingester:
             twtt_surf.fill(np.nan)
 
         # calculate surface elevation 
-        elev_gnd = elev_air - twtt_surf*c/2
+        elev_gnd = elev_air - twtt_surf*C/2
         
         # create dictionary to hold picks
         pick = {}
@@ -229,24 +228,21 @@ class ingester:
 
         trace = np.arange(num_trace)
         sample = np.arange(num_sample)
-        # create sample time array 
-        sample_time = np.arange(num_sample)*dt
 
         # replace potential erroneous twtt_surf values with nan
         # get indices where twtt_surf is not nan
         idx = np.logical_not(np.isnan(twtt_surf))
-        twtt_surf[np.where(twtt_surf[idx] > sample_time[-1])[0]] = np.nan
-        twtt_surf[np.where(twtt_surf[idx] <= sample_time[1])[0]] = np.nan
+        twtt_surf[np.where(twtt_surf[idx] > sample[-1]*dt)[0]] = np.nan
+        twtt_surf[np.where(twtt_surf[idx] <= sample[1]*dt)[0]] = np.nan
 
         # get indices of twtt_surf
         surf_idx = np.rint(twtt_surf/dt)
 
 
-        return {"dt": dt, "num_trace": num_trace, "trace": trace, "num_sample": num_sample, "sample": sample, "sample_time": sample_time, "navdat": nav0, "elev_gnd": elev_gnd, "pick": pick, "surf_idx": surf_idx, "dist": dist, "amp": amp, "clutter": clutter} # other fields?
+        return {"dt": dt, "trace": trace, "sample": sample, "navdat": nav0, "elev_gnd": elev_gnd, "pick": pick, "surf_idx": surf_idx, "dist": dist, "amp": amp, "clutter": clutter} # other fields?
 
-
+    # method to ingest .sgy data
     def segypy_read(self, fpath):
-        # method to ingest .sgy data
         # with open(fpath, "rb") as segy_in_file:
         #     # The seg_y_dataset is a lazy-reader, so keep the file open throughout.
         #     seg_y_dataset = create_reader(segy_in_file, endian=">")  # Non-standard Rev 1 little-endian
@@ -254,6 +250,7 @@ class ingester:
         sys.exit()
 
 
+    # method to read PDS SHARAD USRDR data
     def sharad_read(self, fpath):
         print("----------------------------------------")
         print("Loading: " + fpath.split("/")[-1])
@@ -305,14 +302,46 @@ class ingester:
 
         trace = np.arange(num_trace)
         sample = np.arange(num_sample)
-        # create sample time array 
-        sample_time = np.arange(num_sample)*dt
+
 
         # get indices of twtt_surf
         surf_idx = np.rint(twtt_surf/dt)
-        return {"dt": dt, "num_trace": num_trace, "trace": trace, "num_sample": num_sample, "sample": sample, "sample_time": sample_time, "navdat": nav0, "elev_gnd": elev_gnd, "pick": pick, "surf_idx": surf_idx, "dist": dist, "amp": amp, "clutter": clutter} # other fields?
+        return {"dt": dt, "trace": trace, "sample": sample, "navdat": nav0, "elev_gnd": elev_gnd, "pick": pick, "surf_idx": surf_idx, "dist": dist, "amp": amp, "clutter": clutter} # other fields?
 
     
+    # method to read gssi dzt data
+    def gssi_read(self, fpath):
+        print("----------------------------------------")
+        print("WARNING: gssi ingester is still in beta stages. Data is currently read in without gps information")
+        print("Loading: " + fpath.split("/")[-1])
+        # use readgssi readdzt.dzt reader (credit: https://github.com/iannesbitt/readgssi)
+        header, amp, gps = readgssi.readdzt(fpath)#, gps=normalize, spm=spm, start_scan=start_scan, num_scans=num_scans, epsr=epsr, antfreq=antfreq, verbose=verbose)
+        num_trace = amp.shape[-1]
+        dt = header["dt"]
+        trace = np.arange(num_trace)
+        dist = np.arange(num_trace)
+        sample = np.arange(header["rh_nsamp"])
+
+        # need to sort through this still. placeholders for now for gssi ingest to work with NOSEpick
+        clutter = np.ones(amp.shape)
+        surf_idx = np.repeat(np.nan, num_trace)
+        twtt_surf = np.repeat(np.nan, num_trace)
+        surf_idx = np.repeat(np.nan, num_trace)
+        pick={}
+        pick["twtt_surf"] = twtt_surf
+
+        elev_gnd = np.repeat(np.nan, num_trace)
+        lon = np.repeat(np.nan, num_trace)
+        lat = np.repeat(np.nan, num_trace)
+        elev_air = np.repeat(np.nan, num_trace)
+
+        # convert lon, lat, elev to navdat object of nav class
+        wgs84_proj4 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+        nav0 = nav()
+        nav0.csys = wgs84_proj4
+        nav0.navdat = np.column_stack((lon,lat,elev_air))
+        return {"dt": dt, "trace": trace, "sample": sample, "navdat": nav0, "elev_gnd": elev_gnd, "pick": pick, "surf_idx": surf_idx, "dist": dist, "amp": amp, "clutter": clutter} # other fields?
+
 # load_picks is a method to load picks from a csv file
 def load_picks(path):
     dat = np.genfromtxt(path, delimiter=",", dtype = None, names = True)
