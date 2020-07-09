@@ -7,12 +7,14 @@ Authors: Brandon Tober and Michael Christoffersen
 NOSEpick logo designed by Eric Petersen
 
 ## Description
-NOSEpick is an open source GUI package developed to interpret radar sounding data, written in Python 3. This was originally developed to work with NASA's Operation IceBridge Alaska radar sounding data. NOSEpick is also capable of work with SHARAD data acquired onboard NASA's Mars Reconnaissance Orbiter (Reduced Data Record of Radar Backscatter Power (USRDR) & Geographic, Geometric, and Ionospheric Properties (USGEOM) data available at https://pds-geosciences.wustl.edu/missions/mro/sharad.htm)
+NOSEpick is an open source GUI package developed to interpret radar sounding data, written in Python 3. This was originally developed to work with NASA's Operation IceBridge Alaska radar sounding data. NOSEpick is also capable of work with SHARAD data acquired onboard NASA's Mars Reconnaissance Orbiter (Reduced Data Record of Radar Backscatter Power (USRDR) & Geographic, Geometric, and Ionospheric Properties (USGEOM) data available at https://pds-geosciences.wustl.edu/missions/mro/sharad.htm). GSSI data can also be interpreted with NOSEpick.
 
 - *main.py* is run to begin the NOSEpick app
 - *config.py* contains user-specified configuration file paths necessary to run the NOSEpick app
+- *constants.py* contains uglobal constants
 - *gui.py* initializes the graphical user-interface tools and sets up the app
 - *ingester.py* is used to ingest radar data
+- *readgssi.py* is used to parse gssi data (pulled from https://github.com/iannesbitt/readgssi)
 - *imPick.py* handles the image picking portion of the app
 - *wvPick.py* handles the wave picking optimization portion of the app
 - *basemap.py* handles the basemap portion of the app
@@ -40,9 +42,9 @@ $ python3 main.py
 ```
 
 ## Notes
-NOSEpick is still in development, but is in operable standing for interpreting certain datasets.
-Plans for the future are to complete the wvPick optimization tools, as well as add ingesters for additional datasets. So far, the thought is to add a ingester for PulsEKKO data, GSSI, Mala, and SHARAD. A segy ingester is in the works.
-Also need to find a way to render images faster when toggling between radar data and clutter, zooming/resetting the view. This can possible be done by down-sampling the data based on the zoom.
+NOSEpick is still in development, but is in operable standing for interpreting certain datasets. 
+Plans for the future are to complete the wvPick optimization tools, as well as add ingesters for additional datasets. So far, the thought is to add a ingester for PulsEKKO, Mala, and segy data. A SHARAD ingester as well as a GSSI ingester (thanks to https://github.com/iannesbitt/readgssi) have been added and are still in development stages. GSSI data is currently ingested without gps data. A segy ingester is also in the works.
+Furutre development plans also invlude finding a way to render images faster when toggling between radar data and clutter, zooming/resetting the view. This can possible be done by down-sampling the data based on the zoom.
 
 ### Desktop Shortcut
 If desired, pyshorcuts can be used to create a desktop shortcut:
