@@ -20,12 +20,15 @@ import tkinter.ttk as ttk
 
 # MainGUI is the NOSEpick class which sets the gui interface and holds operating variables
 class MainGUI(tk.Frame):
-    def __init__(self, parent, in_path, map_path, *args, **kwargs):
+    def __init__(self, parent, in_path, map_path, out_path, eps_r, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
         self.in_path = in_path
         self.home_dir = in_path
         self.map_path = map_path
+        self.out_path = out_path
+        self.eps_r = tk.DoubleVar(value=eps_r)
+        self.os = sys.platform
         self.setup()
 
 
@@ -36,7 +39,7 @@ class MainGUI(tk.Frame):
         self.map_loadName = ""
 
         self.userName = tk.StringVar(value="btober")
-        self.eps = tk.DoubleVar(value=3.15)
+        # self.eps_r = tk.DoubleVar(value=3.15)
         self.figSize = tk.StringVar(value="21,7")
         self.cmap = tk.StringVar(value="Greys_r")
         self.debugState = tk.BooleanVar()
@@ -62,6 +65,7 @@ class MainGUI(tk.Frame):
         settingsMenu = tk.Menu(fileMenu,tearoff=0)
         settingsMenu.add_command(label="preferences", command=self.settings)
         settingsMenu.add_command(label="set working directory", command=self.set_home)
+        settingsMenu.add_command(label="set output directory", command=self.set_out)
 
         fileMenu.add_cascade(label="settings", menu = settingsMenu)
 
@@ -200,7 +204,7 @@ class MainGUI(tk.Frame):
 
         # h key to set axes limits to home extent
         elif event.keysym=="h":
-            self.imPick.set_axes(self.eps.get())
+            self.imPick.set_axes(self.eps_r.get())
 
     # close_window is a gui method to exit NOSEpick
     def close_window(self):
@@ -216,13 +220,23 @@ class MainGUI(tk.Frame):
     def set_home(self):
         self.home_dir = tk.filedialog.askdirectory(title="root directory",
                                        initialdir=self.home_dir,
+                                       mustexist=True)    
+    
+
+    # set_out is a method to set the session output directory
+    def set_out(self):
+        self.out_path = tk.filedialog.askdirectory(title="root directory",
+                                       initialdir=self.out_path,
                                        mustexist=True)
 
 
     # open_data is a gui method which has the user select and input data file - then passed to imPick.load()
     def open_data(self):
         # select input file
-        temp_loadName = tk.filedialog.askopenfilename(initialdir = self.home_dir,title = "select file",filetypes = (("all files",".*"),("hd5f files", ".mat .h5"),("segy files", ".sgy"),("image file", ".img")))
+        if "linux" in self.os or "win" in self.os:
+            temp_loadName = tk.filedialog.askopenfilename(initialdir = self.home_dir,title = "select data file",filetypes = (("all files",".*"),("hd5f files", ".mat .h5"),("segy files", ".sgy"),("image file", ".img"),("gssi files",".DZT")))
+        else:
+            temp_loadName = tk.filedialog.askopenfilename(initialdir = self.home_dir,title = "select data file")
         # if input selected, clear imPick canvas, ingest data and pass to imPick
         if temp_loadName:
             self.f_loadName = temp_loadName
@@ -236,7 +250,7 @@ class MainGUI(tk.Frame):
             # check for file errors
             if np.any(self.data["dist"]):
                 self.imPick.load(self.f_loadName, self.data)
-                self.imPick.set_axes(self.eps.get(), self.cmap.get())
+                self.imPick.set_axes(self.eps_r.get(), self.cmap.get())
                 self.imPick.update_bg()
                 self.wvPick.set_vars()
                 self.wvPick.clear()
@@ -256,24 +270,30 @@ class MainGUI(tk.Frame):
     # save_loc is method to receieve the desired pick save location from user input
     def save_loc(self):
         if (self.f_loadName) and ((self.imPick.get_subsurfPickFlag() == True) or (self.imPick.get_surfPickFlag() == True)):
-            out_path = self.f_loadName[:-len("/".join(self.f_loadName.split("/")[-2:]))] + "picks"
-            if self.f_loadName.endswith(".mat"):
-                out_path = self.f_loadName[:-len("/".join(self.f_loadName.split("/")[-3:]))] + "picks"
-            self.f_saveName = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_pk",
-                                initialdir = out_path, title = "save picks",filetypes = (("comma-separated values","*.csv"),))
+            # out_path = self.f_loadName[:-len("/".join(self.f_loadName.split("/")[-2:]))] + "picks"
+            # if self.f_loadName.endswith(".mat"):
+                # out_path = self.f_loadName[:-len("/".join(self.f_loadName.split("/")[-3:]))] + "picks"
+            if "linux" in self.os or "win" in self.os:
+                self.f_saveName = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_pk",
+                                initialdir = self.out_path, title = "save picks",filetypes = (("comma-separated values","*.csv"),))
+            else:
+                self.f_saveName = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_pk.csv",
+                                initialdir = self.out_path, title = "save picks")
         if self.f_saveName:
             self.end_surf_pick()
             self.end_subsurf_pick()
             # get updated pick_dict from wvPick and pass back to imPick
             self.imPick.set_pickDict(self.wvPick.get_pickDict())
-            self.imPick.save(self.f_saveName, self.eps.get(), self.figSize.get().split(","))
+            self.imPick.save(self.f_saveName, self.eps_r.get(), self.cmap.get(), self.figSize.get().split(","))
     
 
     # map_loc is a method to get the desired basemap location and initialize
     def map_loc(self):
         tmp_map_loadName = ""
-        tmp_map_loadName = tk.filedialog.askopenfilename(initialdir = self.map_path, title = "select basemap file", filetypes = (("geotiff files","*.tif"),("all files","*.*")))
-            
+        if "linux" in self.os or "win" in self.os:
+            tmp_map_loadName = tk.filedialog.askopenfilename(initialdir = self.map_path, title = "select basemap file", filetypes = (("geotiff files","*.tif"),("all files","*.*")))
+        else:
+            tmp_map_loadName = tk.filedialog.askopenfilename(initialdir = self.map_path, title = "select basemap file")
         if tmp_map_loadName:
             self.map_loadName = tmp_map_loadName
             self.basemap = basemap.basemap(self.parent, self.map_loadName)
@@ -355,7 +375,7 @@ class MainGUI(tk.Frame):
                 self.imPick.update_option_menu()
                 self.data = self.igst.read(self.f_loadName)
                 self.imPick.load(self.f_loadName, self.data)
-                self.imPick.set_axes(self.eps.get())
+                self.imPick.set_axes(self.eps_r.get())
                 self.imPick.update_bg()
                 self.wvPick.clear()
                 self.wvPick.set_vars()
@@ -456,7 +476,7 @@ class MainGUI(tk.Frame):
         row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
         lab = tk.Label(row, width=25, text="dielectric const.", anchor='w')
         lab.pack(side=tk.LEFT)
-        self.epsEnt = tk.Entry(row,textvariable=self.eps)
+        self.epsEnt = tk.Entry(row,textvariable=self.eps_r)
         self.epsEnt.pack(side=tk.RIGHT, expand=tk.YES, fill=tk.X)
 
         row = tk.Frame(settingsWindow)
@@ -495,9 +515,9 @@ class MainGUI(tk.Frame):
         self.figSize.set(self.figEnt.get())
         try:
             float(self.epsEnt.get())
-            self.eps.set(self.epsEnt.get())
+            self.eps_r.set(self.epsEnt.get())
         except:
-            self.eps.set(3.15)
+            self.eps_r.set(3.15)
 
         # make sure fig size is of correct format
         size = self.figSize.get().split(",")
@@ -510,7 +530,7 @@ class MainGUI(tk.Frame):
             self.figSize.set("21,7")
         
         # pass updated dielectric to imPick
-        self.imPick.set_axes(self.eps.get(), self.cmap.get())
+        self.imPick.set_axes(self.eps_r.get(), self.cmap.get())
 
         # pass updated debug state to imPick
         self.imPick.set_debugState(self.debugState.get())

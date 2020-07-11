@@ -166,11 +166,11 @@ class wvPick(tk.Frame):
             if pick_idx0 != pick_idx1:
                 self.ax.axvline(x = pick_idx1, c="g", ls = "--", label="updated pick")
         
-            # save un-zoomed view to toolbar
-            self.toolbar.push_current()
+            # # save un-zoomed view to toolbar
+            # self.toolbar.push_current()
 
-            # zoom in
-            self.ax.set(xlim=(int(pick_idx0-(winSize/2)),int(pick_idx0+(winSize/2))))
+            # # zoom in
+            # self.ax.set(xlim=(int(pick_idx0-(winSize/2)),int(pick_idx0+(winSize/2))))
 
         self.ax.legend()
 

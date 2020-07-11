@@ -836,14 +836,14 @@ class imPick(tk.Frame):
                 self.yln_subsurf_saved[picked_traces] = self.pick_subsurf_idx_opt[str(self.pick_segment - 1)][picked_traces]
 
 
-    def set_axes(self, eps, cmap):
+    def set_axes(self, eps_r, cmap):
         self.ax.set_xlim((self.data["trace"][0], self.data["trace"][-1]))
         self.ax.set_ylim((self.data["sample"][-1],self.data["sample"][0]))
 
         # update twtt and depth (subradar dist.)
         self.secaxy0.set_ylim(self.data["sample"][-1]*self.data["dt"]*1e6, self.data["sample"][0]*self.data["dt"]*1e6)
-        self.secaxy1.set_ylim(utils.twtt2depth(self.data["sample"][-1]*self.data["dt"],eps), utils.twtt2depth(self.data["sample"][0]*self.data["dt"],eps))
-        self.secaxy1.set_ylabel("approx. subradar distance [m] ($\epsilon_{}$ = {}".format("r",eps))
+        self.secaxy1.set_ylim(utils.twtt2depth(self.data["sample"][-1]*self.data["dt"],eps_r), utils.twtt2depth(self.data["sample"][0]*self.data["dt"],eps_r))
+        self.secaxy1.set_ylabel("approx. subradar distance [m] ($\epsilon_{}$ = {}".format("r",eps_r))
 
         # update along-track distance
         self.secaxx.set_xlim(self.data["dist"][0], self.data["dist"][-1])
@@ -874,13 +874,13 @@ class imPick(tk.Frame):
 
 
     # save is a method to receive the pick save location from gui and save using utils.save
-    def save(self, f_saveName, eps, figSize):
+    def save(self, f_saveName, eps_r, cmap, figSize):
         if self.pick_subsurf_idx_opt:
-            utils.savePick(self,f_loadName, f_saveName, self.data, self.pick_subsurf_idx_opt, eps)
+            utils.savePick(self,f_loadName, f_saveName, self.data, self.pick_subsurf_idx_opt, eps_r)
         else:
-            utils.savePick(self.f_loadName, f_saveName, self.data, self.pick_subsurf_idx, eps)
+            utils.savePick(self.f_loadName, f_saveName, self.data, self.pick_subsurf_idx, eps_r)
         # zoom out to full rgram extent to save pick image
-        self.set_axes(eps)
+        self.set_axes(eps_r, cmap)
         if self.im_status.get() =="clut":
             self.show_data()
         # temporarily turn sliders to invisible for saving image

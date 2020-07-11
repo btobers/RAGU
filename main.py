@@ -27,5 +27,5 @@ root.config(bg="#d9d9d9")
 img = tk.PhotoImage(file='lib/NOSEpick_zoom.png')
 root.tk.call('wm', 'iconphoto', root._w, img)
 # call the NOSEpickGUI class
-gui.MainGUI(root, in_path, map_path)
+gui.MainGUI(root, in_path, map_path, out_path, eps_r)
 root.mainloop()
