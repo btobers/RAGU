@@ -3,7 +3,6 @@ import tkinter as tk
 import sys, h5py
 from constants import *
 
-
 # calculate total euclidian distance along a line
 def euclid_dist(nav):
     dist = np.zeros(nav.navdat.shape[0])
