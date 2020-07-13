@@ -3,7 +3,6 @@ import tkinter as tk
 import sys, h5py
 from constants import *
 
-
 # calculate total euclidian distance along a line
 def euclid_dist(nav):
     dist = np.zeros(nav.navdat.shape[0])
@@ -124,6 +123,12 @@ def interp_array(array):
     # interpolate over array
     array_interp = np.interp(x, xp, fp)
     return array_interp
+
+# extend_array extends the tails of an array n times by repeating a value
+def extend_array(array, first, last, n):
+    array = np.append(np.repeat(array[0], first), array)
+    array = np.append(array, np.repeat(array[-1], n - last - 1))
+    return array
 
 
 # export the pick image

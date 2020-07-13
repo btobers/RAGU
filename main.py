@@ -7,11 +7,15 @@ environment requirements in nose_env.yml
 """
 
 ### IMPORTS ###
+import os,sys
 from config import *
 import gui
 import tkinter as tk
 from tkinter import font
-import os
+
+# allow for optional data directory input
+if len(sys.argv) > 0:
+    in_path = sys.argv[1]
 
 # change dir to NOSEpick code directory 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
