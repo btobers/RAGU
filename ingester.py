@@ -312,8 +312,8 @@ class ingester:
     # method to read gssi dzt data
     def gssi_read(self, fpath):
         print("----------------------------------------")
-        print("WARNING: gssi ingester is still in beta stages. Data is currently read in without gps information")
         print("Loading: " + fpath.split("/")[-1])
+        print("WARNING: gssi ingester is still in beta stages. Data is currently read in without gps information")
         # use readgssi readdzt.dzt reader (credit: https://github.com/iannesbitt/readgssi)
         header, amp, gps = readgssi.readdzt(fpath)#, gps=normalize, spm=spm, start_scan=start_scan, num_scans=num_scans, epsr=epsr, antfreq=antfreq, verbose=verbose)
         num_trace = amp.shape[-1]

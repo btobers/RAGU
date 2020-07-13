@@ -68,7 +68,9 @@ def readdzt(fpath, gps=False):
     # for i in range(len(readsize)): packed_size = packed_size+readsize[i]
     # print('fixed header size: '+str(packed_size)+'\\n')
     '''
-    infile_gps = fpath.replace(".DZT",".DTG")
+    infile_gps = fpath.replace(".DZT",".DZG")
+    print(infile_gps)
+    print(os.path.exists(infile_gps))
     infile_dzx = fpath.replace(".DZT",".DTX")
 
     infile = open(fpath, 'rb')
