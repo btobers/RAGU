@@ -4,10 +4,10 @@ import os,sys
 import numpy as np
 from datetime import datetime
 from itertools import takewhile
-# from geopy.distance import geodesic
+from geopy.distance import geodesic
 from constants import *
-# import pandas as pd
-# import pynmea2
+import pandas as pd
+import pynmea2
 
 """
 this module contains functions parsed from https://github.com/iannesbitt/readgssi to read gssi dzt files and associated dzg files for use in NOSEpick
@@ -52,7 +52,6 @@ def readdzt(fpath, gps=False):
     Function to unpack and return things the program needs from the file header, and the data itself.
 
     :param str infile: The DZT file location
-    :param bool gps: Whether a GPS file exists. Defaults to False, but changed to :py:class:`pandas.DataFrame` if a DZG file with the same name as :code:`infile` exists.
     :param float spm: User value of samples per meter, if specified. Defaults to None.
     :param float epsr: User value of relative permittivity, if specified. Defaults to None.
     :param bool verbose: Verbose, defaults to False
@@ -68,9 +67,6 @@ def readdzt(fpath, gps=False):
     # for i in range(len(readsize)): packed_size = packed_size+readsize[i]
     # print('fixed header size: '+str(packed_size)+'\\n')
     '''
-    infile_gps = fpath.replace(".DZT",".DZG")
-    print(infile_gps)
-    print(os.path.exists(infile_gps))
     infile_dzx = fpath.replace(".DZT",".DTX")
 
     infile = open(fpath, 'rb')
@@ -140,24 +136,24 @@ def readdzt(fpath, gps=False):
     # close data file
     infile.close()
 
-    if os.path.isfile(infile_gps):
-        try:
-            gps = readdzg(infile_gps, 'dzg', header)
-        except IOError as e0:
-            print('WARNING: cannot read DZG file')
-            try:
-                infile_gps = os.path.splitext(infile_gps)[0] + ".csv"
-                gps = readdzg(infile_gps, 'csv', header)
-            except Exception as e1:
-                try:
-                    infile_gps = os.path.splitext(infile_gps)[0] + ".CSV"
-                    gps = readdzg(infile_gps, 'csv', header)
-                except Exception as e2:
-                    print('ERROR reading GPS. distance normalization will not be possible.')
-                    print('   details: %s' % e0)
-                    print('            %s' % e1)
-                    print('            %s' % e2)
-                    gps = []
+    # if os.path.isfile(infile_gps):
+    #     try:
+    #         gps = readdzg(infile_gps, 'dzg', header)
+    #     except IOError as e0:
+    #         print('WARNING: cannot read DZG file')
+    #         try:
+    #             infile_gps = os.path.splitext(infile_gps)[0] + ".csv"
+    #             gps = readdzg(infile_gps, 'csv', header)
+    #         except Exception as e1:
+    #             try:
+    #                 infile_gps = os.path.splitext(infile_gps)[0] + ".CSV"
+    #                 gps = readdzg(infile_gps, 'csv', header)
+    #             except Exception as e2:
+    #                 print('ERROR reading GPS. distance normalization will not be possible.')
+    #                 print('   details: %s' % e0)
+    #                 print('            %s' % e1)
+    #                 print('            %s' % e2)
+    #                 gps = []
     # else:
     #     print('WARNING: no DZG file found for GPS input')
 
@@ -181,7 +177,7 @@ def readdzt(fpath, gps=False):
     # print('DZT marks read successfully. marks: %s' % len(header['marks']))
     # print('                            traces: %s' % header['marks'])
 
-    return header, data.astype(np.float), gps
+    return header, data.astype(np.float)
 
 def readdzg(fi, frmt, header):
     """
@@ -214,12 +210,17 @@ def readdzg(fi, frmt, header):
         * meters (:py:class:`float` meters traveled)
 
     """
+
+    # initialize data arrays
+    trace_num = np.array(())
+    lon = np.array(())
+    lat = np.array(())
+    elev = np.array(())
+
     if header['rhf_spm'] == 0:
         spu = header['rhf_sps']
     else:
         spu = header['rhf_spm']
-    array = pd.DataFrame(columns=['datetimeutc', 'trace', 'longitude', 'latitude', # our dataframe
-                                  'altitude', 'velocity', 'sec_elapsed', 'meters'])
 
     trace = 0 # the elapsed number of traces iterated through
     tracenum = 0 # the sequential increase in trace number
@@ -267,26 +268,26 @@ def readdzg(fi, frmt, header):
                         td = ts1 - ts0 # timedelta = datetime1 - datetime0
                     rowgga += 1
             gpssps = 1 / td.total_seconds() # GPS samples per second
-            if (rmcwarn) and (rowrmc == 0):
-                print('WARNING: no RMC sentences found in GPS records. this could become an issue if your file goes through 00:00:00.')
-                print("         if you get a time jump error please open a github issue at https://github.com/iannesbitt/readgssi/issues")
-                print("         and attach the verbose output of this script plus a zip of the DZT and DZG files you're working with.")
-                rmcwarn = False
-            if (rmc and gga) and (rowrmc != rowgga):
-                if verbose:
-                    print('WARNING: GGA and RMC sentences are not recorded at the same rate! This could cause unforseen problems!')
-                    print('    rmc: %i records' % rowrmc)
-                    print('    gga: %i records' % rowgga)
-            if verbose:
-                ss0, ss1, ss2 = '', '', ''
-                if gga:
-                    ss0 = 'GGA'
-                if rmc:
-                    ss2 = 'RMC'
-                if gga and rmc:
-                    ss1 = ' and '
-                print('found %i %s%s%s GPS epochs at rate of ~%.2f Hz' % (rowrmc, ss0, ss1, ss2, gpssps))
-                print('reading gps locations to data frame...')
+            # if (rmcwarn) and (rowrmc == 0):
+            #     print('WARNING: no RMC sentences found in GPS records. this could become an issue if your file goes through 00:00:00.')
+            #     print("         if you get a time jump error please open a github issue at https://github.com/iannesbitt/readgssi/issues")
+            #     print("         and attach the verbose output of this script plus a zip of the DZT and DZG files you're working with.")
+            #     rmcwarn = False
+            # if (rmc and gga) and (rowrmc != rowgga):
+            #     if verbose:
+            #         print('WARNING: GGA and RMC sentences are not recorded at the same rate! This could cause unforseen problems!')
+            #         print('    rmc: %i records' % rowrmc)
+            #         print('    gga: %i records' % rowgga)
+            # if verbose:
+            #     ss0, ss1, ss2 = '', '', ''
+            #     if gga:
+            #         ss0 = 'GGA'
+            #     if rmc:
+            #         ss2 = 'RMC'
+            #     if gga and rmc:
+            #         ss1 = ' and '
+            #     print('found %i %s%s%s GPS epochs at rate of ~%.2f Hz' % (rowrmc, ss0, ss1, ss2, gpssps))
+            #     print('reading gps locations to data frame...')
 
             gf.seek(0) # back to beginning of file
             rowgga, rowrmc = 0, 0
@@ -295,14 +296,14 @@ def readdzg(fi, frmt, header):
                     # if it's a GSSI sentence, grab the scan/trace number
                     trace = int(ln.split(',')[1])
 
-                if (rmc and gga) and ('GGA' in ln):
-                    # RMC doesn't use altitude so if it exists we include it from a neighboring GGA
-                    z1 = pynmea2.parse(ln.rstrip()).altitude
-                    if rowrmc != rowgga:
-                        # this takes care of the case where RMC lines occur above GGA
-                        z0 = array['altitude'].iat[rowgga]
-                        array['altitude'].iat[rowgga] = z1
-                    rowgga += 1
+                # if (rmc and gga) and ('GGA' in ln):
+                #     # RMC doesn't use altitude so if it exists we include it from a neighboring GGA
+                #     z1 = pynmea2.parse(ln.rstrip()).altitude
+                #     if rowrmc != rowgga:
+                #         # this takes care of the case where RMC lines occur above GGA
+                #         z0 = array['altitude'].iat[rowgga]
+                #         array['altitude'].iat[rowgga] = z1
+                #     rowgga += 1
 
                 if rmc == True: # if there is RMC, we can use the full datestamp but there is no altitude
                     if 'RMC' in ln:
@@ -324,16 +325,19 @@ def readdzg(fi, frmt, header):
                             u = 0
                             m = 0
                             elapsed = 0
-                            if verbose:
-                                print('record starts in %s and %s hemispheres' % (lonhem, lathem))
+                            # if verbose:
+                            #     print('record starts in %s and %s hemispheres' % (lonhem, lathem))
                         x0, y0, z0, sec0, m0 = x1, y1, z1, sec1, m # set xyzs0 for next loop
                         prevtime = timestamp # set t0 for next loop
                         if rowrmc == 0:
                             init_time = timestamp
                         prevtrace = trace
-                        array = array.append({'datetimeutc':timestamp.strftime('%Y-%m-%d %H:%M:%S.%f %z'),
-                                              'trace':trace, 'longitude':x1, 'latitude':y1, 'altitude':z1,
-                                              'velocity':u, 'sec_elapsed':elapsed, 'meters':m}, ignore_index=True)
+
+                        trace_num=np.append(trace_num,trace)
+                        lon=np.append(lon,x1)
+                        lat=np.append(lat,y1)
+                        elev=np.append(elev,z1)
+
                         rowrmc += 1
 
                 else: # if no RMC, we hope there is no UTC 00:00:00 in the file.........
@@ -351,41 +355,36 @@ def readdzg(fi, frmt, header):
                             lonhem = 'west'
                         if msg.lat_dir in 'S':
                             lathem = 'south'
-                        if rowgga != 0:
-                            m += geodesic((y1, x1, z1), (y0, x0, z0)).meters
-                            if rmc == False:
-                                u = float((m - m0) / (sec1 - sec0))
-                            elapsedelta = timestamp - prevtime # t1 - t0 in timedelta format
-                            elapsed = float((timestamp-init_time).total_seconds()) # seconds elapsed
-                            if elapsed > 3600.0:
-                                print("WARNING: Time jumps by more than an hour in this GPS dataset and there are no RMC sentences to anchor the datestamp!")
-                                print("         This dataset may cross over the UTC midnight dateline!\nprevious timestamp: %s\ncurrent timestamp:  %s" % (prevtime, timestamp))
-                                print("         trace number:       %s" % trace)
-                        else:
-                            u = 0
-                            m = 0
-                            elapsed = 0
+                        # if rowgga != 0:
+                        #     m += geodesic((y1, x1, z1), (y0, x0, z0)).meters
+                        #     if rmc == False:
+                        #         u = float((m - m0) / (sec1 - sec0))
+                        #     elapsedelta = timestamp - prevtime # t1 - t0 in timedelta format
+                        #     elapsed = float((timestamp-init_time).total_seconds()) # seconds elapsed
+                        #     if elapsed > 3600.0:
+                        #         print("WARNING: Time jumps by more than an hour in this GPS dataset and there are no RMC sentences to anchor the datestamp!")
+                        #         print("         This dataset may cross over the UTC midnight dateline!\nprevious timestamp: %s\ncurrent timestamp:  %s" % (prevtime, timestamp))
+                        #         print("         trace number:       %s" % trace)
+                        # else:
+                        #     u = 0
+                        #     m = 0
+                        #     elapsed = 0
                         x0, y0, z0, sec0, m0 = x1, y1, z1, sec1, m # set xyzs0 for next loop
                         prevtime = timestamp # set t0 for next loop
                         if rowgga == 0:
                             init_time = timestamp
                         prevtrace = trace
-                        array = array.append({'datetimeutc':timestamp.strftime('%Y-%m-%d %H:%M:%S.%f %z'),
-                                              'trace':trace, 'longitude':x1, 'latitude':y1, 'altitude':z1,
-                                              'velocity':u, 'sec_elapsed':elapsed, 'meters':m}, ignore_index=True)
+
+                        trace_num=np.append(trace_num,trace)
+                        lon=np.append(lon,x1)
+                        lat=np.append(lat,y1)
+                        elev=np.append(elev,z1)
+                        
                         rowgga += 1
 
-            if verbose:
-                if rmc:
-                    print('processed %i gps epochs (RMC)' % (rowrmc))
-                else:
-                    print('processed %i gps epochs (GGA)' % (rowgga))
 
         elif frmt == 'csv':
             with open(fi, 'r') as f:
                 gps = np.fromfile(f)
 
-    array['datetimeutc'] = pd.to_datetime(array['datetimeutc'], format='%Y-%m-%d %H:%M:%S.%f +0000', utc=True)
-    array.set_index('datetimeutc', inplace=True)
-
-    return array
+    return {"trace":trace_num,"lon":lon,"lat":lat,"elev":elev}
