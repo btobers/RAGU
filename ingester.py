@@ -360,6 +360,7 @@ class ingester:
             earth_equidist_proj4 = "+proj=longlat +a=6378140 +b=6356750 +no_defs +units=m"
             nav0_xform = nav0.transform(earth_equidist_proj4)
             dist = utils.euclid_dist(nav0)
+            ### NOTE: EUCLIDIAN DISTANCE DOES NOT SEEM TO BE WORKING YET  - INNACURATE DIST ARRAY ###
 
         else: 
             # if no gps data file, use nan arrays
