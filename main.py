@@ -14,7 +14,7 @@ import tkinter as tk
 from tkinter import font
 
 # allow for optional data directory input
-if len(sys.argv) > 0:
+if len(sys.argv) > 1:
     in_path = sys.argv[1]
 
 # change dir to NOSEpick code directory 
