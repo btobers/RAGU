@@ -167,7 +167,7 @@ class imPick(tk.Frame):
         self.pick_ann_vis.set(False)
         self.debugState = False
         self.pickLabel.config(fg="#d9d9d9")
-
+        self.secaxx.set_visible(True)
 
     # get debug state from gui settings
     def set_debugState(self, debugState):
@@ -846,8 +846,12 @@ class imPick(tk.Frame):
         self.secaxy1.set_ylabel("approx. subradar distance [m] ($\epsilon_{}$ = {}".format("r",eps_r))
 
         # update along-track distance
-        self.secaxx.set_xlim(self.data["dist"][0], self.data["dist"][-1])
-
+        if not np.all(np.isnan(self.data["dist"])):
+            self.secaxx.set_xlim(self.data["dist"][0], self.data["dist"][-1])
+        
+        else:
+            self.secaxx.set_visible(False)
+        
         self.im_data.set_cmap(cmap)
         self.im_clut.set_cmap(cmap)
 

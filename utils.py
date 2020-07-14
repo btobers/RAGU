@@ -9,9 +9,6 @@ def euclid_dist(nav):
     for _i in range(len(dist)):
         if _i>=1:
             dist[_i] = dist[_i-1] + np.sqrt((nav.navdat[_i,0] - nav.navdat[_i-1,0])**2 + (nav.navdat[_i,1] - nav.navdat[_i-1,1])**2)
-    # convert to km
-    dist = dist*1e-3
-
     return dist
 
 

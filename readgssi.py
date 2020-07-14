@@ -47,7 +47,7 @@ def readtime(bytes):
     yr = int(dtbits[0:7], 2) + 1980     # year, stored as 1980+(0:127)
     return datetime(yr, mo, day, hr, mins, sec2, 0, tzinfo=pytz.UTC)
 
-def readdzt(fpath, gps=False):
+def readdzt(fpath):
     """
     Function to unpack and return things the program needs from the file header, and the data itself.
 
@@ -179,7 +179,7 @@ def readdzt(fpath, gps=False):
 
     return header, data.astype(np.float)
 
-def readdzg(fi, frmt, header):
+def readdzg(fpath, frmt, header):
     """
     A parser to extract gps data from DZG file format. DZG contains raw NMEA sentences, which should include at least RMC and GGA.
 
@@ -244,7 +244,7 @@ def readdzg(fi, frmt, header):
     x0, x1, y0, y1 = False, False, False, False # coordinates
     z0, z1 = 0, 0
     x2, y2, z2, sec2 = 0, 0, 0, 0
-    with open(fi, 'r') as gf:
+    with open(fpath, 'r') as gf:
         if frmt == 'dzg': # if we're working with DZG format
             for ln in gf: # loop through the first few sentences, check for RMC
                 if 'RMC' in ln: # check to see if RMC sentence (should occur before GGA)

@@ -315,62 +315,64 @@ class ingester:
         print("Loading: " + fpath.split("/")[-1])
         # use readgssi readdzt.dzt reader (credit: https://github.com/iannesbitt/readgssi)
         header, amp = readgssi.readdzt(fpath)#, gps=normalize, spm=spm, start_scan=start_scan, num_scans=num_scans, epsr=epsr, antfreq=antfreq, verbose=verbose)
-        gps = readgssi.readdzg(fpath.replace(".DZT",".DZG"), 'dzg', header)
-        
+
         num_trace = amp.shape[-1]
         dt = header["dt"]
-        trace = np.arange(num_trace)
-        sample = np.arange(header["rh_nsamp"])
+        trace = np.arange(num_trace)                            # array to hold trace numbers
+        sample = np.arange(header["rh_nsamp"])                  # array to hold sample numbers
 
-        # need to sort through this still. placeholders for now for gssi ingest to work with NOSEpick
-        clutter = np.ones(amp.shape)
-        surf_idx = np.repeat(np.nan, num_trace)
-        twtt_surf = np.repeat(np.nan, num_trace)
-        surf_idx = np.repeat(np.nan, num_trace)
-        pick={}
-        pick["twtt_surf"] = twtt_surf
-
-        elev_gnd = np.repeat(np.nan, num_trace)
-        lon = np.repeat(np.nan, num_trace)
-        lat = np.repeat(np.nan, num_trace)
-
-        # interpolate gps data to length of radara data
-        if len(gps["trace"]) < num_trace:
-            x = np.arange(gps["trace"][0], gps["trace"][-1] + 1)
-            gps["lon"] = np.interp(x, gps["trace"], gps["lon"])
-            gps["lat"] = np.interp(x, gps["trace"], gps["lat"])
-            gps["elev"] = np.interp(x, gps["trace"], gps["elev"])
-            gps["trace"] = x
-
-        # may still need to extrapolate from ends - just copy beginning and end values for now
-        if len(gps["trace"]) < num_trace:
-            first = int(gps["trace"][0])
-            last = int(gps["trace"][-1])
-            gps["lon"] = utils.extend_array(gps["lon"], first, last, num_trace)
-            gps["lat"] = utils.extend_array(gps["lat"], first, last, num_trace)
-            gps["elev"] = utils.extend_array(gps["elev"], first, last, num_trace)
-            gps["trace"] = np.arange(num_trace)
+        clutter = np.ones(amp.shape)                            # place holder for clutter data
+        surf_idx = np.repeat(np.nan, num_trace)                 # array to hold sample number for surface pick at each trace
+        pick={}                                                 # dictionary to hold picks
+        pick["twtt_surf"] = np.repeat(np.nan, num_trace)        # place holder for pick of twtt_surf
 
         # create nav object to hold lon, lat, elev
         wgs84_proj4 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
         nav0 = nav()
         nav0.csys = wgs84_proj4
-        nav0.navdat = np.column_stack((gps["lon"],gps["lat"],gps["elev"]))
 
-        # create dist array  - convert nav to meters then find cumulative euclidian distance
-        earth_equidist_proj4 = "+proj=longlat +a=6378140 +b=6356750 +no_defs +units=m"
-        nav0_xform = nav0.transform(earth_equidist_proj4)
-        dist = utils.euclid_dist(nav0)
+        # read in gps data if exists
+        infile_gps = fpath.replace(".DZT",".DZG")
+        if os.path.isfile(infile_gps):
+            gps = readgssi.readdzg(infile_gps, 'dzg', header)
+            
+            # interpolate gps data to length of radara data
+            if len(gps["trace"]) < num_trace:
+                x = np.arange(gps["trace"][0], gps["trace"][-1] + 1)
+                gps["lon"] = np.interp(x, gps["trace"], gps["lon"])
+                gps["lat"] = np.interp(x, gps["trace"], gps["lat"])
+                gps["elev"] = np.interp(x, gps["trace"], gps["elev"])
+                gps["trace"] = x
 
-        # interpolate nav data if not unique location for each trace
-        if len(np.unique(lon)) < num_trace:
-            nav0.navdat[:,0] = utils.interp_array(lon)
-        if len(np.unique(lat)) < num_trace:
-            nav0.navdat[:,1] = utils.interp_array(lat)
-        if len(np.unique(dist)) < num_trace:
-            dist = utils.interp_array(dist)
+            # may still need to extrapolate from ends - just copy beginning and end values for now
+            if len(gps["trace"]) < num_trace:
+                first = int(gps["trace"][0])
+                last = int(gps["trace"][-1])
+                gps["lon"] = utils.extend_array(gps["lon"], first, last, num_trace)
+                gps["lat"] = utils.extend_array(gps["lat"], first, last, num_trace)
+                gps["elev"] = utils.extend_array(gps["elev"], first, last, num_trace)
+                gps["trace"] = np.arange(num_trace)
+            
+            # combine gps data as nav object
+            nav0.navdat = np.column_stack((gps["lon"],gps["lat"],gps["elev"]))
 
-        
+            # create dist array  - convert nav to meters then find cumulative euclidian distance
+            earth_equidist_proj4 = "+proj=longlat +a=6378140 +b=6356750 +no_defs +units=m"
+            nav0_xform = nav0.transform(earth_equidist_proj4)
+            dist = utils.euclid_dist(nav0)
+
+        else: 
+            # if no gps data file, use nan arrays
+            print("Warning: no associated nav data found")
+            lon = np.repeat(np.nan, num_trace)
+            lat = np.repeat(np.nan, num_trace)
+            elev = np.repeat(np.nan, num_trace)
+            dist = np.repeat(np.nan, num_trace)
+            nav0.navdat = np.column_stack((lon, lat, elev))
+
+        # for ground-based GPR, elev_gnd is the same as GPS recorded elev
+        elev_gnd = nav0.navdat[:,2]
+
         return {"dt": dt, "trace": trace, "sample": sample, "navdat": nav0, "elev_gnd": elev_gnd, "pick": pick, "surf_idx": surf_idx, "dist": dist, "amp": amp, "clutter": clutter}
 
 # load_picks is a method to load picks from a csv file

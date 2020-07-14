@@ -375,7 +375,7 @@ class MainGUI(tk.Frame):
                 self.imPick.update_option_menu()
                 self.data = self.igst.read(self.f_loadName)
                 self.imPick.load(self.f_loadName, self.data)
-                self.imPick.set_axes(self.eps_r.get())
+                self.imPick.set_axes(self.eps_r.get(), self.cmap.get())
                 self.imPick.update_bg()
                 self.wvPick.clear()
                 self.wvPick.set_vars()
