@@ -85,7 +85,6 @@ class imPick(tk.Frame):
         self.secaxy0.yaxis.set_ticks_position("left")
         self.secaxy0.yaxis.set_label_position("left")
         self.secaxy0.spines["left"].set_position(("outward", 52))
-        self.secaxy0.set_ylabel("two-way travel time [microsec.]")
 
         # initiate a twin axis that shares the same x-axis and shows approximate depth
         self.secaxy1 = self.ax.twinx()
@@ -167,6 +166,7 @@ class imPick(tk.Frame):
         self.debugState = False
         self.pickLabel.config(fg="#d9d9d9")
         self.secaxx.set_xlabel("along-track distance [m]")
+        self.secaxy0.set_ylabel("two-way travel time [microsec.]")
         self.secaxx.set_visible(True)
 
     # get debug state from gui settings
@@ -851,9 +851,14 @@ class imPick(tk.Frame):
         self.ax.set_ylim((self.data["sample"][-1],self.data["sample"][0]))
 
         # update twtt and depth (subradar dist.)
-        self.secaxy0.set_ylim(self.data["sample"][-1]*self.data["dt"]*1e6, self.data["sample"][0]*self.data["dt"]*1e6)
-        self.secaxy1.set_ylim(utils.twtt2depth(self.data["sample"][-1]*self.data["dt"],eps_r), utils.twtt2depth(self.data["sample"][0]*self.data["dt"],eps_r))
+        if self.data["dt"] < 1e-9:
+            self.secaxy0.set_ylabel("two-way travel time [nanosec.]")
+            self.secaxy0.set_ylim(self.data["sample"][-1]*self.data["dt"]*1e9, self.data["sample"][0]*self.data["dt"]*1e9)
+        else:
+            self.secaxy0.set_ylim(self.data["sample"][-1]*self.data["dt"]*1e6, self.data["sample"][0]*self.data["dt"]*1e5)
+
         self.secaxy1.set_ylabel("approx. subradar distance [m] ($\epsilon_{}$ = {}".format("r",eps_r))
+        self.secaxy1.set_ylim(utils.twtt2depth(self.data["sample"][-1]*self.data["dt"],eps_r), utils.twtt2depth(self.data["sample"][0]*self.data["dt"],eps_r))
 
         # update along-track distance
         if not np.all(np.isnan(self.data["dist"])):
