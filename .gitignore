@@ -6,3 +6,6 @@ testData/
 
 # Python bytecode
 *.pyc
+
+# Don't update config file
+config.py
