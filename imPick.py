@@ -195,7 +195,7 @@ class imPick(tk.Frame):
         # calculate power of data
         Pow_data = np.power(self.data["amp"],2)
         # replace zero power values with nan
-        Pow_data[Pow_data == 0] = np.NaN
+        Pow_data[Pow_data == 0] = np.nan
         # dB it
         self.dB_data = np.log10(Pow_data)
 
@@ -206,7 +206,7 @@ class imPick(tk.Frame):
             # calculate power (squared amplitude)
             Pow_clut = np.power(self.data["clutter"],2)
             # replace zero power values with nan
-            Pow_clut[Pow_clut == 0] = np.NaN
+            Pow_clut[Pow_clut == 0] = np.nan
             # dB it
             self.dB_clut = np.log10(Pow_clut)
         # if in log space, leave as is
