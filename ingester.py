@@ -357,10 +357,9 @@ class ingester:
             nav0.navdat = np.column_stack((gps["lon"],gps["lat"],gps["elev"]))
 
             # create dist array  - convert nav to meters then find cumulative euclidian distance
-            earth_equidist_proj4 = "+proj=longlat +a=6378140 +b=6356750 +no_defs +units=m"
+            earth_equidist_proj4 = "+proj=aeqd +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m no_defs" #"+proj=longlat +a=6378140 +b=6356750 +no_defs"
             nav0_xform = nav0.transform(earth_equidist_proj4)
-            dist = utils.euclid_dist(nav0)
-            ### NOTE: EUCLIDIAN DISTANCE DOES NOT SEEM TO BE WORKING YET  - INNACURATE DIST ARRAY ###
+            dist = utils.euclid_dist(nav0_xform)
 
         else: 
             # if no gps data file, use nan arrays

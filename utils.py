@@ -5,6 +5,8 @@ from constants import *
 
 # calculate total euclidian distance along a line
 def euclid_dist(nav):
+    # nav.navdat[:,0] is an array of longitude data
+    # nav.navdat[:,1] is an array of latitude data
     dist = np.zeros(nav.navdat.shape[0])
     for _i in range(len(dist)):
         if _i>=1:
@@ -120,6 +122,7 @@ def interp_array(array):
     # interpolate over array
     array_interp = np.interp(x, xp, fp)
     return array_interp
+
 
 # extend_array extends the tails of an array n times by repeating a value
 def extend_array(array, first, last, n):
