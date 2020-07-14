@@ -97,7 +97,6 @@ class imPick(tk.Frame):
         self.secaxx.xaxis.set_ticks_position("bottom")
         self.secaxx.xaxis.set_label_position("bottom")
         self.secaxx.spines["bottom"].set_position(("outward", 42))
-        self.secaxx.set_xlabel("along-track distance [km]")
 
         # set zorder of secondary axes to be behind main axis (self.ax)
         self.secaxx.set_zorder(-100)
@@ -167,6 +166,7 @@ class imPick(tk.Frame):
         self.pick_ann_vis.set(False)
         self.debugState = False
         self.pickLabel.config(fg="#d9d9d9")
+        self.secaxx.set_xlabel("along-track distance [m]")
         self.secaxx.set_visible(True)
 
     # get debug state from gui settings
@@ -847,7 +847,13 @@ class imPick(tk.Frame):
 
         # update along-track distance
         if not np.all(np.isnan(self.data["dist"])):
-            self.secaxx.set_xlim(self.data["dist"][0], self.data["dist"][-1])
+            # use km if distance exceeds 1 km
+            if self.data["dist"][-1] >= 1e3:
+                self.secaxx.set_xlabel("along-track distance [km]")
+                self.secaxx.set_xlim(self.data["dist"][0]*1e-3, self.data["dist"][-1]*1e-3)
+
+            else:
+                self.secaxx.set_xlim(self.data["dist"][0], self.data["dist"][-1])
         
         else:
             self.secaxx.set_visible(False)
