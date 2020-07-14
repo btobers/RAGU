@@ -855,7 +855,7 @@ class imPick(tk.Frame):
             self.secaxy0.set_ylabel("two-way travel time [nanosec.]")
             self.secaxy0.set_ylim(self.data["sample"][-1]*self.data["dt"]*1e9, self.data["sample"][0]*self.data["dt"]*1e9)
         else:
-            self.secaxy0.set_ylim(self.data["sample"][-1]*self.data["dt"]*1e6, self.data["sample"][0]*self.data["dt"]*1e5)
+            self.secaxy0.set_ylim(self.data["sample"][-1]*self.data["dt"]*1e6, self.data["sample"][0]*self.data["dt"]*1e6)
 
         self.secaxy1.set_ylabel("approx. subradar distance [m] ($\epsilon_{}$ = {}".format("r",eps_r))
         self.secaxy1.set_ylim(utils.twtt2depth(self.data["sample"][-1]*self.data["dt"],eps_r), utils.twtt2depth(self.data["sample"][0]*self.data["dt"],eps_r))
