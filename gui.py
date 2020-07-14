@@ -20,7 +20,7 @@ import tkinter.ttk as ttk
 
 # MainGUI is the NOSEpick class which sets the gui interface and holds operating variables
 class MainGUI(tk.Frame):
-    def __init__(self, parent, in_path, map_path, out_path, eps_r, *args, **kwargs):
+    def __init__(self, parent, in_path, map_path, out_path, eps_r, amp_out, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
         self.in_path = in_path
@@ -28,6 +28,7 @@ class MainGUI(tk.Frame):
         self.map_path = map_path
         self.out_path = out_path
         self.eps_r = tk.DoubleVar(value=eps_r)
+        self.amp_out = amp_out
         self.os = sys.platform
         self.setup()
 
@@ -75,16 +76,16 @@ class MainGUI(tk.Frame):
         surfacePickMenu = tk.Menu(pickMenu,tearoff=0)
         subsurfacePickMenu = tk.Menu(pickMenu,tearoff=0)
 
+        # surface pick menu items
+        surfacePickMenu.add_command(label="new  [ctrl+shift+n]", command=self.start_surf_pick)
+        surfacePickMenu.add_command(label="stop       [escape]", command=self.end_surf_pick)    
+        surfacePickMenu.add_command(label="clear", command=lambda: self.clear(surf = "surface"))    
+
         # subsurface pick menu items
         subsurfacePickMenu.add_command(label="new     [ctrl+n]", command=self.start_subsurf_pick)
         subsurfacePickMenu.add_command(label="stop    [escape]", command=self.end_subsurf_pick)
         subsurfacePickMenu.add_command(label="clear        [c]", command=lambda: self.clear(surf = "subsurface"))    
         subsurfacePickMenu.add_command(label="clear file", command=self.delete_datafilePicks)            
-
-        # surface pick menu items
-        surfacePickMenu.add_command(label="new  [ctrl+shift+n]", command=self.start_surf_pick)
-        surfacePickMenu.add_command(label="stop       [escape]", command=self.end_surf_pick)    
-        surfacePickMenu.add_command(label="clear", command=lambda: self.clear(surf = "surface"))    
 
         pickMenu.add_cascade(label="surface", menu = surfacePickMenu)
         pickMenu.add_cascade(label="subsurface", menu = subsurfacePickMenu)  
@@ -284,8 +285,8 @@ class MainGUI(tk.Frame):
             self.end_subsurf_pick()
             # get updated pick_dict from wvPick and pass back to imPick
             self.imPick.set_pickDict(self.wvPick.get_pickDict())
-            self.imPick.save(self.f_saveName, self.eps_r.get(), self.cmap.get(), self.figSize.get().split(","))
-    
+            self.imPick.save(self.f_saveName, self.eps_r.get(), self.amp_out, self.cmap.get(), self.figSize.get().split(","))
+
 
     # map_loc is a method to get the desired basemap location and initialize
     def map_loc(self):
@@ -413,8 +414,13 @@ class MainGUI(tk.Frame):
             if (self.imPick.get_subsurfPickFlag() == True) and (self.dict_compare(self.imPick.get_pickDict(),self.wvPick.get_pickDict()) == False) and (tk.messagebox.askyesno("tab change","import optimized picks to imagePick from wavePick?") == True):
                 self.imPick.set_pickDict(self.wvPick.get_pickDict())
                 self.imPick.plot_picks(surf = "subsurface")
-            elif (self.imPick.get_surfPickFlag() == True):
-                self.imPick.plot_picks(surf = "surface")
+            # elif (self.imPick.get_surfPickFlag() == True):
+            if self.f_loadName:
+                tmp_surf = self.wvPick.get_surf()
+                if ~np.array_equal(self.data["surf_idx"], tmp_surf):
+                    self.data["surf_idx"] = tmp_surf
+                    self.data["pick"]["twtt_surf"] = utils.sample2twtt(self.data["surf_idx"], self.data["dt"])
+                    self.imPick.plot_picks(surf = "surface")
             self.imPick.blit()
 
 

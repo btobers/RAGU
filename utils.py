@@ -3,20 +3,10 @@ import tkinter as tk
 import sys, h5py
 from constants import *
 
-# calculate total euclidian distance along a line
-def euclid_dist(nav):
-    # nav.navdat[:,0] is an array of longitude data
-    # nav.navdat[:,1] is an array of latitude data
-    dist = np.zeros(nav.navdat.shape[0])
-    for _i in range(len(dist)):
-        if _i>=1:
-            dist[_i] = dist[_i-1] + np.sqrt((nav.navdat[_i,0] - nav.navdat[_i-1,0])**2 + (nav.navdat[_i,1] - nav.navdat[_i-1,1])**2)
-    return dist
-
 
 # a set of utility functions for NOSEpick GUI
 # need to clean up this entire utility at some point
-def savePick(fpath, f_saveName, data, subsurf_pick_dict, eps_r):
+def savePick(fpath, f_saveName, data, subsurf_pick_dict, eps_r, amp_out = False):
     # fpath is the data file path [str]
     # f_saveName is the path for where the exported csv pick file should be saved [str]
     # data is the data file structure [dict]
@@ -24,14 +14,14 @@ def savePick(fpath, f_saveName, data, subsurf_pick_dict, eps_r):
     # eps_r is a value for the dielectric constant used to calculate ice thickness based on EM wave speed [float]
     v = C/(np.sqrt(eps_r))        # EM wave veloity in ice - for thickness calculation
 
-    trace = data["trace"]                # array to hold trace number
+    trace = data["trace"]                               # array to hold trace number
     lon = data["navdat"].navdat[:,0]                    # array to hold longitude
     lat = data["navdat"].navdat[:,1]                    # array to hold latitude
     elev_air = data["navdat"].navdat[:,2]               # array to hold aircraft elevation
     twtt_surf = data["pick"]["twtt_surf"]               # array to hold twtt to surface below nadir position
     elev_gnd = data["elev_gnd"]                         # array to hold ground elevation beneath aircraft sampled from lidar pointcloud
     surf_idx = data["surf_idx"]                         # array to hold surface index
-    subsurf_idx_pk = np.repeat(np.nan,lon.shape[0])     # array to hold indeces of picks
+    subsurf_idx_pk = np.repeat(np.nan,trace[-1] + 1)    # array to hold indeces of picks
 
     # iterate through subsurf_pick_dict layers adding data to export arrays
     for _i in range(len(subsurf_pick_dict)):
@@ -50,9 +40,27 @@ def savePick(fpath, f_saveName, data, subsurf_pick_dict, eps_r):
 
     try:
         # combine the data into a matrix for export
-        dstack = np.column_stack((trace,lon,lat,elev_air,elev_gnd,surf_idx,twtt_surf,subsurf_idx_pk,twtt_bed,elev_bed,thick))
+        if amp_out:
+            # export surface and subsurface pick amplitude values
+            idx = ~np.isnan(surf_idx)
+            surf_amp = np.repeat(np.nan, trace[-1] + 1)
+            surf_amp[idx] = data["amp"][surf_idx[idx].astype(np.int),idx]
 
-        header = "trace,lon,lat,elev_air,elev_gnd,surf_idx,twtt_surf,subsurf_idx_pk,twtt_bed,elev_bed,thick"
+            idx = ~np.isnan(subsurf_idx_pk)
+            subsurf_amp = np.repeat(np.nan, trace[-1] + 1)
+            subsurf_amp[idx] = data["amp"][subsurf_idx_pk[idx].astype(np.int),idx]
+
+            dstack = np.column_stack((trace,lon,lat,elev_air,elev_gnd,surf_idx,twtt_surf,surf_amp,subsurf_idx_pk,twtt_bed,subsurf_amp,elev_bed,thick))
+            header = "trace,lon,lat,elev_air,elev_gnd,surf_idx,twtt_surf,surf_amp,subsurf_idx_pk,twtt_bed,subsurf_amp,elev_bed,thick"
+        else:
+            dstack = np.column_stack((trace,lon,lat,elev_air,elev_gnd,surf_idx,twtt_surf,subsurf_idx_pk,twtt_bed,elev_bed,thick))
+            header = "trace,lon,lat,elev_air,elev_gnd,surf_idx,twtt_surf,subsurf_idx_pk,twtt_bed,elev_bed,thick"
+
+        if np.array_equal(elev_air, elev_gnd):
+            # remove elev_air if ground-based data
+            dstack = np.delete(dstack, 4, 1)
+            header = header.replace(",elev_air","")
+            
         np.savetxt(f_saveName, dstack, delimiter=",", newline="\n", fmt="%s", header=header, comments="")
 
         if fpath.endswith(".h5"):
@@ -75,6 +83,18 @@ def savePick(fpath, f_saveName, data, subsurf_pick_dict, eps_r):
         print("picks export error:" + str(err))
 
 
+# remove_outliers is a function to remove outliers from an array
+# returns bool array
+def remove_outliers(array):
+    mean = np.mean(array)
+    standard_deviation = np.std(array)
+    distance_from_mean = abs(array - mean)
+    max_deviations = 2
+    not_outlier = distance_from_mean < max_deviations * standard_deviation
+    return not_outlier
+
+
+# delete_savedPicks is a method to clear saved picks from an hdf5 data file
 def delete_savedPicks(fpath, num_file_pick_lyr):
     if fpath.endswith("h5"):
         f =  h5py.File(fpath, "a")
@@ -91,6 +111,17 @@ def list_insert_idx(list, n):
             index = i 
             break
     return index
+
+
+# calculate total euclidian distance along a line
+def euclid_dist(nav):
+    # nav.navdat[:,0] is an array of longitude data
+    # nav.navdat[:,1] is an array of latitude data
+    dist = np.zeros(nav.navdat.shape[0])
+    for _i in range(len(dist)):
+        if _i>=1:
+            dist[_i] = dist[_i-1] + np.sqrt((nav.navdat[_i,0] - nav.navdat[_i-1,0])**2 + (nav.navdat[_i,1] - nav.navdat[_i-1,1])**2)
+    return dist
 
 
 def find_nearest(array,value):

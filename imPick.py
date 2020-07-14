@@ -194,13 +194,10 @@ class imPick(tk.Frame):
 
         # calculate power of data
         Pow_data = np.power(self.data["amp"],2)
-
+        # replace zero power values with nan
+        Pow_data[Pow_data == 0] = np.NaN
         # dB it
         self.dB_data = np.log10(Pow_data)
-
-        # initialize arrays to hold saved picks
-        self.xln_subsurf_saved = np.repeat(np.nan, self.data["trace"][-1] + 1)
-        self.yln_subsurf_saved = np.repeat(np.nan, self.data["trace"][-1] + 1)
 
         # get clutter data in dB
         # check if clutter data is stored in linear space or log space - lin space should have values less than 1
@@ -252,6 +249,10 @@ class imPick(tk.Frame):
 
         # set clutter sim visibility to false
         self.im_clut.set_visible(False)
+
+        # initialize arrays to hold saved picks
+        self.xln_subsurf_saved = np.repeat(np.nan, self.data["trace"][-1] + 1)
+        self.yln_subsurf_saved = np.repeat(np.nan, self.data["trace"][-1] + 1)
 
         # initialize lines to hold picks
         self.saved_surf_ln, = self.ax.plot(self.data["trace"],self.data["surf_idx"],"c")            # plot lidar surface
@@ -330,6 +331,11 @@ class imPick(tk.Frame):
             if self.pick_state == True:
                 # restrict subsurface picks to fall below surface
                 if (self.pick_surf == "subsurface") and ((pick_sample > self.data["surf_idx"][self.pick_trace]) or (np.isnan(self.data["surf_idx"][self.pick_trace]))):
+                    # determine if trace already contains pick - if so, replace with current sample
+                    if self.pick_trace in self.xln_subsurf:
+                        self.yln_subsurf[self.xln_subsurf.index(self.pick_trace)] = pick_sample
+                        return
+
                     # if pick falls before previous pix, prepend to pick list
                     if (len(self.xln_subsurf) >= 1) and (self.pick_trace < self.xln_subsurf[0]):
                         self.xln_subsurf.insert(0, self.pick_trace)
@@ -351,6 +357,11 @@ class imPick(tk.Frame):
                     self.tmp_subsurf_ln.set_data(self.xln_subsurf, self.yln_subsurf)
 
                 elif self.pick_surf == "surface":
+                    # determine if trace already contains pick - if so, replace with current sample
+                    if self.pick_trace in self.xln_surf:
+                        self.yln_surf[self.xln_surf.index(self.pick_trace)] = pick_sample
+                        return
+
                     # if pick falls before previous pix, prepend to pick list
                     if (len(self.xln_surf) >= 1) and (self.pick_trace < self.xln_surf[0]):
                         self.xln_surf.insert(0, self.pick_trace)
@@ -600,7 +611,6 @@ class imPick(tk.Frame):
 
     # add_pickLabels is a method to create annotations for picks
     def add_pickLabels(self):
-        # ensure a new pick segment was completed
         if len(self.ann_list) < self.pick_segment:
             # get x and y locations for placing annotation
             x = np.where(~np.isnan(self.pick_subsurf_idx[str(self.pick_segment - 1)]))[0][0]
@@ -884,11 +894,12 @@ class imPick(tk.Frame):
 
 
     # save is a method to receive the pick save location from gui and save using utils.save
-    def save(self, f_saveName, eps_r, cmap, figSize):
+    def save(self, f_saveName, eps_r, amp_out, cmap, figSize):
+        self.f_saveName = f_saveName
         if self.pick_subsurf_idx_opt:
-            utils.savePick(self,f_loadName, f_saveName, self.data, self.pick_subsurf_idx_opt, eps_r)
+            utils.savePick(self,f_loadName, self.f_saveName, self.data, self.pick_subsurf_idx_opt, eps_r, amp_out)
         else:
-            utils.savePick(self.f_loadName, f_saveName, self.data, self.pick_subsurf_idx, eps_r)
+            utils.savePick(self.f_loadName, self.f_saveName, self.data, self.pick_subsurf_idx, eps_r, amp_out)
         # zoom out to full rgram extent to save pick image
         self.set_axes(eps_r, cmap)
         if self.im_status.get() =="clut":

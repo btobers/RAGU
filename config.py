@@ -19,3 +19,6 @@ out_path = in_path[:-4] + "picks"
 
 # relative permittivity (dielectric constant)
 eps_r = 3.15
+
+# param bool amp_out: export pick amplitudes, default False
+amp_out = True

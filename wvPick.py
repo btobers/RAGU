@@ -1,6 +1,7 @@
 import utils
 import numpy as np
 from scipy.interpolate import CubicSpline
+from scipy.signal import find_peaks
 import tkinter as tk
 import sys,os,time
 import matplotlib as mpl
@@ -98,6 +99,7 @@ class wvPick(tk.Frame):
         self.pick_dict0 = {}
         self.pick_dict1 = {}
         self.rePick = None
+        self.surf_idx = None
         self.rePick_idx = {}        # dictionary of indeces of repicked traces for each segment
         self.subsurf_interpType.set("cubic")
 
@@ -105,7 +107,7 @@ class wvPick(tk.Frame):
     # set_data is a method to receive the radar data
     def set_data(self, data):
         self.data_dB = 10*np.log10(np.power(data["amp"],2))
-        self.num_trace = data["trace"][1] + 1
+        self.num_trace = data["trace"][-1] + 1
         self.surf_idx = data["surf_idx"]
 
 
@@ -159,7 +161,7 @@ class wvPick(tk.Frame):
 
         surf = self.surf_idx[self.traceNum[segment]]
 
-        self.ax.plot(self.data_dB[:,self.traceNum[segment]], label="trace: " + str(int(self.traceNum[segment] + 1)) + "/" + str(int(self.num_trace)))
+        self.ax.plot(self.data_dB[:,self.traceNum[segment]], ".", label="trace: " + str(int(self.traceNum[segment] + 1)) + "/" + str(int(self.num_trace)))
 
         if not np.isnan(surf):
             self.ax.axvline(x = surf, c='c', label="surface")
@@ -247,16 +249,25 @@ class wvPick(tk.Frame):
 
     # surf_autoPick is a method to automatically optimize surface picks by selecting the maximul amplitude sample within the specified window around existing surf_idx
     def surf_autoPick(self):
-        if (not np.any(self.surf_idx)):
-            return
-        winSize = self.winSize.get()
-        x = np.argwhere(~np.isnan(self.surf_idx))
-        y = self.surf_idx[x]
-        for _i in range(len(x)):
-            # find argmax for window for given data trace in pick
-            max_idx = np.argmax(self.data_dB[int(y[_i] - (winSize/2)):int(y[_i] + (winSize/2)), x[_i]])
-            # add argmax index to pick_dict1 - account for window index shift
-            self.surf_idx[x[_i]] = max_idx + int(y[_i] - (winSize/2))
+        if np.all(np.isnan(self.surf_idx)):
+            # if surf idx array is all nans, take max power to define surface 
+            max_idx = np.nanargmax(self.data_dB[10:,:], axis = 0) + 10
+            # remove outliers
+            not_outlier = utils.remove_outliers(max_idx)
+            # interpolate over outliers
+            x = np.arange(self.num_trace)
+            self.surf_idx = np.interp(x, x[not_outlier], max_idx[not_outlier])
+
+        else:
+            # if existing surface pick, find max within specified window form existing pick
+            winSize = self.winSize.get()
+            x = np.argwhere(~np.isnan(self.surf_idx))
+            y = self.surf_idx[x]
+            for _i in range(len(x)):
+                # find argmax for window for given data trace in pick
+                max_idx = np.argmax(self.data_dB[int(y[_i] - (winSize/2)):int(y[_i] + (winSize/2)), x[_i]])
+                # add argmax index to pick_dict1 - account for window index shift
+                self.surf_idx[x[_i]] = max_idx + int(y[_i] - (winSize/2))
         self.plot_wv()
 
 
