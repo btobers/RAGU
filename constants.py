@@ -1,9 +1,5 @@
 import pytz
 
-"""
-This module contains a number of variables that readgssi needs to perform physics calculations and interpret files from DZT files.
-"""
-
 
 TZ = pytz.timezone('UTC')
 

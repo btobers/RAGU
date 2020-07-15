@@ -6,10 +6,11 @@ last updated: 13JUL2020
 environment requirements in nose_env.yml
 """
 
+
 ### USER SPECIFIED VARS ###
 
 # input data path
-in_path = "/media/btober/beefmaster/MARS/targ/supl/UAF/2019/hdf5"        
+in_path = "/media/btober/beefmaster/MARS/targ/supl/UAF/2020/hdf5"        
 
 # input basemap path
 map_path = "/home/btober/Documents/OIB-AK_qgis/"

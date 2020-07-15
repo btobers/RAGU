@@ -1,3 +1,4 @@
+### IMPORTS ###
 import numpy as np
 import tkinter as tk
 import sys, h5py
@@ -193,6 +194,15 @@ def twtt2sample(array, dt):
 def sample2twtt(array, dt):
     twtt_array = array * dt
     return twtt_array
+
+
+# amp2powdB
+def amp2powdB(amparray):
+    powarray = np.power(amparray,2)
+    # mask zero-power values
+    powarray[powarray == 0] = np.nan
+    dBarray = 10*np.log10(powarray)
+    return dBarray
 
 
 def print_pickInfo(data, trace, sample):

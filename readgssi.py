@@ -1,3 +1,4 @@
+### IMPORTS ###
 import struct
 import math
 import os,sys
@@ -9,6 +10,7 @@ from constants import *
 import pandas as pd
 import pynmea2
 
+
 """
 this module contains functions parsed from https://github.com/iannesbitt/readgssi to read gssi dzt files and associated dzg files for use in NOSEpick
 much of the header data which is not necessary for NOSEpick use has been removed
@@ -19,6 +21,7 @@ and the radar profile in a numpy array.
 Brandon S. Tober
 09JUL2020
 """
+
 
 def readtime(bytes):
     """
@@ -130,8 +133,8 @@ def readdzt(fpath):
     # read in and transpose data - as float 
     data = np.fromfile(infile, dtype).reshape(-1,(header['rh_nsamp']*header['rh_nchan'])).T.astype(np.float) # offset=start_offset,
 
-    # replace missing data samples with nan
-    data[data == 0] = np.nan
+    # # replace missing data samples with nan
+    # data[data == 0] = np.nan
 
     # close data file
     infile.close()

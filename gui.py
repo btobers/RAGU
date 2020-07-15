@@ -6,8 +6,8 @@ last updated: 05FEB20
 environment requirements in nose_env.yml
 """
 
+
 ### IMPORTS ###
-# import ingester
 import imPick, wvPick, basemap, utils, ingester
 import os, sys, scipy, glob
 import numpy as np
@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 import tkinter as tk
 import tkinter.ttk as ttk
+
 
 # MainGUI is the NOSEpick class which sets the gui interface and holds operating variables
 class MainGUI(tk.Frame):
@@ -40,7 +41,6 @@ class MainGUI(tk.Frame):
         self.map_loadName = ""
 
         self.userName = tk.StringVar(value="btober")
-        # self.eps_r = tk.DoubleVar(value=3.15)
         self.figSize = tk.StringVar(value="21,7")
         self.cmap = tk.StringVar(value="Greys_r")
         self.debugState = tk.BooleanVar()
@@ -206,6 +206,7 @@ class MainGUI(tk.Frame):
         # h key to set axes limits to home extent
         elif event.keysym=="h":
             self.imPick.set_axes(self.eps_r.get())
+
 
     # close_window is a gui method to exit NOSEpick
     def close_window(self):
@@ -502,7 +503,7 @@ class MainGUI(tk.Frame):
 
         row = tk.Frame(settingsWindow)
         row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-        lab = tk.Label(row, width=25, text="degub mode", anchor='w')
+        lab = tk.Label(row, width=25, text="debug mode", anchor='w')
         lab.pack(side=tk.LEFT)
         tk.Radiobutton(row,text="on", variable=self.debugState, value=True).pack(side="left")
         tk.Radiobutton(row,text="off", variable=self.debugState, value=False).pack(side="left")

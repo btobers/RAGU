@@ -1,14 +1,15 @@
+### IMPORTS ###
 import utils
 import numpy as np
 from scipy.interpolate import CubicSpline
 from scipy.signal import find_peaks
 import tkinter as tk
-import sys,os,time
+import sys,os,time,copy
 import matplotlib as mpl
 mpl.use("TkAgg")
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-import copy
+
 
 class wvPick(tk.Frame):
     # wvPick is a class to optimize the picking of horizons from radar data
@@ -106,7 +107,8 @@ class wvPick(tk.Frame):
 
     # set_data is a method to receive the radar data
     def set_data(self, data):
-        self.data_dB = 10*np.log10(np.power(data["amp"],2))
+        # get data in dB
+        self.data_dB = utils.amp2powdB(data["amp"])
         self.num_trace = data["trace"][-1] + 1
         self.surf_idx = data["surf_idx"]
 
@@ -161,7 +163,7 @@ class wvPick(tk.Frame):
 
         surf = self.surf_idx[self.traceNum[segment]]
 
-        self.ax.plot(self.data_dB[:,self.traceNum[segment]], ".", label="trace: " + str(int(self.traceNum[segment] + 1)) + "/" + str(int(self.num_trace)))
+        self.ax.plot(self.data_dB[:,self.traceNum[segment]], label="trace: " + str(int(self.traceNum[segment] + 1)) + "/" + str(int(self.num_trace)))
 
         if not np.isnan(surf):
             self.ax.axvline(x = surf, c='c', label="surface")
@@ -176,7 +178,7 @@ class wvPick(tk.Frame):
             if pick_idx0 != pick_idx1:
                 self.ax.axvline(x = pick_idx1, c="g", ls = "--", label="updated pick")
         
-            # # save un-zoomed view to toolbar
+            # # save un-zoomed view to toolbar10*np.log10(np.power(data["amp"][mask],2))
             # self.toolbar.push_current()
 
             # # zoom in

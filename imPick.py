@@ -1,4 +1,4 @@
-###IMPORTS###
+### IMPORTS ###
 import utils, basemap
 import h5py
 import numpy as np
@@ -168,6 +168,7 @@ class imPick(tk.Frame):
         self.secaxx.set_xlabel("along-track distance [m]")
         self.secaxy0.set_ylabel("two-way travel time [microsec.]")
         self.secaxx.set_visible(True)
+
 
     # get debug state from gui settings
     def set_debugState(self, debugState):
@@ -772,7 +773,7 @@ class imPick(tk.Frame):
         for _i in self.ax.lines:
             _i.set_visible(True)
 
-            
+
     def update_bg(self, event=None):
         """
         when the figure is resized, hide picks, draw everything,
