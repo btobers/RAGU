@@ -205,7 +205,7 @@ class MainGUI(tk.Frame):
 
         # h key to set axes limits to home extent
         elif event.keysym=="h":
-            self.imPick.set_axes(self.eps_r.get())
+            self.imPick.set_axes(self.eps_r.get(), self.cmap.get())
 
 
     # close_window is a gui method to exit NOSEpick
@@ -567,6 +567,7 @@ class MainGUI(tk.Frame):
         \n[ctrl+o]\topen radar data file
         \n[ctrl+m]\topen basemap window
         \n[spacebar]\ttoggle between radar and\n\t\tclutter images
+        \n[h]\t\treturn to home extent
         \n[ctrl+s]\texport pick data
         \n[→]\t\topen next file in\n\t\tworking directory
         \n[ctrl+q]\tquit NOSEpick
