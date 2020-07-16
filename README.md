@@ -7,9 +7,9 @@ Authors: Brandon Tober and Michael Christoffersen
 
 NOSEpick logo designed by Eric Petersen
 
-
-<img align="center" img src="lib/NOSEpick_demo.gif" height="400">
-
+<p align="center">
+<img src="lib/NOSEpick_demo.gif" height="400">
+</p>
 
 ## Description
 NOSEpick is an open source GUI package developed to interpret radar sounding data, written in Python 3. This was originally developed to work with NASA's Operation IceBridge Alaska radar sounding data. NOSEpick is also capable of work with SHARAD data acquired onboard NASA's Mars Reconnaissance Orbiter (Reduced Data Record of Radar Backscatter Power (USRDR) & Geographic, Geometric, and Ionospheric Properties (USGEOM) data available at https://pds-geosciences.wustl.edu/missions/mro/sharad.htm). GSSI data can also be interpreted with NOSEpick.
