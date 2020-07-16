@@ -8,7 +8,7 @@ Authors: Brandon Tober and Michael Christoffersen
 NOSEpick logo designed by Eric Petersen
 
 
-<img src="lib/NOSEpick_demo.gif" height="200">
+<img align="center" img src="lib/NOSEpick_demo.gif" height="400">
 
 
 ## Description
