@@ -5,6 +5,7 @@
 <p align="center">
   <img src="lib/NOSEpick.png" height="200"><br>
   NOSEpick logo artist: Eric Petersen<br>
+  
   <img src="lib/NOSEpick_demo.gif" height="500">
 </p>
 
