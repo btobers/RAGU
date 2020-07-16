@@ -116,7 +116,10 @@ def readdzt(fpath):
     header['cr'] = 1 / math.sqrt(Mu_0 * Eps_0 * header['rhf_epsr'])
     header['cr_true'] = 1 / math.sqrt(Mu_0 * Eps_0 * header['dzt_epsr'])
     header['dt'] = (header['dzt_depth'] * 2) / (header['rh_nsamp'] * header['cr_true'])
-
+    
+    fs = header['rh_nsamp'] * header['rhf_sps']
+    print(1/fs)
+    print(header["dt"])
     # skip ahead to data
     if header['rh_data'] < 1024: # whether or not the header is normal or big-->determines offset to data array
         infile.seek(1024 * header['rh_data'])
