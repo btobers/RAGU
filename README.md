@@ -1,14 +1,14 @@
 # NOSEpick
-Nearly Optimal Subsurface Extractor GUI
-
-Authors: Brandon Tober and Michael Christoffersen
-
-<img src="lib/NOSEpick.png" height="200">
-
-NOSEpick logo designed by Eric Petersen
+## Nearly Optimal Subsurface Extractor GUI
+### Authors: Brandon Tober and Michael Christoffersen
 
 <p align="center">
-<img src="lib/NOSEpick_demo.gif" height="400">
+  <img src="lib/NOSEpick.png" height="200">
+  <>
+  <NOSEpick logo artist: Eric Petersen>
+  <>
+  <>
+  <img src="lib/NOSEpick_demo.gif" height="500">
 </p>
 
 ## Description
