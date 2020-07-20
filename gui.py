@@ -248,19 +248,15 @@ class MainGUI(tk.Frame):
             # ingest the data
             self.igst = ingester.ingester(self.f_loadName.split(".")[-1])
             self.data = self.igst.read(self.f_loadName)
-
-            # check for file errors
-            if np.any(self.data["dist"]):
-                self.imPick.load(self.f_loadName, self.data)
-                self.imPick.set_axes(self.eps_r.get(), self.cmap.get())
-                self.imPick.update_bg()
-                self.wvPick.set_vars()
-                self.wvPick.clear()
-                self.wvPick.set_data(self.data)
-            
-            else: 
-                print("data file error, trying another!")
-                self.open_data()
+            # return if no data ingested
+            if not self.data:
+                return
+            self.imPick.load(self.f_loadName, self.data)
+            self.imPick.set_axes(self.eps_r.get(), self.cmap.get())
+            self.imPick.update_bg()
+            self.wvPick.set_vars()
+            self.wvPick.clear()
+            self.wvPick.set_data(self.data)
 
         # pass basemap to imPick for plotting pick location
         if self.map_loadName and self.basemap.get_state() == 1:
@@ -287,6 +283,7 @@ class MainGUI(tk.Frame):
             # get updated pick_dict from wvPick and pass back to imPick
             self.imPick.set_pickDict(self.wvPick.get_pickDict())
             self.imPick.save(self.f_saveName, self.eps_r.get(), self.amp_out, self.cmap.get(), self.figSize.get().split(","))
+            self.f_saveName = ""
 
 
     # map_loc is a method to get the desired basemap location and initialize
@@ -376,6 +373,9 @@ class MainGUI(tk.Frame):
                 self.imPick.set_vars()
                 self.imPick.update_option_menu()
                 self.data = self.igst.read(self.f_loadName)
+                # return if no data ingested
+                if not self.data:
+                    return
                 self.imPick.load(self.f_loadName, self.data)
                 self.imPick.set_axes(self.eps_r.get(), self.cmap.get())
                 self.imPick.update_bg()

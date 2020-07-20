@@ -317,6 +317,11 @@ class ingester:
         # use readgssi readdzt.dzt reader (credit: https://github.com/iannesbitt/readgssi)
         header, amp = readgssi.readdzt(fpath)#, gps=normalize, spm=spm, start_scan=start_scan, num_scans=num_scans, epsr=epsr, antfreq=antfreq, verbose=verbose)
 
+        # ensure data file is not empty
+        if not np.any(amp):
+            print("gssi_read error: file contains no data")
+            return
+
         num_trace = amp.shape[-1]
         dt = header["dt"]
         trace = np.arange(num_trace)                            # array to hold trace numbers
@@ -344,11 +349,13 @@ class ingester:
                 gps["lat"] = np.interp(x, gps["trace"], gps["lat"])
                 gps["elev"] = np.interp(x, gps["trace"], gps["elev"])
                 gps["trace"] = x
-
+            # plt.plot(gps["trace"],gps["lat"],'d')
+            # plt.plot(tmp_trace, tmp_lat, '.')
+            # plt.show()
             # may still need to extrapolate from ends - just copy beginning and end values for now
             if len(gps["trace"]) < num_trace:
-                first = int(gps["trace"][0])
-                last = int(gps["trace"][-1])
+                first = gps["trace"][0]
+                last = gps["trace"][-1]
                 gps["lon"] = utils.extend_array(gps["lon"], first, last, num_trace)
                 gps["lat"] = utils.extend_array(gps["lat"], first, last, num_trace)
                 gps["elev"] = utils.extend_array(gps["elev"], first, last, num_trace)

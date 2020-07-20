@@ -116,10 +116,7 @@ def readdzt(fpath):
     header['cr'] = 1 / math.sqrt(Mu_0 * Eps_0 * header['rhf_epsr'])
     header['cr_true'] = 1 / math.sqrt(Mu_0 * Eps_0 * header['dzt_epsr'])
     header['dt'] = (header['dzt_depth'] * 2) / (header['rh_nsamp'] * header['cr_true'])
-    
-    fs = header['rh_nsamp'] * header['rhf_sps']
-    print(1/fs)
-    print(header["dt"])
+
     # skip ahead to data
     if header['rh_data'] < 1024: # whether or not the header is normal or big-->determines offset to data array
         infile.seek(1024 * header['rh_data'])
@@ -196,10 +193,10 @@ def readdzg(fpath, frmt, header):
     """
 
     # initialize data arrays
-    trace_num = np.array(())
-    lon = np.array(())
-    lat = np.array(())
-    elev = np.array(())
+    trace_num = np.array(()).astype(np.int)
+    lon = np.array(()).astype(np.float64)
+    lat = np.array(()).astype(np.float64)
+    elev = np.array(()).astype(np.float64)
 
     if header['rhf_spm'] == 0:
         spu = header['rhf_sps']
