@@ -355,9 +355,15 @@ class ingester:
                 gps["lat"] = np.interp(x, gps["trace"], gps["lat"])
                 gps["elev"] = np.interp(x, gps["trace"], gps["elev"])
                 gps["trace"] = x
-            # plt.plot(gps["trace"],gps["lat"],'d')
-            # plt.plot(tmp_trace, tmp_lat, '.')
-            # plt.show()
+
+            # check if last gps record trace is out of data bounds - trim navdat if necessary
+            if gps["trace"][-1] >= num_trace:
+                idx = np.where(gps["trace"] >= num_trace)[0]
+                gps["lon"] = np.delete(gps["lon"],idx)
+                gps["lat"] = np.delete(gps["lat"],idx)
+                gps["elev"] = np.delete(gps["elev"],idx)
+                gps["trace"] = np.delete(gps["trace"],idx)
+
             # may still need to extrapolate from ends - just copy beginning and end values for now
             if len(gps["trace"]) < num_trace:
                 first = gps["trace"][0]
