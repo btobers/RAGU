@@ -152,6 +152,12 @@ class ingester:
         # get indices of twtt_surf
         surf_idx = utils.twtt2sample(pick["twtt_surf"], dt)
 
+        # determine if non-unique navdat
+        if np.all(nav0.navdat[:,0]==nav0.navdat[0,0]):
+            print("h5py_read error: non-unique nav data")
+            # set dist array to range from 0 to 1
+            dist = np.linspace(0,1,num_trace)
+
         return {"dt": dt, "trace": trace, "sample": sample, "navdat": nav0, "elev_gnd": elev_gnd, "pick": pick, "surf_idx": surf_idx, "dist": dist, "amp": amp, "clutter": clutter, "num_file_pick_lyr": num_file_pick_lyr} # other fields?
 
 

@@ -156,7 +156,7 @@ def interp_array(array):
     return array_interp
 
 
-# extend_array extends the tails of an array n times by repeating a value
+# extend_array extends the tails of an array to a length of n by repeating tail values
 def extend_array(array, first, last, n):
     array = np.append(np.repeat(array[0], first), array)
     array = np.append(array, np.repeat(array[-1], n - last))
