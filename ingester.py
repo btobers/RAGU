@@ -5,7 +5,7 @@ from nav import *
 import readgssi
 import utils
 import matplotlib.pyplot as plt
-import scipy.io as scio
+import scipy as sp
 import sys,os,fnmatch,struct
 # from segpy.reader import create_reader
 
@@ -47,12 +47,12 @@ class ingester:
             exit(1)
 
 
-    ### method to ingest OIB-AK radar .h5 data format ###
+   ### method to ingest OIB-AK radar .h5 data format ###
     def h5py_read(self, fpath):
         print("----------------------------------------")
         print("Loading: " + fpath.split("/")[-1])
         # read in .h5 file
-        f = h5py.File(fpath, "r")                               
+        f = h5py.File(fpath, "r")                      
 
         # h5 radar data group structure        
         # |-raw
@@ -67,66 +67,64 @@ class ingester:
         # |  |-pick
 
         # pull necessary raw group data
-        fs = f["raw/rx0/"].attrs["samplingFrequency-Hz"]        # sampling frequency, Hz
-        num_trace = f["raw/rx0"].attrs["numTrace"]              # number of traces in rgram
-        num_sample = f["raw/rx0"].attrs["samplesPerTrace"]      # samples per trace in rgram
+        fs = f["raw"]["rx0/"].attrs["samplingFrequency-Hz"]        # sampling frequency, Hz
+        num_trace = f["raw"]["rx0"].attrs["numTrace"]              # number of traces in rgram
+        num_sample = f["raw"]["rx0"].attrs["samplesPerTrace"]      # samples per trace in rgram
 
-
+        # initialize nav path
+        nav0 = nav()
         # pull necessary ext group nav data - use more precise Larsen nav data pulled from Trimble if available
         if "nav0" in f["ext"].keys():
-            lon =  np.array(f["ext/nav0"]["lon"]).astype(np.float64)
-            lat =  np.array(f["ext/nav0"]["lat"]).astype(np.float64)
-            elev_air =  np.array(f["ext/nav0"]["altM"]).astype(np.float64)
-            crs = f["ext/nav0"].attrs["CRS"].decode("utf-8") 
+            lon = f["ext"]["nav0"]["lon"][:].astype(np.float64)
+            lat = f["ext"]["nav0"]["lat"][:].astype(np.float64)
+            alt = f["ext"]["nav0"]["altM"][:].astype(np.float64)
+            crs = f["ext"]["nav0"].attrs["CRS"].decode("utf-8") 
         # pull raw loc0 nav data if Larsen nav DNE
         else:
-            lon =  np.array(f["raw/loc0"]["lon"]).astype(np.float64)
-            lat =  np.array(f["raw/loc0"]["lat"]).astype(np.float64)
-            elev_air =  np.array(f["raw/loc0"]["altM"]).astype(np.float64)
-            crs = f["raw/loc0"].attrs["CRS"].decode("utf-8")             
-
+            lon = f["raw"]["loc0"]["lon"][:].astype(np.float64)
+            lat = f["raw"]["loc0"]["lat"][:].astype(np.float64)
+            alt = f["raw"]["loc0"]["altM"][:].astype(np.float64)
+            crs = f["raw"]["loc0"].attrs["CRS"].decode("utf-8")        
+     
         # pull lidar surface elevation if possible
         if "srf0" in f["ext"].keys():
-            elev_gnd = np.array(f["ext/srf0"])                # surface elevation from lidar, averaged over radar first fresnel zone per trace (see code within /zippy/MARS/code/xped/hfProc/ext)
+            elev_gnd = f["ext"]["srf0"][:]                          # surface elevation from lidar, averaged over radar first fresnel zone per trace (see code within /zippy/MARS/code/xped/hfProc/ext)
         # create empty arrays to hold surface elevation and twtt otherwise
         else:
             elev_gnd = np.repeat(np.nan, num_trace)
 
         # pull necessary drv group data
-        amp = np.abs(np.array(f["drv/proc0"]))                  # pulse compressed amplitude array
+        pc = f["drv/proc0"][:]                                      # pulse compressed array
+
         if "clutter0" in f["drv"].keys():
-            clutter = np.array(f["drv/clutter0"])               # simulated clutter array
+            clutter = f["drv"]["clutter0"][:]                       # simulated clutter array
         else:
-            clutter = np.ones(amp.shape)                        # empty clutter array if no sim exists
+            clutter = np.ones(amp.shape)                            # empty clutter array if no sim exists
         
         # read in any existing picks
         pick = {}
-        if "twtt_surf" in f["drv/pick"].keys():
-            pick["twtt_surf"] = np.array(f["drv/pick"]["twtt_surf"])
+        if "twtt_surf" in f["drv"]["pick"].keys():
+            pick["twtt_surf"] = f["drv"]["pick"]["twtt_surf"][:]
         else:
             pick["twtt_surf"] = np.repeat(np.nan, num_trace)
-            
+
         #  determine how many subsurface pick layers exist in the file - read each in as a numpy array to the pick dictionary
-        num_file_pick_lyr = len(fnmatch.filter(f["drv/pick"].keys(), "twtt_subsurf*"))
+        num_file_pick_lyr = len(fnmatch.filter(f["drv"]["pick"].keys(), "twtt_subsurf*"))
         if num_file_pick_lyr > 0:
             # iterate through any existing subsurface pick layers to import
             for _i in range(num_file_pick_lyr):
-                pick["twtt_subsurf" + str(_i)] = np.array(f["drv/pick"]["twtt_subsurf" + str(_i)])
+                pick["twtt_subsurf" + str(_i)] = np.array(f["drv"]["pick"]["twtt_subsurf" + str(_i)])
 
-        f.close()                                               # close the file
+        f.close()                                                   # close the file
 
-        # convert lon, lat, elev to nav object of nav class
+        # create dist array  - convert nav to meters then find cumulative euclidian distance
+        nav0.navdat = np.column_stack((lon,lat,alt))
         if "wgs" in crs.lower(): 
             nav0_proj4 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
         else:
             print("Unknown nav coordinate reference system")
-            sys.exit()
-            
-        nav0 = nav()
+            sys.exit()    
         nav0.csys = nav0_proj4
-        nav0.navdat = np.column_stack((lon,lat,elev_air))
-
-        # create dist array  - convert nav to meters then find cumulative euclidian distance
         ak_nad83_proj4 = "+proj=aea +lat_1=55 +lat_2=65 +lat_0=50 +lon_0=-154 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs" 
         nav0_xform = nav0.transform(ak_nad83_proj4)
         dist = utils.euclid_dist(nav0_xform)
@@ -160,8 +158,7 @@ class ingester:
 
         return {"dt": dt, "trace": trace, "sample": sample, "navdat": nav0, "elev_gnd": elev_gnd, "pick": pick, "surf_idx": surf_idx, "dist": dist, "amp": amp, "clutter": clutter, "num_file_pick_lyr": num_file_pick_lyr} # other fields?
 
-
-    # method to ingest .mat files. for older matlab files, scio works and h5py does not. for newer files, h5py works and scio does not 
+    # method to ingest .mat files. for older matlab files, sp.io works and h5py does not. for newer files, h5py works and sp.io does not 
     def mat_read(self,fpath):
         try:
             f = h5py.File(fpath, "r")
@@ -170,7 +167,7 @@ class ingester:
             num_sample = int(f["block"]["num_sample"][0])
             lon = np.array(f["block"]["lon"]).flatten().astype(np.float64)
             lat = np.array(f["block"]["lat"]).flatten().astype(np.float64)
-            elev_air = np.array(f["block"]["elev_air"]).flatten().astype(np.float64)
+            alt = np.array(f["block"]["elev_air"]).flatten().astype(np.float64)
             twtt_surf = np.array(f["block"]["twtt_surf"]).flatten().astype(np.float64)
             amp = np.array(f["block"]["amp"])
             clutter = np.array(f["block"]["clutter"])
@@ -178,14 +175,14 @@ class ingester:
 
         except:
             try:
-                f = scio.loadmat(fpath)
+                f = sp.io.loadmat(fpath)
                 dt = float(f["block"]["dt"][0])
                 num_trace = int(f["block"]["num_trace"][0])
                 num_sample = int(f["block"]["num_sample"][0])
                 dist = f["block"]["dist"][0][0].flatten()
                 lon = f["block"]["lon"][0][0].flatten().astype(np.float64)
                 lat = f["block"]["lat"][0][0].flatten().astype(np.float64)
-                elev_air = f["block"]["elev_air"][0][0].flatten().astype(np.float64)
+                alt = f["block"]["elev_air"][0][0].flatten().astype(np.float64)
                 twtt_surf = f["block"]["twtt_surf"][0][0].flatten().astype(np.float64)
                 amp = f["block"]["amp"][0][0]
                 clutter = f["block"]["clutter"][0][0]
@@ -208,7 +205,7 @@ class ingester:
             twtt_surf.fill(np.nan)
 
         # calculate surface elevation 
-        elev_gnd = elev_air - twtt_surf*C/2
+        elev_gnd = alt - twtt_surf*C/2
         
         # create dictionary to hold picks
         pick = {}
@@ -218,7 +215,7 @@ class ingester:
         wgs84_proj4 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
         nav0 = nav()
         nav0.csys = wgs84_proj4
-        nav0.navdat = np.column_stack((lon,lat,elev_air))
+        nav0.navdat = np.column_stack((lon,lat,alt))
 
         # create dist array  - convert nav to meters then find cumulative euclidian distance
         ak_nad83_proj4 = "+proj=aea +lat_1=55 +lat_2=65 +lat_0=50 +lon_0=-154 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs" 
@@ -244,7 +241,6 @@ class ingester:
 
         # get indices of twtt_surf
         surf_idx = np.rint(twtt_surf/dt)
-
 
         return {"dt": dt, "trace": trace, "sample": sample, "navdat": nav0, "elev_gnd": elev_gnd, "pick": pick, "surf_idx": surf_idx, "dist": dist, "amp": amp, "clutter": clutter} # other fields?
 
@@ -285,7 +281,7 @@ class ingester:
         dt = .0375e-6                                                                           # sampling interval for 3600 real-values voltage samples
         lon = nav_file[:,3].astype(np.float64)
         lat = nav_file[:,2].astype(np.float64)
-        elev_air = nav_file[:,5].astype(np.float64) - nav_file[:,4].astype(np.float64)          # [km]
+        alt = nav_file[:,5].astype(np.float64) - nav_file[:,4].astype(np.float64)               # [km]
 
         elev_gnd = np.repeat(np.nan, num_trace)
 
@@ -300,7 +296,7 @@ class ingester:
         # create nav object to hold lon, lat, elev
         nav0 = nav()
         nav0.csys = "+proj=longlat +a=3396190 +b=3376200 +no_defs"
-        nav0.navdat = np.column_stack((lon,lat,elev_air))
+        nav0.navdat = np.column_stack((lon,lat,alt))
 
         # create dist array - convert nav to meters then find cumulative euclidian distance
         mars_equidistant_proj4 = "+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=180 +x_0=0 +y_0=0 +a=3396190 +b=3396190 +units=m +no_defs" 
@@ -356,7 +352,7 @@ class ingester:
                 gps["elev"] = np.interp(x, gps["trace"], gps["elev"])
                 gps["trace"] = x
 
-            # check if last gps record trace is out of data bounds - trim navdat if necessary
+            # if last gps record trace is out of data bounds trim navdat
             if gps["trace"][-1] >= num_trace:
                 idx = np.where(gps["trace"] >= num_trace)[0]
                 gps["lon"] = np.delete(gps["lon"],idx)

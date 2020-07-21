@@ -18,7 +18,7 @@ def savePick(fpath, f_saveName, data, subsurf_pick_dict, eps_r, amp_out = False)
     trace = data["trace"]                               # array to hold trace number
     lon = data["navdat"].navdat[:,0]                    # array to hold longitude
     lat = data["navdat"].navdat[:,1]                    # array to hold latitude
-    elev_air = data["navdat"].navdat[:,2]               # array to hold aircraft elevation
+    alt = data["navdat"].navdat[:,2]               # array to hold aircraft elevation
     twtt_surf = data["pick"]["twtt_surf"]               # array to hold twtt to surface below nadir position
     elev_gnd = data["elev_gnd"]                         # array to hold ground elevation beneath aircraft sampled from lidar pointcloud
     surf_idx = data["surf_idx"]                         # array to hold surface index
@@ -51,16 +51,16 @@ def savePick(fpath, f_saveName, data, subsurf_pick_dict, eps_r, amp_out = False)
             subsurf_amp = np.repeat(np.nan, trace[-1] + 1)
             subsurf_amp[idx] = data["amp"][subsurf_idx_pk[idx].astype(np.int),idx]
 
-            dstack = np.column_stack((trace,lon,lat,elev_air,elev_gnd,surf_idx,twtt_surf,surf_amp,subsurf_idx_pk,twtt_bed,subsurf_amp,elev_bed,thick))
-            header = "trace,lon,lat,elev_air,elev_gnd,surf_idx,twtt_surf,surf_amp,subsurf_idx_pk,twtt_bed,subsurf_amp,elev_bed,thick"
+            dstack = np.column_stack((trace,lon,lat,alt,elev_gnd,surf_idx,twtt_surf,surf_amp,subsurf_idx_pk,twtt_bed,subsurf_amp,elev_bed,thick))
+            header = "trace,lon,lat,alt,elev_gnd,surf_idx,twtt_surf,surf_amp,subsurf_idx_pk,twtt_bed,subsurf_amp,elev_bed,thick"
         else:
-            dstack = np.column_stack((trace,lon,lat,elev_air,elev_gnd,surf_idx,twtt_surf,subsurf_idx_pk,twtt_bed,elev_bed,thick))
-            header = "trace,lon,lat,elev_air,elev_gnd,surf_idx,twtt_surf,subsurf_idx_pk,twtt_bed,elev_bed,thick"
+            dstack = np.column_stack((trace,lon,lat,alt,elev_gnd,surf_idx,twtt_surf,subsurf_idx_pk,twtt_bed,elev_bed,thick))
+            header = "trace,lon,lat,alt,elev_gnd,surf_idx,twtt_surf,subsurf_idx_pk,twtt_bed,elev_bed,thick"
 
-        if np.array_equal(elev_air, elev_gnd):
-            # remove elev_air if ground-based data
+        if np.array_equal(alt, elev_gnd):
+            # remove alt if ground-based data
             dstack = np.delete(dstack, 4, 1)
-            header = header.replace(",elev_air","")
+            header = header.replace(",alt","")
             
         np.savetxt(f_saveName, dstack, delimiter=",", newline="\n", fmt="%s", header=header, comments="")
 
@@ -70,7 +70,7 @@ def savePick(fpath, f_saveName, data, subsurf_pick_dict, eps_r, amp_out = False)
             num_file_pick_lyr = data["num_file_pick_lyr"]
             # save the new subsurface pick to the hdf5 file - determine whther to overwrite or append
             if (num_file_pick_lyr > 0) and (tk.messagebox.askyesno("overwrite picks","overwrite most recent subsurface picks previously exported to data file (no to append as new subsurface pick layer)?") == True):
-                del f["drv/pick"]["twtt_subsurf" + str(num_file_pick_lyr - 1)]
+                del f["drv"]["pick"]["twtt_subsurf" + str(num_file_pick_lyr - 1)]
                 twtt_subsurf_pick = f["drv"]["pick"].require_dataset("twtt_subsurf" + str(num_file_pick_lyr - 1), data=twtt_bed, shape=twtt_bed.shape, dtype=np.float32)
             else:
                 twtt_subsurf_pick = f["drv"]["pick"].require_dataset("twtt_subsurf" + str(num_file_pick_lyr), data=twtt_bed, shape=twtt_bed.shape, dtype=np.float32)
@@ -208,9 +208,9 @@ def amp2powdB(amparray):
 def print_pickInfo(data, trace, sample):
     v = C/(np.sqrt(3.15))        # EM wave veloity in ice - for thickness calculation
 
-    fields = ["trace","sample","elev_air","twtt_surf","elev_gnd","twtt_bed","elev_bed","thick"]
+    fields = ["trace","sample","alt","twtt_surf","elev_gnd","twtt_bed","elev_bed","thick"]
 
-    elev_air = data["navdat"].navdat[trace,2]
+    alt = data["navdat"].navdat[trace,2]
     twtt_surf = data["pick"]["twtt_surf"][trace]
     elev_gnd = data["elev_gnd"][trace]
     twtt_bed = sample * data["dt"]
@@ -218,5 +218,5 @@ def print_pickInfo(data, trace, sample):
     elev_bed = elev_gnd - thick
 
     print(*fields, sep="\t")
-    print("%d\t%d\t%8.4f\t%8.4e\t%8.4f\t%8.4e\t%8.4f\t%8.4f" % (trace,sample,elev_air,twtt_surf,elev_gnd,twtt_bed,elev_bed,thick))
+    print("%d\t%d\t%8.4f\t%8.4e\t%8.4f\t%8.4e\t%8.4f\t%8.4f" % (trace,sample,alt,twtt_surf,elev_gnd,twtt_bed,elev_bed,thick))
     print()
