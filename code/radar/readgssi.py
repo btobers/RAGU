@@ -6,7 +6,7 @@ import numpy as np
 from datetime import datetime
 from itertools import takewhile
 from geopy.distance import geodesic
-from constants import *
+from tools.constants import *
 import pandas as pd
 import pynmea2
 

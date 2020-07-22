@@ -1,8 +1,8 @@
 ### IMPORTS ###
 import h5py
 import numpy as np
-from nav import *
-import utils, processing, readgssi
+from tools import nav, utils, processing
+from radar import readgssi
 import matplotlib.pyplot as plt
 import scipy as sp
 import sys,os,fnmatch,struct
@@ -71,7 +71,7 @@ class ingester:
         num_sample = f["raw"]["rx0"].attrs["samplesPerTrace"]      # samples per trace in rgram
 
         # initialize nav path
-        nav0 = nav()
+        nav0 = nav.navpath()
         # pull necessary ext group nav data - use more precise Larsen nav data pulled from Trimble if available
         if "nav0" in f["ext"].keys():
             lon = f["ext"]["nav0"]["lon"][:].astype(np.float64)
@@ -219,7 +219,7 @@ class ingester:
 
         # convert lon, lat, elev to navdat object of nav class
         wgs84_proj4 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
-        nav0 = nav()
+        nav0 = nav.navpath()
         nav0.csys = wgs84_proj4
         nav0.navdat = np.column_stack((lon,lat,alt))
 
@@ -300,7 +300,7 @@ class ingester:
         pick["twtt_surf"] = twtt_surf
 
         # create nav object to hold lon, lat, elev
-        nav0 = nav()
+        nav0 = nav.navpath()
         nav0.csys = "+proj=longlat +a=3396190 +b=3376200 +no_defs"
         nav0.navdat = np.column_stack((lon,lat,alt))
 
@@ -342,7 +342,7 @@ class ingester:
 
         # create nav object to hold lon, lat, elev
         wgs84_proj4 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
-        nav0 = nav()
+        nav0 = nav.navpath()
         nav0.csys = wgs84_proj4
 
         # read in gps data if exists

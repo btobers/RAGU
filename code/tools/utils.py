@@ -2,7 +2,7 @@
 import numpy as np
 import tkinter as tk
 import sys, h5py
-from constants import *
+from tools.constants import *
 
 
 # a set of utility functions for NOSEpick GUI

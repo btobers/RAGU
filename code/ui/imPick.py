@@ -1,5 +1,6 @@
 ### IMPORTS ###
-import utils, basemap
+from tools import utils
+from ui import basemap
 import h5py
 import numpy as np
 import tkinter as tk

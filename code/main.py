@@ -10,10 +10,9 @@ environment requirements in nose_env.yml
 ### IMPORTS ###
 import os,sys
 from config import *
-import gui
+from ui import gui
 import tkinter as tk
 from tkinter import font
-
 
 # allow for optional data directory input
 if len(sys.argv) > 1:
@@ -30,7 +29,7 @@ w, h = root.winfo_screenwidth(), root.winfo_screenheight()
 root.geometry("%dx%d+0+0" % (.5*w, .5*h))
 root.title("NOSEpick")
 root.config(bg="#d9d9d9")
-img = tk.PhotoImage(file='lib/NOSEpick_zoom.png')
+img = tk.PhotoImage(file='../lib/NOSEpick_zoom.png')
 root.tk.call('wm', 'iconphoto', root._w, img)
 # call the NOSEpickGUI class
 gui.MainGUI(root, in_path, map_path, out_path, eps_r, amp_out)

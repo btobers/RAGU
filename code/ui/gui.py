@@ -8,7 +8,9 @@ environment requirements in nose_env.yml
 
 
 ### IMPORTS ###
-import imPick, wvPick, basemap, utils, ingester, processing
+from ui import imPick, wvPick, basemap 
+from tools import utils, processing
+from radar import ingester
 import os, sys, scipy, glob
 import numpy as np
 import matplotlib as mpl

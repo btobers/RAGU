@@ -1,5 +1,5 @@
 ### IMPORTS ###
-import utils
+from tools import utils
 import numpy as np
 from scipy.interpolate import CubicSpline
 from scipy.signal import find_peaks

@@ -14,7 +14,7 @@ class basemap(tk.Tk):
         self.map_loadName = map_path
         # create tkinter toplevel window to display basemap
         self.basemap_window = tk.Toplevel(self.parent)
-        img = tk.PhotoImage(file='lib/basemap_icon.png')
+        img = tk.PhotoImage(file='../lib/basemap_icon.png')
         self.basemap_window.tk.call('wm', 'iconphoto', self.basemap_window._w, img)
         self.basemap_window.config(bg="#d9d9d9")
         self.basemap_window.title("NOSEpick - Map Window")
