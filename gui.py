@@ -8,7 +8,7 @@ environment requirements in nose_env.yml
 
 
 ### IMPORTS ###
-import imPick, wvPick, basemap, utils, ingester
+import imPick, wvPick, basemap, utils, ingester, processing
 import os, sys, scipy, glob
 import numpy as np
 import matplotlib as mpl
@@ -46,6 +46,40 @@ class MainGUI(tk.Frame):
         self.debugState = tk.BooleanVar()
         self.debugState.set(False)
 
+        # menubar structure     
+        # |-file
+        # |  |-open
+        # |  |-load picks
+        # |  |-next
+        # |  |-save
+        # |  |-settings
+        # |  |  |-preferences
+        # |  |  |-set working directory
+        # |  |  |-set output directory
+        # |  |-exit
+        # |-pick
+        # |  |-surface
+        # |  |  |-new
+        # |  |  |-end
+        # |  |  |-clear
+        # |  |-subsurface
+        # |  |  |-new
+        # |  |  |-end
+        # |  |  |-clear
+        # |  |  |-clear file
+        # |-map
+        # |  |-open
+        # |-processing
+        # |  |-dewow
+        # |  |-remove mean trace
+        # |  |-filter
+        # |  |  |-low pass
+        # |  |-gain
+        # |  |  |-acg
+        # |-help
+        # |  |-instructions
+        # |  |-keyboard shortcuts
+
         # generate menubar
         menubar = tk.Menu(self.parent)
 
@@ -53,6 +87,7 @@ class MainGUI(tk.Frame):
         fileMenu = tk.Menu(menubar, tearoff=0)
         pickMenu = tk.Menu(menubar, tearoff=0)
         mapMenu = tk.Menu(menubar, tearoff=0)
+        procMenu = tk.Menu(menubar, tearoff=0)
         helpMenu = tk.Menu(menubar, tearoff=0)
 
         # file menu items
@@ -78,20 +113,36 @@ class MainGUI(tk.Frame):
 
         # surface pick menu items
         surfacePickMenu.add_command(label="new  [ctrl+shift+n]", command=self.start_surf_pick)
-        surfacePickMenu.add_command(label="stop       [escape]", command=self.end_surf_pick)    
+        surfacePickMenu.add_command(label="end       [escape]", command=self.end_surf_pick)    
         surfacePickMenu.add_command(label="clear", command=lambda: self.clear(surf = "surface"))    
+        pickMenu.add_cascade(label="surface", menu = surfacePickMenu)
 
         # subsurface pick menu items
         subsurfacePickMenu.add_command(label="new     [ctrl+n]", command=self.start_subsurf_pick)
-        subsurfacePickMenu.add_command(label="stop    [escape]", command=self.end_subsurf_pick)
+        subsurfacePickMenu.add_command(label="end    [escape]", command=self.end_subsurf_pick)
         subsurfacePickMenu.add_command(label="clear        [c]", command=lambda: self.clear(surf = "subsurface"))    
         subsurfacePickMenu.add_command(label="clear file", command=self.delete_datafilePicks)            
-
-        pickMenu.add_cascade(label="surface", menu = surfacePickMenu)
         pickMenu.add_cascade(label="subsurface", menu = subsurfacePickMenu)  
 
         # pickMenu.add_separator()
         # pickMenu.add_command(label="Optimize", command=self.nb.select(wav))
+
+        # processing menu items
+        # procMenu.add_command(label="dewow", command=lambda: self.procTools("dewow"))
+        # procMenu.add_command(label="remove mean trace", command=lambda: self.procTools("remMnTr"))
+
+        # processing submenu items
+        filtMenu = tk.Menu(procMenu,tearoff=0)
+        gainMenu = tk.Menu(procMenu,tearoff=0)
+
+        # filtering menu items
+        filtMenu.add_command(label="low pass", command=lambda:self.procTools("lowpass"))
+        procMenu.add_cascade(label="filter", menu = filtMenu)
+
+        # gain menu items
+        # gainMenu.add_command(label="agc", command=lambda:self.procTools("agc"))
+        gainMenu.add_command(label="t-pow", command=lambda:self.procTools("tpow"))
+        procMenu.add_cascade(label="gain", menu = gainMenu)
 
         # map menu items
         mapMenu.add_command(label="open     [Ctrl+M]", command=self.map_loc)
@@ -104,6 +155,7 @@ class MainGUI(tk.Frame):
         menubar.add_cascade(label="file", menu=fileMenu)
         menubar.add_cascade(label="pick", menu=pickMenu)
         menubar.add_cascade(label="map", menu=mapMenu)
+        menubar.add_cascade(label="processing", menu = procMenu)
         menubar.add_cascade(label="help", menu=helpMenu)
         
         # add the menubar to the window
@@ -267,7 +319,7 @@ class MainGUI(tk.Frame):
 
     # save_loc is method to receieve the desired pick save location from user input
     def save_loc(self):
-        if (self.f_loadName) and ((self.imPick.get_subsurfPickFlag() == True) or (self.imPick.get_surfPickFlag() == True)):
+        if self.f_loadName:# and ((self.imPick.get_subsurfPickFlag() == True) or (self.imPick.get_surfPickFlag() == True)):
             # out_path = self.f_loadName[:-len("/".join(self.f_loadName.split("/")[-2:]))] + "picks"
             # if self.f_loadName.endswith(".mat"):
                 # out_path = self.f_loadName[:-len("/".join(self.f_loadName.split("/")[-3:]))] + "picks"
@@ -467,6 +519,35 @@ class MainGUI(tk.Frame):
                 self.imPick.blit()
                 utils.delete_savedPicks(self.f_loadName, self.data["num_file_pick_lyr"])
                 self.data["num_file_pick_lyr"] = 0
+
+
+    # processing tools
+    def procTools(self, arg = None):
+        if self.f_loadName:
+            if arg == "dewow":
+                window = tk.simpledialog.askfloat("input","dewow window size (# samples/" +  str(int(self.data["sample"][-1] + 1)) + ")?")
+                self.data["amp"] = np.abs(processing.dewow(self.data["amp"], window=10))
+            elif arg == "remMnTr":
+                ntraces = int((self.data["trace"][-1] + 1)/100)
+                self.data["amp"] = np.abs(processing.remMeanTrace(self.data["amp"], ntraces=ntraces))
+            elif arg == "lowpass":
+                cutoff = tk.simpledialog.askfloat("input","butterworth filter cutoff frequency?")
+                self.data["amp"] = np.abs(processing.lowpassFilt(self.data["pc"], Wn = cutoff, fs = 1/self.data["dt"]))
+            elif arg == "agc":
+                window = tk.simpledialog.askfloat("input","AGC gain window size (# samples/" +  str(int(self.data["sample"][-1] + 1)) + ")?")
+                self.data["amp"] = processing.agcGain(self.data["amp"], window=window)
+            elif arg == "tpow":
+                power = tk.simpledialog.askfloat("input","power for tpow gain?")
+                self.data["amp"] = processing.tpowGain(self.data["amp"], self.data["sample"]*self.data["dt"], power=power)
+            else:
+                print("undefined processing method")
+                exit(1)
+            self.imPick.load(self.f_loadName, self.data)
+            self.imPick.set_axes(self.eps_r.get(), self.cmap.get())
+            self.imPick.update_bg()
+            self.wvPick.clear()
+            self.wvPick.set_vars()
+            self.wvPick.set_data(self.data)
 
 
     def settings(self):

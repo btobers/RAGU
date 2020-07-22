@@ -2,8 +2,7 @@
 import h5py
 import numpy as np
 from nav import *
-import readgssi
-import utils
+import utils, processing, readgssi
 import matplotlib.pyplot as plt
 import scipy as sp
 import sys,os,fnmatch,struct
@@ -95,6 +94,7 @@ class ingester:
 
         # pull necessary drv group data
         pc = f["drv/proc0"][:]                                      # pulse compressed array
+        amp = np.abs(pc)
 
         if "clutter0" in f["drv"].keys():
             clutter = f["drv"]["clutter0"][:]                       # simulated clutter array
@@ -155,8 +155,14 @@ class ingester:
             print("h5py_read error: non-unique nav data")
             # set dist array to range from 0 to 1
             dist = np.linspace(0,1,num_trace)
+        
+        # tmp auto filtering handle of 2020 ak data
+        if fpath.split("/")[-1].startswith("2020"):
+            [b, a] = sp.signal.butter(N=5, Wn=1e6, btype="lowpass", fs=fs)
+            pc = sp.signal.filtfilt(b, a, pc, axis=0)
+            amp = np.abs(pc)
 
-        return {"dt": dt, "trace": trace, "sample": sample, "navdat": nav0, "elev_gnd": elev_gnd, "pick": pick, "surf_idx": surf_idx, "dist": dist, "amp": amp, "clutter": clutter, "num_file_pick_lyr": num_file_pick_lyr} # other fields?
+        return {"dt": dt, "trace": trace, "sample": sample, "navdat": nav0, "elev_gnd": elev_gnd, "pick": pick, "surf_idx": surf_idx, "dist": dist, "pc": pc, "amp": amp, "clutter": clutter, "num_file_pick_lyr": num_file_pick_lyr} # other fields?
 
     # method to ingest .mat files. for older matlab files, sp.io works and h5py does not. for newer files, h5py works and sp.io does not 
     def mat_read(self,fpath):
