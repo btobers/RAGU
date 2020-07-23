@@ -1,4 +1,5 @@
 ### IMPORTS ###
+from tools import nav, utils
 import struct
 import math
 import os,sys
@@ -10,7 +11,6 @@ from tools.constants import *
 import pandas as pd
 import pynmea2
 
-
 """
 this module contains functions parsed from https://github.com/iannesbitt/readgssi to read gssi dzt files and associated dzg files for use in NOSEpick
 much of the header data which is not necessary for NOSEpick use has been removed
@@ -21,6 +21,85 @@ and the radar profile in a numpy array.
 Brandon S. Tober
 09JUL2020
 """
+
+# method to read gssi dzt data
+def read(fpath):
+    print("----------------------------------------")
+    print("Loading: " + fpath.split("/")[-1])
+    # use readgssi readdzt.dzt reader (credit: https://github.com/iannesbitt/readgssi)
+    header, amp = readdzt(fpath)#, gps=normalize, spm=spm, start_scan=start_scan, num_scans=num_scans, epsr=epsr, antfreq=antfreq, verbose=verbose)
+
+    # ensure data file is not empty
+    if not np.any(amp):
+        print("gssi_read error: file contains no data")
+        return
+
+    num_trace = amp.shape[-1]
+    dt = header["dt"]
+    trace = np.arange(num_trace)                            # array to hold trace numbers
+    sample = np.arange(header["rh_nsamp"])                  # array to hold sample numbers
+
+    clutter = np.ones(amp.shape)                            # place holder for clutter data
+    surf_idx = np.repeat(np.nan, num_trace)                 # array to hold sample number for surface pick at each trace
+    pick={}                                                 # dictionary to hold picks
+    pick["twtt_surf"] = np.repeat(np.nan, num_trace)        # place holder for pick of twtt_surf
+
+    # create nav object to hold lon, lat, elev
+    wgs84_proj4 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+    nav0 = nav.navpath()
+    nav0.csys = wgs84_proj4
+
+    # read in gps data if exists
+    infile_gps = fpath.replace(".DZT",".DZG")
+    if os.path.isfile(infile_gps):
+        gps = readdzg(infile_gps, 'dzg', header)
+        
+        # interpolate gps data to length of radara data
+        if len(gps["trace"]) < num_trace:
+            x = np.arange(gps["trace"][0], gps["trace"][-1] + 1)
+            gps["lon"] = np.interp(x, gps["trace"], gps["lon"])
+            gps["lat"] = np.interp(x, gps["trace"], gps["lat"])
+            gps["elev"] = np.interp(x, gps["trace"], gps["elev"])
+            gps["trace"] = x
+
+        # if last gps record trace is out of data bounds trim navdat
+        if gps["trace"][-1] >= num_trace:
+            idx = np.where(gps["trace"] >= num_trace)[0]
+            gps["lon"] = np.delete(gps["lon"],idx)
+            gps["lat"] = np.delete(gps["lat"],idx)
+            gps["elev"] = np.delete(gps["elev"],idx)
+            gps["trace"] = np.delete(gps["trace"],idx)
+
+        # may still need to extrapolate from ends - just copy beginning and end values for now
+        if len(gps["trace"]) < num_trace:
+            first = gps["trace"][0]
+            last = gps["trace"][-1]
+            gps["lon"] = utils.extend_array(gps["lon"], first, last, num_trace)
+            gps["lat"] = utils.extend_array(gps["lat"], first, last, num_trace)
+            gps["elev"] = utils.extend_array(gps["elev"], first, last, num_trace)
+            gps["trace"] = np.arange(num_trace)
+        
+        # combine gps data as nav object
+        nav0.navdat = np.column_stack((gps["lon"],gps["lat"],gps["elev"]))
+
+        # create dist array  - convert nav to meters then find cumulative euclidian distance
+        earth_equidist_proj4 = "+proj=aeqd +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m no_defs" #"+proj=longlat +a=6378140 +b=6356750 +no_defs"
+        nav0_xform = nav0.transform(earth_equidist_proj4)
+        dist = utils.euclid_dist(nav0_xform)
+
+    else: 
+        # if no gps data file, use nan arrays
+        print("Warning: no associated nav data found")
+        lon = np.repeat(np.nan, num_trace)
+        lat = np.repeat(np.nan, num_trace)
+        elev = np.repeat(np.nan, num_trace)
+        dist = np.repeat(np.nan, num_trace)
+        nav0.navdat = np.column_stack((lon, lat, elev))
+
+    # for ground-based GPR, elev_gnd is the same as GPS recorded elev
+    elev_gnd = nav0.navdat[:,2]
+
+    return {"dt": dt, "trace": trace, "sample": sample, "navdat": nav0, "elev_gnd": elev_gnd, "pick": pick, "surf_idx": surf_idx, "dist": dist, "amp": amp, "clutter": clutter}
 
 
 def readtime(bytes):
@@ -49,6 +128,7 @@ def readtime(bytes):
     mo = int(dtbits[7:11], 2)           # month
     yr = int(dtbits[0:7], 2) + 1980     # year, stored as 1980+(0:127)
     return datetime(yr, mo, day, hr, mins, sec2, 0, tzinfo=pytz.UTC)
+
 
 def readdzt(fpath):
     """
@@ -133,33 +213,11 @@ def readdzt(fpath):
     # read in and transpose data - as float 
     data = np.fromfile(infile, dtype).reshape(-1,(header['rh_nsamp']*header['rh_nchan'])).T.astype(np.float) # offset=start_offset,
 
-    # # replace missing data samples with nan
-    # data[data == 0] = np.nan
-
     # close data file
     infile.close()
 
-    # header['marks'] = []
-    # header['picks'] = {}
-
-    # if os.path.isfile(infile_dzx):
-    #     header['marks'] = get_user_marks(infile_dzx, verbose=verbose)
-    #     header['picks'] = get_picks(infile_dzx, verbose=verbose)
-    # else:
-    #     print('WARNING: could not find DZX file to read metadata. Trying to read array for marks...')
-
-    # tnums = np.ndarray.tolist(data[0])  # the first row of the array is trace number
-    # usr_marks = np.ndarray.tolist(data[1])  # when the system type is SIR3000, the second row should be user marks (otherwise these are in the DZX, see note below)
-    # i = 0
-    # for m in usr_marks:
-    #     if m > 0:
-    #         print(m)
-    #         header['marks'].append(i)
-    #     i += 1
-    # print('DZT marks read successfully. marks: %s' % len(header['marks']))
-    # print('                            traces: %s' % header['marks'])
-
     return header, data.astype(np.float)
+
 
 def readdzg(fpath, frmt, header):
     """

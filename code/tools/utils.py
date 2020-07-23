@@ -61,6 +61,7 @@ def savePick(fpath, f_saveName, data, subsurf_pick_dict, eps_r, amp_out = False)
             # remove alt if ground-based data
             dstack = np.delete(dstack, 4, 1)
             header = header.replace(",alt","")
+
             
         np.savetxt(f_saveName, dstack, delimiter=",", newline="\n", fmt="%s", header=header, comments="")
 

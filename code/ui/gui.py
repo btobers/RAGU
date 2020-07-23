@@ -8,9 +8,9 @@ environment requirements in nose_env.yml
 
 
 ### IMPORTS ###
-from ui import imPick, wvPick, basemap 
+from ui import impick, wvpick, basemap 
 from tools import utils, processing
-from radar import ingester
+from ingest import ingest
 import os, sys, scipy, glob
 import numpy as np
 import matplotlib as mpl
@@ -21,7 +21,7 @@ import tkinter as tk
 import tkinter.ttk as ttk
 
 
-# MainGUI is the NOSEpick class which sets the gui interface and holds operating variables
+# MainGUI is the NOSEpick class which sets the graphical user interface and holds operating variables to pass between packages
 class MainGUI(tk.Frame):
     def __init__(self, parent, in_path, map_path, out_path, eps_r, amp_out, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
@@ -42,7 +42,7 @@ class MainGUI(tk.Frame):
         self.f_saveName = ""
         self.map_loadName = ""
 
-        self.userName = tk.StringVar(value="btober")
+        self.userName = tk.StringVar(value="")
         self.figSize = tk.StringVar(value="21,7")
         self.cmap = tk.StringVar(value="Greys_r")
         self.debugState = tk.BooleanVar()
@@ -130,8 +130,8 @@ class MainGUI(tk.Frame):
         # pickMenu.add_command(label="Optimize", command=self.nb.select(wav))
 
         # processing menu items
-        # procMenu.add_command(label="dewow", command=lambda: self.procTools("dewow"))
-        # procMenu.add_command(label="remove mean trace", command=lambda: self.procTools("remMnTr"))
+        procMenu.add_command(label="dewow", command=lambda: self.procTools("dewow"))
+        procMenu.add_command(label="remove mean trace", command=lambda: self.procTools("remMnTr"))
 
         # processing submenu items
         filtMenu = tk.Menu(procMenu,tearoff=0)
@@ -142,7 +142,7 @@ class MainGUI(tk.Frame):
         procMenu.add_cascade(label="filter", menu = filtMenu)
 
         # gain menu items
-        # gainMenu.add_command(label="agc", command=lambda:self.procTools("agc"))
+        gainMenu.add_command(label="agc", command=lambda:self.procTools("agc"))
         gainMenu.add_command(label="t-pow", command=lambda:self.procTools("tpow"))
         procMenu.add_cascade(label="gain", menu = gainMenu)
 
@@ -163,26 +163,26 @@ class MainGUI(tk.Frame):
         # add the menubar to the window
         self.parent.config(menu=menubar)
 
-        #configure imPick and wvPick tabs
+        #configure impick and wvpick tabs
         self.nb = ttk.Notebook(self.parent)
         self.nb.pack(side="top",anchor='w', fill="both", expand=1)
         self.imTab = tk.Frame(self.parent)
         self.imTab.pack()
-        self.nb.add(self.imTab, text='imagePick')
+        self.nb.add(self.imTab, text='profile')
         self.wvTab = tk.Frame(self.parent)
         self.wvTab.pack()
-        self.nb.add(self.wvTab, text='wavePick')
+        self.nb.add(self.wvTab, text='waveform')
 
-        # bind tab change event to send pick data to wvPick if tab switched from imPick
+        # bind tab change event to send pick data to wvpick if tab switched from impick
         self.nb.bind("<<NotebookTabChanged>>", self.tab_change)
 
-        # initialize imPick
-        self.imPick = imPick.imPick(self.imTab)
-        self.imPick.set_vars()
+        # initialize impick
+        self.impick = impick.impick(self.imTab)
+        self.impick.set_vars()
 
-        # initialize wvPick
-        self.wvPick = wvPick.wvPick(self.wvTab)
-        self.wvPick.set_vars()
+        # initialize wvpick
+        self.wvpick = wvpick.wvpick(self.wvTab)
+        self.wvpick.set_vars()
 
         # bind keypress events
         self.parent.bind("<Key>", self.key)
@@ -212,12 +212,12 @@ class MainGUI(tk.Frame):
 
         # Ctrl+N begin subsurface pick
         elif event.state & 4 and event.keysym == "n":
-            if self.tab == "imagePick":
+            if self.tab == "profile":
                 self.start_subsurf_pick()
 
         # Ctrl+Shift+N begin surface pick
         elif event.state & 5 == 5 and event.keysym == "N":
-            if self.tab == "imagePick":
+            if self.tab == "profile":
                 self.start_surf_pick()
 
         # Ctrl+Q close NOSEpick
@@ -225,47 +225,47 @@ class MainGUI(tk.Frame):
             self.close_window()
 
         elif event.keysym =="Left":
-            if self.tab == "wavePick":
-                self.wvPick.stepBackward()
+            if self.tab == "waveform":
+                self.wvpick.stepBackward()
 
         # shift+. (>) next file
         elif event.keysym =="Right":
-            if self.tab == "imagePick":
+            if self.tab == "profile":
                 self.next_loc()
-            elif self.tab == "wavePick":
-                self.wvPick.stepForward()
+            elif self.tab == "waveform":
+                self.wvpick.stepForward()
 
 
         # Escape key to stop picking current layer
         elif event.keysym == "Escape":
-            if self.tab == "imagePick":
+            if self.tab == "profile":
                 self.end_subsurf_pick()
                 self.end_surf_pick()
 
-        # c key to clear all picks in imPick
+        # c key to clear all picks in impick
         if event.keysym =="c":
             # clear the drawing of line segments
             self.clear(surf = "subsurface")
             
         # BackSpace to clear last pick 
         elif event.keysym =="BackSpace":
-            if self.tab == "imagePick":
-                self.imPick.clear_last()
+            if self.tab == "profile":
+                self.impick.clear_last()
 
-        # Space key to toggle imPick between radar image and clutter
+        # Space key to toggle impick between radar image and clutter
         elif event.keysym=="space":
-            if self.tab == "imagePick":
-                self.imPick.set_im()
+            if self.tab == "profile":
+                self.impick.set_im()
 
         # h key to set axes limits to home extent
         elif event.keysym=="h":
-            self.imPick.set_axes(self.eps_r.get(), self.cmap.get())
+            self.impick.set_axes(self.eps_r.get(), self.cmap.get())
 
 
     # close_window is a gui method to exit NOSEpick
     def close_window(self):
         # check if picks have been made and saved
-        if ((self.imPick.get_subsurfPickFlag() == True) or (self.imPick.get_surfPickFlag == True)) and (self.f_saveName == ""):
+        if ((self.impick.get_subsurfPickFlag() == True) or (self.impick.get_surfPickFlag == True)) and (self.f_saveName == ""):
             if tk.messagebox.askokcancel("Warning", "exit NOSEpick without saving picks?", icon = "warning") == True:
                 self.parent.destroy()
         else:
@@ -286,45 +286,42 @@ class MainGUI(tk.Frame):
                                        mustexist=True)
 
 
-    # open_data is a gui method which has the user select and input data file - then passed to imPick.load()
+    # open_data is a gui method which has the user select and input data file - then passed to impick.load()
     def open_data(self):
         # select input file
         if "linux" in self.os or "win" in self.os:
             temp_loadName = tk.filedialog.askopenfilename(initialdir = self.home_dir,title = "select data file",filetypes = (("all files",".*"),("hd5f files", ".mat .h5"),("segy files", ".sgy"),("image file", ".img"),("gssi files",".DZT")))
         else:
             temp_loadName = tk.filedialog.askopenfilename(initialdir = self.home_dir,title = "select data file")
-        # if input selected, clear imPick canvas, ingest data and pass to imPick
+        # if input selected, clear impick canvas, ingest data and pass to impick
         if temp_loadName:
             self.f_loadName = temp_loadName
-            self.imPick.clear_canvas()  
-            self.imPick.set_vars()
-            self.imPick.update_option_menu()
+            self.impick.clear_canvas()  
+            self.impick.set_vars()
+            self.impick.update_option_menu()
             # ingest the data
-            self.igst = ingester.ingester(self.f_loadName.split(".")[-1])
+            self.igst = ingest(self.f_loadName.split(".")[-1])
             self.data = self.igst.read(self.f_loadName)
             # return if no data ingested
             if not self.data:
                 return
-            self.imPick.load(self.f_loadName, self.data)
-            self.imPick.set_axes(self.eps_r.get(), self.cmap.get())
-            self.imPick.update_bg()
-            self.wvPick.set_vars()
-            self.wvPick.clear()
-            self.wvPick.set_data(self.data)
+            self.impick.load(self.f_loadName, self.data)
+            self.impick.set_axes(self.eps_r.get(), self.cmap.get())
+            self.impick.update_bg()
+            self.wvpick.set_vars()
+            self.wvpick.clear()
+            self.wvpick.set_data(self.data)
 
-        # pass basemap to imPick for plotting pick location
+        # pass basemap to impick for plotting pick location
         if self.map_loadName and self.basemap.get_state() == 1:
             self.basemap.clear_nav()
             self.basemap.set_nav(self.data["navdat"], self.f_loadName)
-            self.imPick.get_basemap(self.basemap)            
+            self.impick.get_basemap(self.basemap)            
 
 
     # save_loc is method to receieve the desired pick save location from user input
     def save_loc(self):
-        if self.f_loadName:# and ((self.imPick.get_subsurfPickFlag() == True) or (self.imPick.get_surfPickFlag() == True)):
-            # out_path = self.f_loadName[:-len("/".join(self.f_loadName.split("/")[-2:]))] + "picks"
-            # if self.f_loadName.endswith(".mat"):
-                # out_path = self.f_loadName[:-len("/".join(self.f_loadName.split("/")[-3:]))] + "picks"
+        if self.f_loadName:# and ((self.impick.get_subsurfPickFlag() == True) or (self.impick.get_surfPickFlag() == True)):
             if "linux" in self.os or "win" in self.os:
                 self.f_saveName = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_pk",
                                 initialdir = self.out_path, title = "save picks",filetypes = (("comma-separated values","*.csv"),))
@@ -334,9 +331,9 @@ class MainGUI(tk.Frame):
         if self.f_saveName:
             self.end_surf_pick()
             self.end_subsurf_pick()
-            # get updated pick_dict from wvPick and pass back to imPick
-            self.imPick.set_pickDict(self.wvPick.get_pickDict())
-            self.imPick.save(self.f_saveName, self.eps_r.get(), self.amp_out, self.cmap.get(), self.figSize.get().split(","))
+            # get updated pick_dict from wvpick and pass back to impick
+            self.impick.set_pickDict(self.wvpick.get_pickDict())
+            self.impick.save(self.f_saveName, self.eps_r.get(), self.amp_out, self.cmap.get(), self.figSize.get().split(","))
             self.f_saveName = ""
 
 
@@ -353,37 +350,37 @@ class MainGUI(tk.Frame):
             self.basemap.map()
 
             if self.f_loadName:
-                # pass basemap to imPick for plotting pick location
+                # pass basemap to impick for plotting pick location
                 self.basemap.set_nav(self.data["navdat"], self.f_loadName)
-                self.imPick.get_basemap(self.basemap)
+                self.impick.get_basemap(self.basemap)
 
 
-    # start_subsurf_pick is a method which begins a new imPick pick layer
+    # start_subsurf_pick is a method which begins a new impick pick layer
     def start_subsurf_pick(self):
         if self.f_loadName:
             # end surface picking if currently active
             self.end_surf_pick()
-            self.imPick.set_pickState(True,surf="subsurface")
-            self.imPick.pick_interp(surf = "subsurface")
-            self.imPick.plot_picks(surf = "subsurface")
+            self.impick.set_pickState(True,surf="subsurface")
+            self.impick.pick_interp(surf = "subsurface")
+            self.impick.plot_picks(surf = "subsurface")
             # add pick annotations
-            self.imPick.add_pickLabels()
-            self.imPick.update_bg()
-            self.imPick.blit()
-            self.imPick.update_option_menu()
+            self.impick.add_pickLabels()
+            self.impick.update_bg()
+            self.impick.blit()
+            self.impick.update_option_menu()
 
 
-    # end_subsurf_pick is a method which terminates the current imPick pick layer
+    # end_subsurf_pick is a method which terminates the current impick pick layer
     def end_subsurf_pick(self):
-        if (self.imPick.get_pickState() is True) and (self.imPick.get_pickSurf() == "subsurface"):
-            self.imPick.set_pickState(False,surf="subsurface")
-            self.imPick.pick_interp(surf = "subsurface")
-            self.imPick.plot_picks(surf = "subsurface")
+        if (self.impick.get_pickState() is True) and (self.impick.get_pickSurf() == "subsurface"):
+            self.impick.set_pickState(False,surf="subsurface")
+            self.impick.pick_interp(surf = "subsurface")
+            self.impick.plot_picks(surf = "subsurface")
             # add pick annotations
-            self.imPick.add_pickLabels()
-            self.imPick.update_bg()
-            self.imPick.blit()
-            self.imPick.update_option_menu()
+            self.impick.add_pickLabels()
+            self.impick.update_bg()
+            self.impick.blit()
+            self.impick.update_option_menu()
 
 
     # start picking the surface
@@ -391,21 +388,21 @@ class MainGUI(tk.Frame):
         if self.f_loadName:
             # end subsurface picking if currently active
             self.end_subsurf_pick()
-            self.imPick.set_pickState(True,surf="surface")
+            self.impick.set_pickState(True,surf="surface")
 
 
     # end surface picking
     def end_surf_pick(self):
-        if (self.imPick.get_pickState() is True) and (self.imPick.get_pickSurf() == "surface"):
-            self.imPick.set_pickState(False,surf="surface")
-            self.imPick.pick_interp(surf = "surface")
-            self.imPick.plot_picks(surf = "surface")
-            self.imPick.blit()
+        if (self.impick.get_pickState() is True) and (self.impick.get_pickSurf() == "surface"):
+            self.impick.set_pickState(False,surf="surface")
+            self.impick.pick_interp(surf = "surface")
+            self.impick.plot_picks(surf = "surface")
+            self.impick.blit()
 
 
-    # next_loc is a method to get the filename of the next data file in the directory then call imPick.load()
+    # next_loc is a method to get the filename of the next data file in the directory then call impick.load()
     def next_loc(self):
-        if self.tab == "imagePick" and self.f_loadName and self.imPick.nextSave_warning() == True:
+        if self.tab == "profile" and self.f_loadName and self.impick.nextSave_warning() == True:
             # get index of crurrently displayed file in directory
             file_path = self.f_loadName.rstrip(self.f_loadName.split("/")[-1])
             file_list = []
@@ -423,26 +420,26 @@ class MainGUI(tk.Frame):
             # check if more files exist in directory following current file
             if file_index <= (len(file_list) - 1):
                 self.f_loadName = file_list[file_index]
-                self.imPick.clear_canvas()
-                self.imPick.set_vars()
-                self.imPick.update_option_menu()
+                self.impick.clear_canvas()
+                self.impick.set_vars()
+                self.impick.update_option_menu()
                 self.data = self.igst.read(self.f_loadName)
                 # return if no data ingested
                 if not self.data:
                     return
-                self.imPick.load(self.f_loadName, self.data)
-                self.imPick.set_axes(self.eps_r.get(), self.cmap.get())
-                self.imPick.update_bg()
-                self.wvPick.clear()
-                self.wvPick.set_vars()
-                self.wvPick.set_data(self.data)
+                self.impick.load(self.f_loadName, self.data)
+                self.impick.set_axes(self.eps_r.get(), self.cmap.get())
+                self.impick.update_bg()
+                self.wvpick.clear()
+                self.wvpick.set_vars()
+                self.wvpick.set_data(self.data)
 
                 # if basemap open, update. Only do this if line is longer than certain threshold to now waste time
                 if self.map_loadName and self.basemap.get_state() == 1:
                     if self.data["dist"][-1] > 5:
                         self.basemap.clear_nav()
                         self.basemap.set_nav(self.data["navdat"], self.f_loadName)
-                        self.imPick.get_basemap(self.basemap)
+                        self.impick.get_basemap(self.basemap)
 
             else:
                 print("Note: " + self.f_loadName.split("/")[-1] + " is the last file in " + file_path + "*." + self.f_loadName.split(".")[-1])
@@ -454,45 +451,45 @@ class MainGUI(tk.Frame):
             tmp_loadName = tk.filedialog.askopenfilename(initialdir = self.home_dir, title = "load picks", filetypes = (("comma separated value", "*.csv"),))
             if tmp_loadName:
                 twtt_bed = ingester.load_picks(path=tmp_loadName)
-                self.imPick.plot_bed(utils.twtt2sample(twtt_bed, self.data["dt"]))
+                self.impick.plot_bed(utils.twtt2sample(twtt_bed, self.data["dt"]))
 
 
     def tab_change(self, event):
         selection = event.widget.select()
         self.tab = event.widget.tab(selection, "text")
         # determine which tab is active
-        if (self.tab == "wavePick"):
+        if (self.tab == "waveform"):
             if self.f_loadName:
                 self.pick_opt()
-        elif (self.tab == "imagePick"):
-            # get updated pick_dict and surf_idx from wvPick and pass back to imPick if dictionaries differ
-            if (self.imPick.get_subsurfPickFlag() == True) and (self.dict_compare(self.imPick.get_pickDict(),self.wvPick.get_pickDict()) == False) and (tk.messagebox.askyesno("tab change","import optimized picks to imagePick from wavePick?") == True):
-                self.imPick.set_pickDict(self.wvPick.get_pickDict())
-                self.imPick.plot_picks(surf = "subsurface")
-            # elif (self.imPick.get_surfPickFlag() == True):
+        elif (self.tab == "profile"):
+            # get updated pick_dict and surf_idx from wvpick and pass back to impick if dictionaries differ
+            if (self.impick.get_subsurfPickFlag() == True) and (self.dict_compare(self.impick.get_pickDict(),self.wvpick.get_pickDict()) == False) and (tk.messagebox.askyesno("tab change","import optimized picks to profile from waveform?") == True):
+                self.impick.set_pickDict(self.wvpick.get_pickDict())
+                self.impick.plot_picks(surf = "subsurface")
+            # elif (self.impick.get_surfPickFlag() == True):
             if self.f_loadName:
-                tmp_surf = self.wvPick.get_surf()
+                tmp_surf = self.wvpick.get_surf()
                 if ~np.array_equal(self.data["surf_idx"], tmp_surf):
                     self.data["surf_idx"] = tmp_surf
                     self.data["pick"]["twtt_surf"] = utils.sample2twtt(self.data["surf_idx"], self.data["dt"])
-                    self.imPick.plot_picks(surf = "surface")
-            self.imPick.blit()
+                    self.impick.plot_picks(surf = "surface")
+            self.impick.blit()
 
 
-    # pick_opt is a method to load the wvPick optimization tools
+    # pick_opt is a method to load the wvpick optimization tools
     def pick_opt(self):
         # end any picking
         self.end_subsurf_pick()
         self.end_surf_pick()
-        # get pick dict from imPick and pass to wvPick
-        self.wvPick.set_pickDict(self.imPick.get_pickDict())
-        self.wvPick.plot_wv()
+        # get pick dict from impick and pass to wvpick
+        self.wvpick.set_pickDict(self.impick.get_pickDict())
+        self.wvpick.plot_wv()
 
 
-    # dict_compare is a method to compare the subsurface pick dictionaries from wvPick and imPick to determine if updates have been made
-    def dict_compare(self, dict_imPick, dict_wvPick):
-        for _i in range(len(dict_imPick)):
-            if not (np.array_equal(dict_imPick[str(_i)] ,dict_wvPick[str(_i)])):
+    # dict_compare is a method to compare the subsurface pick dictionaries from wvpick and impick to determine if updates have been made
+    def dict_compare(self, dict_impick, dict_wvpick):
+        for _i in range(len(dict_impick)):
+            if not (np.array_equal(dict_impick[str(_i)] ,dict_wvpick[str(_i)])):
                 return False
 
 
@@ -500,25 +497,25 @@ class MainGUI(tk.Frame):
     def clear(self, surf = None):
         if self.f_loadName:
             if (surf == "surface") and (tk.messagebox.askokcancel("warning", "clear all surface picks?", icon = "warning") == True):
-                self.imPick.clear_picks(surf = "surface")
-                self.imPick.plot_picks(surf = "surface")
-                self.imPick.blit()
-            elif (self.imPick.get_subsurfPickFlag() == True) and (surf == "subsurface") and (tk.messagebox.askokcancel("warning", "clear all subsurface picks?", icon = "warning") == True):
-                self.imPick.clear_picks(surf = "subsurface")
-                self.imPick.plot_picks(surf = "subsurface")
-                self.imPick.update_bg()
-                self.imPick.blit()
-                self.imPick.update_option_menu()
-                self.wvPick.set_vars()
-                self.wvPick.clear()
+                self.impick.clear_picks(surf = "surface")
+                self.impick.plot_picks(surf = "surface")
+                self.impick.blit()
+            elif (self.impick.get_subsurfPickFlag() == True) and (surf == "subsurface") and (tk.messagebox.askokcancel("warning", "clear all subsurface picks?", icon = "warning") == True):
+                self.impick.clear_picks(surf = "subsurface")
+                self.impick.plot_picks(surf = "subsurface")
+                self.impick.update_bg()
+                self.impick.blit()
+                self.impick.update_option_menu()
+                self.wvpick.set_vars()
+                self.wvpick.clear()
 
 
     # delete_datafilePicks is a method to clear subsurface picks saved to the data file
     def delete_datafilePicks(self):
             if (self.data["num_file_pick_lyr"] > 0) and (tk.messagebox.askokcancel("warning", "delte data file subsurface picks?", icon = "warning") == True):
-                self.imPick.remove_imported_picks()
-                self.imPick.update_bg()
-                self.imPick.blit()
+                self.impick.remove_imported_picks()
+                self.impick.update_bg()
+                self.impick.blit()
                 utils.delete_savedPicks(self.f_loadName, self.data["num_file_pick_lyr"])
                 self.data["num_file_pick_lyr"] = 0
 
@@ -544,12 +541,12 @@ class MainGUI(tk.Frame):
             else:
                 print("undefined processing method")
                 exit(1)
-            self.imPick.load(self.f_loadName, self.data)
-            self.imPick.set_axes(self.eps_r.get(), self.cmap.get())
-            self.imPick.update_bg()
-            self.wvPick.clear()
-            self.wvPick.set_vars()
-            self.wvPick.set_data(self.data)
+            self.impick.load(self.f_loadName, self.data)
+            self.impick.set_axes(self.eps_r.get(), self.cmap.get())
+            self.impick.update_bg()
+            self.wvpick.clear()
+            self.wvpick.set_vars()
+            self.wvpick.set_data(self.data)
 
 
     def settings(self):
@@ -619,11 +616,11 @@ class MainGUI(tk.Frame):
         except:
             self.figSize.set("21,7")
         
-        # pass updated dielectric to imPick
-        self.imPick.set_axes(self.eps_r.get(), self.cmap.get())
+        # pass updated dielectric to impick
+        self.impick.set_axes(self.eps_r.get(), self.cmap.get())
 
-        # pass updated debug state to imPick
-        self.imPick.set_debugState(self.debugState.get())
+        # pass updated debug state to impick
+        self.impick.set_debugState(self.debugState.get())
 
 
     def help(self):

@@ -11,8 +11,8 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 
 
-class wvPick(tk.Frame):
-    # wvPick is a class to optimize the picking of horizons from radar data
+class wvpick(tk.Frame):
+    # wvpick is a class to optimize the picking of horizons from radar data
     def __init__(self, parent, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent

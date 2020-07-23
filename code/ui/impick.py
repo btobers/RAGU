@@ -13,8 +13,8 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 from scipy.interpolate import CubicSpline
 
 
-class imPick(tk.Frame):
-    # imPick is a class to pick horizons from a radar image
+class impick(tk.Frame):
+    # impick is a class to pick horizons from a radar image
     def __init__(self, parent, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
@@ -117,7 +117,7 @@ class imPick(tk.Frame):
         self.cmap_reset_button.on_clicked(self.cmap_reset)
 
         
-    # set_vars is a method to set imPick variables
+    # set_vars is a method to set impick variables
     def set_vars(self):
         self.f_loadName = ""
         self.f_saveName = ""
