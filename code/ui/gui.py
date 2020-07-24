@@ -5,13 +5,12 @@ date: 25JUN19
 last updated: 05FEB20
 environment requirements in nose_env.yml
 """
-
-
-### IMPORTS ###
+### imports ###
 from ui import impick, wvpick, basemap 
-from tools import utils, processing
+from tools import utils
+from radar import processing
 from ingest import ingest
-import os, sys, scipy, glob
+import os, sys, scipy, glob, configparser
 import numpy as np
 import matplotlib as mpl
 mpl.use("TkAgg")
@@ -20,18 +19,19 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 import tkinter as tk
 import tkinter.ttk as ttk
 
-
-# MainGUI is the NOSEpick class which sets the graphical user interface and holds operating variables to pass between packages
-class MainGUI(tk.Frame):
-    def __init__(self, parent, in_path, map_path, out_path, eps_r, amp_out, *args, **kwargs):
+# mainGUI is the NOSEpick class which sets the graphical user interface and holds operating variables to pass between packages
+class mainGUI(tk.Frame):
+    def __init__(self, parent, datPath, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
-        self.in_path = in_path
-        self.home_dir = in_path
-        self.map_path = map_path
-        self.out_path = out_path
-        self.eps_r = tk.DoubleVar(value=eps_r)
-        self.amp_out = amp_out
+        # read and parse config
+        self.conf = configparser.ConfigParser()
+        self.conf.read("config.ini")
+        if datPath:
+            self.datPath = datPath
+        else:
+            self.datPath = self.conf["paths"]["datPath"]
+        self.eps_r = tk.DoubleVar(value=self.conf["params"]["eps_r"])
         self.os = sys.platform
         self.setup()
 
@@ -115,13 +115,13 @@ class MainGUI(tk.Frame):
 
         # surface pick menu items
         surfacePickMenu.add_command(label="new  [ctrl+shift+n]", command=self.start_surf_pick)
-        surfacePickMenu.add_command(label="end       [escape]", command=self.end_surf_pick)    
+        surfacePickMenu.add_command(label="end        [escape]", command=self.end_surf_pick)    
         surfacePickMenu.add_command(label="clear", command=lambda: self.clear(surf = "surface"))    
         pickMenu.add_cascade(label="surface", menu = surfacePickMenu)
 
         # subsurface pick menu items
         subsurfacePickMenu.add_command(label="new     [ctrl+n]", command=self.start_subsurf_pick)
-        subsurfacePickMenu.add_command(label="end    [escape]", command=self.end_subsurf_pick)
+        subsurfacePickMenu.add_command(label="end     [escape]", command=self.end_subsurf_pick)
         subsurfacePickMenu.add_command(label="clear        [c]", command=lambda: self.clear(surf = "subsurface"))    
         subsurfacePickMenu.add_command(label="clear file", command=self.delete_datafilePicks)            
         pickMenu.add_cascade(label="subsurface", menu = subsurfacePickMenu)  
@@ -196,7 +196,8 @@ class MainGUI(tk.Frame):
 
     # key is a method to handle UI keypress events
     def key(self,event):
-        # event.state & 4 True for Ctrl+Key
+        # event.state & 4 True for Ctrl+Key    confDict = ingest.readConfig(argDict)
+
         # event.state & 1 True for Shift+Key
         # Ctrl+O open file
         if event.state & 4 and event.keysym == "o":
@@ -274,15 +275,15 @@ class MainGUI(tk.Frame):
 
     # set_home is a method to set the session home directory
     def set_home(self):
-        self.home_dir = tk.filedialog.askdirectory(title="root directory",
-                                       initialdir=self.home_dir,
+        self.datPath = tk.filedialog.askdirectory(title="root data directory",
+                                       initialdir=self.datPath,
                                        mustexist=True)    
     
 
     # set_out is a method to set the session output directory
     def set_out(self):
-        self.out_path = tk.filedialog.askdirectory(title="root directory",
-                                       initialdir=self.out_path,
+        self.conf["paths"]["outPath"] = tk.filedialog.askdirectory(title="root directory",
+                                       initialdir=self.conf["paths"]["outPath"],
                                        mustexist=True)
 
 
@@ -290,9 +291,9 @@ class MainGUI(tk.Frame):
     def open_data(self):
         # select input file
         if "linux" in self.os or "win" in self.os:
-            temp_loadName = tk.filedialog.askopenfilename(initialdir = self.home_dir,title = "select data file",filetypes = (("all files",".*"),("hd5f files", ".mat .h5"),("segy files", ".sgy"),("image file", ".img"),("gssi files",".DZT")))
+            temp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select data file",filetypes = (("all files",".*"),("hd5f files", ".mat .h5"),("segy files", ".sgy"),("image file", ".img"),("gssi files",".DZT")))
         else:
-            temp_loadName = tk.filedialog.askopenfilename(initialdir = self.home_dir,title = "select data file")
+            temp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select data file")
         # if input selected, clear impick canvas, ingest data and pass to impick
         if temp_loadName:
             self.f_loadName = temp_loadName
@@ -301,21 +302,21 @@ class MainGUI(tk.Frame):
             self.impick.update_option_menu()
             # ingest the data
             self.igst = ingest(self.f_loadName.split(".")[-1])
-            self.data = self.igst.read(self.f_loadName)
+            self.rdata = self.igst.read(self.f_loadName, self.conf["navigation"]["navcrs"], self.conf["params"]["body"])
             # return if no data ingested
-            if not self.data:
+            if not self.rdata:
                 return
-            self.impick.load(self.f_loadName, self.data)
+            self.impick.load(self.rdata)
             self.impick.set_axes(self.eps_r.get(), self.cmap.get())
             self.impick.update_bg()
             self.wvpick.set_vars()
             self.wvpick.clear()
-            self.wvpick.set_data(self.data)
+            self.wvpick.set_data(self.rdata)
 
         # pass basemap to impick for plotting pick location
         if self.map_loadName and self.basemap.get_state() == 1:
             self.basemap.clear_nav()
-            self.basemap.set_nav(self.data["navdat"], self.f_loadName)
+            self.basemap.set_nav(self.rdata["navdat"], self.f_loadName)
             self.impick.get_basemap(self.basemap)            
 
 
@@ -324,16 +325,16 @@ class MainGUI(tk.Frame):
         if self.f_loadName:# and ((self.impick.get_subsurfPickFlag() == True) or (self.impick.get_surfPickFlag() == True)):
             if "linux" in self.os or "win" in self.os:
                 self.f_saveName = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_pk",
-                                initialdir = self.out_path, title = "save picks",filetypes = (("comma-separated values","*.csv"),))
+                                initialdir = self.conf["paths"]["outPath"], title = "save picks",filetypes = (("comma-separated values","*.csv"),))
             else:
                 self.f_saveName = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_pk.csv",
-                                initialdir = self.out_path, title = "save picks")
+                                initialdir = self.conf["paths"]["outPath"], title = "save picks")
         if self.f_saveName:
             self.end_surf_pick()
             self.end_subsurf_pick()
             # get updated pick_dict from wvpick and pass back to impick
             self.impick.set_pickDict(self.wvpick.get_pickDict())
-            self.impick.save(self.f_saveName, self.eps_r.get(), self.amp_out, self.cmap.get(), self.figSize.get().split(","))
+            self.impick.save(self.f_saveName, self.eps_r.get(), self.conf["params"]["amp"], self.cmap.get(), self.figSize.get().split(","))
             self.f_saveName = ""
 
 
@@ -341,9 +342,9 @@ class MainGUI(tk.Frame):
     def map_loc(self):
         tmp_map_loadName = ""
         if "linux" in self.os or "win" in self.os:
-            tmp_map_loadName = tk.filedialog.askopenfilename(initialdir = self.map_path, title = "select basemap file", filetypes = (("geotiff files","*.tif"),("all files","*.*")))
+            tmp_map_loadName = tk.filedialog.askopenfilename(initialdir = self.conf["paths"]["mapPath"], title = "select basemap file", filetypes = (("geotiff files","*.tif"),("all files","*.*")))
         else:
-            tmp_map_loadName = tk.filedialog.askopenfilename(initialdir = self.map_path, title = "select basemap file")
+            tmp_map_loadName = tk.filedialog.askopenfilename(initialdir = self.conf["paths"]["mapPath"], title = "select basemap file")
         if tmp_map_loadName:
             self.map_loadName = tmp_map_loadName
             self.basemap = basemap.basemap(self.parent, self.map_loadName)
@@ -351,7 +352,7 @@ class MainGUI(tk.Frame):
 
             if self.f_loadName:
                 # pass basemap to impick for plotting pick location
-                self.basemap.set_nav(self.data["navdat"], self.f_loadName)
+                self.basemap.set_nav(self.rdata["navdat"], self.f_loadName)
                 self.impick.get_basemap(self.basemap)
 
 
@@ -423,22 +424,22 @@ class MainGUI(tk.Frame):
                 self.impick.clear_canvas()
                 self.impick.set_vars()
                 self.impick.update_option_menu()
-                self.data = self.igst.read(self.f_loadName)
+                self.rdata = self.igst.read(self.f_loadName, self.conf["navigation"]["navcrs"], self.conf["params"]["body"])
                 # return if no data ingested
-                if not self.data:
+                if not self.rdata:
                     return
-                self.impick.load(self.f_loadName, self.data)
+                self.impick.load(self.f_loadName, self.rdata)
                 self.impick.set_axes(self.eps_r.get(), self.cmap.get())
                 self.impick.update_bg()
                 self.wvpick.clear()
                 self.wvpick.set_vars()
-                self.wvpick.set_data(self.data)
+                self.wvpick.set_data(self.rdata)
 
                 # if basemap open, update. Only do this if line is longer than certain threshold to now waste time
                 if self.map_loadName and self.basemap.get_state() == 1:
-                    if self.data["dist"][-1] > 5:
+                    if self.rdata["dist"][-1] > 5:
                         self.basemap.clear_nav()
-                        self.basemap.set_nav(self.data["navdat"], self.f_loadName)
+                        self.basemap.set_nav(self.rdata["navdat"], self.f_loadName)
                         self.impick.get_basemap(self.basemap)
 
             else:
@@ -448,10 +449,10 @@ class MainGUI(tk.Frame):
     # load_picks is a method to load and plot picks saved to a csv file
     def load_picks(self):
         if self.f_loadName:
-            tmp_loadName = tk.filedialog.askopenfilename(initialdir = self.home_dir, title = "load picks", filetypes = (("comma separated value", "*.csv"),))
+            tmp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath, title = "load picks", filetypes = (("comma separated value", "*.csv"),))
             if tmp_loadName:
                 twtt_bed = ingester.load_picks(path=tmp_loadName)
-                self.impick.plot_bed(utils.twtt2sample(twtt_bed, self.data["dt"]))
+                self.impick.plot_bed(utils.twtt2sample(twtt_bed, self.rdata["dt"]))
 
 
     def tab_change(self, event):
@@ -469,9 +470,9 @@ class MainGUI(tk.Frame):
             # elif (self.impick.get_surfPickFlag() == True):
             if self.f_loadName:
                 tmp_surf = self.wvpick.get_surf()
-                if ~np.array_equal(self.data["surf_idx"], tmp_surf):
-                    self.data["surf_idx"] = tmp_surf
-                    self.data["pick"]["twtt_surf"] = utils.sample2twtt(self.data["surf_idx"], self.data["dt"])
+                if ~np.array_equal(self.rdata.surf, tmp_surf):
+                    self.rdata.surf = tmp_surf
+                    self.rdata.picks["twtt_surf"] = utils.sample2twtt(self.rdata.surf, self.rdata.dt)
                     self.impick.plot_picks(surf = "surface")
             self.impick.blit()
 
@@ -512,41 +513,41 @@ class MainGUI(tk.Frame):
 
     # delete_datafilePicks is a method to clear subsurface picks saved to the data file
     def delete_datafilePicks(self):
-            if (self.data["num_file_pick_lyr"] > 0) and (tk.messagebox.askokcancel("warning", "delte data file subsurface picks?", icon = "warning") == True):
+            if (self.rdata["num_file_pick_lyr"] > 0) and (tk.messagebox.askokcancel("warning", "delte data file subsurface picks?", icon = "warning") == True):
                 self.impick.remove_imported_picks()
                 self.impick.update_bg()
                 self.impick.blit()
-                utils.delete_savedPicks(self.f_loadName, self.data["num_file_pick_lyr"])
-                self.data["num_file_pick_lyr"] = 0
+                utils.delete_savedPicks(self.f_loadName, self.rdata["num_file_pick_lyr"])
+                self.rdata["num_file_pick_lyr"] = 0
 
 
     # processing tools
     def procTools(self, arg = None):
         if self.f_loadName:
             if arg == "dewow":
-                window = tk.simpledialog.askfloat("input","dewow window size (# samples/" +  str(int(self.data["sample"][-1] + 1)) + ")?")
-                self.data["amp"] = np.abs(processing.dewow(self.data["amp"], window=10))
+                window = tk.simpledialog.askfloat("input","dewow window size (# samples/" +  str(int(self.rdata["sample"][-1] + 1)) + ")?")
+                self.rdata["amp"] = np.abs(processing.dewow(self.rdata["amp"], window=10))
             elif arg == "remMnTr":
-                ntraces = int((self.data["trace"][-1] + 1)/100)
-                self.data["amp"] = np.abs(processing.remMeanTrace(self.data["amp"], ntraces=ntraces))
+                ntraces = int((self.rdata["trace"][-1] + 1)/100)
+                self.rdata["amp"] = np.abs(processing.remMeanTrace(self.rdata["amp"], ntraces=ntraces))
             elif arg == "lowpass":
                 cutoff = tk.simpledialog.askfloat("input","butterworth filter cutoff frequency?")
-                self.data["amp"] = np.abs(processing.lowpassFilt(self.data["pc"], Wn = cutoff, fs = 1/self.data["dt"]))
+                self.rdata["amp"] = np.abs(processing.lowpassFilt(self.rdata["pc"], Wn = cutoff, fs = 1/self.rdata["dt"]))
             elif arg == "agc":
-                window = tk.simpledialog.askfloat("input","AGC gain window size (# samples/" +  str(int(self.data["sample"][-1] + 1)) + ")?")
-                self.data["amp"] = processing.agcGain(self.data["amp"], window=window)
+                window = tk.simpledialog.askfloat("input","AGC gain window size (# samples/" +  str(int(self.rdata["sample"][-1] + 1)) + ")?")
+                self.rdata["amp"] = processing.agcGain(self.rdata["amp"], window=window)
             elif arg == "tpow":
                 power = tk.simpledialog.askfloat("input","power for tpow gain?")
-                self.data["amp"] = processing.tpowGain(self.data["amp"], self.data["sample"]*self.data["dt"], power=power)
+                self.rdata["amp"] = processing.tpowGain(self.rdata["amp"], self.rdata["sample"]*self.rdata["dt"], power=power)
             else:
                 print("undefined processing method")
                 exit(1)
-            self.impick.load(self.f_loadName, self.data)
+            self.impick.load(self.f_loadName, self.rdata)
             self.impick.set_axes(self.eps_r.get(), self.cmap.get())
             self.impick.update_bg()
             self.wvpick.clear()
             self.wvpick.set_vars()
-            self.wvpick.set_data(self.data)
+            self.wvpick.set_data(self.rdata)
 
 
     def settings(self):

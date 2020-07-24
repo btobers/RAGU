@@ -1,4 +1,4 @@
-### IMPORTS ###
+### imports ###
 from tools import utils
 from ui import basemap
 import h5py
@@ -72,7 +72,7 @@ class impick(tk.Frame):
         self.click = self.fig.canvas.mpl_connect("button_press_event", self.onpress)
         self.unclick = self.fig.canvas.mpl_connect("button_release_event", self.onrelease)
 
-        # add axes for colormap sliders and reset button - leave invisible until data loaded
+        # add axes for colormap sliders and reset button - leave invisible until rdata loaded
         self.ax_cmax = self.fig.add_axes([0.95, 0.55, 0.01, 0.30])
         self.ax_cmax.set_visible(False)
         self.ax_cmin  = self.fig.add_axes([0.95, 0.18, 0.01, 0.30])
@@ -177,13 +177,12 @@ class impick(tk.Frame):
 
 
     # load calls ingest() on the data file and sets the datacanvas
-    def load(self, f_loadName, data):
-        self.f_loadName = f_loadName
-        
-        # receive the data
-        self.data = data
+    def load(self, rdata):       
+        # receive the rdata
+        self.rdata = rdata
 
-        self.ax.set_title(os.path.splitext(self.f_loadName.split("/")[-1])[0])
+        # self.ax.set_title(os.path.splitext(self.f_loadName.split("/")[-1])[0])
+        self.ax.set_title(self.rdata.fn.split(".")[0])
         # set scalebar axes now that data displayed
         self.ax.set_visible(True)
         self.ax_cmax.set_visible(True)
@@ -194,8 +193,8 @@ class impick(tk.Frame):
         self.ax.set_title(os.path.splitext(self.f_loadName.split("/")[-1])[0])
         self.ax.set(xlabel = "trace", ylabel = "sample")
 
-        # calculate power of data
-        Pow_data = np.power(self.data["amp"],2)
+        # calculate power of rdata
+        Pow_data = np.power(self.rdata.proc_data,2)
         # replace zero power values with nan
         Pow_data[Pow_data == 0] = np.nan
         # dB it
@@ -204,18 +203,18 @@ class impick(tk.Frame):
         # get clutter data in dB
         # check if clutter data is stored in linear space or log space - lin space should have values less than 1
         # if in lin space, convert to dB
-        if (np.nanmax(np.abs(self.data["clutter"])) < 1) or (~np.all(self.data["clutter"] == 1)) or ("2012" in self.f_loadName):
+        if (np.nanmax(np.abs(self.rdata.clut)) < 1) or (~np.all(self.rdata.clut == 1)) or ("2012" in self.rdata.fn):
             # calculate power (squared amplitude)
-            Pow_clut = np.power(self.data["clutter"],2)
+            Pow_clut = np.power(self.rdata.clut,2)
             # replace zero power values with nan
             Pow_clut[Pow_clut == 0] = np.nan
             # dB it
             self.dB_clut = np.log10(Pow_clut)
         # if in log space, leave as is
         else:
-            self.dB_clut = self.data["clutter"]
+            self.dB_clut = self.rdata.clut
 
-        # cut off data at 10th percentile to avoid extreme outliers - round down
+        # cut off rdata at 10th percentile to avoid extreme outliers - round down
         self.mindB_data = np.floor(np.nanpercentile(self.dB_data,10))
         self.mindB_clut = np.floor(np.nanpercentile(self.dB_clut,10))
         self.maxdB_data = np.nanmax(self.dB_data)
@@ -230,11 +229,10 @@ class impick(tk.Frame):
         self.dataCanvas.get_tk_widget().pack(in_=self.dataFrame, side="bottom", fill="both", expand=1) 
 
         # display image data for radargram and clutter sim
-        self.im_data  = self.ax.imshow(self.dB_data, cmap="Greys_r", aspect="auto", extent=[self.data["trace"][0], 
-                        self.data["trace"][-1], self.data["sample"][-1], self.data["sample"][0]])
-        self.im_clut  = self.ax.imshow(self.dB_clut, cmap="Greys_r", aspect="auto", extent=[self.data["trace"][0], 
-                        self.data["trace"][-1], self.data["sample"][-1], self.data["sample"][0]])
-
+        self.im_data  = self.ax.imshow(self.dB_data, cmap="Greys_r", aspect="auto", extent=[0, 
+                        self.rdata.tnum - 1, self.rdata.snum - 1, 0])
+        self.im_clut  = self.ax.imshow(self.dB_clut, cmap="Greys_r", aspect="auto", extent=[0, 
+                        self.rdata.tnum - 1, self.rdata.snum - 1, 0])
         # update colormaps
         self.im_data.set_clim([self.mindB_data, self.maxdB_data])
         self.im_clut.set_clim([self.mindB_clut, self.maxdB_clut])
@@ -253,19 +251,19 @@ class impick(tk.Frame):
         self.im_clut.set_visible(False)
 
         # initialize arrays to hold saved picks
-        self.xln_subsurf_saved = np.repeat(np.nan, self.data["trace"][-1] + 1)
-        self.yln_subsurf_saved = np.repeat(np.nan, self.data["trace"][-1] + 1)
+        self.xln_subsurf_saved = np.repeat(np.nan, self.rdata.tnum)
+        self.yln_subsurf_saved = np.repeat(np.nan, self.rdata.tnum)
 
         # initialize lines to hold picks
-        self.saved_surf_ln, = self.ax.plot(self.data["trace"],self.data["surf_idx"],"c")            # plot lidar surface
+        self.saved_surf_ln, = self.ax.plot(np.arange(self.rdata.tnum), self.rdata.surf,"c")            # plot lidar surface
         self.tmp_surf_ln, = self.ax.plot(self.xln_surf,self.yln_surf,"mx")                          # empty line for surface pick segment
         self.saved_subsurf_ln, = self.ax.plot(self.xln_subsurf_saved,self.yln_subsurf_saved,"g")    # empty line for saved subsurface pick
         self.tmp_subsurf_ln, = self.ax.plot(self.xln_subsurf,self.yln_subsurf,"rx")                 # empty line for current pick segment
 
-        # plot any imported picks if desired
-        if ("num_file_pick_lyr" in self.data) and (self.data["num_file_pick_lyr"] > 0) and (tk.messagebox.askyesno("display picks","display existing data file picks?") == True):
-            for _i in range(self.data["num_file_pick_lyr"]):
-                self.plot_bed(utils.twtt2sample(self.data["pick"]["twtt_subsurf" + str(_i)], self.data["dt"]), lbl=str(_i))
+        # # plot any imported picks if desired
+        # if ("num_file_pick_lyr" in self.rdata) and (self.rdata["num_file_pick_lyr"] > 0) and (tk.messagebox.askyesno("display picks","display existing rdata file picks?") == True):
+        #     for _i in range(self.rdata["num_file_pick_lyr"]):
+        #         self.plot_bed(utils.twtt2sample(self.rdata["pick"]["twtt_subsurf" + str(_i)], self.rdata["dt"]), lbl=str(_i))
 
         # update the canvas
         self.dataCanvas._tkcanvas.pack()
@@ -300,7 +298,7 @@ class impick(tk.Frame):
                     self.clear_last()
                 self.pickLabel.config(text="subsurface pick segment " + str(self.pick_segment) + ":\t active", fg="red")
                 # initialize pick index and twtt dictionaries for current picking layer
-                self.pick_subsurf_idx[str(self.pick_segment)] = np.repeat(np.nan, self.data["trace"][-1] + 1)
+                self.pick_subsurf_idx[str(self.pick_segment)] = np.repeat(np.nan, self.rdata["trace"][-1] + 1)
 
             elif self.pick_state == False and self.edit_flag == False:
                 if len(self.xln_subsurf) >=  2:
@@ -332,7 +330,7 @@ class impick(tk.Frame):
             # check if picking state is a go
             if self.pick_state == True:
                 # restrict subsurface picks to fall below surface
-                if (self.pick_surf == "subsurface") and ((pick_sample > self.data["surf_idx"][self.pick_trace]) or (np.isnan(self.data["surf_idx"][self.pick_trace]))):
+                if (self.pick_surf == "subsurface") and ((pick_sample > self.rdata["surf_idx"][self.pick_trace]) or (np.isnan(self.rdata["surf_idx"][self.pick_trace]))):
                     # determine if trace already contains pick - if so, replace with current sample
                     if self.pick_trace in self.xln_subsurf:
                         self.yln_subsurf[self.xln_subsurf.index(self.pick_trace)] = pick_sample
@@ -394,7 +392,7 @@ class impick(tk.Frame):
 
             # if in debug state, print pick info
             if self.debugState == True:
-                utils.print_pickInfo(self.data, self.pick_trace, pick_sample)
+                utils.print_pickInfo(self.rdata, self.pick_trace, pick_sample)
 
 
     # pick_interp is a method for cubic spline interpolation of twtt between pick locations
@@ -429,9 +427,9 @@ class impick(tk.Frame):
                     picked_traces = np.arange(self.xln_surf[0], self.xln_surf[-1] + 1)
                     sample = cs(picked_traces).astype(int)
                     # input cubic spline output surface twtt array - force output to integer for index of pick
-                    self.data["surf_idx"][picked_traces] = sample
+                    self.rdata["surf_idx"][picked_traces] = sample
                     # update twtt_surf
-                    self.data["pick"]["twtt_surf"][picked_traces] = sample*self.data["dt"]
+                    self.rdata["pick"]["twtt_surf"][picked_traces] = sample*self.rdata.dt
 
         except Exception as err:
             print("Pick interp error: " + str(err))
@@ -451,7 +449,7 @@ class impick(tk.Frame):
             del self.xln_surf[:]
             del self.yln_surf[:]
             self.tmp_surf_ln.set_data(self.xln_surf, self.yln_surf)
-            self.saved_surf_ln.set_data(self.data["trace"], self.data["surf_idx"])
+            self.saved_surf_ln.set_data(self.rdata["trace"], self.rdata["surf_idx"])
 
 
     def clear_picks(self, surf = None):
@@ -476,7 +474,7 @@ class impick(tk.Frame):
                 del self.ann_list[:]
 
         elif surf == "surface":
-            self.data["surf_idx"].fill(np.nan)
+            self.rdata["surf_idx"].fill(np.nan)
             self.surf_pickFlag = False
 
 
@@ -627,7 +625,7 @@ class impick(tk.Frame):
     def remove_imported_picks(self):
         # get number of plotted lines
         if len(self.ax.lines) > 4:
-            for _i in range(self.data["num_file_pick_lyr"]):
+            for _i in range(self.rdata["num_file_pick_lyr"]):
                 self.ax.lines[4].remove()
 
 
@@ -849,28 +847,28 @@ class impick(tk.Frame):
 
 
     def set_axes(self, eps_r, cmap):
-        self.ax.set_xlim((self.data["trace"][0], self.data["trace"][-1]))
-        self.ax.set_ylim((self.data["sample"][-1],self.data["sample"][0]))
+        self.ax.set_xlim(0, self.rdata.tnum)
+        self.ax.set_ylim(self.rdata.snum, 0)
 
         # update twtt and depth (subradar dist.)
-        if self.data["dt"] < 1e-9:
+        if self.rdata.dt < 1e-9:
             self.secaxy0.set_ylabel("two-way travel time [nanosec.]")
-            self.secaxy0.set_ylim(self.data["sample"][-1]*self.data["dt"]*1e9, self.data["sample"][0]*self.data["dt"]*1e9)
+            self.secaxy0.set_ylim(self.rdata.snum * self.rdata.dt * 1e9, 0)
         else:
-            self.secaxy0.set_ylim(self.data["sample"][-1]*self.data["dt"]*1e6, self.data["sample"][0]*self.data["dt"]*1e6)
+            self.secaxy0.set_ylim(self.rdata.snum * self.rdata.dt * 1e6, 0)
 
         self.secaxy1.set_ylabel("approx. subradar distance [m] ($\epsilon_{}$ = {}".format("r",eps_r))
-        self.secaxy1.set_ylim(utils.twtt2depth(self.data["sample"][-1]*self.data["dt"],eps_r), utils.twtt2depth(self.data["sample"][0]*self.data["dt"],eps_r))
+        self.secaxy1.set_ylim(utils.twtt2depth(self.rdata.snum * self.rdata.dt, eps_r), 0)
 
         # update along-track distance
-        if not np.all(np.isnan(self.data["dist"])):
+        if not np.all(np.isnan(self.rdata.dist)):
             # use km if distance exceeds 1 km
-            if self.data["dist"][-1] >= 1e3:
+            if self.rdata.dist[-1] >= 1e3:
                 self.secaxx.set_xlabel("along-track distance [km]")
-                self.secaxx.set_xlim(self.data["dist"][0]*1e-3, self.data["dist"][-1]*1e-3)
+                self.secaxx.set_xlim(0, self.rdata.dist[-1]*1e-3)
 
             else:
-                self.secaxx.set_xlim(self.data["dist"][0], self.data["dist"][-1])
+                self.secaxx.set_xlim(0, self.rdata.dist[-1])
         
         else:
             self.secaxx.set_visible(False)
@@ -883,10 +881,10 @@ class impick(tk.Frame):
 
     # get_nav method returns the nav data       
     def get_nav(self):
-        return self.data["navdat"]
+        return self.rdata.nav
 
 
-    # set_im is a method to set which data is being displayed
+    # set_im is a method to set which rdata is being displayed
     def set_im(self):
         if self.im_status.get() == "data":
             self.show_clut()
@@ -904,9 +902,9 @@ class impick(tk.Frame):
     def save(self, f_saveName, eps_r, amp_out, cmap, figSize):
         self.f_saveName = f_saveName
         if self.pick_subsurf_idx_opt:
-            utils.savePick(self,f_loadName, self.f_saveName, self.data, self.pick_subsurf_idx_opt, eps_r, amp_out)
+            utils.savePick(self,f_loadName, self.f_saveName, self.rdata, self.pick_subsurf_idx_opt, eps_r, amp_out)
         else:
-            utils.savePick(self.f_loadName, self.f_saveName, self.data, self.pick_subsurf_idx, eps_r, amp_out)
+            utils.savePick(self.f_loadName, self.f_saveName, self.rdata, self.pick_subsurf_idx, eps_r, amp_out)
         # zoom out to full rgram extent to save pick image
         self.set_axes(eps_r, cmap)
         if self.im_status.get() =="clut":

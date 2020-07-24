@@ -100,27 +100,25 @@ class wvpick(tk.Frame):
         self.pick_dict0 = {}
         self.pick_dict1 = {}
         self.rePick = None
-        self.surf_idx = None
         self.rePick_idx = {}        # dictionary of indeces of repicked traces for each segment
         self.subsurf_interpType.set("cubic")
 
 
     # set_data is a method to receive the radar data
-    def set_data(self, data):
+    def set_data(self, rdata):
         # get data in dB
-        self.data_dB = utils.amp2powdB(data["amp"])
-        self.num_trace = data["trace"][-1] + 1
-        self.surf_idx = data["surf_idx"]
+        self.rdata = rdata
+        self.data_dB = utils.amp2powdB(rdata.proc_data)
 
 
-    # set_surf is a method to set the surface index along in the case that a manual surface pick is made in the imPick tab after ingest
-    def set_surf(self,surf_idx):
-        self.surf_idx = surf_idx
+    # # set_surf is a method to set the surface index along in the case that a manual surface pick is made in the imPick tab after ingest
+    # def set_surf(self,self.rdata.surf):
+    #     self.rdata.surf = self.rdata.surf
 
     
     # get_surf is a method to return the optimized surface pick indices
     def get_surf(self):
-        return self.surf_idx
+        return self.rdata.surf
 
 
     # get_pickDict is a method to return the pick dictionary
@@ -161,9 +159,9 @@ class wvpick(tk.Frame):
         self.ax.clear()
         self.ax.set(xlabel = "sample", ylabel = "power [dB]")
 
-        surf = self.surf_idx[self.traceNum[segment]]
+        surf = self.rdata.surf[self.traceNum[segment]]
 
-        self.ax.plot(self.data_dB[:,self.traceNum[segment]], label="trace: " + str(int(self.traceNum[segment] + 1)) + "/" + str(int(self.num_trace)))
+        self.ax.plot(self.data_dB[:,self.traceNum[segment]], label="trace: " + str(int(self.traceNum[segment] + 1)) + "/" + str(int(self.rdata.tnum)))
 
         if not np.isnan(surf):
             self.ax.axvline(x = surf, c='c', label="surface")
@@ -228,14 +226,13 @@ class wvpick(tk.Frame):
                     self.traceNum[segment] = self.segment_trace_last[segment]
         
         else:
-            numTraces = self.num_trace
-            if newTrace <= numTraces:
+            if newTrace <= self.rdata.tnum:
                 self.traceNum[0] += step
-            elif newTrace > numTraces:
-                if self.traceNum[0] == numTraces - 1:
+            elif newTrace > self.rdata.tnum:
+                if self.traceNum[0] == self.rdata.tnum - 1:
                     return
                 else:
-                    self.traceNum[0] = numTraces - 1
+                    self.traceNum[0] = self.rdata.tnum - 1
 
         self.plot_wv()
 
@@ -249,27 +246,27 @@ class wvpick(tk.Frame):
                 self.rePick_idx[str(_i)] = []
 
 
-    # surf_autoPick is a method to automatically optimize surface picks by selecting the maximul amplitude sample within the specified window around existing surf_idx
+    # surf_autoPick is a method to automatically optimize surface picks by selecting the maximul amplitude sample within the specified window around existing self.rdata.surf
     def surf_autoPick(self):
-        if np.all(np.isnan(self.surf_idx)):
+        if np.all(np.isnan(self.rdata.surf)):
             # if surf idx array is all nans, take max power to define surface 
             max_idx = np.nanargmax(self.data_dB[10:,:], axis = 0) + 10
             # remove outliers
             not_outlier = utils.remove_outliers(max_idx)
             # interpolate over outliers
-            x = np.arange(self.num_trace)
-            self.surf_idx = np.interp(x, x[not_outlier], max_idx[not_outlier])
+            x = np.arange(self.rdata.tnum)
+            self.rdata.surf = np.interp(x, x[not_outlier], max_idx[not_outlier])
 
         else:
             # if existing surface pick, find max within specified window form existing pick
             winSize = self.winSize.get()
-            x = np.argwhere(~np.isnan(self.surf_idx))
-            y = self.surf_idx[x]
+            x = np.argwhere(~np.isnan(self.rdata.surf))
+            y = self.rdata.surf[x]
             for _i in range(len(x)):
                 # find argmax for window for given data trace in pick
                 max_idx = np.argmax(self.data_dB[int(y[_i] - (winSize/2)):int(y[_i] + (winSize/2)), x[_i]])
                 # add argmax index to pick_dict1 - account for window index shift
-                self.surf_idx[x[_i]] = max_idx + int(y[_i] - (winSize/2))
+                self.rdata.surf[x[_i]] = max_idx + int(y[_i] - (winSize/2))
         self.plot_wv()
 
 

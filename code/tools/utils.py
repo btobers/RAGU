@@ -115,17 +115,6 @@ def list_insert_idx(list, n):
     return index
 
 
-# calculate total euclidian distance along a line
-def euclid_dist(nav):
-    # nav.navdat[:,0] is an array of longitude data
-    # nav.navdat[:,1] is an array of latitude data
-    dist = np.zeros(nav.navdat.shape[0])
-    for _i in range(len(dist)):
-        if _i>=1:
-            dist[_i] = dist[_i-1] + np.sqrt((nav.navdat[_i,0] - nav.navdat[_i-1,0])**2 + (nav.navdat[_i,1] - nav.navdat[_i-1,1])**2)
-    return dist
-
-
 def find_nearest(array,value):
     # return index in array with value closest to the passed value
     idx = (np.abs(array-value)).argmin()

@@ -1,66 +1,30 @@
+### imports ###
 import numpy as np
+import pandas as pd
 import gdal, osr
 import sys
+import pyproj
     
-class navpath:
-  # A list of loc objects, representing a path. Along with some useful
-  # metadata
-  def __init__(self, csys = None, navdat = None):
-    self.navdat = navdat
-    self.csys = csys
+class navdat:
+  # list of loc objects, representing a path. Along with some useful methods
+  def __init__(self, crs = None, df = None):
+    #: str: coordinate system, Proj4 or WKT 
+    self.crs = crs
+    #: pandas dataframe (tnum x 3) df object [lon, lat, elev]
+    self.df = pd.DataFrame(columns=["lon","lat","elev"])
 
+    self.xyz = {
+    "mars": "+proj=geocent +a=3396190 +b=3376200 +no_defs",
+    "moon": "+proj=geocent +a=1737400 +b=1737400 +no_defs",
+    "earth": "+proj=geocent +a=6378140 +b=6356750 +no_defs",
+    }
 
-  def copy(self):
-    # Returns a copy of the Pointlist
-    return navpath(self.csys,self.navdat)
+  def transform(self,body):
+    xform = pyproj.transformer.Transformer.from_crs(self.crs, self.xyz[body])
+    x, y = xform.transform(self.df["lon"].tolist(), self.df["lat"].tolist(), direction="FORWARD")
+    return np.asarray(x), np.asarray(y)
 
-
-  def transform(self,targ):
-    #print(self)
-    # Transforms a Pointlist to another coordinate system, can read Proj4 format
-    # and WKT
-
-    navpath = self.copy()
-
-    source = osr.SpatialReference()  
-    target = osr.SpatialReference()  
-
-    # Deciding whether the coordinate systems are Proj4 or WKT
-    sc0 = self.csys[0]
-    if(sc0 == 'G' or sc0 == 'P'):
-      source.ImportFromWkt(navpath.csys)
-    else:
-      source.ImportFromProj4(navpath.csys)
-
-    tc0 = targ[0]
-    if(tc0 == 'G' or tc0 == 'P'):
-      target.ImportFromWkt(targ)
-    elif(tc0 == '+'):
-      target.ImportFromProj4(targ)
-    else:
-      print("Unrecognized target coordinate system:")
-      print(targ)
-      sys.exit()
-
-    nav_xform = np.zeros(navpath.navdat.shape)
-
-    # The actual transformation
-    transform = osr.CoordinateTransformation(source, target)
-    xform = transform.TransformPoint
-
-    for _i in range(navpath.navdat.shape[0]):  
-      nav_xform[_i,:] = np.asarray(xform(navpath.navdat[_i,0],navpath.navdat[_i,1],navpath.navdat[_i,2]))
-
-    navpath.navdat = nav_xform
-    navpath.csys = targ
-    return navpath
-
-def transformPt(nav, in_csys, out_csys):
-  # Transforms a point to another coordinate system, can read Proj4 format
-  # and WKT
-
-  # The actual transformation
-  transform = osr.CoordinateTransformation(in_csys, out_csys)
-  npt = transform.TransformPoint(nav[:,0],nav[:,1], nav[:,2]) # x, y, z data list
-
-  return npt
+def euclid_dist(xarray, yarray):
+  dist = np.zeros_like(xarray)
+  dist[1:] = np.cumsum(np.sqrt(np.diff(xarray) ** 2.0 + np.diff(yarray) ** 2.0))
+  return dist
