@@ -861,14 +861,14 @@ class impick(tk.Frame):
         self.secaxy1.set_ylim(utils.twtt2depth(self.rdata.snum * self.rdata.dt, eps_r), 0)
 
         # update along-track distance
-        if not np.all(np.isnan(self.rdata.dist)):
+        if not np.all(np.isnan(self.rdata.navdf["dist"])) or  np.all((self.rdata.navdf["dist"] == 0)):
             # use km if distance exceeds 1 km
-            if self.rdata.dist[-1] >= 1e3:
+            if self.rdata.navdf.iloc[-1]["dist"] >= 1e3:
                 self.secaxx.set_xlabel("along-track distance [km]")
-                self.secaxx.set_xlim(0, self.rdata.dist[-1]*1e-3)
+                self.secaxx.set_xlim(0, self.rdata.navdf.iloc[-1]["dist"]*1e-3)
 
             else:
-                self.secaxx.set_xlim(0, self.rdata.dist[-1])
+                self.secaxx.set_xlim(0, self.rdata.navdf.iloc[-1]["dist"])
         
         else:
             self.secaxx.set_visible(False)

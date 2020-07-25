@@ -428,7 +428,7 @@ class mainGUI(tk.Frame):
                 # return if no data ingested
                 if not self.rdata:
                     return
-                self.impick.load(self.f_loadName, self.rdata)
+                self.impick.load(self.rdata)
                 self.impick.set_axes(self.eps_r.get(), self.cmap.get())
                 self.impick.update_bg()
                 self.wvpick.clear()

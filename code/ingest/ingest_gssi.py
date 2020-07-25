@@ -3,8 +3,9 @@ this module contains functions parsed from https://github.com/iannesbitt/readgss
 much of the header data which is not necessary for NOSEpick use has been removed
 """
 ### imports ###
-from tools import nav, utils
+from tools import utils
 from radar import radar
+from nav import navparse
 import struct
 import math
 import os,sys
@@ -23,7 +24,8 @@ def read(fpath, navcrs, body):
     rdata = radar(fpath.split("/")[-1])
     # use readgssi readdzt.dzt reader (credit: https://github.com/iannesbitt/readgssi)
     header, rdata.dat = readdzt(fpath)#, gps=normalize, spm=spm, start_scan=start_scan, num_scans=num_scans, epsr=epsr, antfreq=antfreq, verbose=verbose)
-
+    # convert gssi signed int amplitude to floating point for displaying
+    rdata.proc_data = rdata.dat.astype(np.float)
     # ensure data file is not empty
     if not np.any(rdata.dat):
         print("gssi_read error: file contains no data")
@@ -40,61 +42,22 @@ def read(fpath, navcrs, body):
     pick={}                                                 # dictionary to hold picks
     pick["twtt_surf"] = np.repeat(np.nan, rdata.tnum)       # place holder for pick of twtt_surf
 
-    # create nav object to hold lon, lat, elev
-    rdata.navdat.crs = navcrs
-
     # read in gps data if exists
     infile_gps = fpath.replace(".DZT",".DZG")
     if os.path.isfile(infile_gps):
-        gps = readdzg(infile_gps, "dzg", header)
-        
-        # interpolate gps data to length of radara data
-        if len(gps["trace"]) < rdata.tnum:
-            x = np.arange(gps["trace"][0], gps["trace"][-1] + 1)
-            gps["lon"] = np.interp(x, gps["trace"], gps["lon"])
-            gps["lat"] = np.interp(x, gps["trace"], gps["lat"])
-            gps["elev"] = np.interp(x, gps["trace"], gps["elev"])
-            gps["trace"] = x
-
-        # if last gps record trace is out of data bounds trim navdat
-        if gps["trace"][-1] >= rdata.tnum:
-            idx = np.where(gps["trace"] >= rdata.tnum)[0]
-            gps["lon"] = np.delete(gps["lon"],idx)
-            gps["lat"] = np.delete(gps["lat"],idx)
-            gps["elev"] = np.delete(gps["elev"],idx)
-            gps["trace"] = np.delete(gps["trace"],idx)
-
-        # may still need to extrapolate from ends - just copy beginning and end values for now
-        if len(gps["trace"]) < rdata.tnum:
-            first = gps["trace"][0]
-            last = gps["trace"][-1]
-            gps["lon"] = utils.extend_array(gps["lon"], first, last, rdata.tnum)
-            gps["lat"] = utils.extend_array(gps["lat"], first, last, rdata.tnum)
-            gps["elev"] = utils.extend_array(gps["elev"], first, last, rdata.tnum)
-            gps["trace"] = np.arange(rdata.tnum)
-        
-        # combine gps data as nav object
-        rdata.navdat.df["lon"] = gps["lon"]
-        rdata.navdat.df["lat"] = gps["lat"]
-        rdata.navdat.df["elev"] = gps["elev"]
-        
-        # convert from geograpic to geocentric coords
-        try: 
-            rdata.get_projected_coords(body)
-        except Exception as err:
-            print(str(err))
-            pass
+        # create nav object to hold lon, lat, elev
+        rdata.navdf = navparse.getnav_gssi(infile_gps, rdata.tnum, navcrs, body)
 
     else: 
         # if no gps data file, use nan arrays
         print("Warning: no associated nav data found")
-        rdata.navdat.df["lon"] = np.repeat(np.nan, rdata.tnum)
-        rdata.navdat.df["lat"] = np.repeat(np.nan, rdata.tnum)
-        rdata.navdat.df["elev"] = np.repeat(np.nan, rdata.tnum)
-        rdata.dist = np.repeat(np.nan, rdata.tnum)
+        rdata.navdf["lon"] = np.nan
+        rdata.navdf["lat"] = np.nan
+        rdata.navdf["elev"] = np.nan
+        rdata.navdf["dist"] = np.nan
 
     # for ground-based GPR, elev_gnd is the same as GPS recorded elev
-    rdata.elev_gnd = rdata.navdat.df["elev"]
+    rdata.elev_gnd = rdata.navdf["elev"]
 
     return rdata
 
@@ -216,116 +179,116 @@ def readdzt(fpath):
     return header, amp
 
 
-def readdzg(fpath, frmt, header):
-    """
-    A parser to extract gps data from DZG file format. DZG contains raw NMEA sentences, which should include at least RMC and GGA.
+# def readdzg(fpath, frmt, header):
+#     """
+#     A parser to extract gps data from DZG file format. DZG contains raw NMEA sentences, which should include at least RMC and GGA.
 
-    NMEA RMC sentence string format:
-    :py:data:`$xxRMC,UTC hhmmss,status,lat DDmm.sss,lon DDDmm.sss,SOG,COG,date ddmmyy,checksum \*xx`
+#     NMEA RMC sentence string format:
+#     :py:data:`$xxRMC,UTC hhmmss,status,lat DDmm.sss,lon DDDmm.sss,SOG,COG,date ddmmyy,checksum \*xx`
 
-    NMEA GGA sentence string format:
-    :py:data:`$xxGGA,UTC hhmmss.s,lat DDmm.sss,lon DDDmm.sss,fix qual,numsats,hdop,mamsl,wgs84 geoid ht,fix age,dgps sta.,checksum \*xx`
+#     NMEA GGA sentence string format:
+#     :py:data:`$xxGGA,UTC hhmmss.s,lat DDmm.sss,lon DDDmm.sss,fix qual,numsats,hdop,mamsl,wgs84 geoid ht,fix age,dgps sta.,checksum \*xx`
     
-    Shared message variables between GGA and RMC: timestamp, latitude, and longitude
+#     Shared message variables between GGA and RMC: timestamp, latitude, and longitude
 
-    RMC contains a datestamp which makes it preferable, but this parser will read either.
+#     RMC contains a datestamp which makes it preferable, but this parser will read either.
 
-    :param str fi: File containing gps information
-    :param str frmt: GPS information format ("dzg" = DZG file containing gps sentence strings (see below); "csv" = comma separated file with: lat,lon,elev,time)
-    :param dict header: File header produced by :py:func:`readgssi.dzt.readdzt`
-    :param bool verbose: Verbose, defaults to False
-    :rtype: GPS data (pandas.DataFrame)
+#     :param str fi: File containing gps information
+#     :param str frmt: GPS information format ("dzg" = DZG file containing gps sentence strings (see below); "csv" = comma separated file with: lat,lon,elev,time)
+#     :param dict header: File header produced by :py:func:`readgssi.dzt.readdzt`
+#     :param bool verbose: Verbose, defaults to False
+#     :rtype: GPS data (pandas.DataFrame)
 
-        The dataframe contains the following fields:
-        * datetimeutc (:py:class:`datetime.datetime`)
-        * trace (:py:class:`int` trace number)
-        * longitude (:py:class:`float`)
-        * latitude (:py:class:`float`)
-        * altitude (:py:class:`float`)
-        * velocity (:py:class:`float`)
-        * meters (:py:class:`float` meters traveled)
+#         The dataframe contains the following fields:
+#         * datetimeutc (:py:class:`datetime.datetime`)
+#         * trace (:py:class:`int` trace number)
+#         * longitude (:py:class:`float`)
+#         * latitude (:py:class:`float`)
+#         * altitude (:py:class:`float`)
+#         * velocity (:py:class:`float`)
+#         * meters (:py:class:`float` meters traveled)
 
-    """
+#     """
 
-    # initialize data arrays
-    trace_num = np.array(()).astype(np.int)
-    lon = np.array(()).astype(np.float64)
-    lat = np.array(()).astype(np.float64)
-    elev = np.array(()).astype(np.float64)
+#     # initialize data arrays
+#     trace_num = np.array(()).astype(np.int)
+#     lon = np.array(()).astype(np.float64)
+#     lat = np.array(()).astype(np.float64)
+#     elev = np.array(()).astype(np.float64)
 
-    if header["rhf_spm"] == 0:
-        spu = header["rhf_sps"]
-    else:
-        spu = header["rhf_spm"]
+#     if header["rhf_spm"] == 0:
+#         spu = header["rhf_sps"]
+#     else:
+#         spu = header["rhf_spm"]
 
-    trace = 0 # the elapsed number of traces iterated through
-    rowrmc = 0 # rmc record iterated through (gps file)
-    rowgga = 0 # gga record
-    timestamp = False
-    td = False
-    rmc, gga = False, False
-    x0, x1, y0, y1 = False, False, False, False # coordinates
-    z0, z1 = 0, 0
-    x2, y2, z2 = 0, 0, 0
-    with open(fpath, "r") as gf:
-        if frmt == "dzg": # if we"re working with DZG format
-            for ln in gf: # loop through the first few sentences, check for RMC
-                if "RMC" in ln: # check to see if RMC sentence (should occur before GGA)
-                    rmc = True
-                    if rowrmc == 0:
-                        msg = pynmea2.parse(ln.rstrip()) # convert gps sentence to pynmea2 named tuple
-                        ts0 = TZ.localize(datetime.combine(msg.datestamp, msg.timestamp)) # row 0"s timestamp (not ideal)
-                    if rowrmc == 1:
-                        msg = pynmea2.parse(ln.rstrip())
-                        ts1 = TZ.localize(datetime.combine(msg.datestamp, msg.timestamp)) # row 1"s timestamp (not ideal)
-                        td = ts1 - ts0 # timedelta = datetime1 - datetime0
-                    rowrmc += 1
-                if "GGA" in ln:
-                    gga = True
-                    if rowgga == 0:
-                        msg = pynmea2.parse(ln.rstrip()) # convert gps sentence to pynmea2 named tuple
-                        ts0 = TZ.localize(datetime.combine(datetime(1980, 1, 1), msg.timestamp)) # row 0"s timestamp (not ideal)
-                    if rowgga == 1:
-                        msg = pynmea2.parse(ln.rstrip())
-                        ts1 = TZ.localize(datetime.combine(datetime(1980, 1, 1), msg.timestamp)) # row 1"s timestamp (not ideal)
-                        td = ts1 - ts0 # timedelta = datetime1 - datetime0
-                    rowgga += 1
-            gpssps = 1 / td.total_seconds() # GPS samples per second
+#     trace = 0 # the elapsed number of traces iterated through
+#     rowrmc = 0 # rmc record iterated through (gps file)
+#     rowgga = 0 # gga record
+#     timestamp = False
+#     td = False
+#     rmc, gga = False, False
+#     x0, x1, y0, y1 = False, False, False, False # coordinates
+#     z0, z1 = 0, 0
+#     x2, y2, z2 = 0, 0, 0
+#     with open(fpath, "r") as gf:
+#         if frmt == "dzg": # if we"re working with DZG format
+#             for ln in gf: # loop through the first few sentences, check for RMC
+#                 if "RMC" in ln: # check to see if RMC sentence (should occur before GGA)
+#                     rmc = True
+#                     if rowrmc == 0:
+#                         msg = pynmea2.parse(ln.rstrip()) # convert gps sentence to pynmea2 named tuple
+#                         ts0 = TZ.localize(datetime.combine(msg.datestamp, msg.timestamp)) # row 0"s timestamp (not ideal)
+#                     if rowrmc == 1:
+#                         msg = pynmea2.parse(ln.rstrip())
+#                         ts1 = TZ.localize(datetime.combine(msg.datestamp, msg.timestamp)) # row 1"s timestamp (not ideal)
+#                         td = ts1 - ts0 # timedelta = datetime1 - datetime0
+#                     rowrmc += 1
+#                 if "GGA" in ln:
+#                     gga = True
+#                     if rowgga == 0:
+#                         msg = pynmea2.parse(ln.rstrip()) # convert gps sentence to pynmea2 named tuple
+#                         ts0 = TZ.localize(datetime.combine(datetime(1980, 1, 1), msg.timestamp)) # row 0"s timestamp (not ideal)
+#                     if rowgga == 1:
+#                         msg = pynmea2.parse(ln.rstrip())
+#                         ts1 = TZ.localize(datetime.combine(datetime(1980, 1, 1), msg.timestamp)) # row 1"s timestamp (not ideal)
+#                         td = ts1 - ts0 # timedelta = datetime1 - datetime0
+#                     rowgga += 1
+#             gpssps = 1 / td.total_seconds() # GPS samples per second
 
-            gf.seek(0) # back to beginning of file
-            for ln in gf: # loop over file line by line
-                if "$GSSIS" in ln:
-                    # if it"s a GSSI sentence, grab the scan/trace number
-                    trace = int(ln.split(",")[1])
+#             gf.seek(0) # back to beginning of file
+#             for ln in gf: # loop over file line by line
+#                 if "$GSSIS" in ln:
+#                     # if it"s a GSSI sentence, grab the scan/trace number
+#                     trace = int(ln.split(",")[1])
 
-                if rmc == True: # if there is RMC, we can use the full datestamp but there is no altitude
-                    if "RMC" in ln:
-                        msg = pynmea2.parse(ln.rstrip())
-                        x1, y1 = float(msg.longitude), float(msg.latitude)
-                        x0, y0, z0 = x1, y1, z1 # set xyzs0 for next loop
+#                 if rmc == True: # if there is RMC, we can use the full datestamp but there is no altitude
+#                     if "RMC" in ln:
+#                         msg = pynmea2.parse(ln.rstrip())
+#                         x1, y1 = float(msg.longitude), float(msg.latitude)
+#                         x0, y0, z0 = x1, y1, z1 # set xyzs0 for next loop
 
-                        trace_num=np.append(trace_num,trace)
-                        lon=np.append(lon,x1)
-                        lat=np.append(lat,y1)
-                        elev=np.append(elev,z1)
+#                         trace_num=np.append(trace_num,trace)
+#                         lon=np.append(lon,x1)
+#                         lat=np.append(lat,y1)
+#                         elev=np.append(elev,z1)
 
-                else: # if no RMC, we hope there is no UTC 00:00:00 in the file.........
-                    if "GGA" in ln:
-                        msg = pynmea2.parse(ln.rstrip())
-                        x1, y1 = float(msg.longitude), float(msg.latitude)
-                        try:
-                            z1 = float(msg.altitude)
-                        except AttributeError:
-                            z1 = 0
-                        x0, y0, z0 = x1, y1, z1 # set xyzs0 for next loop
+#                 else: # if no RMC, we hope there is no UTC 00:00:00 in the file.........
+#                     if "GGA" in ln:
+#                         msg = pynmea2.parse(ln.rstrip())
+#                         x1, y1 = float(msg.longitude), float(msg.latitude)
+#                         try:
+#                             z1 = float(msg.altitude)
+#                         except AttributeError:
+#                             z1 = 0
+#                         x0, y0, z0 = x1, y1, z1 # set xyzs0 for next loop
 
-                        trace_num=np.append(trace_num,trace)
-                        lon=np.append(lon,x1)
-                        lat=np.append(lat,y1)
-                        elev=np.append(elev,z1)
+#                         trace_num=np.append(trace_num,trace)
+#                         lon=np.append(lon,x1)
+#                         lat=np.append(lat,y1)
+#                         elev=np.append(elev,z1)
 
-        elif frmt == "csv":
-            with open(fpath, "r") as f:
-                gps = np.fromfile(f)
+#         elif frmt == "csv":
+#             with open(fpath, "r") as f:
+#                 gps = np.fromfile(f)
 
-    return {"trace":trace_num,"lon":lon,"lat":lat,"elev":elev}
+#     return {"trace":trace_num,"lon":lon,"lat":lat,"elev":elev}

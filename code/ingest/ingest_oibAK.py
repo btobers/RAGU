@@ -3,8 +3,9 @@ ingest_oibAK is a module developed to ingest NASA OIB-AK radar sounding data.
 primary data format is hdf5, however some older data is still being converted over from .mat format
 """
 ### imports ###
-from tools import nav, utils
 from radar import radar
+from nav import navparse
+from tools import utils
 import h5py, fnmatch
 import numpy as np
 import scipy as sp
@@ -34,17 +35,8 @@ def read_h5(fpath, navcrs, body):
     rdata.tnum = f["raw"]["rx0"].attrs["numTrace"]                      # number of traces in rgram 
     rdata.dt = 1/ f["raw"]["rx0/"].attrs["samplingFrequency-Hz"]        # sampling interval, sec
 
-    # pull necessary ext group nav data - use more precise Larsen nav data pulled from Trimble if available
-    if "nav0" in f["ext"].keys():
-        rdata.navdat.df["lon"] = f["ext"]["nav0"]["lon"][:].astype(np.float64)
-        rdata.navdat.df["lat"] = f["ext"]["nav0"]["lat"][:].astype(np.float64)
-        rdata.navdat.df["elev"] = f["ext"]["nav0"]["altM"][:].astype(np.float64)
-    # pull raw loc0 nav data if Larsen nav DNE
-    else:
-        rdata.navdat.df["lon"] = f["raw"]["loc0"]["lon"][:].astype(np.float64)
-        rdata.navdat.df["lat"] = f["raw"]["loc0"]["lat"][:].astype(np.float64)
-        rdata.navdat.df["elev"] = f["raw"]["loc0"]["altM"][:].astype(np.float64)
-    rdata.navdat.crs = navcrs
+    # parse nav
+    rdata.navdf = navparse.getnav_oibAK(fpath, navcrs, body)
     
     # pull lidar surface elevation if possible
     if "srf0" in f["ext"].keys():
@@ -78,21 +70,6 @@ def read_h5(fpath, navcrs, body):
 
     f.close()                                                   # close the file
 
-    # convert from geograpic to geocentric coords
-    try: 
-        rdata.get_projected_coords(body)
-    except Exception as err:
-        print(str(err))
-        pass
-
-    # interpolate nav data if not unique location for each trace
-    if len(np.unique(rdata.navdat.df["lon"])) < rdata.tnum:
-        rdata.navdat.df["lon"] = utils.interp_array(rdata.navdat.df["lon"])
-    if len(np.unique(rdata.navdat.df["lon"])) < rdata.tnum:
-        rdata.navdat.df["lon"] = utils.interp_array(rdata.navdat.df["lat"])
-    if len(np.unique(rdata.dist)) < rdata.tnum:
-        rdata.dist = utils.interp_array(rdata.dist)
-
     # replace potential erroneous twtt_surf values with nan
     # get indices where twtt_surf is not nan
     idx = np.logical_not(np.isnan(pick["twtt_surf"]))
@@ -101,13 +78,7 @@ def read_h5(fpath, navcrs, body):
     
     # get indices of twtt_surf
     rdata.surf = utils.twtt2sample(pick["twtt_surf"], rdata.dt)
-
-    # determine if non-unique navdat
-    if np.all(rdata.navdat.df["lon"][:] == rdata.navdat.df["lon"][0]):
-        print("h5py_read error: non-unique nav data")
-        # set dist array to range from 0 to 1
-        rdatat.dist = np.repeat(np.nan, rdata.tnum)
-    
+  
     # tmp auto filtering handle of 2020 ak data
     if fpath.split("/")[-1].startswith("2020"):
         [b, a] = sp.signal.butter(N=5, Wn=1e6, btype="lowpass", fs=fs)
@@ -126,11 +97,11 @@ def read_mat(fpath):
         rdata.dt = float(f["block"]["dt"][0])
         rdata.clut = np.array(f["block"]["clutter"])
 
-        rdata.navdat.df["lon"] = f["block"]["lon"]).flatten()
-        rdata.navdat.df["lat"] = f["block"]["lat"]).flatten()
-        rdata.navdat.df["elev"] = f["block"]["elev_air"]).flatten()
+        rdata.navdat.df["lon"] = f["block"]["lon"].flatten()
+        rdata.navdat.df["lat"] = f["block"]["lat"].flatten()
+        rdata.navdat.df["elev"] = f["block"]["elev_air"].flatten()
 
-        rdata.surf = utils.twtt2sample(np.array(f["block"]["twtt_surf"]).flatten(), rdata.dt)
+        rdata.surf = utils.twtt2sample(f["block"]["twtt_surf"].flatten(), rdata.dt)
         rdata.dat = np.array(f["block"]["amp"])
         f.close()
 

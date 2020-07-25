@@ -1,61 +1,57 @@
-### IMPORTS ###
+"""
+ingest_sharad is a module developed to ingest NASA MRO-SHARAD FPB radar sounding data. 
+data format is binary 32-bit floating point pulse compressed amplitude data acquired from the PDS
+"""
+### imports ###
+from radar import radar
+from nav import navparse
+from tools import utils
 import numpy as np
-from tools import nav, utils
+import os
 
 # method to read PDS SHARAD USRDR data
-def read(fpath):
+def read(fpath, navcrs, body):
     print("----------------------------------------")
     print("Loading: " + fpath.split("/")[-1])
+    rdata = radar(fpath.split("/")[-1])
     # convert binary .img PDS RGRAM to numpy array
     # reshape array with 3600 lines
     dtype = np.dtype("float32")     
     with open(fpath, "rb") as f:
-        amp = np.fromfile(f, dtype)     
-    l = len(amp)
-    num_sample = 3600
-    num_trace = int(len(amp)/num_sample)
-    amp = amp.reshape(num_sample,num_trace)
+        rdata.dat = np.fromfile(f, dtype)     
+    l = len(rdata.dat)
+
+    rdata.snum = 3600
+    rdata.tnum = int(len(rdata.dat)/rdata.snum)
+    rdata.dt = .0375e-6
+    rdata.dat = rdata.dat.reshape(rdata.snum,rdata.tnum)
+    rdata.proc_data = rdata.dat
     
     # convert binary .img clutter sim product to numpy array
-    with open(fpath.replace("rgram","geom_combined"), "rb") as f:
-        clutter = np.fromfile(f, dtype)   
-    clutter = clutter.reshape(num_sample,num_trace)
+    clutpath = fpath.replace("rgram","geom_combined")
+    if os.path.isfile(clutpath):
+        with open(clutpath, "rb") as f:
+            rdata.clut = np.fromfile(f, dtype)   
+        rdata.clut = rdata.clut.reshape(rdata.snum,rdata.tnum)
+    else:
+        rdata.clut = np.ones(rdata.dat.shape)
 
     # open geom nav file for rgram
     geom_path = fpath.replace("rgram","geom").replace("img","tab")
 
-    nav_file = np.genfromtxt(geom_path, delimiter = ",", dtype = str)
+    # parse nav
+    rdata.navdf = navparse.getnav_sharad(geom_path, navcrs, body)
 
-    # get necessary data from image file and geom
-    dt = .0375e-6                                                                           # sampling interval for 3600 real-values voltage samples
-    lon = nav_file[:,3].astype(np.float64)
-    lat = nav_file[:,2].astype(np.float64)
-    alt = nav_file[:,5].astype(np.float64) - nav_file[:,4].astype(np.float64)               # [km]
+    rdata.elev_gnd = np.repeat(np.nan, rdata.tnum)
 
-    elev_gnd = np.repeat(np.nan, num_trace)
-
-    dist = np.arange(num_trace)
-
-    twtt_surf = np.repeat(np.nan, num_trace)
+    twtt_surf = np.repeat(np.nan, rdata.tnum)
 
     # create dictionary to hold picks
     pick = {}
     pick["twtt_surf"] = twtt_surf
-
-    # create nav object to hold lon, lat, elev
-    nav0 = nav.navpath()
-    nav0.csys = "+proj=longlat +a=3396190 +b=3376200 +no_defs"
-    nav0.navdat = np.column_stack((lon,lat,alt))
-
-    # create dist array - convert nav to meters then find cumulative euclidian distance
-    mars_equidistant_proj4 = "+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=180 +x_0=0 +y_0=0 +a=3396190 +b=3396190 +units=m +no_defs" 
-    nav0_xform = nav0.transform(mars_equidistant_proj4)
-    dist = utils.euclid_dist(nav0_xform)
-
-    trace = np.arange(num_trace)
-    sample = np.arange(num_sample)
-
+   
 
     # get indices of twtt_surf
-    surf_idx = np.rint(twtt_surf/dt)
-    return {"dt": dt, "trace": trace, "sample": sample, "navdat": nav0, "elev_gnd": elev_gnd, "pick": pick, "surf_idx": surf_idx, "dist": dist, "amp": amp, "clutter": clutter} # other fields?
+    rdata.surf = utils.twtt2sample(twtt_surf, rdata.dt)
+
+    return rdata

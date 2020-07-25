@@ -77,12 +77,8 @@ class radar(object):
         self.chan = None
 
         # per-trace attributes
-        #: pandas dataframe (tnum x 3) navdf object [lon, lat, elev]
-        self.navdat = nav.navdat()
-        #: np.ndarray(tnum,) along-track distance
-        #: units will depend on whether geographic coordinate transforms,
-        #: as well as GPS data, are available
-        self.dist = None
+        #: navdf consisting of [lon, lat, elev, x, y, z, dist]
+        self.navdf = None
 
         # sample-wise attributes
         #: np.ndarray(snum,) The two way travel time to each sample, in us
@@ -102,7 +98,7 @@ class radar(object):
         #: np.ndarray(tnum,) Optional.
         #: Depth of each trace below the surface
         self.nmo_depth = None
-        #: np.ndarray(snum x tnum) processed radat data
+        #: np.ndarray(snum x tnum) processed radat data - this is what will actually be displayed, as to not modify original data
         self.proc_data = None
         #: np.ndarray(snum x tnum) clutter simulation
         self.clut = None
