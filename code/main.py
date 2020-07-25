@@ -29,7 +29,7 @@ def main():
     root.geometry("%dx%d+0+0" % (.5*w, .5*h))
     root.title("NOSEpick")
     root.config(bg="#d9d9d9")
-    img = tk.PhotoImage(file='../lib/NOSEpick_zoom.png')
+    img = tk.PhotoImage(file='../recs/NOSEpick_zoom.png')
     root.tk.call('wm', 'iconphoto', root._w, img)
     # call the NOSEpick mainGUI class
     gui.mainGUI(root, datPath = datPath)

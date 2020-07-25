@@ -1,4 +1,3 @@
-
 # NOSEpick - Nearly Optimal Subsurface Extractor
 #
 # Copyright © 2020 btobers <tobers.brandon@gmail.com>

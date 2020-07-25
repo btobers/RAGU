@@ -298,7 +298,7 @@ class impick(tk.Frame):
                     self.clear_last()
                 self.pickLabel.config(text="subsurface pick segment " + str(self.pick_segment) + ":\t active", fg="red")
                 # initialize pick index and twtt dictionaries for current picking layer
-                self.pick_subsurf_idx[str(self.pick_segment)] = np.repeat(np.nan, self.rdata["trace"][-1] + 1)
+                self.pick_subsurf_idx[str(self.pick_segment)] = np.repeat(np.nan, self.rdata.tnum)
 
             elif self.pick_state == False and self.edit_flag == False:
                 if len(self.xln_subsurf) >=  2:

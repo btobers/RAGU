@@ -146,6 +146,8 @@ class mainGUI(tk.Frame):
         gainMenu.add_command(label="t-pow", command=lambda:self.procTools("tpow"))
         procMenu.add_cascade(label="gain", menu = gainMenu)
 
+        procMenu.add_command(label="restore original data", command=lambda:self.procTools("restore"))
+
         # map menu items
         mapMenu.add_command(label="open     [Ctrl+M]", command=self.map_loc)
 
@@ -282,7 +284,7 @@ class mainGUI(tk.Frame):
 
     # set_out is a method to set the session output directory
     def set_out(self):
-        self.conf["paths"]["outPath"] = tk.filedialog.askdirectory(title="root directory",
+        self.conf["paths"]["outPath"] = tk.filedialog.askdirectory(title="output data directory",
                                        initialdir=self.conf["paths"]["outPath"],
                                        mustexist=True)
 
@@ -316,7 +318,7 @@ class mainGUI(tk.Frame):
         # pass basemap to impick for plotting pick location
         if self.map_loadName and self.basemap.get_state() == 1:
             self.basemap.clear_nav()
-            self.basemap.set_nav(self.rdata["navdat"], self.f_loadName)
+            self.basemap.set_nav(self.f_loadName, self.rdata.navdf, self.conf["navigation"]["navcrs"])
             self.impick.get_basemap(self.basemap)            
 
 
@@ -350,9 +352,9 @@ class mainGUI(tk.Frame):
             self.basemap = basemap.basemap(self.parent, self.map_loadName)
             self.basemap.map()
 
-            if self.f_loadName:
+            if self.f_loadName and self.basemap.get_state() == 1:
                 # pass basemap to impick for plotting pick location
-                self.basemap.set_nav(self.rdata["navdat"], self.f_loadName)
+                self.basemap.set_nav(self.f_loadName, self.rdata.navdf, self.conf["navigation"]["navcrs"])
                 self.impick.get_basemap(self.basemap)
 
 
@@ -437,10 +439,9 @@ class mainGUI(tk.Frame):
 
                 # if basemap open, update. Only do this if line is longer than certain threshold to now waste time
                 if self.map_loadName and self.basemap.get_state() == 1:
-                    if self.rdata["dist"][-1] > 5:
-                        self.basemap.clear_nav()
-                        self.basemap.set_nav(self.rdata["navdat"], self.f_loadName)
-                        self.impick.get_basemap(self.basemap)
+                    self.basemap.clear_nav()
+                    self.basemap.set_nav(self.f_loadName, self.rdata.navdf, self.conf["navigation"]["navcrs"])
+                    self.impick.get_basemap(self.basemap)
 
             else:
                 print("Note: " + self.f_loadName.split("/")[-1] + " is the last file in " + file_path + "*." + self.f_loadName.split(".")[-1])
@@ -525,20 +526,23 @@ class mainGUI(tk.Frame):
     def procTools(self, arg = None):
         if self.f_loadName:
             if arg == "dewow":
-                window = tk.simpledialog.askfloat("input","dewow window size (# samples/" +  str(int(self.rdata["sample"][-1] + 1)) + ")?")
-                self.rdata["amp"] = np.abs(processing.dewow(self.rdata["amp"], window=10))
+                window = tk.simpledialog.askfloat("input","dewow window size (# samples/" +  str(int(self.rdata.snum)) + ")?")
+                self.rdata.proc_data = np.abs(processing.dewow(self.rdata.proc_data, window=10))
             elif arg == "remMnTr":
-                ntraces = int((self.rdata["trace"][-1] + 1)/100)
-                self.rdata["amp"] = np.abs(processing.remMeanTrace(self.rdata["amp"], ntraces=ntraces))
+                nraces = tk.simpledialog.askfloat("input","moving average window size (# traces/" +  str(int(self.rdata.tnum)) + ")?")
+                self.rdata.proc_data = np.abs(processing.remMeanTrace(self.rdata.proc_data, ntraces=ntraces))
             elif arg == "lowpass":
                 cutoff = tk.simpledialog.askfloat("input","butterworth filter cutoff frequency?")
-                self.rdata["amp"] = np.abs(processing.lowpassFilt(self.rdata["pc"], Wn = cutoff, fs = 1/self.rdata["dt"]))
+                self.rdata.proc_data = np.abs(processing.lowpassFilt(self.rdata.proc_data, Wn = cutoff, fs = 1/self.rdata.dt))
             elif arg == "agc":
-                window = tk.simpledialog.askfloat("input","AGC gain window size (# samples/" +  str(int(self.rdata["sample"][-1] + 1)) + ")?")
-                self.rdata["amp"] = processing.agcGain(self.rdata["amp"], window=window)
+                window = tk.simpledialog.askfloat("input","AGC gain window size (# samples/" +  str(int(self.rdata.snum)) + ")?")
+                self.rdata.proc_data = processing.agcGain(self.rdata.proc_data, window=window)
             elif arg == "tpow":
                 power = tk.simpledialog.askfloat("input","power for tpow gain?")
-                self.rdata["amp"] = processing.tpowGain(self.rdata["amp"], self.rdata["sample"]*self.rdata["dt"], power=power)
+                self.rdata.proc_data = processing.tpowGain(self.rdata.proc_data, np.arange(self.rdata.snum)*self.rdata.dt, power=power)
+            elif arg == "restore":
+                # restore origianl rdata
+                self.rdata.proc_data = self.rdata.dat
             else:
                 print("undefined processing method")
                 exit(1)

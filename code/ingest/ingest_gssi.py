@@ -3,7 +3,6 @@ this module contains functions parsed from https://github.com/iannesbitt/readgss
 much of the header data which is not necessary for NOSEpick use has been removed
 """
 ### imports ###
-from tools import utils
 from radar import radar
 from nav import navparse
 import struct

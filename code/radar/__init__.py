@@ -7,7 +7,6 @@
 radar data object wrapper, structure based on ImpDAR
 """
 ### imports ###
-from tools import nav, utils
 # import datetime
 import numpy as np
 # from scipy.io import loadmat
@@ -214,14 +213,6 @@ class radar(object):
             self.data_dtype = self.data.dtype
         return
 
-    def get_projected_coords(self, body):
-        """convert from geographic to geocentric coordinates
-        param body: str
-        text string defining the planetary body for which to convert to geocentric coordinates
-        """
-        self.x_coord, self.y_coord = self.navdat.transform(body)
-        self.dist = nav.euclid_dist(self.x_coord, self.y_coord)
-
     @property
     def datetime(self):
         """Get pythonic version of the acquisition time of each trace."""
@@ -229,3 +220,71 @@ class radar(object):
                          datetime.timedelta(days=dd % 1) -
                          datetime.timedelta(days=366)
                          for dd in self.decday], dtype=np.datetime64)
+
+
+class picks(object):
+    """
+    picks class holds the relevant radar picks information.
+    """
+    # necessary picks objects:
+    #     - ingested data file picks
+    #     - current picks
+
+    # methods:
+    #     - interp
+    #     - edit
+    #     - delete
+
+    def __init__(self):
+        # necessary picks objects - pick dictionaries contain arrays of pick sample numbers at each trace in rdata
+        #: dict, existing data file picks
+        self.existing = None
+
+        # basic data file attributes
+        #: str, file name
+        self.fn = fn
+        #: int, number of samples per trace
+        self.snum = None
+        #: int, the number of traces in the file
+        self.tnum = None
+        #: float, spacing between samples in travel time [seconds]
+        self.dt = None
+        #: np.ndarray(snum x tnum) ingested radar datah
+        self.dat = None
+        #: int, channel number of the data
+        self.chan = None
+
+        # per-trace attributes
+        #: navdf consisting of [lon, lat, elev, x, y, z, dist]
+        self.navdf = None
+
+        # sample-wise attributes
+        #: np.ndarray(snum,) The two way travel time to each sample, in us
+        self.twtt = None
+
+        # optional attributes
+        #: np.ndarray(tnum,) surface index per trace [samle #]
+        self.surf = None
+        #: np.ndarray(tnum,) ground elevation per trace [m.a.s.l.]
+        self.elev_gnd = None
+        #: np.ndarray(tnum,) Optional.
+        #: Projected x-coordinate along the profile.
+        self.x_coord = None
+        #: np.ndarray(tnum,) Optional.
+        #: Projected y-coordinate along the profile.
+        self.y_coord = None
+        #: np.ndarray(tnum,) Optional.
+        #: Depth of each trace below the surface
+        self.nmo_depth = None
+        #: np.ndarray(snum x tnum) processed radat data - this is what will actually be displayed, as to not modify original data
+        self.proc_data = None
+        #: np.ndarray(snum x tnum) clutter simulation
+        self.clut = None
+
+        #: impdar.lib.RadarFlags object containing information about the
+        #: processing steps done.
+        # self.flags = RadarFlags()
+        #: picks object
+        self.picks = None
+
+        return

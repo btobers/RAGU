@@ -1,12 +1,11 @@
 import numpy as np
 import tkinter as tk
-import gdal, osr
+import rasterio as rio
+import os, pyproj
 import matplotlib as mpl
 mpl.use("TkAgg")
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-import os
-# from PIL import Image
 
 class basemap(tk.Tk):
     def __init__(self, parent, map_path):
@@ -14,7 +13,7 @@ class basemap(tk.Tk):
         self.map_loadName = map_path
         # create tkinter toplevel window to display basemap
         self.basemap_window = tk.Toplevel(self.parent)
-        img = tk.PhotoImage(file='../lib/basemap_icon.png')
+        img = tk.PhotoImage(file='../recs/basemap_icon.png')
         self.basemap_window.tk.call('wm', 'iconphoto', self.basemap_window._w, img)
         self.basemap_window.config(bg="#d9d9d9")
         self.basemap_window.title("NOSEpick - Map Window")
@@ -34,35 +33,48 @@ class basemap(tk.Tk):
         if self.map_loadName:
             print("Loading Basemap: ", self.map_loadName.split("/")[-1])
             try:
-                # open geotiff and convert coordinate systems to get lat long of image extent
-                self.basemap_ds = gdal.Open(self.map_loadName)              # open raster
-                self.basemap_im = self.basemap_ds.ReadAsArray()             # read input raster as array
-                self.basemap_proj = self.basemap_ds.GetProjection()         # get coordinate system of input raster
-                self.basemap_proj_xform = osr.SpatialReference()
-                self.basemap_proj_xform.ImportFromWkt(self.basemap_proj)
-                # Get raster georeference info 
-                width = self.basemap_ds.RasterXSize
-                height = self.basemap_ds.RasterYSize
-                gt = self.basemap_ds.GetGeoTransform()
-                if gt[2] != 0 or gt[4] != 0:
-                    print('Geotransform rotation!')
-                    print('gt[2]:ax '+ gt[2] + '\ngt[4]: ' + gt[4])
-                    return
-                # get image corner locations
-                minx = gt[0]
-                miny = gt[3]  + height*gt[5] 
-                maxx = gt[0]  + width*gt[1]
-                maxy = gt[3] 
-                # show basemap figure in basemap window
+                # open geotiff with rasterio
+                dataset = rio.open(self.map_loadName, mode="r")
+                self.bmcrs = dataset.crs
+                bands = dataset.count
+                im = np.dstack((dataset.read())) # dataset.read(1), dataset.read(2), dataset.read(3), dataset.read(4)))
+
+                # # open geotiff and convert coordinate systems to get lat long of image extent
+                # self.basemap_ds = gdal.Open(self.map_loadName)              # open raster
+                # self.basemap_im = self.basemap_ds.ReadAsArray()             # read input raster as array
+                # self.basemap_proj = self.basemap_ds.GetProjection()         # get coordinate system of input raster
+                # self.basemap_proj_xform = osr.SpatialReference()
+                # self.basemap_proj_xform.ImportFromWkt(self.basemap_proj)
+                # # Get raster georeference info 
+                # width = self.basemap_ds.RasterXSize
+                # height = self.basemap_ds.RasterYSize
+                # gt = self.basemap_ds.GetGeoTransform()
+                # if gt[2] != 0 or gt[4] != 0:
+                #     print('Geotransform rotation!')
+                #     print('gt[2]:ax '+ gt[2] + '\ngt[4]: ' + gt[4])
+                #     return
+                # # get image corner locations
+                # minx = gt[0]
+                # miny = gt[3]  + height*gt[5] 
+                # maxx = gt[0]  + width*gt[1]
+                # maxy = gt[3] 
+
+
+                # # show basemap figure in basemap window
                 self.map_fig = mpl.figure.Figure()
                 self.map_fig.patch.set_facecolor(self.parent.cget('bg'))
                 self.map_fig_ax = self.map_fig.add_subplot(111)
-                # if using rgb image, make sure the proper shape
-                if self.basemap_im.shape[0] == 3 or self.basemap_im.shape[0] == 4:
-                    self.basemap_im = np.dstack([self.basemap_im[0,:,:],self.basemap_im[1,:,:],self.basemap_im[2,:,:]])
-                # display image in km
-                self.map_fig_ax.imshow(self.basemap_im, cmap="Greys_r", aspect="auto", extent=[int(minx*1e-3), int(maxx*1e-3), int(miny*1e-3), int(maxy*1e-3)])
-                self.map_fig_ax.set(xlabel = "x [km]", ylabel = "y [km]")
+
+                # # if using rgb image, make sure the proper shape
+                # if self.basemap_im.shape[0] == 3 or self.basemap_im.shape[0] == 4:
+                #     self.basemap_im = np.dstack([self.basemap_im[0,:,:],self.basemap_im[1,:,:],self.basemap_im[2,:,:]])
+                # # display image in km
+                # self.map_fig_ax.imshow(self.basemap_im, cmap="Greys_r", aspect="auto", extent=[int(minx*1e-3), int(maxx*1e-3), int(miny*1e-3), int(maxy*1e-3)])
+
+                self.map_fig_ax.imshow(im, cmap="Greys_r", aspect="auto",
+                        extent=[dataset.bounds.left, dataset.bounds.right,
+                        dataset.bounds.bottom, dataset.bounds.top])
+                self.map_fig_ax.set(xlabel = "x [m]", ylabel = "y [m]")
                 self.map_dataCanvas = FigureCanvasTkAgg(self.map_fig, self.basemap_window)
                 self.map_dataCanvas.get_tk_widget().pack(in_=self.map_display, side="bottom", fill="both", expand=1)
                 self.map_toolbar = NavigationToolbar2Tk(self.map_dataCanvas, self.basemap_window)
@@ -80,23 +92,24 @@ class basemap(tk.Tk):
 
 
     # set_nav is a method to update the navigation data plotted on the basemap
-    def set_nav(self, navdat, floadName):
-        self.navdat = navdat
-        if self.basemap_state == 1:
-            # transform navdat to csys of geotiff   
-            self.nav_transform = self.navdat.transform(self.basemap_proj)   
-            # convert to km
-            self.nav_transform.navdat = self.nav_transform.navdat * 1e-3
-            # plot lat, lon atop basemap im
-            self.track, = self.map_fig_ax.plot(self.nav_transform.navdat[:,0],self.nav_transform.navdat[:,1],"k")
-            # zoom in to 10 km from track on all sides
-            self.map_fig_ax.axis([(np.amin(self.nav_transform.navdat[:,0])- 15),(np.amax(self.nav_transform.navdat[:,0])+ 15),(np.amin(self.nav_transform.navdat[:,1])- 15),(np.amax(self.nav_transform.navdat[:,1])+ 15)])
-            # annotate each end of the track
-            self.track_start, = self.map_fig_ax.plot(self.nav_transform.navdat[0,0],self.nav_transform.navdat[0,1],'go',label='start')
-            self.track_end, = self.map_fig_ax.plot(self.nav_transform.navdat[-1,0],self.nav_transform.navdat[-1,1],'ro',label='end')
-            self.legend = self.map_fig_ax.legend()  
-            self.basemap_window.title("NOSEpick - Map Window: " + os.path.splitext(floadName.split("/")[-1])[0])
-            self.map_dataCanvas.draw() 
+    def set_nav(self, floadName, navdf, navcrs):
+        # transform navcrs to basemap crs
+        self.x, self.y = pyproj.transform(
+            navcrs,
+            self.bmcrs,
+            navdf["lon"].to_numpy(),
+            navdf["lat"].to_numpy(),
+        )
+        # plot lat, lon atop basemap im
+        self.track, = self.map_fig_ax.plot(self.x, self.y, "k")
+        # zoom in to 10 km from track on all sides
+        self.map_fig_ax.axis([(np.amin(self.x)- 15000),(np.amax(self.x)+ 15000),(np.amin(self.y)- 15000),(np.amax(self.y)+ 15000)])
+        # annotate each end of the track
+        self.track_start, = self.map_fig_ax.plot(self.x[0], self.y[0],'go',label='start')
+        self.track_end, = self.map_fig_ax.plot(self.x[-1] , self.y[-1],'ro',label='end')
+        self.legend = self.map_fig_ax.legend()  
+        self.basemap_window.title("NOSEpick - Map Window: " + os.path.splitext(floadName.split("/")[-1])[0])
+        self.map_dataCanvas.draw() 
 
 
     # plot_idx is a method to plot the location of a click event on the datacanvas to the basemap
@@ -107,7 +120,7 @@ class basemap(tk.Tk):
             # plot pick location on basemap
             if self.pick_loc:
                 self.pick_loc.remove()
-            self.pick_loc = self.map_fig_ax.scatter(self.nav_transform.navdat[idx,0],self.nav_transform.navdat[idx,1],c="b",marker="D",zorder=3)
+            self.pick_loc = self.map_fig_ax.scatter(self.x[idx],self.y[idx],c="b",marker="X",zorder=3)
             self.blit()
 
         

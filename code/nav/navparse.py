@@ -19,7 +19,7 @@ xyzsys = {
 "earth": "+proj=geocent +a=6378140 +b=6356750 +no_defs",
 }
 
-def getnav_oibAK(navfile, navsys, body):
+def getnav_oibAK(navfile, navcrs, body):
     h5 = h5py.File(navfile, "r")
     if "nav0" in h5["ext"].keys():
         nav = h5["ext"]["nav0"][:]
@@ -47,9 +47,9 @@ def getnav_oibAK(navfile, navsys, body):
 
     # set altM series name to elev for consistency with other datasets
     df = df.rename(columns={"altM": "elev"})
-    
+
     df["x"], df["y"], df["z"] = pyproj.transform(
-        navsys,
+        navcrs,
         xyzsys[body],
         df["lon"].to_numpy(),
         df["lat"].to_numpy(),
@@ -64,7 +64,7 @@ def getnav_oibAK(navfile, navsys, body):
     return df[["lon", "lat", "elev", "x", "y", "z", "dist"]]
 
 
-def getnav_gssi(navfile, tnum, navsys, body):
+def getnav_gssi(navfile, tnum, navcrs, body):
     with codecs.open(navfile, 'r', encoding='utf-8', errors='ignore') as f_in:
         lines = f_in.readlines()
     # We have to be careful with this to permit other NMEA strings to have been recorded
@@ -92,7 +92,7 @@ def getnav_gssi(navfile, tnum, navsys, body):
                                 "dist": np.nan})
 
     df["x"], df["y"], df["z"] = pyproj.transform(
-        navsys,
+        navcrs,
         xyzsys[body],
         df["lon"].to_numpy(),
         df["lat"].to_numpy(),
@@ -138,7 +138,7 @@ def getnav_pulseekko(navfile, tnum, xyzs, body):
     return data
 
     
-def getnav_sharad(navfile, navsys, body):
+def getnav_sharad(navfile, navcrs, body):
     c = 299792458
     geomCols = [
         "trace",
@@ -154,7 +154,7 @@ def getnav_sharad(navfile, navsys, body):
     ]
     df = pd.read_csv(navfile, names=geomCols)
 
-    # Planetocentric lat, lon, radius to x,y,z - no need for navsys in this one
+    # Planetocentric lat, lon, radius to x,y,z - no need for navcrs in this one
     df["x"] = (
         (df["elev"] * 1000)
         * np.cos(np.radians(df["lat"]))
