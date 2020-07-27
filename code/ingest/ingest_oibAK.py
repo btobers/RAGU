@@ -54,30 +54,27 @@ def read_h5(fpath, navcrs, body):
     else:
         rdata.clut = np.ones(rdata.dat.shape)                            # empty clutter array if no sim exists
     
-    # read in any existing picks
-    pick = {}
+    # read in existing surface picks
     if "twtt_surf" in f["drv"]["pick"].keys():
-        pick["twtt_surf"] = f["drv"]["pick"]["twtt_surf"][:]
-    else:
-        pick["twtt_surf"] = np.repeat(np.nan, rdata.tnum)
+        rdata.pick.existing["twtt_surf"] =f["drv"]["pick"]["twtt_surf"][:]
 
-    #  determine how many subsurface pick layers exist in the file - read each in as a numpy array to the pick dictionary
+    # read in existing subsurface picks
     num_file_pick_lyr = len(fnmatch.filter(f["drv"]["pick"].keys(), "twtt_subsurf*"))
     if num_file_pick_lyr > 0:
         # iterate through any existing subsurface pick layers to import
         for _i in range(num_file_pick_lyr):
-            pick["twtt_subsurf" + str(_i)] = np.array(f["drv"]["pick"]["twtt_subsurf" + str(_i)])
+            rdata.pick.existing["twtt_subsurf" + str(_i)] = np.array(f["drv"]["pick"]["twtt_subsurf" + str(_i)])
 
     f.close()                                                   # close the file
 
     # replace potential erroneous twtt_surf values with nan
     # get indices where twtt_surf is not nan
-    idx = np.logical_not(np.isnan(pick["twtt_surf"]))
-    pick["twtt_surf"][np.where(pick["twtt_surf"][idx] > rdata.snum*rdata.dt)[0]] = np.nan
-    pick["twtt_surf"][np.where(pick["twtt_surf"][idx] <= rdata.dt)[0]] = np.nan
+    # idx = np.logical_not(np.isnan(pick["twtt_surf"]))
+    # pick["twtt_surf"][np.where(pick["twtt_surf"][idx] > rdata.snum*rdata.dt)[0]] = np.nan
+    # pick["twtt_surf"][np.where(pick["twtt_surf"][idx] <= rdata.dt)[0]] = np.nan
     
-    # get indices of twtt_surf
-    rdata.surf = utils.twtt2sample(pick["twtt_surf"], rdata.dt)
+    # # get indices of twtt_surf
+    # rdata.surf = utils.twtt2sample(pick["twtt_surf"], rdata.dt)
   
     # tmp auto filtering handle of 2020 ak data
     if fpath.split("/")[-1].startswith("2020"):

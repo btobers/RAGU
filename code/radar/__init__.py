@@ -7,7 +7,6 @@
 radar data object wrapper, structure based on ImpDAR
 """
 ### imports ###
-# import datetime
 import numpy as np
 # from scipy.io import loadmat
 # from ..RadarFlags import RadarFlags
@@ -101,51 +100,10 @@ class radar(object):
         self.proc_data = None
         #: np.ndarray(snum x tnum) clutter simulation
         self.clut = None
-
-        #: impdar.lib.RadarFlags object containing information about the
-        #: processing steps done.
-        # self.flags = RadarFlags()
-        #: picks object
-        self.picks = None
+        #: pick object
+        self.pick = pick()
 
         return
-
-        mat = loadmat(fn_mat)
-        for attr in self.attrs_guaranteed:
-            # Exceptional case for 'data' variable because there are alternative names
-            if attr == 'data':
-                self._parse_stodeepdata(mat)
-            elif attr not in mat:
-                raise KeyError('.mat file does not appear to be in the StoDeep/ImpDAR format')
-            else:
-                if mat[attr].shape == (1, 1):
-                    setattr(self, attr, mat[attr][0][0])
-                elif mat[attr].shape[0] == 1 or mat[attr].shape[1] == 1:
-                    setattr(self, attr, mat[attr].flatten())
-                else:
-                    setattr(self, attr, mat[attr])
-        # We may have some additional variables
-        for attr in self.attrs_optional:
-            if attr in mat:
-                if mat[attr].shape == (1, 1):
-                    setattr(self, attr, mat[attr][0][0])
-                elif mat[attr].shape[0] == 1 or (len(mat[attr].shape) > 1 and
-                                                 mat[attr].shape[1] == 1):
-                    setattr(self, attr, mat[attr].flatten())
-                else:
-                    setattr(self, attr, mat[attr])
-            else:
-                setattr(self, attr, None)
-
-        self.data_dtype = self.data.dtype
-
-        self.fn = fn_mat
-        self.flags = RadarFlags()
-        self.flags.from_matlab(mat['flags'])
-        if 'picks' not in mat:
-            self.picks = Picks(self)
-        else:
-            self.picks = Picks(self, mat['picks'])
 
         self.check_attrs()
 
@@ -213,21 +171,12 @@ class radar(object):
             self.data_dtype = self.data.dtype
         return
 
-    @property
-    def datetime(self):
-        """Get pythonic version of the acquisition time of each trace."""
-        return np.array([datetime.datetime.fromordinal(int(dd)) +
-                         datetime.timedelta(days=dd % 1) -
-                         datetime.timedelta(days=366)
-                         for dd in self.decday], dtype=np.datetime64)
-
-
-class picks(object):
+class pick(object):
     """
-    picks class holds the relevant radar picks information.
+    pick class holds the relevant radar pick information.
     """
-    # necessary picks objects:
-    #     - ingested data file picks
+    # necessary pick objects:
+    #     - ingested data file picks: surface and subsurf
     #     - current picks
 
     # methods:
@@ -236,55 +185,16 @@ class picks(object):
     #     - delete
 
     def __init__(self):
-        # necessary picks objects - pick dictionaries contain arrays of pick sample numbers at each trace in rdata
-        #: dict, existing data file picks
-        self.existing = None
-
-        # basic data file attributes
-        #: str, file name
-        self.fn = fn
-        #: int, number of samples per trace
-        self.snum = None
-        #: int, the number of traces in the file
-        self.tnum = None
-        #: float, spacing between samples in travel time [seconds]
-        self.dt = None
-        #: np.ndarray(snum x tnum) ingested radar datah
-        self.dat = None
-        #: int, channel number of the data
-        self.chan = None
-
-        # per-trace attributes
-        #: navdf consisting of [lon, lat, elev, x, y, z, dist]
-        self.navdf = None
-
-        # sample-wise attributes
-        #: np.ndarray(snum,) The two way travel time to each sample, in us
-        self.twtt = None
-
-        # optional attributes
-        #: np.ndarray(tnum,) surface index per trace [samle #]
-        self.surf = None
-        #: np.ndarray(tnum,) ground elevation per trace [m.a.s.l.]
-        self.elev_gnd = None
-        #: np.ndarray(tnum,) Optional.
-        #: Projected x-coordinate along the profile.
-        self.x_coord = None
-        #: np.ndarray(tnum,) Optional.
-        #: Projected y-coordinate along the profile.
-        self.y_coord = None
-        #: np.ndarray(tnum,) Optional.
-        #: Depth of each trace below the surface
-        self.nmo_depth = None
-        #: np.ndarray(snum x tnum) processed radat data - this is what will actually be displayed, as to not modify original data
-        self.proc_data = None
-        #: np.ndarray(snum x tnum) clutter simulation
-        self.clut = None
-
-        #: impdar.lib.RadarFlags object containing information about the
-        #: processing steps done.
-        # self.flags = RadarFlags()
-        #: picks object
-        self.picks = None
+        # necessary pick objects - pick dictionaries contain arrays of pick sample numbers at each trace in rdata
+        #: dict, existing data file picks - these are picks already saved to file
+        # data file picks are stored as twtt_surf and twtt_subsurf[n] arrays [np.ndarray(tnum,)]
+        # containing twtt in second to a picked reflection horizon, and NaN where no pick exists
+        # for a given trace. twtt_subsurf[n] is 0-indexed, representing individual pick segments/layers
+        self.existing = {}
+        #: dict, current session picks - these are new picks, not yet saved to file
+        # current picks are stored as surf and subsurf[n] arrays [np.ndarray(tnum,)] containing 
+        # the sample number of a picked reflection horizon, and NaN where no pick exists. 
+        # subsurf[n] is 0-indexed,  representing individual pick segments/layers
+        self.current = {}
 
         return

@@ -3,9 +3,9 @@
 ### Authors: Brandon Tober and Michael Christoffersen
 
 <p align="center">
-  <img src="lib/NOSEpick.png" height="200"><br>
+  <img src="recs/NOSEpick.png" height="200"><br>
   NOSEpick logo artist: Eric Petersen<br><br>
-  <img src="lib/NOSEpick_demo.gif" height="500">
+  <img src="recs/NOSEpick_demo.gif" height="500">
 </p>
 
 ## Description
