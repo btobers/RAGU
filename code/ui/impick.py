@@ -915,10 +915,7 @@ class impick(tk.Frame):
     # save is a method to receive the pick save location from gui and save using utils.save
     def save(self, f_saveName, eps_r, amp_out, cmap, figSize):
         self.f_saveName = f_saveName
-        if self.rdata.pick.current.subsurf_opt:
-            utils.savePick(self,f_loadName, self.f_saveName, self.rdata, self.rdata.pick.current.subsurf_opt, eps_r, amp_out)
-        else:
-            utils.savePick(self.rdata.fn, self.f_saveName, self.rdata, self.rdata.pick.current.subsurf, eps_r, amp_out)
+        utils.savePick(self.rdata, eps_r, amp_out, self.f_saveName)
         # zoom out to full rgram extent to save pick image
         self.set_axes(eps_r, cmap)
         if self.im_status.get() =="clut":

@@ -14,7 +14,7 @@ except ImportError:
     SEGY = False
 
 
-def read(gpath, *args, **kwargs):
+def read(gpath, navcrs, body, *args, **kwargs):
     print("segy ingest still in development")
     sys.exit()
     """Load segy data.

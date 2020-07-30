@@ -1,13 +1,14 @@
 ### IMPORTS ###
 import numpy as np
 import tkinter as tk
-import sys, h5py
+import sys, h5py, geopandas
 from tools.constants import *
+### add shapefile export using geopandas ###
 
 
 # a set of utility functions for NOSEpick GUI
 # need to clean up this entire utility at some point
-def savePick(fpath, f_saveName, data, subsurf_pick_dict, eps_r, amp_out = False):
+def savePick(rdata, eps_r, amp_out = False, f_saveName):
     # fpath is the data file path [str]
     # f_saveName is the path for where the exported csv pick file should be saved [str]
     # data is the data file structure [dict]
@@ -15,23 +16,23 @@ def savePick(fpath, f_saveName, data, subsurf_pick_dict, eps_r, amp_out = False)
     # eps_r is a value for the dielectric constant used to calculate ice thickness based on EM wave speed [float]
     v = C/(np.sqrt(eps_r))        # EM wave veloity in ice - for thickness calculation
 
-    trace = data["trace"]                               # array to hold trace number
-    lon = data["navdat"].navdat[:,0]                    # array to hold longitude
-    lat = data["navdat"].navdat[:,1]                    # array to hold latitude
-    alt = data["navdat"].navdat[:,2]               # array to hold aircraft elevation
-    twtt_surf = data["pick"]["twtt_surf"]               # array to hold twtt to surface below nadir position
-    elev_gnd = data["elev_gnd"]                         # array to hold ground elevation beneath aircraft sampled from lidar pointcloud
-    surf_idx = data["surf_idx"]                         # array to hold surface index
-    subsurf_idx_pk = np.repeat(np.nan,trace[-1] + 1)    # array to hold indeces of picks
+    trace = np.arange(rdata.tnum)                              # array to hold trace number
+    lon = rdata.navdf["lon"]                 # array to hold longitude
+    lat = rdata.navdf["lat"]                   # array to hold latitude
+    alt = rdata.navdf["elev"]              # array to hold aircraft elevation
+    twtt_surf = rdata.pick.current.twtt_surf               # array to hold twtt to surface below nadir position
+    elev_gnd = rdata.elev_gnd                       # array to hold ground elevation beneath aircraft sampled from lidar pointcloud
+    surf = rdata.pick.current.surf                         # array to hold surface index
+    subsurf_idx_pk = np.repeat(np.nan, rdata.tnum)    # array to hold indeces of picks
 
     # iterate through subsurf_pick_dict layers adding data to export arrays
     for _i in range(len(subsurf_pick_dict)):
-        picked_traces = np.where(~np.isnan(subsurf_pick_dict[str(_i)]))[0]
+        picked_traces = np.where(~np.isnan(rdata.pick.current.subsurf[str(_i)]))[0]
 
-        subsurf_idx_pk[picked_traces] = subsurf_pick_dict[str(_i)][picked_traces]
+        subsurf_idx_pk[picked_traces] = rdata.pick.current.subsurf[str(_i)][picked_traces]
 
     # convert pick idx to twtt
-    twtt_bed = subsurf_idx_pk * data["dt"]    
+    twtt_bed = subsurf_idx_pk * rdata.dt    
 
     # calculate ice thickness
     thick = (((twtt_bed - twtt_surf) * v) / 2)
@@ -43,12 +44,12 @@ def savePick(fpath, f_saveName, data, subsurf_pick_dict, eps_r, amp_out = False)
         # combine the data into a matrix for export
         if amp_out:
             # export surface and subsurface pick amplitude values
-            idx = ~np.isnan(surf_idx)
-            surf_amp = np.repeat(np.nan, trace[-1] + 1)
-            surf_amp[idx] = data["amp"][surf_idx[idx].astype(np.int),idx]
+            idx = ~np.isnan(surf)
+            surf_amp = np.repeat(np.nan, rdata.tnum)
+            surf_amp[idx] = rdata.dat[surf_idx[idx].astype(np.int),idx]
 
             idx = ~np.isnan(subsurf_idx_pk)
-            subsurf_amp = np.repeat(np.nan, trace[-1] + 1)
+            subsurf_amp = np.repeat(np.nan, rdata.tnum)
             subsurf_amp[idx] = data["amp"][subsurf_idx_pk[idx].astype(np.int),idx]
 
             dstack = np.column_stack((trace,lon,lat,alt,elev_gnd,surf_idx,twtt_surf,surf_amp,subsurf_idx_pk,twtt_bed,subsurf_amp,elev_bed,thick))

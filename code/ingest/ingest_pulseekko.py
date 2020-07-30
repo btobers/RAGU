@@ -154,7 +154,7 @@ def partition_project_file(fn_project):
         profile_num += 1
 
 
-def read(fpath, *args, **kwargs):
+def read(fpath, navcrs, body, *args, **kwargs):
     print("pulseekko ingest still in development")
     sys.exit()
     """Load data from a pulse_ekko file."""
