@@ -19,7 +19,7 @@ xyzsys = {
 "earth": "+proj=geocent +a=6378140 +b=6356750 +no_defs",
 }
 
-def getnav_oibAK(navfile, navcrs, body):
+def getnav_oibAK_h5(navfile, navcrs, body):
     h5 = h5py.File(navfile, "r")
     if "nav0" in h5["ext"].keys():
         nav = h5["ext"]["nav0"][:]
@@ -47,6 +47,43 @@ def getnav_oibAK(navfile, navcrs, body):
 
     # set altM series name to elev for consistency with other datasets
     df = df.rename(columns={"altM": "elev"})
+
+    df["x"], df["y"], df["z"] = pyproj.transform(
+        navcrs,
+        xyzsys[body],
+        df["lon"].to_numpy(),
+        df["lat"].to_numpy(),
+        df["elev"].to_numpy(),
+    )
+
+    df["dist"] = euclid_dist(
+        df["x"].to_numpy(),
+        df["y"].to_numpy(),
+        df["z"].to_numpy())
+
+    return df[["lon", "lat", "elev", "x", "y", "z", "dist"]]
+
+
+def getnav_oibAK_mat(navfile, navcrs, body):
+    try:
+        f = h5py.File(navfile, "r")
+        lon = f["block"]["lon"].flatten()
+        lat = f["block"]["lat"].flatten()
+        elev = f["block"]["elev_air"].flatten()     
+        f.close()
+    except:
+        try:
+            f = sp.io.loadmat(fpath)
+            lon = f["block"]["lon"][0][0].flatten()
+            lat = f["block"]["lat"][0][0].flatten()
+            alt = f["block"]["elev_air"][0][0].flatten() 
+        except Exception as err:
+            print("getnav_oibAK_mat Error: " + str(err))
+            exit(1)
+
+    df = pd.DataFrame({'lon': gps.lon, 'lat': gps.lat, "elev": gps.z,
+                                "x": np.nan, "z": np.nan, "z": np.nan,
+                                "dist": np.nan})
 
     df["x"], df["y"], df["z"] = pyproj.transform(
         navcrs,

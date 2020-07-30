@@ -115,7 +115,23 @@ def list_insert_idx(list, n):
     return index
 
 
-def find_nearest(array,value):
+# nan_array_equal is a method to determine if two arrays which may contain nan values are equivalent
+def nan_array_equal(a, b):
+    return ((a == b) | (np.isnan(a) & np.isnan(b))).all()
+
+
+# dict_compare is a method to compare the two pick dictionaries to see if they are equal
+def dict_compare(a, b):
+    if len(a) == 0 & len(b) == 0:
+        return True
+    else:
+        for _i in range(len(a)):
+            if nan_array_equal(a[str(_i)],b[str(_i)]):
+                return True
+        return False
+
+
+def find_nearest(array, value):
     # return index in array with value closest to the passed value
     idx = (np.abs(array-value)).argmin()
     return idx

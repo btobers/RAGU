@@ -4,6 +4,8 @@ created by: Brandon S. Tober and Michael S. Christoffersen
 date: 25JUN19
 last updated: 05FEB20
 environment requirements in nose_env.yml
+
+mainGUI class is a tkinter frame which runs the NOSEpick master GUI
 """
 ### imports ###
 from ui import impick, wvpick, basemap 
@@ -38,6 +40,7 @@ class mainGUI(tk.Frame):
 
     # setup is a method which generates the app menubar and buttons and initializes some vars
     def setup(self):
+        self.rdata = None
         self.f_loadName = ""
         self.f_saveName = ""
         self.map_loadName = ""
@@ -453,46 +456,33 @@ class mainGUI(tk.Frame):
             tmp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath, title = "load picks", filetypes = (("comma separated value", "*.csv"),))
             if tmp_loadName:
                 twtt_bed = ingester.load_picks(path=tmp_loadName)
-                self.impick.plot_bed(utils.twtt2sample(twtt_bed, self.rdata["dt"]))
+                self.impick.plot_bed(utils.twtt2sample(twtt_bed, self.rdata.dt))
 
 
     def tab_change(self, event):
         selection = event.widget.select()
         self.tab = event.widget.tab(selection, "text")
-        # determine which tab is active
-        if (self.tab == "waveform"):
-            if self.f_loadName:
-                self.pick_opt()
-        elif (self.tab == "profile"):
-            # get updated pick_dict and surf_idx from wvpick and pass back to impick if dictionaries differ
-            if (self.impick.get_subsurfPickFlag() == True) and (self.dict_compare(self.impick.get_pickDict(),self.wvpick.get_pickDict()) == False) and (tk.messagebox.askyesno("tab change","import optimized picks to profile from waveform?") == True):
-                self.impick.set_pickDict(self.wvpick.get_pickDict())
-                self.impick.plot_picks(surf = "subsurface")
-            # elif (self.impick.get_surfPickFlag() == True):
-            if self.f_loadName:
-                tmp_surf = self.wvpick.get_surf()
-                if ~np.array_equal(self.rdata.surf, tmp_surf):
-                    self.rdata.surf = tmp_surf
-                    self.rdata.picks["twtt_surf"] = utils.sample2twtt(self.rdata.surf, self.rdata.dt)
+        if self.rdata:
+            # determine which tab is active
+            if (self.tab == "waveform"):
+                if self.f_loadName:
+                    # end any picking
+                    self.end_subsurf_pick()
+                    self.end_surf_pick()
+                    # get pick dict from impick and pass to wvpick
+                    self.wvpick.set_picks()
+                    self.wvpick.plot_wv()
+            elif (self.tab == "profile"):
+                # get updated picks from wvpick and pass back to impick if they differ
+                if (((utils.nan_array_equal(self.rdata.pick.current.surf, self.rdata.pick.current.surf_opt)) == False) or \
+                        ((utils.dict_compare(self.rdata.pick.current.subsurf, self.rdata.pick.current.subsurf_opt)) == False)) and \
+                        (tk.messagebox.askyesno("tab change","import optimized picks to profile from waveform?") == True):
+                    self.rdata.pick.current.surf = self.rdata.pick.current.surf_opt
+                    self.rdata.pick.current.subsurf = self.rdata.pick.current.subsurf_opt
+                    self.impick.set_picks()
                     self.impick.plot_picks(surf = "surface")
-            self.impick.blit()
-
-
-    # pick_opt is a method to load the wvpick optimization tools
-    def pick_opt(self):
-        # end any picking
-        self.end_subsurf_pick()
-        self.end_surf_pick()
-        # get pick dict from impick and pass to wvpick
-        self.wvpick.set_pickDict(self.impick.get_pickDict())
-        self.wvpick.plot_wv()
-
-
-    # dict_compare is a method to compare the subsurface pick dictionaries from wvpick and impick to determine if updates have been made
-    def dict_compare(self, dict_impick, dict_wvpick):
-        for _i in range(len(dict_impick)):
-            if not (np.array_equal(dict_impick[str(_i)] ,dict_wvpick[str(_i)])):
-                return False
+                    self.impick.plot_picks(surf = "subsurface")
+                    self.impick.blit()
 
 
     # clear is a method to clear all picks

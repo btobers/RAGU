@@ -37,10 +37,6 @@ def read(fpath, navcrs, body):
     rdata.clut = np.ones(rdata.dat.shape)                   # place holder for clutter data
     rdata.surf = np.repeat(np.nan, rdata.tnum)              # place holder for surface index
 
-
-    pick={}                                                 # dictionary to hold picks
-    pick["twtt_surf"] = np.repeat(np.nan, rdata.tnum)       # place holder for pick of twtt_surf
-
     # read in gps data if exists
     infile_gps = fpath.replace(".DZT",".DZG")
     if os.path.isfile(infile_gps):
@@ -57,7 +53,7 @@ def read(fpath, navcrs, body):
 
     # for ground-based GPR, elev_gnd is the same as GPS recorded elev
     rdata.elev_gnd = rdata.navdf["elev"]
-
+    
     return rdata
 
 

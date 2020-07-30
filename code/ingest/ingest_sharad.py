@@ -44,14 +44,4 @@ def read(fpath, navcrs, body):
 
     rdata.elev_gnd = np.repeat(np.nan, rdata.tnum)
 
-    twtt_surf = np.repeat(np.nan, rdata.tnum)
-
-    # create dictionary to hold picks
-    pick = {}
-    pick["twtt_surf"] = twtt_surf
-   
-
-    # get indices of twtt_surf
-    rdata.surf = utils.twtt2sample(twtt_surf, rdata.dt)
-
     return rdata

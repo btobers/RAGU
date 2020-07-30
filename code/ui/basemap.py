@@ -1,3 +1,7 @@
+"""
+basemap class is a tkinter frame which handles the NOSEpick basemap
+"""
+### imports ###
 import numpy as np
 import tkinter as tk
 import rasterio as rio
@@ -7,7 +11,7 @@ mpl.use("TkAgg")
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 
-class basemap(tk.Tk):
+class basemap(tk.Frame):
     def __init__(self, parent, map_path):
         self.parent = parent
         self.map_loadName = map_path
@@ -27,6 +31,7 @@ class basemap(tk.Tk):
         self.track = None
         self.basemap_state = 0
 
+
     # map is a method to plot the basemap in the basemap window
     def map(self):
         # pull track up on dem basemap
@@ -36,41 +41,11 @@ class basemap(tk.Tk):
                 # open geotiff with rasterio
                 dataset = rio.open(self.map_loadName, mode="r")
                 self.bmcrs = dataset.crs
-                bands = dataset.count
-                im = np.dstack((dataset.read())) # dataset.read(1), dataset.read(2), dataset.read(3), dataset.read(4)))
-
-                # # open geotiff and convert coordinate systems to get lat long of image extent
-                # self.basemap_ds = gdal.Open(self.map_loadName)              # open raster
-                # self.basemap_im = self.basemap_ds.ReadAsArray()             # read input raster as array
-                # self.basemap_proj = self.basemap_ds.GetProjection()         # get coordinate system of input raster
-                # self.basemap_proj_xform = osr.SpatialReference()
-                # self.basemap_proj_xform.ImportFromWkt(self.basemap_proj)
-                # # Get raster georeference info 
-                # width = self.basemap_ds.RasterXSize
-                # height = self.basemap_ds.RasterYSize
-                # gt = self.basemap_ds.GetGeoTransform()
-                # if gt[2] != 0 or gt[4] != 0:
-                #     print('Geotransform rotation!')
-                #     print('gt[2]:ax '+ gt[2] + '\ngt[4]: ' + gt[4])
-                #     return
-                # # get image corner locations
-                # minx = gt[0]
-                # miny = gt[3]  + height*gt[5] 
-                # maxx = gt[0]  + width*gt[1]
-                # maxy = gt[3] 
-
-
+                im = np.dstack((dataset.read())) # np.dstack((dataset.read(1), dataset.read(2), dataset.read(3), dataset.read(4)))
                 # # show basemap figure in basemap window
                 self.map_fig = mpl.figure.Figure()
                 self.map_fig.patch.set_facecolor(self.parent.cget('bg'))
                 self.map_fig_ax = self.map_fig.add_subplot(111)
-
-                # # if using rgb image, make sure the proper shape
-                # if self.basemap_im.shape[0] == 3 or self.basemap_im.shape[0] == 4:
-                #     self.basemap_im = np.dstack([self.basemap_im[0,:,:],self.basemap_im[1,:,:],self.basemap_im[2,:,:]])
-                # # display image in km
-                # self.map_fig_ax.imshow(self.basemap_im, cmap="Greys_r", aspect="auto", extent=[int(minx*1e-3), int(maxx*1e-3), int(miny*1e-3), int(maxy*1e-3)])
-
                 self.map_fig_ax.imshow(im, cmap="Greys_r", aspect="auto",
                         extent=[dataset.bounds.left, dataset.bounds.right,
                         dataset.bounds.bottom, dataset.bounds.top])
@@ -78,7 +53,6 @@ class basemap(tk.Tk):
                 self.map_dataCanvas = FigureCanvasTkAgg(self.map_fig, self.basemap_window)
                 self.map_dataCanvas.get_tk_widget().pack(in_=self.map_display, side="bottom", fill="both", expand=1)
                 self.map_toolbar = NavigationToolbar2Tk(self.map_dataCanvas, self.basemap_window)
-                # self.map_toolbar.update()
                 # save un-zoomed view to toolbar
                 self.map_toolbar.push_current()
                 self.map_dataCanvas._tkcanvas.pack()
