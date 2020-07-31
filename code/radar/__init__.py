@@ -14,10 +14,12 @@ class radar(object):
     the radar class holds the relevant information for a radar profile.
     keep track of processing steps with the flags attribute.
     """
-    def __init__(self, fn):
+    def __init__(self, fpath):
         # basic data file attributes
-        #: str, file name
-        self.fn = fn
+        #: str, file path
+        self.fpath = fpath
+        #: str, scientific data type
+        self.dtype = None
         #: int, number of samples per trace
         self.snum = None
         #: int, the number of traces in the file

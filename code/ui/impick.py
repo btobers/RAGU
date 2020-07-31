@@ -59,14 +59,14 @@ class impick(tk.Frame):
         self.layerMenu.pack(side="right",pady=0)
         tk.Label(infoFrame,text="subsurface pick segment: ").pack(side="right")
 
-        self.pickLabel = tk.Label(toolbarFrame, font= "Verdana 10")#, text="subsurface pick segment:\t0", fg="#d9d9d9")
+        self.pickLabel = tk.Label(toolbarFrame, font= "Verdana 10")
         self.pickLabel.pack(side="right")
         tk.Label(toolbarFrame, text="\t").pack(side="right")
 
         self.fig = mpl.figure.Figure()
         self.fig.patch.set_facecolor("#d9d9d9")
         self.dataCanvas = FigureCanvasTkAgg(self.fig, self.parent)
-        # self.dataCanvas.get_tk_widget().pack(in_=dataFrame, side="bottom", fill="both", expand=1)
+
         # add toolbar to plot
         self.toolbar = NavigationToolbar2Tk(self.dataCanvas, toolbarFrame)
         self.toolbar.update()
@@ -104,8 +104,6 @@ class impick(tk.Frame):
         self.secaxy0.set_zorder(-100)
         self.secaxy1.set_zorder(-100)
 
-        # self.cursor = Cursor(self.ax, useblit=False, horizOn=True, vertOn=True, color="r", lw="0.5")
-
         self.ax.set_visible(False)
 
         # connect xlim_change with event to update image background for blitting
@@ -127,9 +125,6 @@ class impick(tk.Frame):
 
         self.pick_state = False
         self.pick_segment = 0
-
-        # self.rdata.pick.current.subsurf = {}          # dictionary to hold arrays with sample indices of picked segments - starting with "surf" as the surface array and "subsurf(#)" as each subsurface array
-        # self.rdata.pick.current.subsurf_opt = {}      # dictionary to hold picks optimized using wvPick tools
 
         self.data_cmin = None
         self.data_cmax = None
@@ -190,7 +185,7 @@ class impick(tk.Frame):
         self.reset_ax.set_visible(True)
         
         # set figure title and axes labels
-        self.ax.set_title(self.rdata.fn.split(".")[0])
+        self.ax.set_title(self.rdata.fpath.split("/")[-1].split(".")[0])
         self.ax.set(xlabel = "trace", ylabel = "sample")
 
         # calculate power of rdata
@@ -203,7 +198,7 @@ class impick(tk.Frame):
         # get clutter data in dB
         # check if clutter data is stored in linear space or log space - lin space should have values less than 1
         # if in lin space, convert to dB
-        if (np.nanmax(np.abs(self.rdata.clut)) < 1) or (~np.all(self.rdata.clut == 1)) or ("2012" in self.rdata.fn):
+        if (np.nanmax(np.abs(self.rdata.clut)) < 1) or (~np.all(self.rdata.clut == 1)):
             # calculate power (squared amplitude)
             Pow_clut = np.power(self.rdata.clut,2)
             # replace zero power values with nan
@@ -219,8 +214,6 @@ class impick(tk.Frame):
         self.mindB_clut = np.floor(np.nanpercentile(self.dB_clut,10))
         self.maxdB_data = np.nanmax(self.dB_data)
         self.maxdB_clut = np.nanmax(self.dB_clut)
-        # if ("2012" in self.rdata.fn):
-        #     self.maxdB_clut = np.floor(np.nanpercentile(self.dB_clut,90))
 
         # reset samples missing data to small negative value for color scale consistency
         self.dB_data[np.isnan(self.dB_data)] = -9999
@@ -276,8 +269,6 @@ class impick(tk.Frame):
         self.dataCanvas._tkcanvas.pack()
         self.dataCanvas.draw()
 
-        # self.cursor = Cursor(self.ax, useblit=False, horizOn=True, vertOn=True, color="r", lw="0.5")
-
         # update toolbar to save axes extents
         self.toolbar.update()
 
@@ -321,9 +312,7 @@ class impick(tk.Frame):
                 self.pickLabel.config(text="subsurface pick segment " + str(self.pick_segment - 1) + ":\t inactive", fg="black")
 
         elif self.pick_surf == "surface":
-            if self.pick_state == True:
-                if not self.rdata.pick.current.surf:
-                    self.rdata.pick.current.surf = np.repeat(np.nan, self.rdata.tnum)
+            if self.pick_state == True:                    
                 self.pickLabel.config(text="surface pick segment:\t active", fg="red")
             elif self.pick_state == False:
                 self.pickLabel.config(text="surface pick segment:\t inactive", fg="black")
@@ -331,7 +320,7 @@ class impick(tk.Frame):
 
     # addseg is a method to for user to generate picks
     def addseg(self, event):
-        if self.rdata.fn:
+        if self.rdata.fpath:
             # store pick trace idx as integer
             self.pick_trace = int(event.xdata)
             # store pick sample idx as integer
@@ -833,11 +822,6 @@ class impick(tk.Frame):
         return len(self.rdata.pick.current.subsurf)
 
 
-    # get_pickDict is a method to return the pick dictionary
-    def get_pickDict(self):
-        return self.rdata.pick.current.subsurf
-
-    
     # set_picks is a method to update the saved pick arrays based on current the picking dictionary
     def set_picks(self):
         # reset yln_saved arrays to replace with new dictionary values for replotting
@@ -904,7 +888,7 @@ class impick(tk.Frame):
 
 
     # save is a method to receive the pick save location from gui and save using utils.save
-    def save(self, f_saveName, cmap, figSize):
+    def save(self, f_saveName, eps_r, cmap, figSize):
         self.f_saveName = f_saveName
         # zoom out to full rgram extent to save pick image
         self.set_axes(eps_r, cmap)

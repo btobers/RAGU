@@ -339,7 +339,7 @@ class mainGUI(tk.Frame):
             self.end_subsurf_pick()
             # get updated pick_dict from wvpick and pass back to impick
             utils.export_pk_csv(self.f_saveName, self.rdata, self.eps_r.get(), self.conf["params"]["amp"])
-            self.impick.save(self.f_saveName, self.cmap.get(), self.figSize.get().split(","))
+            self.impick.save(self.f_saveName, self.eps_r.get(), self.cmap.get(), self.figSize.get().split(","))
             self.f_saveName = ""
 
 
@@ -532,7 +532,7 @@ class mainGUI(tk.Frame):
                 self.rdata.proc_data = processing.tpowGain(self.rdata.proc_data, np.arange(self.rdata.snum)*self.rdata.dt, power=power)
             elif arg == "restore":
                 # restore origianl rdata
-                self.rdata.proc_data = self.rdata.dat
+                self.rdata.proc_data = processing.restore(rdata.dtype, rdata.dat)
             else:
                 print("undefined processing method")
                 exit(1)

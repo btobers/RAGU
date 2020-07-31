@@ -10,13 +10,14 @@ import h5py, fnmatch
 import numpy as np
 import scipy as sp
 
-### method to ingest OIB-AK radar hdf5 data format ###
+# method to ingest OIB-AK radar hdf5 data format
 def read_h5(fpath, navcrs, body):
     print("----------------------------------------")
     print("Loading: " + fpath.split("/")[-1])
-    rdata = radar(fpath.split("/")[-1])
+    rdata = radar(fpath)
+    rdata.dtype = "oibak"
     # read in .h5 file
-    f = h5py.File(fpath, "r")                      
+    f = h5py.File(rdata.fpath, "r")                      
 
     # h5 radar data group structure        
     # |-raw
@@ -65,15 +66,20 @@ def read_h5(fpath, navcrs, body):
         for _i in range(num_file_pick_lyr):
             rdata.pick.existing.twtt_subsurf[str(_i)] = np.array(f["drv"]["pick"]["twtt_subsurf" + str(_i)])
 
+    # initialize surface pick
+    rdata.pick.current.surf = np.repeat(np.nan, rdata.tnum)
+
     f.close()                                                   # close the file
 
     return rdata
 
+# method to ingest .mat files OIB-AK. for older matlab files, sp.io seems to work while h5py does not. for newer files, h5py seems to work while sp.io does not 
 def read_mat(fpath, navcrs, body):
-# method to ingest .mat files. for older matlab files, sp.io works and h5py does not. for newer files, h5py works and sp.io does not 
-    rdata = radar(fpath.split("/")[-1])
+    print("----------------------------------------")
+    print("Loading: " + fpath.split("/")[-1])
+    rdata = radar(fpath)
     try:
-        f = h5py.File(fpath, "r")
+        f = h5py.File(rdata.fpath, "r")
         rdata.snum = int(f["block"]["num_sample"][0])[-1]
         rdata.tnum = int(f["block"]["num_trace"][0])[-1] 
         rdata.dt = float(f["block"]["dt"][0])
@@ -88,7 +94,7 @@ def read_mat(fpath, navcrs, body):
 
     except:
         try:
-            f = sp.io.loadmat(fpath)
+            f = sp.io.loadmat(rdata.fpath)
             rdata.snum = int(f["block"]["num_sample"][0])
             rdata.tnum = int(f["block"]["num_trace"][0])
             rdata.dt = float(f["block"]["dt"][0])

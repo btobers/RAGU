@@ -7,7 +7,7 @@
 radar data ingest wrapper
 """
 ### imports ###
-from ingest import ingest_oibAK, ingest_gssi, ingest_pulseekko, ingest_sharad
+from ingest import ingest_oibAK, ingest_gssi, ingest_sharad
 
 class ingest:
     # ingest is a class which builds a dictionary holding data and metadata from the file
@@ -15,7 +15,7 @@ class ingest:
         # ftype is a string specifying filetype
         # valid options -
         # hdf5, mat, segy
-        valid_types = ["h5", "mat", "sgy", "dzt", "img"] # can add more to this
+        valid_types = ["h5", "mat", "dzt", "img"] # can add more to this
         if (ftype.lower() not in valid_types):
             print("Invalid file type specifier: " + ftype)
             print("Valid file types:")
@@ -33,8 +33,6 @@ class ingest:
             return ingest_oibAK.read_h5(fpath, navcrs, body)
         elif (self.ftype == "mat"):
             return ingest_oibAK.read_mat(fpath, navcrs, body)
-        elif (self.ftype == "sgy"):
-            return ingest_segy(fpath, navcrs, body)
         elif (self.ftype == "dzt"):
             return ingest_gssi.read(fpath, navcrs, body)
         elif (self.ftype == "img"):

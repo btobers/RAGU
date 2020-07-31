@@ -1,8 +1,5 @@
 import pytz
 
-
-TZ = pytz.timezone('UTC')
-
 # some physical constants for Maxwell's equation for speed of light in a dielectric medium
 C = 299792458                   # speed of light in a vacuum
 Eps_0 = 8.8541878 * 10**(-12)   # epsilon naught (vacuum permittivity)

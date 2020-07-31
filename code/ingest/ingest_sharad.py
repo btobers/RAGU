@@ -13,7 +13,8 @@ import os
 def read(fpath, navcrs, body):
     print("----------------------------------------")
     print("Loading: " + fpath.split("/")[-1])
-    rdata = radar(fpath.split("/")[-1])
+    rdata = radar(fpath)
+    rdata.dtype = "sharad"
     # convert binary .img PDS RGRAM to numpy array
     # reshape array with 3600 lines
     dtype = np.dtype("float32")     
@@ -43,5 +44,8 @@ def read(fpath, navcrs, body):
     rdata.navdf = navparse.getnav_sharad(geom_path, navcrs, body)
 
     rdata.elev_gnd = np.repeat(np.nan, rdata.tnum)
+
+    # initialize surface pick
+    rdata.pick.current.surf = np.repeat(np.nan, rdata.tnum)
 
     return rdata

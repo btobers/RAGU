@@ -6,91 +6,91 @@ import scipy.signal as signal
 from tqdm import tqdm
 
 
-# def dewow(data,window):
-#     """
-#     Subtracts from each sample along each trace an 
-#     along-time moving average.
+def dewow(data,window):
+    """
+    Subtracts from each sample along each trace an 
+    along-time moving average.
 
-#     Can be used as a low-cut filter.
+    Can be used as a low-cut filter.
 
-#     INPUT:
-#     data       data matrix whose columns contain the traces 
-#     window     length of moving average window 
-#                [in "number of samples"]
+    INPUT:
+    data       data matrix whose columns contain the traces 
+    window     length of moving average window 
+               [in "number of samples"]
 
-#     OUTPUT:
-#     newdata    data matrix after dewow
-#     """
-#     totsamps = data.shape[0]
-#     # If the window is larger or equal to the number of samples,
-#     # then we can do a much faster dewow
-#     if (window >= totsamps):
-#         newdata = data-np.matrix.mean(data,0)            
-#     else:
-#         newdata = np.asmatrix(np.zeros(data.shape))
-#         halfwid = int(np.ceil(window/2.0))
+    OUTPUT:
+    newdata    data matrix after dewow
+    """
+    totsamps = data.shape[0]
+    # If the window is larger or equal to the number of samples,
+    # then we can do a much faster dewow
+    if (window >= totsamps):
+        newdata = data-np.matrix.mean(data,0)            
+    else:
+        newdata = np.asmatrix(np.zeros(data.shape))
+        halfwid = int(np.ceil(window/2.0))
         
-#         # For the first few samples, it will always be the same
-#         avgsmp=np.matrix.mean(data[0:halfwid+1,:],0)
-#         newdata[0:halfwid+1,:] = data[0:halfwid+1,:]-avgsmp
+        # For the first few samples, it will always be the same
+        avgsmp=np.matrix.mean(data[0:halfwid+1,:],0)
+        newdata[0:halfwid+1,:] = data[0:halfwid+1,:]-avgsmp
 
-#         # for each sample in the middle
-#         for smp in tqdm(range(halfwid,totsamps-halfwid+1)):
-#             winstart = int(smp - halfwid)
-#             winend = int(smp + halfwid)
-#             avgsmp = np.matrix.mean(data[winstart:winend+1,:],0)
-#             newdata[smp,:] = data[smp,:]-avgsmp
+        # for each sample in the middle
+        for smp in tqdm(range(halfwid,totsamps-halfwid+1)):
+            winstart = int(smp - halfwid)
+            winend = int(smp + halfwid)
+            avgsmp = np.matrix.mean(data[winstart:winend+1,:],0)
+            newdata[smp,:] = data[smp,:]-avgsmp
 
-#         # For the last few samples, it will always be the same
-#         avgsmp = np.matrix.mean(data[totsamps-halfwid:totsamps+1,:],0)
-#         newdata[totsamps-halfwid:totsamps+1,:] = data[totsamps-halfwid:totsamps+1,:]-avgsmp
+        # For the last few samples, it will always be the same
+        avgsmp = np.matrix.mean(data[totsamps-halfwid:totsamps+1,:],0)
+        newdata[totsamps-halfwid:totsamps+1,:] = data[totsamps-halfwid:totsamps+1,:]-avgsmp
         
-#     return newdata
+    return newdata
 
 
-# def remMeanTrace(data,ntraces):
-#     """
-#     Subtracts from each trace the average trace over
-#     a moving average window.
+def remMeanTrace(data,ntraces):
+    """
+    Subtracts from each trace the average trace over
+    a moving average window.
 
-#     Can be used to remove horizontal arrivals, 
-#     such as the airwave.
+    Can be used to remove horizontal arrivals, 
+    such as the airwave.
 
-#     INPUT:
-#     data       data matrix whose columns contain the traces 
-#     ntraces    window width; over how many traces 
-#                to take the moving average.
+    INPUT:
+    data       data matrix whose columns contain the traces 
+    ntraces    window width; over how many traces 
+               to take the moving average.
 
-#     OUTPUT:
-#     newdata    data matrix after subtracting average traces
-#     """
+    OUTPUT:
+    newdata    data matrix after subtracting average traces
+    """
 
-#     data=np.asmatrix(data)
-#     tottraces = data.shape[1]
-#     # For ridiculous ntraces values, just remove the entire average
-#     if ntraces >= tottraces:
-#         newdata=data-np.matrix.mean(data,1) 
-#     else: 
-#         newdata = np.asmatrix(np.zeros(data.shape))    
-#         halfwid = int(np.ceil(ntraces/2.0))
+    data=np.asmatrix(data)
+    tottraces = data.shape[1]
+    # For ridiculous ntraces values, just remove the entire average
+    if ntraces >= tottraces:
+        newdata=data-np.matrix.mean(data,1) 
+    else: 
+        newdata = np.asmatrix(np.zeros(data.shape))    
+        halfwid = int(np.ceil(ntraces/2.0))
         
-#         # First few traces, that all have the same average
-#         avgtr=np.matrix.mean(data[:,0:halfwid+1],1)
-#         newdata[:,0:halfwid+1] = data[:,0:halfwid+1]-avgtr
+        # First few traces, that all have the same average
+        avgtr=np.matrix.mean(data[:,0:halfwid+1],1)
+        newdata[:,0:halfwid+1] = data[:,0:halfwid+1]-avgtr
         
-#         # For each trace in the middle
+        # For each trace in the middle
 
-#         for tr in tqdm(range(halfwid,tottraces-halfwid+1)):   
-#             winstart = int(tr - halfwid)
-#             winend = int(tr + halfwid)
-#             avgtr=np.matrix.mean(data[:,winstart:winend+1],1)                
-#             newdata[:,tr] = data[:,tr] - avgtr
+        for tr in tqdm(range(halfwid,tottraces-halfwid+1)):   
+            winstart = int(tr - halfwid)
+            winend = int(tr + halfwid)
+            avgtr=np.matrix.mean(data[:,winstart:winend+1],1)                
+            newdata[:,tr] = data[:,tr] - avgtr
 
-#         # Last few traces again have the same average    
-#         avgtr=np.matrix.mean(data[:,tottraces-halfwid:tottraces+1],1)
-#         newdata[:,tottraces-halfwid:tottraces+1] = data[:,tottraces-halfwid:tottraces+1]-avgtr
-#     print("rolling mean trace removed: window size: \t" + str(ntraces) + " traces")
-#     return newdata
+        # Last few traces again have the same average    
+        avgtr=np.matrix.mean(data[:,tottraces-halfwid:tottraces+1],1)
+        newdata[:,tottraces-halfwid:tottraces+1] = data[:,tottraces-halfwid:tottraces+1]-avgtr
+    print("rolling mean trace removed: window size: \t" + str(ntraces) + " traces")
+    return newdata
 
 
 def lowpassFilt(pc, order = 5, Wn = 1e6, fs = None):
@@ -100,70 +100,26 @@ def lowpassFilt(pc, order = 5, Wn = 1e6, fs = None):
     return pc_lp 
 
 
-# def agcGain(data,window):
-#     """
-#     Apply automated gain controll (AGC) by normalizing the energy
-#     of the signal over a given window width in each trace
+def agcGain(data, window=50, scaling_factor=50):
+    """Try to do some automatic gain control
 
-#     INPUT:
-#     data       data matrix whose columns contain the traces
-#     window     window width [in "number of samples"]
-    
-#     OUTPUT:
-#     newdata    data matrix after AGC gain
-#     """
-#     eps=1e-8
-#     totsamps = data.shape[0]
-#     # If window is a ridiculous value
-#     if (window>totsamps):
-#         # np.maximum is exactly the right thing (not np.amax or np.max)
-#         energy = np.maximum(np.linalg.norm(data,axis=0),eps)
-#         # np.divide automatically divides each row of "data"
-#         # by the elements in "energy"
-#         newdata = np.divide(data,energy)
-#     else:
-#         # Need to go through the samples
-#         newdata = np.asmatrix(np.zeros(data.shape))
-#         halfwid = int(np.ceil(window/2.0))
-#         # For the first few samples, it will always be the same
-#         energy = np.maximum(np.linalg.norm(data[0:halfwid+1,:],axis=0),eps)
-#         newdata[0:halfwid+1,:] = np.divide(data[0:halfwid+1,:],energy)
-        
-#         for smp in tqdm(range(halfwid,totsamps-halfwid+1)):
-#             winstart = int(smp - halfwid)
-#             winend = int(smp + halfwid)
-#             energy = np.maximum(np.linalg.norm(data[winstart:winend+1,:],axis=0),eps)
-#             newdata[smp,:] = np.divide(data[smp,:],energy)
+    Parameters
+    ----------
+    window: int, optional
+        The size of window we use in number of samples (default 50)
+    scaling_factor: int, optional
+        The scaling factor. This gets divided by the max amplitude when we rescale the input.
+        Default 50.
+    """
+    num_sample = data.shape[1]
+    maxamp = np.zeros((num_sample,))
+    for i in range(num_sample):
+        maxamp[i] = np.max(np.abs(data[max(0, i - window // 2):
+                                            min(i + window // 2, num_sample), :]))
+    maxamp[maxamp == 0] = 1.0e-6
+    newdata = data * (scaling_factor / np.atleast_2d(maxamp).transpose()).astype(data.dtype)
 
-#         # For the first few samples, it will always be the same
-#         energy = np.maximum(np.linalg.norm(data[totsamps-halfwid:totsamps+1,:],axis=0),eps)
-#         newdata[totsamps-halfwid:totsamps+1,:] = np.divide(data[totsamps-halfwid:totsamps+1,:],energy)         
-#         print("agc gain applied") 
-#         print(newdata)
-#     return newdata
-
-
-# def agcGain(data, window=50, scaling_factor=50):
-#     """Try to do some automatic gain control
-
-#     Parameters
-#     ----------
-#     window: int, optional
-#         The size of window we use in number of samples (default 50)
-#     scaling_factor: int, optional
-#         The scaling factor. This gets divided by the max amplitude when we rescale the input.
-#         Default 50.
-#     """
-#     num_sample = data.shape[1]
-#     maxamp = np.zeros((num_sample,))
-#     for i in range(num_sample):
-#         maxamp[i] = np.max(np.abs(data[max(0, i - window // 2):
-#                                             min(i + window // 2, num_sample), :]))
-#     maxamp[maxamp == 0] = 1.0e-6
-#     newdata = data * (scaling_factor / np.atleast_2d(maxamp).transpose()).astype(data.dtype)
-#     print(newdata)
-#     # self.flags.agc = True
-#     return newdata
+    return newdata
 
 
 def tpowGain(data,twtt,power):
@@ -182,3 +138,14 @@ def tpowGain(data,twtt,power):
     factmat = np.matlib.repmat(factor,1,data.shape[1])  
     print("t^" + str(power) + " gain applied")
     return np.multiply(data,factmat)
+
+
+def restore(dtype, dat):
+    if dtype == "oibak":
+        return np.abs(dat)
+    elif dtype == "gssi":
+        return dat.astype(np.float)
+    elif dtype == "sharad":
+        return dat
+    else:
+        print("processing error: restore received unknown data type, " + dtype)

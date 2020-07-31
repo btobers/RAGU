@@ -112,16 +112,6 @@ class wvpick(tk.Frame):
         self.rdata = rdata
         self.data_dB = utils.amp2powdB(self.rdata.proc_data)
 
-    
-    # get_surf is a method to return the optimized surface pick indices
-    def get_surf(self):
-        return self.rdata.pick.current.surf_opt
-
-
-    # get_pickDict is a method to return the pick dictionary
-    def get_pickDict(self):
-        return dict(self.rdata.pick.current.subsurf_opt)
-
 
     # set_pickDict is a method which holds the picked segment data for optimization
     def set_picks(self):

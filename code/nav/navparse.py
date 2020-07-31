@@ -8,6 +8,7 @@ import pandas as pd
 import rasterio as rio
 import numpy as np
 import pyproj, h5py, codecs
+import matplotlib.pyplot as plt
 
 # various getnav functions must return a pandas dataframe consisting of the following cols -
 # ["lon", "lat", "elev", "x", "y", "z", "dist"], where xyz are planetocentric radar platform location
@@ -123,8 +124,7 @@ def getnav_gssi(navfile, tnum, navcrs, body):
     scans = np.array(list(map(lambda x: int(x.split(',')[1]),
                               [line for i, line in enumerate(lines) if i in gssis_inds_keep])))
     gps = GPSdat([line for i, line in enumerate(lines) if i in gga_inds], scans, tnum)
-
-    df = pd.DataFrame({'lon': gps.lon, 'lat': gps.lat, "elev": gps.z,
+    df = pd.DataFrame({'lon': gps.lon, 'lat': gps.lat, "elev": gps.elev,
                                 "x": np.nan, "z": np.nan, "z": np.nan,
                                 "dist": np.nan})
 
@@ -215,126 +215,3 @@ def euclid_dist(xarray, yarray,zarray):
     dist = np.zeros_like(xarray)
     dist[1:] = np.cumsum(np.sqrt(np.diff(xarray) ** 2.0 + np.diff(yarray) ** 2.0 + np.diff(zarray) ** 2.0))
     return dist
-
-# def transform(self,body):
-#     xform = pyproj.transformer.Transformer.from_crs(self.crs, xyz[body])
-#     x, y, z = xform.transform(self.df["lon"].tolist(), self.df["lat"].tolist(), direction="FORWARD")
-#     return np.asarray(x), np.asarray(y), np.asarray(z)
-
-
-# def nmeaparse(gga, scans, trace_num)
-#     def get_all(self):
-#         """Populate all the values from the input data."""
-#         self.glat()
-#         self.glon()
-#         self.gz()
-
-#         self.gtimes()
-#         if conversions_enabled:
-#             self.get_utm()
-
-#     def glat(self):
-#         """Populate lat(itude)."""
-#         if self.lat is None:
-#             self.lat = self.all_data[:, 2] * (
-#                 (self.all_data[:, 1] - self.all_data[:, 1] % 100) / 100 + (
-#                     self.all_data[:, 1] % 100) / 60)
-#         if self.y is None:
-#             self.y = self.lat * 110000.0  # Temporary guess using earths radius
-#         return self.lat
-
-#     def glon(self):
-#         """Populate lon(gitude)."""
-#         if self.lon is None:
-#             self.lon = self.all_data[:, 4] * (
-#                 (self.all_data[:, 3] - self.all_data[:, 3] % 100) / 100 + (
-#                     self.all_data[:, 3] % 100) / 60)
-#         if self.x is None:
-#             # Temporary guess using radius of the earth
-#             if self.lat is None:
-#                 self.glat()
-#             self.x = self.lon * 110000.0 * \
-#                 np.abs(np.cos(self.lat * np.pi / 180.0))
-#         return self.lon
-
-#     def gz(self):
-#         """Populate z (elevation)."""
-#         self.z = self.all_data[:, 8]
-#         return self.z
-
-#     def gtimes(self):
-#         """Populate times."""
-#         self.times = self.all_data[:, 0]
-#         return self.times
-
-
-# def nmea_all_info(list_of_sentences):
-#     """
-#     Return an object with the nmea info from a given list of sentences.
-
-#     Parameters
-#     ----------
-#     list_of_sentences : list of strs
-#         NMEA output.
-
-#     Raises
-#     ------
-#     ValueError
-#         If the NMEA output does not contain GGA strings.
-
-#     Returns
-#     -------
-#     np.ndarray
-#         An array of the useful information in the NMEA sentences.
-#     """
-#     def _gga_sentence_split(sentence):
-#         all = sentence.split(',')
-#         if len(all) > 5:
-#             numbers = list(map(lambda x: float(x) if x != '' else 0, all[1:3] + [1] + [all[4]] + [1] + all[6:10] + [all[11]]))
-#             if all[3] == 'S':
-#                 numbers[2] = -1
-#             if all[5] == 'W':
-#                 numbers[4] = -1
-#         elif len(all) > 2:
-#             numbers = list(map(lambda x: float(x) if x != '' else 0, all[1:3] + [1]))
-#             if all[3] == 'S':
-#                 numbers[2] = -1
-#         else:
-#             numbers = np.nan
-#         return numbers
-
-#     if list_of_sentences[0].split(',')[0] == '$GPGGA':
-#         data = nmea_info()
-#         data.all_data = np.array([_gga_sentence_split(sentence)
-#                                   for sentence in list_of_sentences])
-#         return data
-#     else:
-#         print(list_of_sentences[0].split(',')[0])
-#         raise ValueError('I can only do gga sentences right now')
-
-
-
-# nmea_info = nmea_all_info(gga)
-# self.nmea_info.get_all()
-
-# kgps_mask = np.logical_and(~np.isnan(self.nmea_info.times[1:]),
-#                             np.diff(scans) != 0)
-# kgps_mask = np.logical_and(np.diff(self.nmea_info.times) != 0,
-#                             kgps_mask)
-# kgps_where = np.where(kgps_mask)[0]
-# kgps_indx = np.hstack((np.array([0]), 1 + kgps_where))
-# self.lat = interp1d(scans[kgps_indx],
-#                     self.nmea_info.lat[kgps_indx],
-#                     kind='linear',
-#                     fill_value='extrapolate')(trace_num)
-# self.lon = interp1d(scans[kgps_indx],
-#                     self.nmea_info.lon[kgps_indx],
-#                     kind='linear',
-#                     fill_value='extrapolate')(trace_num)
-# self.z = interp1d(scans[kgps_indx],
-#                     self.nmea_info.z[kgps_indx], kind='linear',
-#                     fill_value='extrapolate')(trace_num)
-# self.times = interp1d(scans[kgps_indx],
-#                         self.nmea_info.times[kgps_indx],
-#                         kind='linear',
-#                         fill_value='extrapolate')(trace_num)
