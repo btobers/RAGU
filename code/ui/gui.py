@@ -294,35 +294,38 @@ class mainGUI(tk.Frame):
 
     # open_data is a gui method which has the user select and input data file - then passed to impick.load()
     def open_data(self):
-        # select input file
-        if "linux" in self.os or "win" in self.os:
-            temp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select data file",filetypes = (("all files",".*"),("hd5f files", ".mat .h5"),("segy files", ".sgy"),("image file", ".img"),("gssi files",".DZT")))
-        else:
-            temp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select data file")
-        # if input selected, clear impick canvas, ingest data and pass to impick
-        if temp_loadName:
-            self.f_loadName = temp_loadName
-            self.impick.clear_canvas()  
-            self.impick.set_vars()
-            self.impick.update_option_menu()
-            # ingest the data
-            self.igst = ingest(self.f_loadName.split(".")[-1])
-            self.rdata = self.igst.read(self.f_loadName, self.conf["navigation"]["navcrs"], self.conf["params"]["body"])
-            # return if no data ingested
-            if not self.rdata:
-                return
-            self.impick.load(self.rdata)
-            self.impick.set_axes(self.eps_r.get(), self.cmap.get())
-            self.impick.update_bg()
-            self.wvpick.set_vars()
-            self.wvpick.clear()
-            self.wvpick.set_data(self.rdata)
+        # prompt save warning if picks exist
+        if self.impick.saveWarning() == True:
+            # select input file
+            if "linux" in self.os or "win" in self.os:
+                temp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select data file",filetypes = (("all files",".*"),("hd5f files", ".mat .h5"),("segy files", ".sgy"),("image file", ".img"),("gssi files",".DZT")))
+            else:
+                temp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select data file")
+            # if input selected, clear impick canvas, ingest data and pass to impick
+            if temp_loadName:
+                self.f_loadName = temp_loadName
+                self.f_saveName = ""
+                self.impick.clear_canvas()  
+                self.impick.set_vars()
+                self.impick.update_option_menu()
+                # ingest the data
+                self.igst = ingest(self.f_loadName.split(".")[-1])
+                self.rdata = self.igst.read(self.f_loadName, self.conf["navigation"]["navcrs"], self.conf["params"]["body"])
+                # return if no data ingested
+                if not self.rdata:
+                    return
+                self.impick.load(self.rdata)
+                self.impick.set_axes(self.eps_r.get(), self.cmap.get())
+                self.impick.update_bg()
+                self.wvpick.set_vars()
+                self.wvpick.clear()
+                self.wvpick.set_data(self.rdata)
 
-        # pass basemap to impick for plotting pick location
-        if self.map_loadName and self.basemap.get_state() == 1:
-            self.basemap.clear_nav()
-            self.basemap.set_nav(self.f_loadName, self.rdata.navdf, self.conf["navigation"]["navcrs"])
-            self.impick.get_basemap(self.basemap)            
+            # pass basemap to impick for plotting pick location
+            if self.map_loadName and self.basemap.get_state() == 1:
+                self.basemap.clear_nav()
+                self.basemap.set_nav(self.f_loadName, self.rdata.navdf, self.conf["navigation"]["navcrs"])
+                self.impick.get_basemap(self.basemap)            
 
 
     # save_loc is method to receieve the desired pick save location from user input
@@ -340,7 +343,6 @@ class mainGUI(tk.Frame):
             # get updated pick_dict from wvpick and pass back to impick
             utils.export_pk_csv(self.f_saveName, self.rdata, self.eps_r.get(), self.conf["params"]["amp"])
             self.impick.save(self.f_saveName, self.eps_r.get(), self.cmap.get(), self.figSize.get().split(","))
-            self.f_saveName = ""
 
 
     # map_loc is a method to get the desired basemap location and initialize
@@ -372,7 +374,6 @@ class mainGUI(tk.Frame):
             # add pick annotations
             self.impick.add_pickLabels()
             self.impick.update_bg()
-            self.impick.blit()
             self.impick.update_option_menu()
 
 
@@ -385,7 +386,6 @@ class mainGUI(tk.Frame):
             # add pick annotations
             self.impick.add_pickLabels()
             self.impick.update_bg()
-            self.impick.blit()
             self.impick.update_option_menu()
 
 
@@ -403,12 +403,12 @@ class mainGUI(tk.Frame):
             self.impick.set_pickState(False,surf="surface")
             self.impick.pick_interp(surf = "surface")
             self.impick.plot_picks(surf = "surface")
-            self.impick.blit()
+            self.impick.update_bg()
 
 
     # next_loc is a method to get the filename of the next data file in the directory then call impick.load()
     def next_loc(self):
-        if self.tab == "profile" and self.f_loadName and self.impick.nextSave_warning() == True:
+        if self.tab == "profile" and self.f_loadName and self.impick.saveWarning() == True:
             # get index of crurrently displayed file in directory
             file_path = self.f_loadName.rstrip(self.f_loadName.split("/")[-1])
             file_list = []
@@ -426,6 +426,7 @@ class mainGUI(tk.Frame):
             # check if more files exist in directory following current file
             if file_index <= (len(file_list) - 1):
                 self.f_loadName = file_list[file_index]
+                self.f_saveName = ""
                 self.impick.clear_canvas()
                 self.impick.set_vars()
                 self.impick.update_option_menu()
@@ -496,7 +497,6 @@ class mainGUI(tk.Frame):
                 self.impick.clear_picks(surf = "subsurface")
                 self.impick.plot_picks(surf = "subsurface")
                 self.impick.update_bg()
-                self.impick.blit()
                 self.impick.update_option_menu()
                 self.wvpick.set_vars()
                 self.wvpick.clear()
@@ -504,12 +504,10 @@ class mainGUI(tk.Frame):
 
     # delete_datafilePicks is a method to clear subsurface picks saved to the data file
     def delete_datafilePicks(self):
-            if (self.rdata["num_file_pick_lyr"] > 0) and (tk.messagebox.askokcancel("warning", "delte data file subsurface picks?", icon = "warning") == True):
+            if self.f_loadName and tk.messagebox.askokcancel("warning", "delte any existing data file subsurface picks?", icon = "warning") == True:
+                utils.delete_savedPicks(self.f_loadName)
                 self.impick.remove_imported_picks()
                 self.impick.update_bg()
-                self.impick.blit()
-                utils.delete_savedPicks(self.f_loadName, self.rdata["num_file_pick_lyr"])
-                self.rdata["num_file_pick_lyr"] = 0
 
 
     # processing tools

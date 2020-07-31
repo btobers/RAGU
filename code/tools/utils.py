@@ -120,9 +120,10 @@ def remove_outliers(array):
 
 
 # delete_savedPicks is a method to clear saved picks from an hdf5 data file
-def delete_savedPicks(fpath, num_file_pick_lyr):
+def delete_savedPicks(fpath):
     if fpath.endswith("h5"):
         f =  h5py.File(fpath, "a")
+        num_file_pick_lyr = len(fnmatch.filter(f["drv"]["pick"].keys(), "twtt_subsurf*"))
         for _i in range(num_file_pick_lyr):
             del f["drv/pick"]["twtt_subsurf" + str(_i)]
         f.close()

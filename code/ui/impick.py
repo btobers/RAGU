@@ -622,9 +622,8 @@ class impick(tk.Frame):
                 ann.set_visible(False)
 
 
-    # remove_imported_picks is a method to remove the imported picks from the image
+    # remove_imported_picks is a method to remove any imported data file picks from the image
     def remove_imported_picks(self):
-        # get number of plotted lines
         if len(self.ax.lines) > 4:
             for _i in range(len(self.ax.lines) - 4):
                 self.ax.lines[-1].remove()
@@ -788,8 +787,8 @@ class impick(tk.Frame):
         self.fig.canvas.blit(self.ax.bbox)
 
 
-    # nextSave_warning is a method which checks if picks exist or if the user would like to discard existing picks before moving to the next track
-    def nextSave_warning(self):
+    # saveWarning is a method which checks if picks exist or if the user would like to discard existing picks before moving to the next track
+    def saveWarning(self):
         # check if picks have been made and saved
         if ((self.get_subsurfPickFlag() == True) or (self.surf_pickFlag == True)) and (self.f_saveName == ""):
             if tk.messagebox.askyesno("Warning", "Load next track without saving picks?", icon = "warning") == True:
