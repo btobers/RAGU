@@ -11,24 +11,36 @@
 ## Description
 NOSEpick is an open source GUI package developed to interpret radar sounding data, written in Python 3. This was originally developed to work with NASA's Operation IceBridge Alaska radar sounding data. NOSEpick is also capable of work with SHARAD data acquired onboard NASA's Mars Reconnaissance Orbiter (Reduced Data Record of Radar Backscatter Power (USRDR) & Geographic, Geometric, and Ionospheric Properties (USGEOM) data available at https://pds-geosciences.wustl.edu/missions/mro/sharad.htm). GSSI data can also be interpreted with NOSEpick.
 
-- *main.py* is run to begin the NOSEpick app
-- *config.py* contains user-specified configuration file paths necessary to run the NOSEpick app
-- *constants.py* contains uglobal constants
-- *gui.py* initializes the graphical user-interface tools and sets up the app
-- *ingester.py* is used to ingest radar data
-- *readgssi.py* is used to parse gssi data (pulled from https://github.com/iannesbitt/readgssi)
-- *imPick.py* handles the image picking portion of the app
-- *wvPick.py* handles the wave picking optimization portion of the app
-- *basemap.py* handles the basemap portion of the app
-- *nav.py* handles navigation data and nav coordinate transformations
-- *utils.py* contains a set of utility functions utilized by the app
-- *nose_env.yml* contains list of the dependencies
+- *config.ini* contains user-specified configuration file paths and information necessary to run the NOSEpick app
+- *main.py* is run to start the NOSEpick app
+- *ui/gui.py* handles the graphical user-interface and sets up the app
+- *ui/impick.py* handles profile-view, radargram image picking
+- *ui/wvpick.py* handles waveform-view picking optimization
+- *ui/basemap.py* handles the basemap
+- *radar/* contains radar data object information
+- *radar/processing.py* performs simple user-specified radar data processing
+- *ingest/* hadnles radar data ingest
+- *nav/navparse.py* is used to parse radar gps data into the appropriate format and perform any necessary coordinate transformations
+- *nav/gps.py*  is used to read and parse raw gps nmea strings into the appropriate format
+- *tools/utils.py* contains a set of utility functions utilized by the app
+- *tools/constants.py* contains uglobal constants
+- *nose_env.yml* contains a list of NOSEpick dependencies
+
+## Dependencies
+- tkinter
+- matplotlib
+- numpy
+- scipy
+- pandas
+- pyproj
+- rasterio
+- h5py
 
 To create a conda environment with the required dependencies, run the following command:
 ```
 $ conda env create -f nose_env.yml
 ```
-    
+
 ## Running NOSEpick
 Prior to running NOSEpick, set appropriate data paths in *config.py*
 

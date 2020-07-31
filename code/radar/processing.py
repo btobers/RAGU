@@ -1,10 +1,11 @@
-### Imports ###
+### imports ###
 import numpy as np
 import numpy.matlib as matlib
 import scipy.interpolate as interp
 import scipy.signal as signal
-from tqdm import tqdm
-
+"""
+NOSEpick radar data processing tools
+"""
 
 def dewow(data,window):
     """
@@ -35,7 +36,7 @@ def dewow(data,window):
         newdata[0:halfwid+1,:] = data[0:halfwid+1,:]-avgsmp
 
         # for each sample in the middle
-        for smp in tqdm(range(halfwid,totsamps-halfwid+1)):
+        for smp in range(halfwid,totsamps-halfwid+1):
             winstart = int(smp - halfwid)
             winend = int(smp + halfwid)
             avgsmp = np.matrix.mean(data[winstart:winend+1,:],0)
@@ -80,7 +81,7 @@ def remMeanTrace(data,ntraces):
         
         # For each trace in the middle
 
-        for tr in tqdm(range(halfwid,tottraces-halfwid+1)):   
+        for tr in range(halfwid,tottraces-halfwid+1):   
             winstart = int(tr - halfwid)
             winend = int(tr + halfwid)
             avgtr=np.matrix.mean(data[:,winstart:winend+1],1)                

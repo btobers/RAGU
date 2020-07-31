@@ -3,13 +3,15 @@ import numpy as np
 import tkinter as tk
 import sys, h5py, fnmatch
 from tools.constants import *
+"""
+utility functions for NOSEpick GUI
+"""
 
-# a set of utility functions for NOSEpick GUI
-# need to clean up this entire utility at some point
 def export_pk_csv(f_saveName, rdata, eps_r, amp_out = False):
     # f_saveName is the path for where the exported csv pick file should be saved [str]
-    # data is the data file structure [dict]
+    # rdata object
     # eps_r is a value for the dielectric constant used to calculate ice thickness based on EM wave speed [float]
+    # amp_out dictates whether or not to export amplitude of picks [bool]
     v = C/(np.sqrt(eps_r))                      # wave veloity
 
     trace = np.arange(rdata.tnum)               # array to hold trace number
@@ -28,7 +30,7 @@ def export_pk_csv(f_saveName, rdata, eps_r, amp_out = False):
         surf = rdata.pick.current.surf
         twtt_surf = sample2twtt(surf, rdata.dt)
 
-    # iterate through subsurf_pick_dict layers adding data to export arrays
+    # iterate through pick segments adding data to export arrays
     for _i in rdata.pick.current.subsurf.keys():
         picked_traces = np.where(~np.isnan(rdata.pick.current.subsurf[str(_i)]))[0]
 
