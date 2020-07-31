@@ -11,4 +11,4 @@ testData/
 *.pyc
 
 # Don't update config file
-config.py
+config.ini
