@@ -1,6 +1,7 @@
 # NOSEpick
 ## Nearly Optimal Subsurface Extractor GUI
 ### Authors: Brandon Tober and Michael Christoffersen
+[![DOI](https://zenodo.org/badge/193940796.svg)](https://zenodo.org/badge/latestdoi/193940796)
 
 <p align="center">
   <img src="recs/NOSEpick.png" height="200"><br>
