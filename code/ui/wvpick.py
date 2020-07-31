@@ -13,7 +13,6 @@ mpl.use("TkAgg")
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 
-
 class wvpick(tk.Frame):
     # wvpick is a class to optimize the picking of horizons from radar data
     def __init__(self, parent, *args, **kwargs):

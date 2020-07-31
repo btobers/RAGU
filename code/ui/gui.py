@@ -338,8 +338,8 @@ class mainGUI(tk.Frame):
             self.end_surf_pick()
             self.end_subsurf_pick()
             # get updated pick_dict from wvpick and pass back to impick
-            self.impick.set_pickDict(self.wvpick.get_pickDict())
-            self.impick.save(self.f_saveName, self.eps_r.get(), self.conf["params"]["amp"], self.cmap.get(), self.figSize.get().split(","))
+            utils.export_pk_csv(self.f_saveName, self.rdata, self.eps_r.get(), self.conf["params"]["amp"])
+            self.impick.save(self.f_saveName, self.cmap.get(), self.figSize.get().split(","))
             self.f_saveName = ""
 
 

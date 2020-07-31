@@ -1,14 +1,13 @@
-### IMPORTS ###
+### imports ###
 import numpy as np
 import tkinter as tk
-import sys, h5py, geopandas
+import sys, h5py
 from tools.constants import *
 ### add shapefile export using geopandas ###
 
-
 # a set of utility functions for NOSEpick GUI
 # need to clean up this entire utility at some point
-def savePick(rdata, eps_r, amp_out = False, f_saveName):
+def export_pk_csv(f_saveName, rdata, eps_r, amp_out = False):
     # fpath is the data file path [str]
     # f_saveName is the path for where the exported csv pick file should be saved [str]
     # data is the data file structure [dict]
@@ -20,19 +19,26 @@ def savePick(rdata, eps_r, amp_out = False, f_saveName):
     lon = rdata.navdf["lon"]                 # array to hold longitude
     lat = rdata.navdf["lat"]                   # array to hold latitude
     alt = rdata.navdf["elev"]              # array to hold aircraft elevation
-    twtt_surf = rdata.pick.current.twtt_surf               # array to hold twtt to surface below nadir position
     elev_gnd = rdata.elev_gnd                       # array to hold ground elevation beneath aircraft sampled from lidar pointcloud
-    surf = rdata.pick.current.surf                         # array to hold surface index
-    subsurf_idx_pk = np.repeat(np.nan, rdata.tnum)    # array to hold indeces of picks
+    subsurf_pk = np.repeat(np.nan, rdata.tnum)    # array to hold indeces of picks
+
+    # if not current surface pick, use existing
+    if np.isnan(rdata.pick.current.surf).all():
+        twtt_surf = rdata.pick.existing.twtt_surf
+        surf_ = twtt2sample(twtt_surf, radar.dt)
+
+    else:
+        surf = rdata.pick.current.surf
+        twtt_surf = sample2twtt(surf, rdata.dt)
 
     # iterate through subsurf_pick_dict layers adding data to export arrays
     for _i in range(len(subsurf_pick_dict)):
         picked_traces = np.where(~np.isnan(rdata.pick.current.subsurf[str(_i)]))[0]
 
-        subsurf_idx_pk[picked_traces] = rdata.pick.current.subsurf[str(_i)][picked_traces]
+        subsurf_pk[picked_traces] = rdata.pick.current.subsurf[str(_i)][picked_traces]
 
-    # convert pick idx to twtt
-    twtt_bed = subsurf_idx_pk * rdata.dt    
+    # convert pick sample to twtt
+    twtt_bed = subsurf_pk * rdata.dt    
 
     # calculate ice thickness
     thick = (((twtt_bed - twtt_surf) * v) / 2)
@@ -50,20 +56,19 @@ def savePick(rdata, eps_r, amp_out = False, f_saveName):
 
             idx = ~np.isnan(subsurf_idx_pk)
             subsurf_amp = np.repeat(np.nan, rdata.tnum)
-            subsurf_amp[idx] = data["amp"][subsurf_idx_pk[idx].astype(np.int),idx]
+            subsurf_amp[idx] = data["amp"][subsurf_pk[idx].astype(np.int),idx]
 
-            dstack = np.column_stack((trace,lon,lat,alt,elev_gnd,surf_idx,twtt_surf,surf_amp,subsurf_idx_pk,twtt_bed,subsurf_amp,elev_bed,thick))
-            header = "trace,lon,lat,alt,elev_gnd,surf_idx,twtt_surf,surf_amp,subsurf_idx_pk,twtt_bed,subsurf_amp,elev_bed,thick"
+            dstack = np.column_stack((trace,lon,lat,alt,elev_gnd,twtt_surf,surf_amp,twtt_bed,subsurf_amp,elev_bed,thick))
+            header = "trace,lon,lat,alt,elev_gnd,twtt_surf,surf_amp,twtt_bed,subsurf_amp,elev_bed,thick"
         else:
-            dstack = np.column_stack((trace,lon,lat,alt,elev_gnd,surf_idx,twtt_surf,subsurf_idx_pk,twtt_bed,elev_bed,thick))
-            header = "trace,lon,lat,alt,elev_gnd,surf_idx,twtt_surf,subsurf_idx_pk,twtt_bed,elev_bed,thick"
+            dstack = np.column_stack((trace,lon,lat,alt,elev_gnd,twtt_surf,twtt_bed,elev_bed,thick))
+            header = "trace,lon,lat,alt,elev_gnd,twtt_surf,twtt_bed,elev_bed,thick"
 
         if np.array_equal(alt, elev_gnd):
-            # remove alt if ground-based data
+            # remove alt if ground-based data and update header
             dstack = np.delete(dstack, 4, 1)
-            header = header.replace(",alt","")
+            header = header.replace(",alt","").replace("elev_gnd","elev")
 
-            
         np.savetxt(f_saveName, dstack, delimiter=",", newline="\n", fmt="%s", header=header, comments="")
 
         if fpath.endswith(".h5"):
@@ -130,44 +135,6 @@ def dict_compare(a, b):
             if nan_array_equal(a[str(_i)],b[str(_i)]):
                 return True
         return False
-
-
-def find_nearest(array, value):
-    # return index in array with value closest to the passed value
-    idx = (np.abs(array-value)).argmin()
-    return idx
-
-
-# interp array is a function which linearly interpolates over an array of data between unique values
-def interp_array(array):
-    # initialize list of xp and fp coordinates for np.interp
-    xp = []
-    fp = []
-    # initialize value to determine if preceeding array value equals the previous value
-    v = -9999
-    # iterate through array
-    # if current value is not equal to previous value append the current index to xp, and the value to fp
-    # update the value
-    for _i in range(len(array)):
-        if(array[_i] != v):
-            xp.append(_i)
-            fp.append(array[_i])
-            v = array[_i]
-
-    # update last value of xp
-    xp[-1] = len(array)-1
-    # declare indeces to interpolate over
-    x = np.arange(0, len(array))
-    # interpolate over array
-    array_interp = np.interp(x, xp, fp)
-    return array_interp
-
-
-# extend_array extends the tails of an array to a length of n by repeating tail values
-def extend_array(array, first, last, n):
-    array = np.append(np.repeat(array[0], first), array)
-    array = np.append(array, np.repeat(array[-1], n - last - 1))
-    return array
 
 
 # export the pick image

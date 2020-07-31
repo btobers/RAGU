@@ -9,14 +9,11 @@ radar data object wrapper, structure based on ImpDAR
 ### imports ###
 import numpy as np
 
-
 class radar(object):
     """
     the radar class holds the relevant information for a radar profile.
     keep track of processing steps with the flags attribute.
     """
-
-    # Now make some load/save methods that will work with the matlab format
     def __init__(self, fn):
         # basic data file attributes
         #: str, file name

@@ -4,17 +4,15 @@ impick class is a tkinter frame which handles the NOSEpick profile view and rada
 ### imports ###
 from tools import utils
 from ui import basemap
-import h5py
 import numpy as np
 import tkinter as tk
-import sys,os,time,copy,fnmatch
+import sys,os,time,fnmatch
 import matplotlib as mpl
 mpl.use("TkAgg")
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Cursor
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from scipy.interpolate import CubicSpline
-import copy
 
 class impick(tk.Frame):
     # impick is a class to pick horizons from a radar image
@@ -470,7 +468,8 @@ class impick(tk.Frame):
         if surf == "subsurface":
             if len(self.xln_subsurf) + np.count_nonzero(~np.isnan(self.xln_subsurf_saved)) > 0:
                 # set picking state to false
-                self.set_pickState(False,surf="subsurface")
+                if self.pick_state == True and self.pick_surf == "subsurface":
+                    self.set_pickState(False,surf="subsurface")
                 # delete pick lists
                 self.yln_subsurf_saved[:] = np.nan
                 self.xln_subsurf_saved[:] = np.nan
@@ -639,7 +638,7 @@ class impick(tk.Frame):
         # get number of plotted lines
         if len(self.ax.lines) > 4:
             for _i in range(len(self.ax.lines) - 4):
-                self.ax.lines[0].remove()
+                self.ax.lines[-1].remove()
 
 
     def show_data(self):
@@ -693,11 +692,6 @@ class impick(tk.Frame):
         # redraw canvas
         self.fig.canvas.draw()
         self.im_status.set("clut")
-
-
-    # # plot_bed is a method to plot bed picks
-    # def plot_bed(self, sample_array, lbl=None):
-    #     self.ax.plot(sample_array, label=lbl)
 
 
     # pick_vis is a method to toggle the visibility of picks
@@ -768,29 +762,28 @@ class impick(tk.Frame):
         self.cmap_update()
 
 
+    # temporarily disconnect the draw_event callback to avoid recursion
     def safe_draw(self):
-        """temporarily disconnect the draw_event callback to avoid recursion"""
         canvas = self.fig.canvas
         canvas.mpl_disconnect(self.draw_cid)
         canvas.draw()
         self.draw_cid = canvas.mpl_connect("draw_event", self.update_bg)
 
 
+    # hide plotted lines
     def hide_artists(self):
         for _i in self.ax.lines:
             _i.set_visible(False)
 
 
+    # show plotted lines
     def show_artists(self):
         for _i in self.ax.lines:
             _i.set_visible(True)
 
 
+    # when the figure is resized, hide picks, draw everything, and update the background.
     def update_bg(self, event=None):
-        """
-        when the figure is resized, hide picks, draw everything,
-        and update the background.
-        """
         self.hide_artists()
         self.safe_draw()
         self.axbg = self.dataCanvas.copy_from_bbox(self.ax.bbox)
@@ -798,11 +791,8 @@ class impick(tk.Frame):
         self.blit()
 
 
+    # update the figure, without needing to redraw the "axbg" artists.
     def blit(self):
-        """
-        update the figure, without needing to redraw the
-        "axbg" artists.
-        """
         self.fig.canvas.restore_region(self.axbg)
         for _i in self.ax.lines:
             self.ax.draw_artist(_i)
@@ -860,6 +850,7 @@ class impick(tk.Frame):
             self.yln_subsurf_saved[idx] = self.rdata.pick.current.subsurf[str(self.pick_segment - 1)][idx]
 
 
+    # set axis labels
     def set_axes(self, eps_r, cmap):
         self.ax.set_xlim(0, self.rdata.tnum)
         self.ax.set_ylim(self.rdata.snum, 0)
@@ -913,9 +904,8 @@ class impick(tk.Frame):
 
 
     # save is a method to receive the pick save location from gui and save using utils.save
-    def save(self, f_saveName, eps_r, amp_out, cmap, figSize):
+    def save(self, f_saveName, cmap, figSize):
         self.f_saveName = f_saveName
-        utils.savePick(self.rdata, eps_r, amp_out, self.f_saveName)
         # zoom out to full rgram extent to save pick image
         self.set_axes(eps_r, cmap)
         if self.im_status.get() =="clut":
