@@ -67,17 +67,9 @@ def read(fpath, navcrs, body):
 
     # read in gps data if exists
     infile_gps = fpath.replace(".DZT",".DZG")
-    if os.path.isfile(infile_gps):
-        # create nav object to hold lon, lat, elev
-        rdata.navdf = navparse.getnav_gssi(infile_gps, rdata.tnum, navcrs, body)
 
-    else: 
-        # if no gps data file, use nan arrays
-        print("Warning: no associated nav data found")
-        rdata.navdf["lon"] = np.nan
-        rdata.navdf["lat"] = np.nan
-        rdata.navdf["elev"] = np.nan
-        rdata.navdf["dist"] = np.nan
+    # create nav object to hold lon, lat, elev
+    rdata.navdf = navparse.getnav_gssi(infile_gps, rdata.tnum, navcrs, body)
 
     # for ground-based GPR, elev_gnd is the same as GPS recorded elev
     rdata.elev_gnd = rdata.navdf["elev"]
