@@ -53,14 +53,16 @@ def read(fpath, navcrs, body):
 
         # read in data - need to transpose to get correct shape
         rdata.dat = np.fromfile(f, dtype).reshape(-1,(rdata.snum*rdata.chan)).T
-        rdata.tnum = rdata.dat.shape[1]
 
-    # convert gssi signed int amplitude to floating point for displaying
-    rdata.proc_data = rdata.dat.astype(np.float)
     # ensure data file is not empty
     if not np.any(rdata.dat):
         print("gssi_read error: file contains no radar data")
         return
+
+    rdata.tnum = rdata.dat.shape[1]
+
+    # convert gssi signed int amplitude to floating point for displaying
+    rdata.proc_data = rdata.dat.astype(np.float)
 
     rdata.clut = np.ones(rdata.dat.shape)                   # place holder for clutter data
     rdata.surf = np.repeat(np.nan, rdata.tnum)              # place holder for surface index
