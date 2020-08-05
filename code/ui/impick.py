@@ -188,8 +188,21 @@ class impick(tk.Frame):
         self.ax.set_title(self.rdata.fpath.split("/")[-1].split(".")[0])
         self.ax.set(xlabel = "trace", ylabel = "sample")
 
+        # Get data display window size in inches
+        w,h = self.fig.get_size_inches()*self.fig.dpi
+
+        # Choose pyramid
+        p = -1
+        for i in range(len(self.rdata.dPyramid)-1, -1, -1):
+            if(self.rdata.dPyramid[i].shape[0] > h):
+                p = i
+                break
+
+        print(i)
+        
         # calculate power of rdata
-        Pow_data = np.power(self.rdata.proc_data,2)
+        #Pow_data = np.power(self.rdata.proc_data,2)
+        Pow_data = np.power(self.rdata.dPyramid[p],2)
         # replace zero power values with nan
         Pow_data[Pow_data == 0] = np.nan
         # dB it
@@ -200,7 +213,8 @@ class impick(tk.Frame):
         # if in lin space, convert to dB
         if (np.nanmax(np.abs(self.rdata.clut)) < 1) or (~np.all(self.rdata.clut == 1)):
             # calculate power (squared amplitude)
-            Pow_clut = np.power(self.rdata.clut,2)
+            #Pow_clut = np.power(self.rdata.clut,2)
+            Pow_clut = np.power(self.rdata.cPyramid[p],2)
             # replace zero power values with nan
             Pow_clut[Pow_clut == 0] = np.nan
             # dB it

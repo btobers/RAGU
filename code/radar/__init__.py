@@ -1,12 +1,9 @@
 # NOSEpick - Nearly Optimal Subsurface Extractor
 #
-# dopyright © 2020 btobers <tobers.brandon@gmail.com>
+# copyright © 2020 btobers <tobers.brandon@gmail.com>
 #
 # distributed under terms of the GNU GPL3.0 license.
-"""
-radar data object wrapper, structure based on ImpDAR
-"""
-### imports ###
+
 import numpy as np
 
 class radar(object):
@@ -53,6 +50,16 @@ class radar(object):
 
         return
 
+    def genPyramids(self):
+        # Only downsample in fast time to make pick export easier
+        self.dPyramid = []
+        self.cPyramid = []
+
+        for i in range(4):
+            self.dPyramid.append(self.proc_data[::2**i,:])
+            self.cPyramid.append(self.clut[::2**i,:])
+
+        return
 
 class pick(object):
     """

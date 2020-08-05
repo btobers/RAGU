@@ -55,6 +55,9 @@ def read_h5(fpath, navcrs, body):
     else:
         rdata.clut = np.ones(rdata.dat.shape)                            # empty clutter array if no sim exists
     
+    # Generate image pyramids for dynamic rendering
+    rdata.genPyramids()
+
     # read in existing surface picks
     if "twtt_surf" in f["drv"]["pick"].keys():
         rdata.pick.existing.twtt_surf =f["drv"]["pick"]["twtt_surf"][:]
