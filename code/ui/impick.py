@@ -257,7 +257,7 @@ class impick(tk.Frame):
             x,y = zip(*self.rdata.pick.existing.twtt_subsurf.items())
             y = np.hstack(y)
             x = np.repeat(np.arange(self.rdata.tnum), count)
-            self.existing_subsurf_ln = self.ax.plot(x, utils.twtt2sample(y, self.rdata.dt), "b.")
+            self.existing_subsurf_ln = self.ax.plot(x, utils.twtt2sample(y, self.rdata.dt), "b")
 
         # initialize lines to hold current pick segments
         self.tmp_surf_ln, = self.ax.plot(self.xln_surf,self.yln_surf,"mx")                          # empty line for surface pick segment
@@ -321,16 +321,19 @@ class impick(tk.Frame):
     # addseg is a method to for user to generate picks
     def addseg(self, event):
         if self.rdata.fpath:
-            # store pick trace idx as integer
-            self.pick_trace = int(event.xdata)
-            # store pick sample idx as integer
-            pick_sample = int(event.ydata)
+            # store pick trace idx as nearest integer
+            self.pick_trace = int(round(event.xdata))
+            # store pick sample idx as nearest integer
+            pick_sample = int(round(event.ydata))
+            # ensure pick is within radargram bounds
+            if self.pick_trace < 0 or self.pick_trace > self.rdata.tnum or pick_sample < 0 or pick_sample > self.rdata.snum:
+                return
             # check if picking state is a go
             if self.pick_state == True:
                 # restrict subsurface picks to fall below surface
                 if (self.pick_surf == "subsurface"):# and ((pick_sample > self.rdata["surf_idx"][self.pick_trace]) or (np.isnan(self.rdata["surf_idx"][self.pick_trace]))):
                     # determine if trace already contains pick - if so, replace with current sample
-                    
+
                     if self.pick_trace in self.xln_subsurf:
                         self.yln_subsurf[self.xln_subsurf.index(self.pick_trace)] = pick_sample
                         return
