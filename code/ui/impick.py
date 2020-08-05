@@ -326,7 +326,8 @@ class impick(tk.Frame):
             # store pick sample idx as nearest integer
             pick_sample = int(round(event.ydata))
             # ensure pick is within radargram bounds
-            if self.pick_trace < 0 or self.pick_trace > self.rdata.tnum or pick_sample < 0 or pick_sample > self.rdata.snum:
+            if (self.pick_trace < 0) or (self.pick_trace > self.rdata.tnum - 1) or \
+                (pick_sample < 0) or (pick_sample > self.rdata.snum - 1):
                 return
             # check if picking state is a go
             if self.pick_state == True:
@@ -336,24 +337,24 @@ class impick(tk.Frame):
 
                     if self.pick_trace in self.xln_subsurf:
                         self.yln_subsurf[self.xln_subsurf.index(self.pick_trace)] = pick_sample
-                        return
 
-                    # if pick falls before previous pix, prepend to pick list
-                    if (len(self.xln_subsurf) >= 1) and (self.pick_trace < self.xln_subsurf[0]):
-                        self.xln_subsurf.insert(0, self.pick_trace)
-                        self.yln_subsurf.insert(0, pick_sample)
-
-                    # if pick falls in between previous picks, insert in proper location of pick list
-                    elif (len(self.xln_subsurf) >= 1) and (self.pick_trace > self.xln_subsurf[0]) and (self.pick_trace < self.xln_subsurf[-1]):
-                        # find proper index to add new pick 
-                        idx = utils.list_insert_idx(self.xln_subsurf, self.pick_trace)   
-                        self.xln_subsurf = self.xln_subsurf[:idx] + [self.pick_trace] + self.xln_subsurf[idx:] 
-                        self.yln_subsurf = self.yln_subsurf[:idx] + [pick_sample] + self.yln_subsurf[idx:] 
-
-                    # else append new pick to end of pick list
                     else:
-                        self.xln_subsurf.append(self.pick_trace)
-                        self.yln_subsurf.append(pick_sample)
+                        # if pick falls before previous pix, prepend to pick list
+                        if (len(self.xln_subsurf) >= 1) and (self.pick_trace < self.xln_subsurf[0]):
+                            self.xln_subsurf.insert(0, self.pick_trace)
+                            self.yln_subsurf.insert(0, pick_sample)
+
+                        # if pick falls in between previous picks, insert in proper location of pick list
+                        elif (len(self.xln_subsurf) >= 1) and (self.pick_trace > self.xln_subsurf[0]) and (self.pick_trace < self.xln_subsurf[-1]):
+                            # find proper index to add new pick 
+                            idx = utils.list_insert_idx(self.xln_subsurf, self.pick_trace)   
+                            self.xln_subsurf = self.xln_subsurf[:idx] + [self.pick_trace] + self.xln_subsurf[idx:] 
+                            self.yln_subsurf = self.yln_subsurf[:idx] + [pick_sample] + self.yln_subsurf[idx:] 
+
+                        # else append new pick to end of pick list
+                        else:
+                            self.xln_subsurf.append(self.pick_trace)
+                            self.yln_subsurf.append(pick_sample)
 
                     # set self.pick data to plot pick on image
                     self.tmp_subsurf_ln.set_data(self.xln_subsurf, self.yln_subsurf)
@@ -362,24 +363,24 @@ class impick(tk.Frame):
                     # determine if trace already contains pick - if so, replace with current sample
                     if self.pick_trace in self.xln_surf:
                         self.yln_surf[self.xln_surf.index(self.pick_trace)] = pick_sample
-                        return
-
-                    # if pick falls before previous pix, prepend to pick list
-                    if (len(self.xln_surf) >= 1) and (self.pick_trace < self.xln_surf[0]):
-                        self.xln_surf.insert(0, self.pick_trace)
-                        self.yln_surf.insert(0, pick_sample)
-
-                    # if pick falls in between previous picks, insert in proper location of pick list
-                    elif (len(self.xln_surf) >= 1) and (self.pick_trace > self.xln_surf[0]) and (self.pick_trace < self.xln_surf[-1]):
-                        # find proper index to add new pick 
-                        idx = utils.list_insert_idx(self.xln_surf, self.pick_trace)   
-                        self.xln_surf = self.xln_surf[:idx] + [self.pick_trace] + self.xln_surf[idx:] 
-                        self.yln_surf = self.yln_surf[:idx] + [pick_sample] + self.yln_surf[idx:] 
-
-                    # else append new pick to end of pick list
+                    
                     else:
-                        self.xln_surf.append(self.pick_trace)
-                        self.yln_surf.append(pick_sample)
+                        # if pick falls before previous pix, prepend to pick list
+                        if (len(self.xln_surf) >= 1) and (self.pick_trace < self.xln_surf[0]):
+                            self.xln_surf.insert(0, self.pick_trace)
+                            self.yln_surf.insert(0, pick_sample)
+
+                        # if pick falls in between previous picks, insert in proper location of pick list
+                        elif (len(self.xln_surf) >= 1) and (self.pick_trace > self.xln_surf[0]) and (self.pick_trace < self.xln_surf[-1]):
+                            # find proper index to add new pick 
+                            idx = utils.list_insert_idx(self.xln_surf, self.pick_trace)   
+                            self.xln_surf = self.xln_surf[:idx] + [self.pick_trace] + self.xln_surf[idx:] 
+                            self.yln_surf = self.yln_surf[:idx] + [pick_sample] + self.yln_surf[idx:] 
+
+                        # else append new pick to end of pick list
+                        else:
+                            self.xln_surf.append(self.pick_trace)
+                            self.yln_surf.append(pick_sample)
 
                     # set self.tmp_surf_ln data to plot pick on image
                     self.tmp_surf_ln.set_data(self.xln_surf, self.yln_surf)
