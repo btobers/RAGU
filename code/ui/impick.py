@@ -63,24 +63,22 @@ class impick(tk.Frame):
         self.pickLabel.pack(side="right")
         tk.Label(toolbarFrame, text="\t").pack(side="right")
 
+        # create matplotlib figure data canvas
         self.fig = mpl.figure.Figure()
         self.fig.patch.set_facecolor("#d9d9d9")
         self.dataCanvas = FigureCanvasTkAgg(self.fig, self.parent)
-
-        # add toolbar to plot
-        self.toolbar = NavigationToolbar2Tk(self.dataCanvas, toolbarFrame)
-        self.toolbar.update()
-        self.click = self.fig.canvas.mpl_connect("button_press_event", self.onpress)
-        self.unclick = self.fig.canvas.mpl_connect("button_release_event", self.onrelease)
+        self.ax = self.fig.add_subplot(1,1,1)
 
         # add axes for colormap sliders and reset button - leave invisible until rdata loaded
         self.ax_cmax = self.fig.add_axes([0.95, 0.55, 0.01, 0.30])
-        self.ax_cmax.set_visible(False)
         self.ax_cmin  = self.fig.add_axes([0.95, 0.18, 0.01, 0.30])
-        self.ax_cmin.set_visible(False)
         self.reset_ax = self.fig.add_axes([0.935, 0.11, 0.04, 0.03])
-        self.reset_ax.set_visible(False)
-        self.ax = self.fig.add_subplot(111)
+     
+        # create colormap sliders and reset button - initialize for data image
+        self.s_cmin = mpl.widgets.Slider(self.ax_cmin, "min", 0, 1, orientation="vertical")
+        self.s_cmax = mpl.widgets.Slider(self.ax_cmax, "max", 0, 1, orientation="vertical")
+        self.cmap_reset_button = mpl.widgets.Button(self.reset_ax, "reset", color="lightgoldenrodyellow")
+        self.cmap_reset_button.on_clicked(self.cmap_reset)
 
         # initiate a twin axis that shows twtt
         self.secaxy0 = self.ax.twinx()
@@ -99,23 +97,23 @@ class impick(tk.Frame):
         self.secaxx.xaxis.set_label_position("bottom")
         self.secaxx.spines["bottom"].set_position(("outward", 42))
 
+
         # set zorder of secondary axes to be behind main axis (self.ax)
         self.secaxx.set_zorder(-100)
         self.secaxy0.set_zorder(-100)
         self.secaxy1.set_zorder(-100)
 
-        self.ax.set_visible(False)
+        # add toolbar to plot
+        self.toolbar = NavigationToolbar2Tk(self.dataCanvas, toolbarFrame)
+        self.toolbar.update()
 
-        # connect xlim_change with event to update image background for blitting
+        # canvas callbacks
+        self.click = self.fig.canvas.mpl_connect("button_press_event", self.onpress)
+        self.unclick = self.fig.canvas.mpl_connect("button_release_event", self.onrelease)
         self.draw_cid = self.fig.canvas.mpl_connect("draw_event", self.update_bg)
+        self.resize_cid = self.fig.canvas.mpl_connect("resize_event", self.drawData)
 
-        # create colormap sliders and reset button - initialize for data image
-        self.s_cmin = mpl.widgets.Slider(self.ax_cmin, "min", 0, 1, orientation="vertical")
-        self.s_cmax = mpl.widgets.Slider(self.ax_cmax, "max", 0, 1, orientation="vertical")
-        self.cmap_reset_button = mpl.widgets.Button(self.reset_ax, "reset", color="lightgoldenrodyellow")
-        self.cmap_reset_button.on_clicked(self.cmap_reset)
-
-        
+       
     # set_vars is a method to set impick variables
     def set_vars(self):
         self.f_saveName = ""
@@ -125,6 +123,7 @@ class impick(tk.Frame):
 
         self.pick_state = False
         self.pick_segment = 0
+        self.pyramid = 0
 
         self.data_cmin = None
         self.data_cmax = None
@@ -178,73 +177,31 @@ class impick(tk.Frame):
         # receive the rdata
         self.rdata = rdata
 
-        # set scalebar axes now that data displayed
-        self.ax.set_visible(True)
-        self.ax_cmax.set_visible(True)
-        self.ax_cmin.set_visible(True)
-        self.reset_ax.set_visible(True)
-        
+        # pack the datacanvas in data frame
+        self.dataCanvas.get_tk_widget().pack(in_=self.dataFrame, side="bottom", fill="both", expand=1) 
+      
         # set figure title and axes labels
         self.ax.set_title(self.rdata.fpath.split("/")[-1].split(".")[0])
         self.ax.set(xlabel = "trace", ylabel = "sample")
 
-        # Get data display window size in inches
-        w,h = self.fig.get_size_inches()*self.fig.dpi
+        # initialize data and clutter images with np.ones - set data in drawData
+        self.im_data  = self.ax.imshow(np.ones((100,100)), cmap="Greys_r", aspect="auto", extent=[0, 
+                        self.rdata.tnum, self.rdata.snum, 0])
+        self.im_clut  = self.ax.imshow(np.ones((100,100)), cmap="Greys_r", aspect="auto", extent=[0, 
+                        self.rdata.tnum, self.rdata.snum, 0])
 
-        # Choose pyramid
-        p = -1
-        for i in range(len(self.rdata.dPyramid)-1, -1, -1):
-            if(self.rdata.dPyramid[i].shape[0] > h):
-                p = i
-                break
+        ### get radar and clut array bounds for setting image color limits - just doing this once based off original arrays, not pyramids ###
+        # get clim bounds - take 10th percentile for min, ignore nd values
+        self.mindB_data = np.floor(np.percentile(self.rdata.proc[self.rdata.proc != -9999],10))
+        self.mindB_clut = np.floor(np.percentile(self.rdata.clut[self.rdata.clut != -9999],10))
+        self.maxdB_data = np.nanmax(self.rdata.proc)
+        self.maxdB_clut = np.nanmax(self.rdata.clut)
 
-        print(i)
-        
-        # calculate power of rdata
-        #Pow_data = np.power(self.rdata.proc_data,2)
-        Pow_data = np.power(self.rdata.dPyramid[p],2)
-        # replace zero power values with nan
-        Pow_data[Pow_data == 0] = np.nan
-        # dB it
-        self.dB_data = np.log10(Pow_data)
-
-        # get clutter data in dB
-        # check if clutter data is stored in linear space or log space - lin space should have values less than 1
-        # if in lin space, convert to dB
-        if (np.nanmax(np.abs(self.rdata.clut)) < 1) or (~np.all(self.rdata.clut == 1)):
-            # calculate power (squared amplitude)
-            #Pow_clut = np.power(self.rdata.clut,2)
-            Pow_clut = np.power(self.rdata.cPyramid[p],2)
-            # replace zero power values with nan
-            Pow_clut[Pow_clut == 0] = np.nan
-            # dB it
-            self.dB_clut = np.log10(Pow_clut)
-        # if in log space, leave as is
-        else:
-            self.dB_clut = self.rdata.clut
-
-        # cut off rdata at 10th percentile to avoid extreme outliers - round down
-        self.mindB_data = np.floor(np.nanpercentile(self.dB_data,10))
-        self.mindB_clut = np.floor(np.nanpercentile(self.dB_clut,10))
-        self.maxdB_data = np.nanmax(self.dB_data)
-        self.maxdB_clut = np.nanmax(self.dB_clut)
-
-        # reset samples missing data to small negative value for color scale consistency
-        self.dB_data[np.isnan(self.dB_data)] = -9999
-        self.dB_clut[np.isnan(self.dB_clut)] = -9999
-
-        self.dataCanvas.get_tk_widget().pack(in_=self.dataFrame, side="bottom", fill="both", expand=1) 
-
-        # display image data for radargram and clutter sim
-        self.im_data  = self.ax.imshow(self.dB_data, cmap="Greys_r", aspect="auto", extent=[0, 
-                        self.rdata.tnum - 1, self.rdata.snum - 1, 0])
-        self.im_clut  = self.ax.imshow(self.dB_clut, cmap="Greys_r", aspect="auto", extent=[0, 
-                        self.rdata.tnum - 1, self.rdata.snum - 1, 0])
-        # update colormaps
+        # update color limits
         self.im_data.set_clim([self.mindB_data, self.maxdB_data])
         self.im_clut.set_clim([self.mindB_clut, self.maxdB_clut])
 
-        # set slider bounds
+        # set slider bounds - use data clim values upon initial load
         self.s_cmin.valmin = self.mindB_data - 10
         self.s_cmin.valmax = self.mindB_data + 10
         self.s_cmin.valinit = self.mindB_data
@@ -254,7 +211,7 @@ class impick(tk.Frame):
 
         self.update_slider()
 
-        # set clutter sim visibility to false
+        # # set clutter sim visibility to false
         self.im_clut.set_visible(False)
 
         # initialize arrays to hold saved picks
@@ -264,11 +221,11 @@ class impick(tk.Frame):
         self.yln_subsurf_saved = np.repeat(np.nan, self.rdata.tnum)
 
         # initialize lines to hold existing picks
-        if np.any(self.rdata.pick.existing.twtt_surf):
-            self.existing_surf_ln = self.ax.plot(np.arange(self.rdata.tnum), utils.twtt2sample(self.rdata.pick.existing.twtt_surf, self.rdata.dt), "c")
-        count = len(self.rdata.pick.existing.twtt_subsurf.items())
+        if np.any(self.rdata.pick.existing_twttSurf):
+            self.existing_surf_ln = self.ax.plot(np.arange(self.rdata.tnum), utils.twtt2sample(self.rdata.pick.existing_twttSurf, self.rdata.dt), "c")
+        count = len(self.rdata.pick.existing_twttSubsurf.items())
         if count > 0:
-            x,y = zip(*self.rdata.pick.existing.twtt_subsurf.items())
+            x,y = zip(*self.rdata.pick.existing_twttSubsurf.items())
             y = np.hstack(y)
             x = np.repeat(np.arange(self.rdata.tnum), count)
             self.existing_subsurf_ln = self.ax.plot(x, utils.twtt2sample(y, self.rdata.dt), "b")
@@ -281,10 +238,37 @@ class impick(tk.Frame):
 
         # update the canvas
         self.dataCanvas._tkcanvas.pack()
-        self.dataCanvas.draw()
+
+        # connect ylim_change with event to update image pyramiding based on zoom - have to do this on load, since clear_canvas removes axis callbacks
+        self.ylim_cid = self.ax.callbacks.connect("ylim_changed", self.drawData)
 
         # update toolbar to save axes extents
         self.toolbar.update()
+
+        self.drawData()
+
+
+    # method to draw radar data
+    def drawData(self, event=None):
+        # Get data display window size in inches
+        w,h = self.fig.get_size_inches()*self.fig.dpi
+        # choose pyramid
+        p = -1
+        for i in range(len(self.rdata.dPyramid)-1, -1, -1):
+            if(self.rdata.dPyramid[i].shape[0] > h):
+                p = i
+                break
+
+        # if ideal pyramid level changed, update image
+        if self.pyramid == p:
+            return
+        else:
+            self.pyramid = p
+
+            self.im_data.set_data(self.rdata.dPyramid[p])
+            self.im_clut.set_data(self.rdata.cPyramid[p])
+
+            self.dataCanvas.draw()
 
 
     # get_pickState is a method to return the current picking state
@@ -310,7 +294,7 @@ class impick(tk.Frame):
                     self.clear_last()
                 self.pickLabel.config(text="subsurface pick segment " + str(self.pick_segment) + ":\t active", fg="red")
                 # initialize pick index and twtt dictionaries for current picking layer
-                self.rdata.pick.current.subsurf[str(self.pick_segment)] = np.repeat(np.nan, self.rdata.tnum)
+                self.rdata.pick.current_subsurf[str(self.pick_segment)] = np.repeat(np.nan, self.rdata.tnum)
 
             elif self.pick_state == False and self.edit_flag == False:
                 if len(self.xln_subsurf) >=  2:
@@ -319,7 +303,7 @@ class impick(tk.Frame):
                 # if surface pick layer has only one pick, remove
                 else:
                     self.clear_last()
-                    del self.rdata.pick.current.subsurf[str(self.pick_segment)]
+                    del self.rdata.pick.current_subsurf[str(self.pick_segment)]
                     self.pickLabel.config(text="subsurface pick segment " + str(self.pick_segment) + ":\t inactive", fg="black")
 
             else:
@@ -337,6 +321,9 @@ class impick(tk.Frame):
         if self.rdata.fpath:
             # store pick trace idx as nearest integer
             self.pick_trace = int(round(event.xdata))
+            # handle picking of last trace - don't want to round up here
+            if self.pick_trace == self.rdata.tnum:
+                self.pick_trace -= 1
             # store pick sample idx as nearest integer
             pick_sample = int(round(event.ydata))
             # ensure pick is within radargram bounds
@@ -425,13 +412,13 @@ class impick(tk.Frame):
                     sample = cs(picked_traces).astype(int)
                     # add cubic spline output interpolation to pick dictionary - force output to integer for index of pick
                     if self.edit_flag == True:
-                        self.rdata.pick.current.subsurf[str(self.layerVar.get())][picked_traces] = sample
+                        self.rdata.pick.current_subsurf[str(self.layerVar.get())][picked_traces] = sample
                         # add pick interpolation to saved pick array
                         self.xln_subsurf_saved[picked_traces] = picked_traces
                         self.yln_subsurf_saved[picked_traces] = sample
                         self.edit_flag = False
                     else:
-                        self.rdata.pick.current.subsurf[str(self.pick_segment - 1)][picked_traces] = cs(picked_traces).astype(int)
+                        self.rdata.pick.current_subsurf[str(self.pick_segment - 1)][picked_traces] = cs(picked_traces).astype(int)
                         # add pick interpolation to saved pick array
                         self.xln_subsurf_saved[picked_traces] = picked_traces
                         self.yln_subsurf_saved[picked_traces] = sample    
@@ -444,7 +431,7 @@ class impick(tk.Frame):
                     picked_traces = np.arange(self.xln_surf[0], self.xln_surf[-1] + 1)
                     sample = cs(picked_traces).astype(int)
                     # input cubic spline output surface twtt array - force output to integer for index of pick
-                    self.rdata.pick.current.surf[picked_traces] = sample
+                    self.rdata.pick.current_surf[picked_traces] = sample
                     # add pick interpolation to saved pick array
                     self.xln_surf_saved[picked_traces] = picked_traces
                     self.yln_surf_saved[picked_traces] = sample
@@ -470,31 +457,23 @@ class impick(tk.Frame):
             self.saved_surf_ln.set_data(self.xln_surf_saved, self.yln_surf_saved)
 
 
-    def clear_picks(self, surf = None):
-        # clear all picks
-        if surf == "subsurface":
-            if len(self.xln_subsurf) + np.count_nonzero(~np.isnan(self.xln_subsurf_saved)) > 0:
-                # set picking state to false
-                if self.pick_state == True and self.pick_surf == "subsurface":
-                    self.set_pickState(False,surf="subsurface")
-                # delete pick lists
-                self.yln_subsurf_saved[:] = np.nan
-                self.xln_subsurf_saved[:] = np.nan
-                # clear current subsurf picks dictionary
-                self.rdata.pick.current.subsurf.clear()
-                self.rdata.pick.current.subsurf_opt.clear()
-                # reset pick segment increment to 0
-                self.pick_segment = 0
-                self.pickLabel.config(fg="#d9d9d9")
-                self.layerVar.set(self.pick_segment)
-                # remove pick annotations
-                for _i in self.ann_list:
-                    _i.remove()
-                del self.ann_list[:]
-
-        elif surf == "surface":
-            self.rdata.pick.current.surf.fill(np.nan)
-            self.surf_pickFlag = False
+    def clear_subsurfPicks(self):
+        # clear all subsurface picks
+        if len(self.xln_subsurf) + np.count_nonzero(~np.isnan(self.xln_subsurf_saved)) > 0:
+            # set picking state to false
+            if self.pick_state == True and self.pick_surf == "subsurface":
+                self.set_pickState(False,surf="subsurface")
+            # delete pick lists
+            self.yln_subsurf_saved[:] = np.nan
+            self.xln_subsurf_saved[:] = np.nan
+            # reset pick segment increment to 0
+            self.pick_segment = 0
+            self.pickLabel.config(fg="#d9d9d9")
+            self.layerVar.set(self.pick_segment)
+            # remove pick annotations
+            for _i in self.ann_list:
+                _i.remove()
+            del self.ann_list[:]
 
 
     def clear_last(self):
@@ -523,7 +502,7 @@ class impick(tk.Frame):
 
     def edit_pkLayer(self):
         layer = self.layerVar.get()
-        if (len(self.rdata.pick.current.subsurf) > 0) and (self.edit_flag == False) and (not ((self.pick_state == True) and (self.pick_surf == "subsurface") and (layer == self.pick_segment))) and (tk.messagebox.askokcancel("warning", "edit pick segment " + str(layer) + "?", icon = "warning") == True):
+        if (len(self.rdata.pick.current_subsurf) > 0) and (self.edit_flag == False) and (not ((self.pick_state == True) and (self.pick_surf == "subsurface") and (layer == self.pick_segment))) and (tk.messagebox.askokcancel("warning", "edit pick segment " + str(layer) + "?", icon = "warning") == True):
             # if another subsurface pick segment is active, end segment
             if (self.pick_state == True) and (self.pick_surf == "subsurface") and (layer != self.pick_segment):
                 self.set_pickState(False, surf="subsurface")
@@ -535,15 +514,15 @@ class impick(tk.Frame):
             self.pick_state = True
             self.pick_surf = "subsurface"
             # find indices of picked traces
-            picks_idx = np.where(~np.isnan(self.rdata.pick.current.subsurf[str(layer)]))[0]
+            picks_idx = np.where(~np.isnan(self.rdata.pick.current_subsurf[str(layer)]))[0]
             # return picked traces to xln list
             self.xln_subsurf = picks_idx[::100].tolist()
             # return picked samples to yln list
-            self.yln_subsurf = self.rdata.pick.current.subsurf[str(layer)][picks_idx][::100].tolist()
+            self.yln_subsurf = self.rdata.pick.current_subsurf[str(layer)][picks_idx][::100].tolist()
             # clear saved picks
             self.xln_subsurf_saved[picks_idx] = np.nan
             self.yln_subsurf_saved[picks_idx] = np.nan
-            self.rdata.pick.current.subsurf[str(layer)][picks_idx] = np.nan
+            self.rdata.pick.current_subsurf[str(layer)][picks_idx] = np.nan
             # reset plotted lines
             self.tmp_subsurf_ln.set_data(self.xln_subsurf, self.yln_subsurf)
             self.saved_subsurf_ln.set_data(self.xln_subsurf_saved, self.yln_subsurf_saved)
@@ -558,9 +537,9 @@ class impick(tk.Frame):
     def delete_pkLayer(self):
         layer = self.layerVar.get()
         # delete selected pick segment
-        if (len(self.rdata.pick.current.subsurf) > 0) and (tk.messagebox.askokcancel("warning", "delete pick segment " + str(layer) + "?", icon = "warning") == True):
+        if (len(self.rdata.pick.current_subsurf) > 0) and (tk.messagebox.askokcancel("warning", "delete pick segment " + str(layer) + "?", icon = "warning") == True):
             # if picking active and only one segment exists, clear all picks
-            if (self.pick_state == True) and (len(self.rdata.pick.current.subsurf) == 1):
+            if (self.pick_state == True) and (len(self.rdata.pick.current_subsurf) == 1):
                 self.clear_picks(surf = "subsurface")
                 self.plot_picks(surf = "subsurface")
 
@@ -575,14 +554,14 @@ class impick(tk.Frame):
 
                 else:
                     # get picked traces for layer
-                    picks_idx = np.where(~np.isnan(self.rdata.pick.current.subsurf[str(layer)]))[0]
+                    picks_idx = np.where(~np.isnan(self.rdata.pick.current_subsurf[str(layer)]))[0]
                     # remove picks from plot list
                     self.xln_subsurf_saved[picks_idx] = np.nan
                     self.yln_subsurf_saved[picks_idx] = np.nan
                     self.saved_subsurf_ln.set_data(self.xln_subsurf_saved ,self.yln_subsurf_saved)
 
                 # delete pick dict layer
-                del self.rdata.pick.current.subsurf[str(layer)]
+                del self.rdata.pick.current_subsurf[str(layer)]
 
                 # remove pick annotation
                 self.ann_list[layer].remove()
@@ -593,13 +572,13 @@ class impick(tk.Frame):
                     self.pick_segment -= 1 
 
                 # reorder pick layers if necessary
-                if layer != len(self.rdata.pick.current.subsurf):
-                    for _i in range(layer, len(self.rdata.pick.current.subsurf)):
-                        self.rdata.pick.current.subsurf[str(_i)] = np.copy(self.rdata.pick.current.subsurf[str(_i + 1)])
+                if layer != len(self.rdata.pick.current_subsurf):
+                    for _i in range(layer, len(self.rdata.pick.current_subsurf)):
+                        self.rdata.pick.current_subsurf[str(_i)] = np.copy(self.rdata.pick.current_subsurf[str(_i + 1)])
                         # reorder annotations
                         self.ann_list[_i].set_text(str(_i))
 
-                    del self.rdata.pick.current.subsurf[str(_i + 1)]
+                    del self.rdata.pick.current_subsurf[str(_i + 1)]
 
                 if self.pick_state == True:
                     if self.edit_flag == True:
@@ -632,8 +611,8 @@ class impick(tk.Frame):
     def add_pickLabels(self):
         if len(self.ann_list) < self.pick_segment:
             # get x and y locations for placing annotation
-            x = np.where(~np.isnan(self.rdata.pick.current.subsurf[str(self.pick_segment - 1)]))[0][0]
-            y = self.rdata.pick.current.subsurf[str(self.pick_segment - 1)][x]
+            x = np.where(~np.isnan(self.rdata.pick.current_subsurf[str(self.pick_segment - 1)]))[0][0]
+            y = self.rdata.pick.current_subsurf[str(self.pick_segment - 1)][x]
             ann = self.ax.text(x-75,y+75, str(self.pick_segment - 1), bbox=dict(facecolor='white', alpha=0.5), horizontalalignment='right', verticalalignment='top')
             self.ann_list.append(ann)
             if self.pick_ann_vis.get() == False:
@@ -664,10 +643,10 @@ class impick(tk.Frame):
         # reverse visilibilty
         self.im_clut.set_visible(False)
         self.im_data.set_visible(True)
-        # redraw canvas
-        self.fig.canvas.draw()
         self.im_status.set("data")
-
+        # redraw canvas
+        self.update_bg()
+        # self.fig.canvas.draw()
 
     def show_clut(self):
         # toggle to clutter sim viewing
@@ -695,10 +674,10 @@ class impick(tk.Frame):
         self.im_clut.set_visible(True)
         # set flag to indicate that clutter has been viewed for resetting colorbar limits
         self.clut_imSwitch_flag = True    
-        # redraw canvas
-        self.fig.canvas.draw()
         self.im_status.set("clut")
-
+        # redraw canvas
+        self.update_bg()
+        # self.fig.canvas.draw()
 
     # pick_vis is a method to toggle the visibility of picks
     def show_picks(self):
@@ -828,15 +807,17 @@ class impick(tk.Frame):
         else:
             return False
 
-
     # get_surfPickFlag is a method which returns true if manual surface picks exist, and false otherwise
     def get_surfPickFlag(self):
         return self.surf_pickFlag
 
+    # set_surfPickFlag is a method which sets a boolean object for whether the surface has been picked
+    def set_surfPickFlag(self,flag):
+        self.surf_pickFlag = flag
 
     # get_numPkLyrs is a method to return the number of picking layers which exist
     def get_numPkLyrs(self):
-        return len(self.rdata.pick.current.subsurf)
+        return len(self.rdata.pick.current_subsurf)
 
 
     # set_picks is a method to update the saved pick arrays based on current the picking dictionary
@@ -844,11 +825,11 @@ class impick(tk.Frame):
         # reset yln_saved arrays to replace with new dictionary values for replotting
         self.yln_surf_saved.fill(np.nan)
         self.yln_subsurf_saved.fill(np.nan)
-        idx = np.where(~np.isnan(self.rdata.pick.current.surf))[0]
-        self.yln_surf_saved[idx] = self.rdata.pick.current.surf[idx]
-        for _i in range(len(self.rdata.pick.current.subsurf)):
-            idx = np.where(~np.isnan(self.rdata.pick.current.subsurf[str(_i)]))[0]
-            self.yln_subsurf_saved[idx] = self.rdata.pick.current.subsurf[str(self.pick_segment - 1)][idx]
+        idx = np.where(~np.isnan(self.rdata.pick.current_surf))[0]
+        self.yln_surf_saved[idx] = self.rdata.pick.current_surf[idx]
+        for _i in range(len(self.rdata.pick.current_subsurf)):
+            idx = np.where(~np.isnan(self.rdata.pick.current_subsurf[str(_i)]))[0]
+            self.yln_subsurf_saved[idx] = self.rdata.pick.current_subsurf[str(self.pick_segment - 1)][idx]
 
 
     # set axis labels
@@ -881,9 +862,6 @@ class impick(tk.Frame):
         
         self.im_data.set_cmap(cmap)
         self.im_clut.set_cmap(cmap)
-
-        self.dataCanvas.draw()
-
 
     # get_nav method returns the nav data       
     def get_nav(self):

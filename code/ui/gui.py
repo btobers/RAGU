@@ -475,11 +475,11 @@ class mainGUI(tk.Frame):
                     self.wvpick.plot_wv()
             elif (self.tab == "profile"):
                 # get updated picks from wvpick and pass back to impick if they differ
-                if (((utils.nan_array_equal(self.rdata.pick.current.surf, self.rdata.pick.current.surf_opt)) == False) or \
-                        ((utils.dict_compare(self.rdata.pick.current.subsurf, self.rdata.pick.current.subsurf_opt)) == False)) and \
+                if (((utils.nan_array_equal(self.rdata.pick.current_surf, self.rdata.pick.current_surfOpt)) == False) or \
+                        ((utils.dict_compare(self.rdata.pick.current_subsurf, self.rdata.pick.current_subsurfOpt)) == False)) and \
                         (tk.messagebox.askyesno("tab change","import optimized picks to profile from waveform?") == True):
-                    self.rdata.pick.current.surf = self.rdata.pick.current.surf_opt
-                    self.rdata.pick.current.subsurf = self.rdata.pick.current.subsurf_opt
+                    self.rdata.pick.current_surf = self.rdata.pick.current_surfOpt
+                    self.rdata.pick.current_subsurf = self.rdata.pick.current_subsurfOpt
                     self.impick.set_picks()
                     self.impick.plot_picks(surf = "surface")
                     self.impick.plot_picks(surf = "subsurface")
@@ -490,11 +490,17 @@ class mainGUI(tk.Frame):
     def clear(self, surf = None):
         if self.f_loadName:
             if (surf == "surface") and (tk.messagebox.askokcancel("warning", "clear all surface picks?", icon = "warning") == True):
-                self.impick.clear_picks(surf = "surface")
+                # reset current surf pick array
+                self.rdata.pick.current_surf.fill(np.nan)
+                # reset surf pick flag
+                self.impick.set_surfPickFlag(False)
                 self.impick.plot_picks(surf = "surface")
                 self.impick.blit()
             elif (self.impick.get_subsurfPickFlag() == True) and (surf == "subsurface") and (tk.messagebox.askokcancel("warning", "clear all subsurface picks?", icon = "warning") == True):
-                self.impick.clear_picks(surf = "subsurface")
+                # clear current subsurf pick dictionaries
+                self.rdata.pick.current_suubsurf.clear()
+                self.rdata.pick.current_suubsurfOpt.clear()
+                self.impick.clear_subsurfPicks()
                 self.impick.plot_picks(surf = "subsurface")
                 self.impick.update_bg()
                 self.impick.update_option_menu()
@@ -515,26 +521,26 @@ class mainGUI(tk.Frame):
         if self.f_loadName:
             if arg == "dewow":
                 window = tk.simpledialog.askfloat("input","dewow window size (# samples/" +  str(int(self.rdata.snum)) + ")?")
-                self.rdata.proc_data = np.abs(processing.dewow(self.rdata.proc_data, window=10))
+                self.rdata.set_proc(processing.dewow(self.rdata.dat, window=10))
             elif arg == "remMnTr":
                 nraces = tk.simpledialog.askfloat("input","moving average window size (# traces/" +  str(int(self.rdata.tnum)) + ")?")
-                self.rdata.proc_data = np.abs(processing.remMeanTrace(self.rdata.proc_data, ntraces=ntraces))
+                self.rdata.set_proc(processing.remMeanTrace(self.rdata.dat, ntraces=ntraces))
             elif arg == "lowpass":
                 cutoff = tk.simpledialog.askfloat("input","butterworth filter cutoff frequency?")
-                self.rdata.proc_data = np.abs(processing.lowpassFilt(self.rdata.proc_data, Wn = cutoff, fs = 1/self.rdata.dt))
+                self.rdata.set_proc(processing.lowpassFilt(self.rdata.dat, Wn = cutoff, fs = 1/self.rdata.dt))
             elif arg == "agc":
                 window = tk.simpledialog.askfloat("input","AGC gain window size (# samples/" +  str(int(self.rdata.snum)) + ")?")
-                self.rdata.proc_data = processing.agcGain(self.rdata.proc_data, window=window)
+                self.rdata.set_proc(processing.agcGain(self.rdata.dat, window=window))
             elif arg == "tpow":
                 power = tk.simpledialog.askfloat("input","power for tpow gain?")
-                self.rdata.proc_data = processing.tpowGain(self.rdata.proc_data, np.arange(self.rdata.snum)*self.rdata.dt, power=power)
+                self.rdata.set_proc(processing.tpowGain(self.rdata.dat, np.arange(self.rdata.snum)*self.rdata.dt, power=power))
             elif arg == "restore":
                 # restore origianl rdata
-                self.rdata.proc_data = processing.restore(rdata.dtype, rdata.dat)
+                self.rdata.set_proc(processing.restore(rdata.dtype, rdata.dat))
             else:
                 print("undefined processing method")
                 exit(1)
-            self.impick.load(self.f_loadName, self.rdata)
+            self.impick.drawData()
             self.impick.set_axes(self.eps_r.get(), self.cmap.get())
             self.impick.update_bg()
             self.wvpick.clear()

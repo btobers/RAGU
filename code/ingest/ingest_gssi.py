@@ -62,9 +62,13 @@ def read(fpath, navcrs, body):
     rdata.tnum = rdata.dat.shape[1]
 
     # convert gssi signed int amplitude to floating point for displaying
-    rdata.proc_data = rdata.dat.astype(np.float)
+    rdata.set_proc(rdata.dat.astype(np.float))
 
     rdata.clut = np.ones(rdata.dat.shape)                   # place holder for clutter data
+
+    # generate image pyramids for dynamic rendering
+    rdata.genPyramids()
+
     rdata.surf = np.repeat(np.nan, rdata.tnum)              # place holder for surface index
 
     # read in gps data if exists
@@ -77,7 +81,7 @@ def read(fpath, navcrs, body):
     rdata.elev_gnd = rdata.navdf["elev"]
 
     # initialize surface pick
-    rdata.pick.current.surf = np.repeat(np.nan, rdata.tnum)
+    rdata.pick.current_surf = np.repeat(np.nan, rdata.tnum)
 
     
     return rdata

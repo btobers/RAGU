@@ -22,19 +22,19 @@ def export_pk_csv(f_saveName, rdata, eps_r, amp_out = False):
     subsurf_pk = np.repeat(np.nan, rdata.tnum)  # array to hold indeces of subsurface picks
 
     # if existing surface pick, and no current -> use existing
-    if np.isnan(rdata.pick.current.surf).all() and not np.isnan(rdata.pick.existing.twtt_surf).all():
-        twtt_surf = rdata.pick.existing.twtt_surf
+    if np.isnan(rdata.pick.current_surf).all() and not np.isnan(rdata.pick.existing_twttSurf).all():
+        twtt_surf = rdata.pick.existing_twttSurf
         surf = twtt2sample(twtt_surf, rdata.dt)
 
     else:
-        surf = rdata.pick.current.surf
+        surf = rdata.pick.current_surf
         twtt_surf = sample2twtt(surf, rdata.dt)
 
     # iterate through pick segments adding data to export arrays
-    for _i in rdata.pick.current.subsurf.keys():
-        picked_traces = np.where(~np.isnan(rdata.pick.current.subsurf[str(_i)]))[0]
+    for _i in rdata.pick.current_subsurf.keys():
+        picked_traces = np.where(~np.isnan(rdata.pick.current_subsurf[str(_i)]))[0]
 
-        subsurf_pk[picked_traces] = rdata.pick.current.subsurf[str(_i)][picked_traces]
+        subsurf_pk[picked_traces] = rdata.pick.current_subsurf[str(_i)][picked_traces]
 
     # convert pick sample to twtt
     twtt_bed = subsurf_pk * rdata.dt    

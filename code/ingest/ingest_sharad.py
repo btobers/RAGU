@@ -26,16 +26,19 @@ def read(fpath, navcrs, body):
     rdata.tnum = int(len(rdata.dat)/rdata.snum)
     rdata.dt = .0375e-6
     rdata.dat = rdata.dat.reshape(rdata.snum,rdata.tnum)
-    rdata.proc_data = rdata.dat
+    rdata.set_proc(rdata.dat)
     
     # convert binary .img clutter sim product to numpy array
     clutpath = fpath.replace("rgram","geom_combined")
     if os.path.isfile(clutpath):
         with open(clutpath, "rb") as f:
-            rdata.clut = np.fromfile(f, dtype)   
-        rdata.clut = rdata.clut.reshape(rdata.snum,rdata.tnum)
+            clut = np.fromfile(f, dtype)   
+        rdata.clut = rdata.dBscale(clut.reshape(rdata.snum,rdata.tnum))
     else:
         rdata.clut = np.ones(rdata.dat.shape)
+
+    # generate image pyramids for dynamic rendering
+    rdata.genPyramids()
 
     # open geom nav file for rgram
     geom_path = fpath.replace("rgram","geom").replace("img","tab")
@@ -46,6 +49,6 @@ def read(fpath, navcrs, body):
     rdata.elev_gnd = np.repeat(np.nan, rdata.tnum)
 
     # initialize surface pick
-    rdata.pick.current.surf = np.repeat(np.nan, rdata.tnum)
+    rdata.pick.current_surf = np.repeat(np.nan, rdata.tnum)
 
     return rdata
