@@ -15,11 +15,16 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 from scipy.interpolate import CubicSpline
 
 class impick(tk.Frame):
-    # impick is a class to pick horizons from a radar image
+    # initialize impick frame with variables passed from mainGUI
     def __init__(self, parent, cmap, eps_r, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
+        self.set_cmap(cmap)
+        self.eps_r = eps_r
+        self.setup()
 
+    # setup is a method which initialized the tkinter frame 
+    def setup(self):
         # set up frames
         infoFrame = tk.Frame(self.parent)
         infoFrame.pack(side="top",fill="both")
@@ -50,13 +55,14 @@ class impick(tk.Frame):
         tk.Radiobutton(infoFrame,text="off", variable=self.pick_ann_vis, value=False, command=self.show_pickLabels).pack(side="left")
         tk.ttk.Separator(infoFrame,orient="vertical").pack(side="left", fill="both", padx=10, pady=4)
 
-        tk.Button(infoFrame, text="edit", command=self.edit_pkLayer).pack(side="right")
-        tk.Button(infoFrame, text="delete", command=self.delete_pkLayer).pack(side="right")
+        tk.Button(infoFrame, text="edit", command=self.edit_pkSeg).pack(side="right")
+        tk.Button(infoFrame, text="delete", command=self.delete_pkSeg).pack(side="right")
 
-        self.layerVar = tk.IntVar()
-        self.layers=[None]
-        self.layerMenu = tk.OptionMenu(infoFrame, self.layerVar, *self.layers)
-        self.layerMenu.pack(side="right",pady=0)
+        # initialize pick segment vars with dropdown menu
+        self.segVar = tk.IntVar()
+        self.segments=[None]
+        self.segMenu = tk.OptionMenu(infoFrame, self.segVar, *self.segments)
+        self.segMenu.pack(side="right",pady=0)
         tk.Label(infoFrame,text="subsurface pick segment: ").pack(side="right")
 
         self.pickLabel = tk.Label(toolbarFrame, font= "Verdana 10")
@@ -112,10 +118,6 @@ class impick(tk.Frame):
         self.unclick = self.fig.canvas.mpl_connect("button_release_event", self.onrelease)
         self.draw_cid = self.fig.canvas.mpl_connect("draw_event", self.update_bg)
         self.resize_cid = self.fig.canvas.mpl_connect("resize_event", self.drawData)
-
-        # variables to initialize once
-        self.set_cmap(cmap)
-        self.eps_r = eps_r
 
 
     # set_vars is a method to set impick variables which need to reset upon each load
@@ -447,7 +449,7 @@ class impick(tk.Frame):
                     sample = cs(picked_traces).astype(int)
                     # add cubic spline output interpolation to pick dictionary - force output to integer for index of pick
                     if self.edit_flag == True:
-                        self.rdata.pick.current_subsurf[str(self.layerVar.get())][picked_traces] = sample
+                        self.rdata.pick.current_subsurf[str(self.segVar.get())][picked_traces] = sample
                         # add pick interpolation to saved pick array
                         self.xln_subsurf_saved[picked_traces] = picked_traces
                         self.yln_subsurf_saved[picked_traces] = sample
@@ -504,7 +506,7 @@ class impick(tk.Frame):
             # reset pick segment increment to 0
             self.pick_segment = 0
             self.pickLabel.config(fg="#d9d9d9")
-            self.layerVar.set(self.pick_segment)
+            self.segVar.set(self.pick_segment)
             # remove pick annotations
             for _i in self.ann_list:
                 _i.remove()
@@ -535,8 +537,9 @@ class impick(tk.Frame):
                     self.surf_pickFlag = False
 
 
-    def edit_pkLayer(self):
-        layer = self.layerVar.get()
+    # edit selected pick segment
+    def edit_pkSeg(self):
+        layer = self.segVar.get()
         if (len(self.rdata.pick.current_subsurf) > 0) and (self.edit_flag == False) and (not ((self.pick_state == True) and (self.pick_surf == "subsurface") and (layer == self.pick_segment))) and (tk.messagebox.askokcancel("warning", "edit pick segment " + str(layer) + "?", icon = "warning") == True):
             # if another subsurface pick segment is active, end segment
             if (self.pick_state == True) and (self.pick_surf == "subsurface") and (layer != self.pick_segment):
@@ -568,9 +571,9 @@ class impick(tk.Frame):
             self.pickLabel.config(text="subsurface pick segment " + str(layer) + ":\t active", fg="red")
             self.blit()
 
-
-    def delete_pkLayer(self):
-        layer = self.layerVar.get()
+    # delete selected pick segment
+    def delete_pkSeg(self):
+        layer = self.segVar.get()
         # delete selected pick segment
         if (len(self.rdata.pick.current_subsurf) > 0) and (tk.messagebox.askokcancel("warning", "delete pick segment " + str(layer) + "?", icon = "warning") == True):
             # if picking active and only one segment exists, clear all picks
@@ -606,7 +609,7 @@ class impick(tk.Frame):
                 if self.pick_segment >=1:
                     self.pick_segment -= 1 
 
-                # reorder pick layers if necessary
+                # reorder pick segments if necessary
                 if layer != len(self.rdata.pick.current_subsurf):
                     for _i in range(layer, len(self.rdata.pick.current_subsurf)):
                         self.rdata.pick.current_subsurf[str(_i)] = np.copy(self.rdata.pick.current_subsurf[str(_i + 1)])
@@ -626,7 +629,7 @@ class impick(tk.Frame):
                         self.pickLabel.config(text="subsurface pick segment " + str(self.pick_segment - 1) + ":\t inactive", fg="black")   
                     else:
                         self.pickLabel.config(text="subsurface pick segment " + str(self.pick_segment) + ":\t inactive", fg="#d9d9d9")
-                self.layerVar.set(0)
+                self.segVar.set(0)
             self.update_option_menu()
             self.update_bg()
 
@@ -727,13 +730,13 @@ class impick(tk.Frame):
         self.fig.canvas.blit(self.ax.bbox)
 
 
-    # update the pick layer menu based on how many layers exist
+    # update the pick layer menu based on how many segments exist
     def update_option_menu(self):
-            menu = self.layerMenu["menu"]
+            menu = self.segMenu["menu"]
             menu.delete(0, "end")
             for _i in range(self.pick_segment):
                 menu.add_command(label=_i,
-                    command=tk._setit(self.layerVar,_i))
+                    command=tk._setit(self.segVar,_i))
 
 
     def update_slider(self):
@@ -842,17 +845,15 @@ class impick(tk.Frame):
         else:
             return False
 
+
     # get_surfPickFlag is a method which returns true if manual surface picks exist, and false otherwise
     def get_surfPickFlag(self):
         return self.surf_pickFlag
 
+
     # set_surfPickFlag is a method which sets a boolean object for whether the surface has been picked
     def set_surfPickFlag(self,flag):
         self.surf_pickFlag = flag
-
-    # get_numPkLyrs is a method to return the number of picking layers which exist
-    def get_numPkLyrs(self):
-        return len(self.rdata.pick.current_subsurf)
 
 
     # set_picks is a method to update the saved pick arrays based on current the picking dictionary
@@ -893,11 +894,6 @@ class impick(tk.Frame):
         
         else:
             self.secaxx.set_visible(False)
-
-
-    # get_nav method returns the nav data       
-    def get_nav(self):
-        return self.rdata.nav
 
 
     # set_im is a method to set which rdata is being displayed

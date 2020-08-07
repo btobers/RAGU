@@ -33,12 +33,11 @@ def read(fpath, navcrs, body):
     if os.path.isfile(clutpath):
         with open(clutpath, "rb") as f:
             clut = np.fromfile(f, dtype)   
-        rdata.clut = rdata.dBscale(clut.reshape(rdata.snum,rdata.tnum))
+        clut = clut.reshape(rdata.snum,rdata.tnum)
     else:
-        rdata.clut = np.ones(rdata.dat.shape)
-
-    # generate image pyramids for dynamic rendering
-    rdata.genPyramids()
+        clut = np.ones(rdata.dat.shape)
+    
+    rdata.set_clut(clut)
 
     # open geom nav file for rgram
     geom_path = fpath.replace("rgram","geom").replace("img","tab")

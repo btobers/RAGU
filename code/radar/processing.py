@@ -3,6 +3,7 @@ import numpy as np
 import numpy.matlib as matlib
 import scipy.interpolate as interp
 import scipy.signal as signal
+import matplotlib.pyplot as plt
 """
 NOSEpick radar data processing tools
 """
@@ -98,7 +99,7 @@ def lowpassFilt(pc, order = 5, Wn = 1e6, fs = None):
     [b, a] = signal.butter(order, Wn, btype="lowpass", fs=fs)
     pc_lp = signal.filtfilt(b, a, pc, axis=0)
     print("lowpass filter applied")
-    return pc_lp 
+    return np.abs(pc_lp) 
 
 
 def agcGain(data, window=50, scaling_factor=50):
@@ -136,9 +137,10 @@ def tpowGain(data,twtt,power):
     newdata   data matrix after t-power gain
     '''
     factor = np.reshape(twtt**(float(power)),(len(twtt),1))
-    factmat = np.matlib.repmat(factor,1,data.shape[1])  
+    factmat = np.matlib.repmat(factor,1,data.shape[1])
+    out = np.multiply(data,factmat)
     print("t^" + str(power) + " gain applied")
-    return np.multiply(data,factmat)
+    return out
 
 
 def restore(dtype, dat):

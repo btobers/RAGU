@@ -21,7 +21,6 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 import tkinter as tk
 import tkinter.ttk as ttk
 
-# mainGUI is the NOSEpick class which sets the graphical user interface and holds operating variables to pass between packages
 class mainGUI(tk.Frame):
     def __init__(self, parent, datPath, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
@@ -33,24 +32,25 @@ class mainGUI(tk.Frame):
             self.datPath = datPath
         else:
             self.datPath = self.conf["paths"]["datPath"]
+
+        # initialize variables
+        self.rdata = None
+        self.f_loadName = ""
+        self.f_saveName = ""
+        self.map_loadName = ""
+        # self.userName = tk.StringVar(value="")
         self.eps_r = tk.DoubleVar(value=self.conf["params"]["eps_r"])
+        self.figSize = tk.StringVar(value="21,7")
+        self.cmap = tk.StringVar(value="Greys_r")
+        self.debugState = tk.BooleanVar()
+        self.debugState.set(False)
         self.os = sys.platform
+        # setup tkinter frame
         self.setup()
 
 
     # setup is a method which generates the app menubar and buttons and initializes some vars
     def setup(self):
-        self.rdata = None
-        self.f_loadName = ""
-        self.f_saveName = ""
-        self.map_loadName = ""
-
-        self.userName = tk.StringVar(value="")
-        self.figSize = tk.StringVar(value="21,7")
-        self.cmap = tk.StringVar(value="Greys_r")
-        self.debugState = tk.BooleanVar()
-        self.debugState.set(False)
-
         # menubar structure     
         # |-file
         # |  |-open
@@ -168,7 +168,7 @@ class mainGUI(tk.Frame):
         # add the menubar to the window
         self.parent.config(menu=menubar)
 
-        #configure impick and wvpick tabs
+        # configure impick and wvpick tabs
         self.nb = ttk.Notebook(self.parent)
         self.nb.pack(side="top",anchor='w', fill="both", expand=1)
         self.imTab = tk.Frame(self.parent)
@@ -189,13 +189,12 @@ class mainGUI(tk.Frame):
         self.wvpick = wvpick.wvpick(self.wvTab)
         self.wvpick.set_vars()
 
-        # bind keypress events
-        self.parent.bind("<Key>", self.key)
-
         # handle x-button closing of window
         self.parent.protocol("WM_DELETE_WINDOW", self.close_window)
 
-        # self.set_home()
+        # bind keypress events
+        self.parent.bind("<Key>", self.key)
+
         self.open_data()
 
 
@@ -462,6 +461,7 @@ class mainGUI(tk.Frame):
                 self.impick.plot_bed(utils.twtt2sample(twtt_bed, self.rdata.dt))
 
 
+    # change tabs between profile and waveform views
     def tab_change(self, event):
         selection = event.widget.select()
         self.tab = event.widget.tab(selection, "text")
@@ -521,46 +521,44 @@ class mainGUI(tk.Frame):
     # processing tools
     def procTools(self, arg = None):
         if self.f_loadName:
-            print("sorry, processing tools still in dev stage")
-            # if arg == "dewow":
-            #     window = tk.simpledialog.askfloat("input","dewow window size (# samples/" +  str(int(self.rdata.snum)) + ")?")
-            #     self.rdata.set_proc(processing.dewow(self.rdata.dat, window=10))
-            # elif arg == "remMnTr":
-            #     nraces = tk.simpledialog.askfloat("input","moving average window size (# traces/" +  str(int(self.rdata.tnum)) + ")?")
-            #     self.rdata.set_proc(processing.remMeanTrace(self.rdata.dat, ntraces=ntraces))
-            # elif arg == "lowpass":
-            #     cutoff = tk.simpledialog.askfloat("input","butterworth filter cutoff frequency?")
-            #     self.rdata.set_proc(processing.lowpassFilt(self.rdata.dat, Wn = cutoff, fs = 1/self.rdata.dt))
-            # elif arg == "agc":
-            #     window = tk.simpledialog.askfloat("input","AGC gain window size (# samples/" +  str(int(self.rdata.snum)) + ")?")
-            #     self.rdata.set_proc(processing.agcGain(self.rdata.dat, window=window))
-            # elif arg == "tpow":
-            #     power = tk.simpledialog.askfloat("input","power for tpow gain?")
-            #     self.rdata.set_proc(processing.tpowGain(np.abs(self.rdata.dat), np.arange(self.rdata.snum)*self.rdata.dt, power=power))
-            # elif arg == "restore":
-            #     # restore origianl rdata
-            #     self.rdata.set_proc(processing.restore(self.rdata.dtype, self.rdata.dat))
-            # else:
-            #     print("undefined processing method")
-            #     exit(1)
-            # self.rdata.genPyramids()
-            # self.impick.set_crange()
-            # self.impick.drawData()
-            # self.impick.update_bg()
-            # self.wvpick.clear()
-            # self.wvpick.set_vars()
-            # self.wvpick.set_data(self.rdata)
+            print("warning, processing tools still in dev stage")
+            if arg == "dewow":
+                window = tk.simpledialog.askfloat("input","dewow window size (# samples/" +  str(int(self.rdata.snum)) + ")?")
+                self.rdata.set_proc(processing.dewow(self.rdata.dat, window=10))
+            elif arg == "remMnTr":
+                nraces = tk.simpledialog.askfloat("input","moving average window size (# traces/" +  str(int(self.rdata.tnum)) + ")?")
+                self.rdata.set_proc(processing.remMeanTrace(self.rdata.dat, ntraces=ntraces))
+            elif arg == "lowpass":
+                cutoff = tk.simpledialog.askfloat("input","butterworth filter cutoff frequency?")
+                self.rdata.set_proc(processing.lowpassFilt(self.rdata.dat, Wn = cutoff, fs = 1/self.rdata.dt))
+            elif arg == "agc":
+                window = tk.simpledialog.askfloat("input","AGC gain window size (# samples/" +  str(int(self.rdata.snum)) + ")?")
+                self.rdata.set_proc(processing.agcGain(self.rdata.dat, window=window))
+            elif arg == "tpow":
+                power = tk.simpledialog.askfloat("input","power for tpow gain?")
+                self.rdata.set_proc(processing.tpowGain(np.abs(self.rdata.dat), np.arange(self.rdata.snum)*self.rdata.dt, power=power))
+            elif arg == "restore":
+                # restore origianl rdata
+                self.rdata.set_proc(processing.restore(self.rdata.dtype, self.rdata.dat))
+            else:
+                print("undefined processing method")
+                exit(1)
+            self.impick.set_crange()
+            self.impick.drawData()
+            self.wvpick.clear()
+            self.wvpick.set_vars()
+            self.wvpick.set_data(self.rdata)
 
 
     def settings(self):
         settingsWindow = tk.Toplevel(self.parent)
 
-        row = tk.Frame(settingsWindow)
-        row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-        lab = tk.Label(row, width=25, text="user", anchor='w')
-        lab.pack(side=tk.LEFT)
-        self.userEnt = tk.Entry(row,textvariable=self.userName)
-        self.userEnt.pack(side=tk.RIGHT, expand=tk.YES, fill=tk.X)
+        # row = tk.Frame(settingsWindow)
+        # row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+        # lab = tk.Label(row, width=25, text="user", anchor='w')
+        # lab.pack(side=tk.LEFT)
+        # self.userEnt = tk.Entry(row,textvariable=self.userName)
+        # self.userEnt.pack(side=tk.RIGHT, expand=tk.YES, fill=tk.X)
 
         row = tk.Frame(settingsWindow)
         row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
@@ -601,7 +599,7 @@ class mainGUI(tk.Frame):
 
 
     def updateSettings(self):
-        self.userName.set(self.userEnt.get())
+        # self.userName.set(self.userEnt.get())
         self.figSize.set(self.figEnt.get())
         try:
             float(self.epsEnt.get())

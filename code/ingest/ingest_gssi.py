@@ -64,10 +64,7 @@ def read(fpath, navcrs, body):
     # convert gssi signed int amplitude to floating point for displaying
     rdata.set_proc(rdata.dat.astype(np.float))
 
-    rdata.clut = np.ones(rdata.dat.shape)                   # place holder for clutter data
-
-    # generate image pyramids for dynamic rendering
-    rdata.genPyramids()
+    rdata.set_clut(np.ones(rdata.dat.shape))                # place holder for clutter data
 
     rdata.surf = np.repeat(np.nan, rdata.tnum)              # place holder for surface index
 
