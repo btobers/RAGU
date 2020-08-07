@@ -73,13 +73,12 @@ class radar(object):
 
     # convert amplitude array to dB log scale
     def dBscale(self, dat):
-        # mask zero-amp values
-        dat[dat == 0] = np.nan
         # convert to power
         pow = np.power(dat, 2)
+        # mask zero-power values
+        pow[pow == 0] = np.nan
         # dB it
         dB = np.log10(pow)
-
         return dB
 
 

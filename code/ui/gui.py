@@ -455,10 +455,14 @@ class mainGUI(tk.Frame):
     # load_picks is a method to load and plot picks saved to a csv file
     def load_picks(self):
         if self.f_loadName:
-            tmp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath, title = "load picks", filetypes = (("comma separated value", "*.csv"),))
-            if tmp_loadName:
-                twtt_bed = ingester.load_picks(path=tmp_loadName)
-                self.impick.plot_bed(utils.twtt2sample(twtt_bed, self.rdata.dt))
+            pk_file = ""
+            pk_file = tk.filedialog.askopenfilename(initialdir = self.conf["paths"]["outPath"], title = "load picks", filetypes = (("comma separated value", "*.csv"),))
+            if pk_file:
+                self.igst.import_picks(pk_file)
+                self.impick.remove_existing_subsurf()
+                self.impick.set_picks()
+                self.impick.update_option_menu()
+                self.impick.blit()
 
 
     # change tabs between profile and waveform views
@@ -514,7 +518,7 @@ class mainGUI(tk.Frame):
     def delete_datafilePicks(self):
             if self.f_loadName and tk.messagebox.askokcancel("warning", "delte any existing data file subsurface picks?", icon = "warning") == True:
                 utils.delete_savedPicks(self.f_loadName)
-                self.impick.remove_imported_picks()
+                self.impick.remove_existing_susurf()
                 self.impick.update_bg()
 
 

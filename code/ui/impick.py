@@ -578,7 +578,7 @@ class impick(tk.Frame):
         if (len(self.rdata.pick.current_subsurf) > 0) and (tk.messagebox.askokcancel("warning", "delete pick segment " + str(layer) + "?", icon = "warning") == True):
             # if picking active and only one segment exists, clear all picks
             if (self.pick_state == True) and (len(self.rdata.pick.current_subsurf) == 1):
-                self.clear_picks(surf = "subsurface")
+                self.clear_subsurfPicks()
                 self.plot_picks(surf = "subsurface")
 
             else:
@@ -658,10 +658,10 @@ class impick(tk.Frame):
 
 
     # remove_imported_picks is a method to remove any imported data file picks from the image
-    def remove_imported_picks(self):
-        if len(self.ax.lines) > 4:
-            for _i in range(len(self.ax.lines) - 4):
-                self.ax.lines[0].remove()
+    def remove_existing_subsurf(self):
+        for _i in self.existing_subsurf_lns:
+            if _i in self.ax.lines:
+                _i.remove()
 
 
     def show_data(self):
@@ -856,16 +856,24 @@ class impick(tk.Frame):
         self.surf_pickFlag = flag
 
 
-    # set_picks is a method to update the saved pick arrays based on current the picking dictionary
+    # set_picks is a method to update the saved pick arrays based on the current picks
     def set_picks(self):
         # reset yln_saved arrays to replace with new dictionary values for replotting
         self.yln_surf_saved.fill(np.nan)
         self.yln_subsurf_saved.fill(np.nan)
         idx = np.where(~np.isnan(self.rdata.pick.current_surf))[0]
+        self.yln_surf_saved[idx] = idx
         self.yln_surf_saved[idx] = self.rdata.pick.current_surf[idx]
         for _i in range(len(self.rdata.pick.current_subsurf)):
             idx = np.where(~np.isnan(self.rdata.pick.current_subsurf[str(_i)]))[0]
-            self.yln_subsurf_saved[idx] = self.rdata.pick.current_subsurf[str(self.pick_segment - 1)][idx]
+            self.xln_subsurf_saved[idx] = idx
+            self.yln_subsurf_saved[idx] = self.rdata.pick.current_subsurf[str(_i)][idx]
+        self.saved_surf_ln.set_data(self.xln_surf_saved, self.yln_surf_saved)
+        self.saved_subsurf_ln.set_data(self.xln_subsurf_saved, self.yln_subsurf_saved)
+        # update pick segment count
+        self.pick_segment = _i + 1
+        # update pick labels
+        self.add_pickLabels()
 
 
     # set axis labels
@@ -930,8 +938,7 @@ class impick(tk.Frame):
         w,h = self.fig.get_size_inches()    # get pre-save figure size
         self.fig.set_size_inches((float(figSize[0]),float(figSize[1])))    # set figsize to wide aspect ratio
         # hide existing picks
-        for _i in self.existing_subsurf_lns:
-            _i.remove()
+        self.remove_existing_subsurf()
         self.safe_draw()
         utils.exportIm(f_saveName, self.fig)
         # return figsize to intial values and make sliders visible again
