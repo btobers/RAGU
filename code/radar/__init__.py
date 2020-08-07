@@ -3,7 +3,7 @@
 # copyright © 2020 btobers <tobers.brandon@gmail.com>
 #
 # distributed under terms of the GNU GPL3.0 license.
-
+### imports ###
 import numpy as np
 
 class radar(object):
@@ -54,8 +54,19 @@ class radar(object):
     # set processed radar data method
     def set_proc(self, dat):
         # dB it
-        dat = self.dBscale(dat)
-        self.proc = dat
+        self.proc = self.dBscale(dat)
+        # generate pyramid arrays
+        self.dPyramid = self.genPyramids(self.proc)
+
+        return
+
+
+    # set clutter simulation data method
+    def set_clut(self, dat):
+        # dB it
+        self.clut = self.dBscale(dat)
+        # generate pyramid arrays
+        self.cPyramid = self.genPyramids(self.clut)
 
         return
 
@@ -72,15 +83,14 @@ class radar(object):
         return dB
 
 
-    def genPyramids(self):
+    def genPyramids(self, dat):
         # downsample in fast time by 2^0, 2^1, 2^2, 2^3
-        self.dPyramid = []
-        self.cPyramid = []
-
+        pyramid = []
+        # add pyramid arrays to list
         for i in range(4):
-            self.dPyramid.append(self.proc[::2**i,:])
-            self.cPyramid.append(self.clut[::2**i,:])
-        return
+            pyramid.append(dat[::2**i,:])
+
+        return pyramid
 
 
 class pick(object):

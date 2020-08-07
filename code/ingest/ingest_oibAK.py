@@ -51,12 +51,9 @@ def read_h5(fpath, navcrs, body):
         rdata.elev_gnd = np.repeat(np.nan, rdata.tnum)
 
     if "clutter0" in f["drv"].keys():
-        rdata.clut = rdata.dBscale(f["drv"]["clutter0"][:])             # simulated clutter array
+        rdata.set_clut(f["drv"]["clutter0"][:])                         # simulated clutter array
     else:
-        rdata.clut = np.ones(rdata.dat.shape)                           # empty clutter array if no sim exists
-    
-    # generate image pyramids for dynamic rendering
-    rdata.genPyramids()
+        rdata.set_clut(np.ones(rdata.dat.shape))                        # empty clutter array if no sim exists
 
     # read in existing surface picks
     if "twtt_surf" in f["drv"]["pick"].keys():
