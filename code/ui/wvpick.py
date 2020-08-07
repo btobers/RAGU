@@ -110,9 +110,6 @@ class wvpick(tk.Frame):
     def set_data(self, rdata):
         # get data in dB
         self.rdata = rdata
-        self.data_dB = self.rdata.proc
-        # np.ma.masked_array(self.rdata.proc, self.rdata.proc  == -9999)
-
 
     # set_pickDict is a method which holds the picked segment data for optimization
     def set_picks(self):
@@ -153,7 +150,7 @@ class wvpick(tk.Frame):
             surf = utils.twtt2sample(self.rdata.pick.existing_twttSurf[self.traceNum[segment]], self.rdata.dt)
         else:
             surf = np.nan
-        self.ax.plot(self.data_dB[:,self.traceNum[segment]], label="trace: " + str(int(self.traceNum[segment] + 1)) + "/" + str(int(self.rdata.tnum)))
+        self.ax.plot(self.rdata.proc[:,self.traceNum[segment]], label="trace: " + str(int(self.traceNum[segment] + 1)) + "/" + str(int(self.rdata.tnum)))
 
         if not np.isnan(surf):
             self.ax.axvline(x = surf, c='c', label="surface")
@@ -242,7 +239,7 @@ class wvpick(tk.Frame):
     def surf_autoPick(self):
         if np.all(np.isnan(self.rdata.pick.current_surf)):
             # if surf idx array is all nans, take max power to define surface 
-            max_idx = np.nanargmax(self.data_dB[10:,:], axis = 0) + 10
+            max_idx = np.nanargmax(self.rdata.proc[10:,:], axis = 0) + 10
             # remove outliers
             not_outlier = utils.remove_outliers(max_idx)
             # interpolate over outliers
@@ -256,7 +253,7 @@ class wvpick(tk.Frame):
             y = self.rdata.pick.current_surf[x]
             for _i in range(len(x)):
                 # find argmax for window for given data trace in pick
-                max_idx = np.argmax(self.data_dB[int(y[_i] - (winSize/2)):int(y[_i] + (winSize/2)), x[_i]])
+                max_idx = np.argmax(self.rdata.proc[int(y[_i] - (winSize/2)):int(y[_i] + (winSize/2)), x[_i]])
                 # add argmax index to pick_dict1 - account for window index shift
                 self.rdata.pick.current_surfOpt[x[_i]] = max_idx + int(y[_i] - (winSize/2))
         self.plot_wv()
@@ -271,7 +268,7 @@ class wvpick(tk.Frame):
                 y = self.rdata.pick.current_subsurf[str(_i)][x]
                 for _j in range(len(x)):
                     # find argmax for window for given data trace in pick
-                    max_idx = np.argmax(self.data_dB[int(y[_j] - (winSize/2)):int(y[_j] + (winSize/2)), x[_j]])
+                    max_idx = np.argmax(self.rdata.proc[int(y[_j] - (winSize/2)):int(y[_j] + (winSize/2)), x[_j]])
                     # add argmax index to pick_dict1 - account for window index shift
                     self.rdata.pick.current_subsurfOpt[str(_i)][x[_j]] = max_idx + int(y[_j] - (winSize/2))
             self.plot_wv()
