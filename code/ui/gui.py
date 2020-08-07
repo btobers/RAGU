@@ -182,7 +182,7 @@ class mainGUI(tk.Frame):
         self.nb.bind("<<NotebookTabChanged>>", self.tab_change)
 
         # initialize impick
-        self.impick = impick.impick(self.imTab)
+        self.impick = impick.impick(self.imTab, self.cmap.get(), self.eps_r.get())
         self.impick.set_vars()
 
         # initialize wvpick
@@ -265,7 +265,7 @@ class mainGUI(tk.Frame):
 
         # h key to set axes limits to home extent
         elif event.keysym=="h":
-            self.impick.set_axes(self.eps_r.get(), self.cmap.get())
+            self.impick.fullExtent()
 
 
     # close_window is a gui method to exit NOSEpick
@@ -315,7 +315,8 @@ class mainGUI(tk.Frame):
                 if not self.rdata:
                     return
                 self.impick.load(self.rdata)
-                self.impick.set_axes(self.eps_r.get(), self.cmap.get())
+                self.impick.set_axes()
+                self.impick.drawData()
                 self.impick.update_bg()
                 self.wvpick.set_vars()
                 self.wvpick.clear()
@@ -342,7 +343,7 @@ class mainGUI(tk.Frame):
             self.end_subsurf_pick()
             # get updated pick_dict from wvpick and pass back to impick
             utils.export_pk_csv(self.f_saveName, self.rdata, self.eps_r.get(), self.conf["params"]["amp"])
-            self.impick.save(self.f_saveName, self.eps_r.get(), self.cmap.get(), self.figSize.get().split(","))
+            self.impick.save(self.f_saveName, self.figSize.get().split(","))
 
 
     # map_loc is a method to get the desired basemap location and initialize
@@ -435,7 +436,8 @@ class mainGUI(tk.Frame):
                 if not self.rdata:
                     return
                 self.impick.load(self.rdata)
-                self.impick.set_axes(self.eps_r.get(), self.cmap.get())
+                self.impick.set_axes()
+                self.impick.drawData()
                 self.impick.update_bg()
                 self.wvpick.clear()
                 self.wvpick.set_vars()
@@ -519,33 +521,35 @@ class mainGUI(tk.Frame):
     # processing tools
     def procTools(self, arg = None):
         if self.f_loadName:
-            if arg == "dewow":
-                window = tk.simpledialog.askfloat("input","dewow window size (# samples/" +  str(int(self.rdata.snum)) + ")?")
-                self.rdata.set_proc(processing.dewow(self.rdata.dat, window=10))
-            elif arg == "remMnTr":
-                nraces = tk.simpledialog.askfloat("input","moving average window size (# traces/" +  str(int(self.rdata.tnum)) + ")?")
-                self.rdata.set_proc(processing.remMeanTrace(self.rdata.dat, ntraces=ntraces))
-            elif arg == "lowpass":
-                cutoff = tk.simpledialog.askfloat("input","butterworth filter cutoff frequency?")
-                self.rdata.set_proc(processing.lowpassFilt(self.rdata.dat, Wn = cutoff, fs = 1/self.rdata.dt))
-            elif arg == "agc":
-                window = tk.simpledialog.askfloat("input","AGC gain window size (# samples/" +  str(int(self.rdata.snum)) + ")?")
-                self.rdata.set_proc(processing.agcGain(self.rdata.dat, window=window))
-            elif arg == "tpow":
-                power = tk.simpledialog.askfloat("input","power for tpow gain?")
-                self.rdata.set_proc(processing.tpowGain(self.rdata.dat, np.arange(self.rdata.snum)*self.rdata.dt, power=power))
-            elif arg == "restore":
-                # restore origianl rdata
-                self.rdata.set_proc(processing.restore(rdata.dtype, rdata.dat))
-            else:
-                print("undefined processing method")
-                exit(1)
-            self.impick.drawData()
-            self.impick.set_axes(self.eps_r.get(), self.cmap.get())
-            self.impick.update_bg()
-            self.wvpick.clear()
-            self.wvpick.set_vars()
-            self.wvpick.set_data(self.rdata)
+            print("sorry, processing tools still in dev stage")
+            # if arg == "dewow":
+            #     window = tk.simpledialog.askfloat("input","dewow window size (# samples/" +  str(int(self.rdata.snum)) + ")?")
+            #     self.rdata.set_proc(processing.dewow(self.rdata.dat, window=10))
+            # elif arg == "remMnTr":
+            #     nraces = tk.simpledialog.askfloat("input","moving average window size (# traces/" +  str(int(self.rdata.tnum)) + ")?")
+            #     self.rdata.set_proc(processing.remMeanTrace(self.rdata.dat, ntraces=ntraces))
+            # elif arg == "lowpass":
+            #     cutoff = tk.simpledialog.askfloat("input","butterworth filter cutoff frequency?")
+            #     self.rdata.set_proc(processing.lowpassFilt(self.rdata.dat, Wn = cutoff, fs = 1/self.rdata.dt))
+            # elif arg == "agc":
+            #     window = tk.simpledialog.askfloat("input","AGC gain window size (# samples/" +  str(int(self.rdata.snum)) + ")?")
+            #     self.rdata.set_proc(processing.agcGain(self.rdata.dat, window=window))
+            # elif arg == "tpow":
+            #     power = tk.simpledialog.askfloat("input","power for tpow gain?")
+            #     self.rdata.set_proc(processing.tpowGain(np.abs(self.rdata.dat), np.arange(self.rdata.snum)*self.rdata.dt, power=power))
+            # elif arg == "restore":
+            #     # restore origianl rdata
+            #     self.rdata.set_proc(processing.restore(self.rdata.dtype, self.rdata.dat))
+            # else:
+            #     print("undefined processing method")
+            #     exit(1)
+            # self.rdata.genPyramids()
+            # self.impick.set_crange()
+            # self.impick.drawData()
+            # self.impick.update_bg()
+            # self.wvpick.clear()
+            # self.wvpick.set_vars()
+            # self.wvpick.set_data(self.rdata)
 
 
     def settings(self):
@@ -616,10 +620,17 @@ class mainGUI(tk.Frame):
             self.figSize.set("21,7")
         
         # pass updated dielectric to impick
-        self.impick.set_axes(self.eps_r.get(), self.cmap.get())
+        self.impick.set_eps_r(self.eps_r.get())
+        self.impick.set_axes()
+
+        # pass cmap
+        self.impick.set_cmap(self.cmap.get())
 
         # pass updated debug state to impick
         self.impick.set_debugState(self.debugState.get())
+
+        # draw images
+        self.impick.drawData()
 
 
     def help(self):

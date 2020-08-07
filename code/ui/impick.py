@@ -16,7 +16,7 @@ from scipy.interpolate import CubicSpline
 
 class impick(tk.Frame):
     # impick is a class to pick horizons from a radar image
-    def __init__(self, parent, *args, **kwargs):
+    def __init__(self, parent, cmap, eps_r, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
 
@@ -113,17 +113,20 @@ class impick(tk.Frame):
         self.draw_cid = self.fig.canvas.mpl_connect("draw_event", self.update_bg)
         self.resize_cid = self.fig.canvas.mpl_connect("resize_event", self.drawData)
 
-       
-    # set_vars is a method to set impick variables
+        # variables to initialize once
+        self.cmap = cmap
+        self.eps_r = eps_r
+
+
+    # set_vars is a method to set impick variables which need to reset upon each load
     def set_vars(self):
         self.f_saveName = ""
-        self.dtype = "amp"
         self.basemap = None
         self.pick_surf = None
 
         self.pick_state = False
         self.pick_segment = 0
-        self.pyramid = 0
+        self.pyramid = None
 
         self.data_cmin = None
         self.data_cmax = None
@@ -162,14 +165,19 @@ class impick(tk.Frame):
         self.pick_ann_vis.set(False)
         self.debugState = False
         self.pickLabel.config(fg="#d9d9d9")
-        self.secaxx.set_xlabel("along-track distance [m]")
-        self.secaxy0.set_ylabel("two-way travel time [microsec.]")
-        self.secaxx.set_visible(True)
 
 
     # get debug state from gui settings
     def set_debugState(self, debugState):
         self.debugState = debugState
+
+    # get cmap settings from gui settings
+    def set_cmap(self, cmap):
+        self.cmap = cmap
+
+    # get eps_r setting from gui settings
+    def set_eps_r(self, eps_r):
+        self.eps_r = eps_r
 
 
     # load calls ingest() on the data file and sets the datacanvas
@@ -190,6 +198,49 @@ class impick(tk.Frame):
         self.im_clut  = self.ax.imshow(np.ones((100,100)), cmap="Greys_r", aspect="auto", extent=[0, 
                         self.rdata.tnum, self.rdata.snum, 0])
 
+        # # set clutter sim visibility to false
+        self.im_clut.set_visible(False)
+
+        # initialize arrays to hold saved picks
+        self.xln_surf_saved = np.repeat(np.nan, self.rdata.tnum)
+        self.yln_surf_saved = np.repeat(np.nan, self.rdata.tnum)
+        self.xln_subsurf_saved = np.repeat(np.nan, self.rdata.tnum)
+        self.yln_subsurf_saved = np.repeat(np.nan, self.rdata.tnum)
+
+        # initialize lines to hold existing picks
+        self.existing_subsurf_lns = []
+        count = len(self.rdata.pick.existing_twttSubsurf.items())
+        if count > 0:
+            x,y = zip(*self.rdata.pick.existing_twttSubsurf.items())
+            y = np.hstack(y)
+            x = np.repeat(np.arange(self.rdata.tnum), count)
+            self.ax.plot(x, utils.twtt2sample(y, self.rdata.dt), "b")
+        for _i in self.ax.lines:
+            self.existing_subsurf_lns.append(_i)
+
+        if np.any(self.rdata.pick.existing_twttSurf):
+            self.existing_surf_ln = self.ax.plot(np.arange(self.rdata.tnum), utils.twtt2sample(self.rdata.pick.existing_twttSurf, self.rdata.dt), "c")
+
+        # initialize lines to hold current pick segments
+        self.tmp_surf_ln, = self.ax.plot(self.xln_surf,self.yln_surf,"mx")                          # empty line for surface pick segment
+        self.saved_subsurf_ln, = self.ax.plot(self.xln_subsurf_saved,self.yln_subsurf_saved,"g")    # empty line for saved subsurface pick
+        self.tmp_subsurf_ln, = self.ax.plot(self.xln_subsurf,self.yln_subsurf,"rx")                 # empty line for current pick segment
+        self.saved_surf_ln, = self.ax.plot(self.xln_surf_saved, self.yln_subsurf_saved, "y")        # plot lidar surface
+
+        # update the canvas
+        self.dataCanvas._tkcanvas.pack()
+
+        # connect ylim_change with event to update image pyramiding based on zoom - have to do this on load, since clear_canvas removes axis callbacks
+        self.ylim_cid = self.ax.callbacks.connect("ylim_changed", self.drawData)
+
+        # update toolbar to save axes extents
+        self.toolbar.update()
+
+        # set color range
+        self.set_crange()
+
+
+    def set_crange(self):
         ### get radar and clut array bounds for setting image color limits - just doing this once based off original arrays, not pyramids ###
         # get clim bounds - take 10th percentile for min, ignore nd values
         self.mindB_data = np.floor(np.percentile(self.rdata.proc[self.rdata.proc != -9999],10))
@@ -211,41 +262,12 @@ class impick(tk.Frame):
 
         self.update_slider()
 
-        # # set clutter sim visibility to false
-        self.im_clut.set_visible(False)
 
-        # initialize arrays to hold saved picks
-        self.xln_surf_saved = np.repeat(np.nan, self.rdata.tnum)
-        self.yln_surf_saved = np.repeat(np.nan, self.rdata.tnum)
-        self.xln_subsurf_saved = np.repeat(np.nan, self.rdata.tnum)
-        self.yln_subsurf_saved = np.repeat(np.nan, self.rdata.tnum)
-
-        # initialize lines to hold existing picks
-        if np.any(self.rdata.pick.existing_twttSurf):
-            self.existing_surf_ln = self.ax.plot(np.arange(self.rdata.tnum), utils.twtt2sample(self.rdata.pick.existing_twttSurf, self.rdata.dt), "c")
-        count = len(self.rdata.pick.existing_twttSubsurf.items())
-        if count > 0:
-            x,y = zip(*self.rdata.pick.existing_twttSubsurf.items())
-            y = np.hstack(y)
-            x = np.repeat(np.arange(self.rdata.tnum), count)
-            self.existing_subsurf_ln = self.ax.plot(x, utils.twtt2sample(y, self.rdata.dt), "b")
-
-        # initialize lines to hold current pick segments
-        self.tmp_surf_ln, = self.ax.plot(self.xln_surf,self.yln_surf,"mx")                          # empty line for surface pick segment
-        self.saved_subsurf_ln, = self.ax.plot(self.xln_subsurf_saved,self.yln_subsurf_saved,"g")    # empty line for saved subsurface pick
-        self.tmp_subsurf_ln, = self.ax.plot(self.xln_subsurf,self.yln_subsurf,"rx")                 # empty line for current pick segment
-        self.saved_surf_ln, = self.ax.plot(self.xln_surf_saved, self.yln_subsurf_saved, "y")        # plot lidar surface
-
-        # update the canvas
-        self.dataCanvas._tkcanvas.pack()
-
-        # connect ylim_change with event to update image pyramiding based on zoom - have to do this on load, since clear_canvas removes axis callbacks
-        self.ylim_cid = self.ax.callbacks.connect("ylim_changed", self.drawData)
-
-        # update toolbar to save axes extents
-        self.toolbar.update()
-
-        self.drawData()
+    # method to zoom to full image extent
+    def fullExtent(self):
+        self.ax.set_xlim(0, self.rdata.tnum)
+        self.ax.set_ylim(self.rdata.snum, 0)
+        self.dataCanvas.draw()
 
 
     # method to draw radar data
@@ -259,15 +281,23 @@ class impick(tk.Frame):
                 p = i
                 break
 
+        # set flag to detect if canvas needs redrawing
+        flag = False
+
         # if ideal pyramid level changed, update image
-        if self.pyramid == p:
-            return
-        else:
+        if self.pyramid != p:
             self.pyramid = p
+            self.im_data.set_data(self.rdata.dPyramid[self.pyramid])
+            self.im_clut.set_data(self.rdata.cPyramid[self.pyramid])
+            flag = True
 
-            self.im_data.set_data(self.rdata.dPyramid[p])
-            self.im_clut.set_data(self.rdata.cPyramid[p])
+        # update cmap if necessary
+        if self.im_data.get_cmap().name != self.cmap:
+            self.im_data.set_cmap(self.cmap)
+            self.im_clut.set_cmap(self.cmap)
+            flag = True
 
+        if flag:
             self.dataCanvas.draw()
 
 
@@ -600,11 +630,11 @@ class impick(tk.Frame):
         if self.pick_ann_vis.get() == True:
             for _i in self.ann_list:
                 _i.set_visible(True)
-                self.update_bg()
         else:
             for _i in self.ann_list:
                 _i.set_visible(False)
-                self.update_bg()
+
+        self.update_bg()
 
 
     # add_pickLabels is a method to create annotations for picks
@@ -623,7 +653,7 @@ class impick(tk.Frame):
     def remove_imported_picks(self):
         if len(self.ax.lines) > 4:
             for _i in range(len(self.ax.lines) - 4):
-                self.ax.lines[-1].remove()
+                self.ax.lines[0].remove()
 
 
     def show_data(self):
@@ -679,13 +709,13 @@ class impick(tk.Frame):
         self.update_bg()
         # self.fig.canvas.draw()
 
-    # pick_vis is a method to toggle the visibility of picks
+    # show_picks is a method to toggle the visibility of picks on
     def show_picks(self):
         self.show_artists()
         self.safe_draw()
         self.fig.canvas.blit(self.ax.bbox)
 
-
+    # hide_picks is a method to toggle the visibility of picks off
     def hide_picks(self):
         self.hide_artists()
         self.safe_draw()
@@ -833,19 +863,17 @@ class impick(tk.Frame):
 
 
     # set axis labels
-    def set_axes(self, eps_r, cmap):
-        self.ax.set_xlim(0, self.rdata.tnum)
-        self.ax.set_ylim(self.rdata.snum, 0)
-
+    def set_axes(self):
         # update twtt and depth (subradar dist.)
         if self.rdata.dt < 1e-9:
             self.secaxy0.set_ylabel("two-way travel time [nanosec.]")
             self.secaxy0.set_ylim(self.rdata.snum * self.rdata.dt * 1e9, 0)
         else:
+            self.secaxy0.set_ylabel("two-way travel time [microsec.]")
             self.secaxy0.set_ylim(self.rdata.snum * self.rdata.dt * 1e6, 0)
 
-        self.secaxy1.set_ylabel("approx. subradar distance [m] ($\epsilon_{}$ = {}".format("r",eps_r))
-        self.secaxy1.set_ylim(utils.twtt2depth(self.rdata.snum * self.rdata.dt, eps_r), 0)
+        self.secaxy1.set_ylabel("approx. subradar distance [m] ($\epsilon_{}$ = {}".format("r",self.eps_r))
+        self.secaxy1.set_ylim(utils.twtt2depth(self.rdata.snum * self.rdata.dt, self.eps_r), 0)
 
         # update along-track distance
         if not np.all(np.isnan(self.rdata.navdf["dist"])) or  np.all((self.rdata.navdf["dist"] == 0)):
@@ -855,13 +883,12 @@ class impick(tk.Frame):
                 self.secaxx.set_xlim(0, self.rdata.navdf.iloc[-1]["dist"]*1e-3)
 
             else:
+                self.secaxx.set_xlabel("along-track distance [m]")
                 self.secaxx.set_xlim(0, self.rdata.navdf.iloc[-1]["dist"])
         
         else:
             self.secaxx.set_visible(False)
-        
-        self.im_data.set_cmap(cmap)
-        self.im_clut.set_cmap(cmap)
+
 
     # get_nav method returns the nav data       
     def get_nav(self):
@@ -883,10 +910,10 @@ class impick(tk.Frame):
 
 
     # save is a method to receive the pick save location from gui and save using utils.save
-    def save(self, f_saveName, eps_r, cmap, figSize):
+    def save(self, f_saveName, figSize):
         self.f_saveName = f_saveName
         # zoom out to full rgram extent to save pick image
-        self.set_axes(eps_r, cmap)
+        self.fullExtent()
         if self.im_status.get() =="clut":
             self.show_data()
         # temporarily turn sliders to invisible for saving image
@@ -895,12 +922,16 @@ class impick(tk.Frame):
         self.reset_ax.set_visible(False)
         # hide pick annotations
         self.pick_ann_vis.set(False)
-        self.show_pickLabels()        
+        self.show_pickLabels()     
         # ensure picks are visible
         self.pick_vis.set(True)
         self.show_picks()
         w,h = self.fig.get_size_inches()    # get pre-save figure size
         self.fig.set_size_inches((float(figSize[0]),float(figSize[1])))    # set figsize to wide aspect ratio
+        # hide existing picks
+        for _i in self.existing_subsurf_lns:
+            _i.remove()
+        self.safe_draw()
         utils.exportIm(f_saveName, self.fig)
         # return figsize to intial values and make sliders visible again
         self.fig.set_size_inches((w,h))
