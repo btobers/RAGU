@@ -171,9 +171,11 @@ class impick(tk.Frame):
     def set_debugState(self, debugState):
         self.debugState = debugState
 
+
     # get cmap settings from gui settings
     def set_cmap(self, cmap):
         self.cmap = cmap
+
 
     # get eps_r setting from gui settings
     def set_eps_r(self, eps_r):

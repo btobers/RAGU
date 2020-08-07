@@ -110,14 +110,14 @@ class wvpick(tk.Frame):
     def set_data(self, rdata):
         # get data in dB
         self.rdata = rdata
-        self.data_dB = utils.amp2powdB(self.rdata.proc)
+        self.data_dB = np.ma.masked_array(self.rdata.proc, self.rdata.proc  == -9999)
 
 
     # set_pickDict is a method which holds the picked segment data for optimization
     def set_picks(self):
         # create a copy of passed from imPick as to not modify original values
-        self.rdata.pick.current_surfOpt = copy.deepcopy(self.rdata.pick.current.surf)
-        self.rdata.pick.current_subsurfOpt = copy.deepcopy(self.rdata.pick.current.subsurf)
+        self.rdata.pick.current_surfOpt = copy.deepcopy(self.rdata.pick.current_surf)
+        self.rdata.pick.current_subsurfOpt = copy.deepcopy(self.rdata.pick.current_subsurf)
 
         # determine number of pick segments
         self.num_pksegs = len(self.rdata.pick.current_subsurfOpt)
@@ -159,7 +159,7 @@ class wvpick(tk.Frame):
 
         if self.num_pksegs > 0:
             # get sample index of pick for given trace
-            pick_idx0 = self.rdata.pick.current.subsurf[str(segment)][self.traceNum[segment]]
+            pick_idx0 = self.rdata.pick.current_subsurf[str(segment)][self.traceNum[segment]]
             pick_idx1 = self.rdata.pick.current_subsurfOpt[str(segment)][self.traceNum[segment]]
 
             self.ax.axvline(x = pick_idx0, c="k", label="initial subsurface pick")
@@ -239,7 +239,7 @@ class wvpick(tk.Frame):
 
     # surf_autoPick is a method to automatically optimize surface picks by selecting the maximul amplitude sample within the specified window around existing self.rdata.surf
     def surf_autoPick(self):
-        if np.all(np.isnan(self.rdata.pick.current.surf)):
+        if np.all(np.isnan(self.rdata.pick.current_surf)):
             # if surf idx array is all nans, take max power to define surface 
             max_idx = np.nanargmax(self.data_dB[10:,:], axis = 0) + 10
             # remove outliers
@@ -251,8 +251,8 @@ class wvpick(tk.Frame):
         else:
             # if existing surface pick, find max within specified window form existing pick
             winSize = self.winSize.get()
-            x = np.argwhere(~np.isnan(self.rdata.pick.current.surf))
-            y = self.rdata.pick.current.surf[x]
+            x = np.argwhere(~np.isnan(self.rdata.pick.current_surf))
+            y = self.rdata.pick.current_surf[x]
             for _i in range(len(x)):
                 # find argmax for window for given data trace in pick
                 max_idx = np.argmax(self.data_dB[int(y[_i] - (winSize/2)):int(y[_i] + (winSize/2)), x[_i]])
@@ -266,8 +266,8 @@ class wvpick(tk.Frame):
         if self.num_pksegs > 0:
             winSize = self.winSize.get()
             for _i in range(self.num_pksegs):
-                x = np.where(~np.isnan(self.rdata.pick.current.subsurf[str(_i)]))[0]
-                y = self.rdata.pick.current.subsurf[str(_i)][x]
+                x = np.where(~np.isnan(self.rdata.pick.current_subsurf[str(_i)]))[0]
+                y = self.rdata.pick.current_subsurf[str(_i)][x]
                 for _j in range(len(x)):
                     # find argmax for window for given data trace in pick
                     max_idx = np.argmax(self.data_dB[int(y[_j] - (winSize/2)):int(y[_j] + (winSize/2)), x[_j]])

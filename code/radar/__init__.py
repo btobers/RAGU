@@ -67,7 +67,7 @@ class radar(object):
         with np.errstate(divide="ignore"):
             dB = np.log10(pow)
         # set -9999 as nodata value
-        dB[dB == np.NINF] = -9999
+        dB[~np.isfinite(dB)] = -9999
 
         return dB
 
