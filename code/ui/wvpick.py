@@ -110,7 +110,8 @@ class wvpick(tk.Frame):
     def set_data(self, rdata):
         # get data in dB
         self.rdata = rdata
-        self.data_dB = np.ma.masked_array(self.rdata.proc, self.rdata.proc  == -9999)
+        self.data_dB = self.rdata.proc
+        # np.ma.masked_array(self.rdata.proc, self.rdata.proc  == -9999)
 
 
     # set_pickDict is a method which holds the picked segment data for optimization

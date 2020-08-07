@@ -114,7 +114,7 @@ class impick(tk.Frame):
         self.resize_cid = self.fig.canvas.mpl_connect("resize_event", self.drawData)
 
         # variables to initialize once
-        self.cmap = cmap
+        self.set_cmap(cmap)
         self.eps_r = eps_r
 
 
@@ -174,7 +174,10 @@ class impick(tk.Frame):
 
     # get cmap settings from gui settings
     def set_cmap(self, cmap):
-        self.cmap = cmap
+        self.cmap = mpl.cm.get_cmap(cmap)
+        # set nodata value as darkest color in cmap
+        nd = self.cmap(np.linspace(0,1,256))[0]
+        self.cmap.set_bad(nd)
 
 
     # get eps_r setting from gui settings
@@ -195,10 +198,10 @@ class impick(tk.Frame):
         self.ax.set(xlabel = "trace", ylabel = "sample")
 
         # initialize data and clutter images with np.ones - set data in drawData
-        self.im_data  = self.ax.imshow(np.ones((100,100)), cmap="Greys_r", aspect="auto", extent=[0, 
-                        self.rdata.tnum, self.rdata.snum, 0])
-        self.im_clut  = self.ax.imshow(np.ones((100,100)), cmap="Greys_r", aspect="auto", extent=[0, 
-                        self.rdata.tnum, self.rdata.snum, 0])
+        self.im_data  = self.ax.imshow(np.ones((100,100)), aspect="auto", 
+                        extent=[0, self.rdata.tnum, self.rdata.snum, 0])
+        self.im_clut  = self.ax.imshow(np.ones((100,100)), aspect="auto", 
+                        extent=[0, self.rdata.tnum, self.rdata.snum, 0])
 
         # # set clutter sim visibility to false
         self.im_clut.set_visible(False)
@@ -245,8 +248,8 @@ class impick(tk.Frame):
     def set_crange(self):
         ### get radar and clut array bounds for setting image color limits - just doing this once based off original arrays, not pyramids ###
         # get clim bounds - take 10th percentile for min, ignore nd values
-        self.mindB_data = np.floor(np.percentile(self.rdata.proc[self.rdata.proc != -9999],10))
-        self.mindB_clut = np.floor(np.percentile(self.rdata.clut[self.rdata.clut != -9999],10))
+        self.mindB_data = np.floor(np.nanpercentile(self.rdata.proc,10))
+        self.mindB_clut = np.floor(np.nanpercentile(self.rdata.clut,10))
         self.maxdB_data = np.nanmax(self.rdata.proc)
         self.maxdB_clut = np.nanmax(self.rdata.clut)
 
@@ -294,7 +297,7 @@ class impick(tk.Frame):
             flag = True
 
         # update cmap if necessary
-        if self.im_data.get_cmap().name != self.cmap:
+        if self.im_data.get_cmap().name != self.cmap.name:
             self.im_data.set_cmap(self.cmap)
             self.im_clut.set_cmap(self.cmap)
             flag = True

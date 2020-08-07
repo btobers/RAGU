@@ -62,12 +62,12 @@ class radar(object):
 
     # convert amplitude array to dB log scale
     def dBscale(self, dat):
+        # mask zero-amp values
+        dat[dat == 0] = np.nan
+        # convert to power
         pow = np.power(dat, 2)
-        # dB it - ignore divide by zero warning for zero-power values
-        with np.errstate(divide="ignore"):
-            dB = np.log10(pow)
-        # set -9999 as nodata value
-        dB[~np.isfinite(dB)] = -9999
+        # dB it
+        dB = np.log10(pow)
 
         return dB
 
@@ -80,7 +80,6 @@ class radar(object):
         for i in range(4):
             self.dPyramid.append(self.proc[::2**i,:])
             self.cPyramid.append(self.clut[::2**i,:])
-
         return
 
 
