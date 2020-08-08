@@ -78,7 +78,7 @@ class radar(object):
         # mask zero-power values
         pow[pow == 0] = np.nan
         # dB it
-        dB = np.log10(pow)
+        dB = 10*np.log10(pow)
         return dB
 
 

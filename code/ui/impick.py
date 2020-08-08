@@ -76,14 +76,14 @@ class impick(tk.Frame):
         self.ax = self.fig.add_subplot(1,1,1)
 
         # add axes for colormap sliders and reset button - leave invisible until rdata loaded
-        self.ax_cmax = self.fig.add_axes([0.95, 0.55, 0.01, 0.30])
-        self.ax_cmin  = self.fig.add_axes([0.95, 0.18, 0.01, 0.30])
-        self.reset_ax = self.fig.add_axes([0.935, 0.11, 0.04, 0.03])
+        self.ax_cmax = self.fig.add_axes([0.96, 0.55, 0.0075, 0.30])
+        self.ax_cmin  = self.fig.add_axes([0.96, 0.18, 0.0075, 0.30])
+        self.reset_ax = self.fig.add_axes([0.95125, 0.11, 0.025, 0.03])
      
         # create colormap sliders and reset button - initialize for data image
         self.s_cmin = mpl.widgets.Slider(self.ax_cmin, "min", 0, 1, orientation="vertical")
         self.s_cmax = mpl.widgets.Slider(self.ax_cmax, "max", 0, 1, orientation="vertical")
-        self.cmap_reset_button = mpl.widgets.Button(self.reset_ax, "reset", color="lightgoldenrodyellow")
+        self.cmap_reset_button = mpl.widgets.Button(self.reset_ax, "reset", color="white")
         self.cmap_reset_button.on_clicked(self.cmap_reset)
 
         # initiate a twin axis that shows twtt
@@ -130,10 +130,15 @@ class impick(tk.Frame):
         self.pick_segment = 0
         self.pyramid = None
 
+        # image colormap bounds
         self.data_cmin = None
         self.data_cmax = None
         self.clut_cmin = None
         self.clut_cmax = None
+
+        # image colormap range
+        self.data_crange = None
+        self.clut_crange = None
 
         # initialize lists to hold temporary picks
         self.xln_subsurf = []
@@ -247,24 +252,32 @@ class impick(tk.Frame):
         self.set_crange()
 
 
+    # set radar and clut array bounds for setting image color limits - just doing this once based off original arrays, not pyramids
     def set_crange(self):
-        ### get radar and clut array bounds for setting image color limits - just doing this once based off original arrays, not pyramids ###
         # get clim bounds - take 10th percentile for min, ignore nd values
         self.mindB_data = np.floor(np.nanpercentile(self.rdata.proc,10))
-        self.mindB_clut = np.floor(np.nanpercentile(self.rdata.clut,10))
         self.maxdB_data = np.nanmax(self.rdata.proc)
-        self.maxdB_clut = np.nanmax(self.rdata.clut)
+        # handle possible missing clutter data for cmap bounds
+        if (self.rdata.clut == 0).all():
+            self.mindB_clut = 0
+            self.maxdB_clut = 1
+        else:
+            self.mindB_clut = np.floor(np.nanpercentile(self.rdata.clut,10))
+            self.maxdB_clut = np.nanmax(self.rdata.clut)
 
+        # get colormap range
+        self.data_crange = self.maxdB_data - self.mindB_data
+        self.clut_crange = self.maxdB_clut - self.mindB_clut
         # update color limits
         self.im_data.set_clim([self.mindB_data, self.maxdB_data])
         self.im_clut.set_clim([self.mindB_clut, self.maxdB_clut])
 
         # set slider bounds - use data clim values upon initial load
-        self.s_cmin.valmin = self.mindB_data - 10
-        self.s_cmin.valmax = self.mindB_data + 10
+        self.s_cmin.valmin = self.mindB_data - (self.data_crange/2)
+        self.s_cmin.valmax = self.mindB_data + (self.data_crange/2)
         self.s_cmin.valinit = self.mindB_data
-        self.s_cmax.valmin = self.maxdB_data - 10
-        self.s_cmax.valmax = self.maxdB_data + 10
+        self.s_cmax.valmin = self.maxdB_data - (self.data_crange/2)
+        self.s_cmax.valmax = self.maxdB_data + (self.data_crange/2)
         self.s_cmax.valinit = self.maxdB_data
 
         self.update_slider()
@@ -313,6 +326,7 @@ class impick(tk.Frame):
         return self.pick_state
 
 
+    # return surface being picked (surface or subsurface)
     def get_pickSurf(self):
         return self.pick_surf
 
@@ -494,8 +508,8 @@ class impick(tk.Frame):
             self.saved_surf_ln.set_data(self.xln_surf_saved, self.yln_surf_saved)
 
 
+    # clear all subsurface picks
     def clear_subsurfPicks(self):
-        # clear all subsurface picks
         if len(self.xln_subsurf) + np.count_nonzero(~np.isnan(self.xln_subsurf_saved)) > 0:
             # set picking state to false
             if self.pick_state == True and self.pick_surf == "subsurface":
@@ -513,8 +527,8 @@ class impick(tk.Frame):
             del self.ann_list[:]
 
 
+    # clear last pick
     def clear_last(self):
-        # clear last pick
         if self.pick_state == True:
             if self.pick_surf == "subsurface" and len(self.xln_subsurf) >= 1:
                 del self.xln_subsurf[-1:]
@@ -664,8 +678,8 @@ class impick(tk.Frame):
                 _i.remove()
 
 
+    # toggle to radar data
     def show_data(self):
-        # toggle to radar data
         # get clutter colormap slider values for reviewing
         self.clut_cmin = self.s_cmin.val
         self.clut_cmax = self.s_cmax.val
@@ -673,10 +687,10 @@ class impick(tk.Frame):
         self.s_cmin.valinit = self.data_cmin
         self.s_cmax.valinit = self.data_cmax
         # set colorbar bounds
-        self.s_cmin.valmin = self.mindB_data - 10
-        self.s_cmin.valmax = self.mindB_data + 10
-        self.s_cmax.valmin = self.maxdB_data - 10
-        self.s_cmax.valmax = self.maxdB_data + 10
+        self.s_cmin.valmin = self.mindB_data - (self.data_crange/2)
+        self.s_cmin.valmax = self.mindB_data + (self.data_crange/2)
+        self.s_cmax.valmin = self.maxdB_data - (self.data_crange/2)
+        self.s_cmax.valmax = self.maxdB_data + (self.data_crange/2)
         self.update_slider()
         # reverse visilibilty
         self.im_clut.set_visible(False)
@@ -686,8 +700,9 @@ class impick(tk.Frame):
         self.update_bg()
         # self.fig.canvas.draw()
 
+
+    # toggle to clutter sim viewing
     def show_clut(self):
-        # toggle to clutter sim viewing
         # get radar data colormap slider values for reviewing
         self.data_cmin = self.s_cmin.val
         self.data_cmax = self.s_cmax.val
@@ -702,10 +717,10 @@ class impick(tk.Frame):
             self.s_cmin.valinit = self.clut_cmin
             self.s_cmax.valinit = self.clut_cmax
 
-        self.s_cmin.valmin = self.mindB_clut - 10
-        self.s_cmin.valmax = self.mindB_clut + 10            
-        self.s_cmax.valmin = self.maxdB_clut - 10
-        self.s_cmax.valmax = self.maxdB_clut + 10
+        self.s_cmin.valmin = self.mindB_clut - (self.clut_crange/2)
+        self.s_cmin.valmax = self.mindB_clut + (self.clut_crange/2)           
+        self.s_cmax.valmin = self.maxdB_clut - (self.clut_crange/2)
+        self.s_cmax.valmax = self.maxdB_clut + (self.clut_crange/2)
         self.update_slider()
         # reverse visilibilty
         self.im_data.set_visible(False)
@@ -738,7 +753,7 @@ class impick(tk.Frame):
                 menu.add_command(label=_i,
                     command=tk._setit(self.segVar,_i))
 
-
+    # update clim slider bar
     def update_slider(self):
         self.ax_cmax.clear()
         self.ax_cmin.clear()
@@ -747,9 +762,8 @@ class impick(tk.Frame):
         self.s_cmin.on_changed(self.cmap_update)
         self.s_cmax.on_changed(self.cmap_update)
 
-
+    # update image colormap based on slider values
     def cmap_update(self, s=None):
-        # method to update image colormap based on slider values
         try:
             if self.im_data.get_visible():
                 # apply slider values to visible image
@@ -763,23 +777,22 @@ class impick(tk.Frame):
         except Exception as err:
             print("cmap_update error: " + str(err))
 
-
+    # reset sliders to initial values
     def cmap_reset(self, event):
-        # reset sliders to initial values
         if self.im_data.get_visible():
-            self.s_cmin.valmin = self.mindB_data - 10
-            self.s_cmin.valmax = self.mindB_data + 10
+            self.s_cmin.valmin = self.mindB_data - (self.data_crange/2)
+            self.s_cmin.valmax = self.mindB_data + (self.data_crange/2)
             self.s_cmin.valinit = self.mindB_data
-            self.s_cmax.valmin = self.maxdB_data - 10
-            self.s_cmax.valmax = self.maxdB_data + 10
+            self.s_cmax.valmin = self.maxdB_data - (self.data_crange/2)
+            self.s_cmax.valmax = self.maxdB_data + (self.data_crange/2)
             self.s_cmax.valinit = self.maxdB_data
         else:
             # if clutter is displayed, change slider bounds
-            self.s_cmin.valmin = self.mindB_clut - 10
-            self.s_cmin.valmax = self.mindB_clut + 10
+            self.s_cmin.valmin = self.mindB_clut - (self.clut_crange/2)
+            self.s_cmin.valmax = self.mindB_clut + (self.clut_crange/2)
             self.s_cmin.valinit = self.mindB_clut
-            self.s_cmax.valmin = self.maxdB_clut - 10
-            self.s_cmax.valmax = self.maxdB_clut + 10
+            self.s_cmax.valmin = self.maxdB_clut - (self.clut_crange/2)
+            self.s_cmax.valmax = self.maxdB_clut + (self.clut_crange/2)
             self.s_cmax.valinit = self.maxdB_clut
         self.update_slider()
         self.cmap_update()
