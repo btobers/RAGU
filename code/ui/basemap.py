@@ -42,7 +42,9 @@ class basemap(tk.Frame):
                 dataset = rio.open(self.map_loadName, mode="r")
                 self.bmcrs = dataset.crs
                 im = np.dstack((dataset.read())) # np.dstack((dataset.read(1), dataset.read(2), dataset.read(3), dataset.read(4)))
-                # # show basemap figure in basemap window
+                if im.shape[-1] == 1:
+                    im = im.reshape(im.shape[0], -1)
+                # show basemap figure in basemap window
                 self.map_fig = mpl.figure.Figure()
                 self.map_fig.patch.set_facecolor(self.parent.cget('bg'))
                 self.map_fig_ax = self.map_fig.add_subplot(111)
