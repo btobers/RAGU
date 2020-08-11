@@ -51,9 +51,9 @@ def read_h5(fpath, navcrs, body):
         rdata.elev_gnd = np.repeat(np.nan, rdata.tnum)
 
     if "clutter0" in f["drv"].keys():
-        rdata.set_clut(f["drv"]["clutter0"][:])                         # simulated clutter array
+        rdata.set_sim(f["drv"]["clutter0"][:])                         # simulated clutter array
     else:
-        rdata.set_clut(np.ones(rdata.dat.shape))                        # empty clutter array if no sim exists
+        rdata.set_sim(np.ones(rdata.dat.shape))                        # empty clutter array if no sim exists
 
     # read in existing surface picks
     if "twtt_surf" in f["drv"]["pick"].keys():
@@ -87,7 +87,7 @@ def read_mat(fpath, navcrs, body):
         rdata.set_proc(rdata.dat)
 
         rdata.navdf = navparse.getnav_oibAK_mat(fpath, navcrs, body)
-        rdata.clut = rdata.dBscale(np.array(f["block"]["clutter"]))
+        rdata.set_sim(np.array(f["block"]["clutter"]))
 
         rdata.pick.existing.twtt_surf = f["block"]["twtt_surf"].flatten()
         f.close()
@@ -102,7 +102,7 @@ def read_mat(fpath, navcrs, body):
             rdata.proc(rdata.dat)
 
             rdata.navdf = navparse.getnav_oibAK_mat(fpath,navcrs,body)
-            rdata.clut = rdata.dBscale(f["block"]["clutter"][0][0])
+            rdata.set_sim(f["block"]["clutter"][0][0])
 
             rdata.pick.existing.twtt_surf = f["block"]["twtt_surf"][0][0].flatten().astype(np.float64)
 

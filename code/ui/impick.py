@@ -23,6 +23,7 @@ class impick(tk.Frame):
         self.eps_r = eps_r
         self.setup()
 
+
     # setup is a method which initialized the tkinter frame 
     def setup(self):
         # set up frames
@@ -34,11 +35,11 @@ class impick(tk.Frame):
         self.dataFrame.pack(side="bottom", fill="both", expand=1)
 
         self.im_status = tk.StringVar()
-        # add radio buttons for toggling between radargram and clutter-sim
+        # add radio buttons for toggling between radargram and clutter sim
         radarRadio = tk.Radiobutton(infoFrame, text="radargram", variable=self.im_status, value="data",command=self.show_data)
         radarRadio.pack(side="left")
-        clutterRadio = tk.Radiobutton(infoFrame,text="cluttergram", variable=self.im_status, value="clut",command=self.show_clut)
-        clutterRadio.pack(side="left")
+        simRadio = tk.Radiobutton(infoFrame,text="clutter sim", variable=self.im_status, value="sim",command=self.show_sim)
+        simRadio.pack(side="left")
         tk.ttk.Separator(infoFrame,orient="vertical").pack(side="left", fill="both", padx=10, pady=4)
 
         # add radio buttons for toggling pick visibility
@@ -133,12 +134,12 @@ class impick(tk.Frame):
         # image colormap bounds
         self.data_cmin = None
         self.data_cmax = None
-        self.clut_cmin = None
-        self.clut_cmax = None
+        self.sim_cmin = None
+        self.sim_cmax = None
 
         # image colormap range
         self.data_crange = None
-        self.clut_crange = None
+        self.sim_crange = None
 
         # initialize lists to hold temporary picks
         self.xln_subsurf = []
@@ -162,7 +163,7 @@ class impick(tk.Frame):
         self.saved_surf_ln = None
 
         # necessary flags
-        self.clut_imSwitch_flag = False
+        self.sim_imSwitch_flag = False
         self.surf_pickFlag = False
         self.edit_flag = False
 
@@ -205,13 +206,13 @@ class impick(tk.Frame):
         self.ax.set(xlabel = "trace", ylabel = "sample")
 
         # initialize data and clutter images with np.ones - set data in drawData
-        self.im_data  = self.ax.imshow(np.ones((100,100)), aspect="auto", 
+        self.im_dat  = self.ax.imshow(np.ones((100,100)), aspect="auto", 
                         extent=[0, self.rdata.tnum, self.rdata.snum, 0])
-        self.im_clut  = self.ax.imshow(np.ones((100,100)), aspect="auto", 
+        self.im_sim  = self.ax.imshow(np.ones((100,100)), aspect="auto", 
                         extent=[0, self.rdata.tnum, self.rdata.snum, 0])
 
         # # set clutter sim visibility to false
-        self.im_clut.set_visible(False)
+        self.im_sim.set_visible(False)
 
         # initialize arrays to hold saved picks
         self.xln_surf_saved = np.repeat(np.nan, self.rdata.tnum)
@@ -252,25 +253,25 @@ class impick(tk.Frame):
         self.set_crange()
 
 
-    # set radar and clut array bounds for setting image color limits - just doing this once based off original arrays, not pyramids
+    # set radar and sim array bounds for setting image color limits - just doing this once based off original arrays, not pyramids
     def set_crange(self):
         # get clim bounds - take 10th percentile for min, ignore nd values
         self.mindB_data = np.floor(np.nanpercentile(self.rdata.proc,10))
         self.maxdB_data = np.nanmax(self.rdata.proc)
-        # handle possible missing clutter data for cmap bounds
-        if (self.rdata.clut == 0).all():
-            self.mindB_clut = 0
-            self.maxdB_clut = 1
+        # handle possible missing sim data for cmap bounds
+        if (self.rdata.sim == 0).all():
+            self.mindB_sim = 0
+            self.maxdB_sim = 1
         else:
-            self.mindB_clut = np.floor(np.nanpercentile(self.rdata.clut,10))
-            self.maxdB_clut = np.nanmax(self.rdata.clut)
+            self.mindB_sim = np.floor(np.nanpercentile(self.rdata.sim,10))
+            self.maxdB_sim = np.nanmax(self.rdata.sim)
 
         # get colormap range
         self.data_crange = self.maxdB_data - self.mindB_data
-        self.clut_crange = self.maxdB_clut - self.mindB_clut
+        self.sim_crange = self.maxdB_sim - self.mindB_sim
         # update color limits
-        self.im_data.set_clim([self.mindB_data, self.maxdB_data])
-        self.im_clut.set_clim([self.mindB_clut, self.maxdB_clut])
+        self.im_dat.set_clim([self.mindB_data, self.maxdB_data])
+        self.im_sim.set_clim([self.mindB_sim, self.maxdB_sim])
 
         # set slider bounds - use data clim values upon initial load
         self.s_cmin.valmin = self.mindB_data - (self.data_crange/2)
@@ -307,14 +308,14 @@ class impick(tk.Frame):
         # if ideal pyramid level changed, update image
         if self.pyramid != p:
             self.pyramid = p
-            self.im_data.set_data(self.rdata.dPyramid[self.pyramid])
-            self.im_clut.set_data(self.rdata.cPyramid[self.pyramid])
+            self.im_dat.set_data(self.rdata.dPyramid[self.pyramid])
+            self.im_sim.set_data(self.rdata.sPyramid[self.pyramid])
             flag = True
 
         # update cmap if necessary
-        if self.im_data.get_cmap().name != self.cmap.name:
-            self.im_data.set_cmap(self.cmap)
-            self.im_clut.set_cmap(self.cmap)
+        if self.im_dat.get_cmap().name != self.cmap.name:
+            self.im_dat.set_cmap(self.cmap)
+            self.im_sim.set_cmap(self.cmap)
             flag = True
 
         if flag:
@@ -585,6 +586,7 @@ class impick(tk.Frame):
             self.pickLabel.config(text="subsurface pick segment " + str(layer) + ":\t active", fg="red")
             self.blit()
 
+
     # delete selected pick segment
     def delete_pkSeg(self):
         layer = self.segVar.get()
@@ -680,9 +682,9 @@ class impick(tk.Frame):
 
     # toggle to radar data
     def show_data(self):
-        # get clutter colormap slider values for reviewing
-        self.clut_cmin = self.s_cmin.val
-        self.clut_cmax = self.s_cmax.val
+        # get sim colormap slider values for reviewing
+        self.sim_cmin = self.s_cmin.val
+        self.sim_cmax = self.s_cmax.val
         # set colorbar initial values to previous values
         self.s_cmin.valinit = self.data_cmin
         self.s_cmax.valinit = self.data_cmax
@@ -693,50 +695,52 @@ class impick(tk.Frame):
         self.s_cmax.valmax = self.maxdB_data + (self.data_crange/2)
         self.update_slider()
         # reverse visilibilty
-        self.im_clut.set_visible(False)
-        self.im_data.set_visible(True)
+        self.im_sim.set_visible(False)
+        self.im_dat.set_visible(True)
         self.im_status.set("data")
         # redraw canvas
-        self.update_bg()
-        # self.fig.canvas.draw()
+        # self.update_bg()
+        self.fig.canvas.draw()
 
 
-    # toggle to clutter sim viewing
-    def show_clut(self):
+    # toggle to sim viewing
+    def show_sim(self):
         # get radar data colormap slider values for reviewing
         self.data_cmin = self.s_cmin.val
         self.data_cmax = self.s_cmax.val
 
-        if not self.clut_imSwitch_flag:
-            # if this is the first time viewing the clutter sim, set colorbar limits to initial values
-            self.s_cmin.valinit = self.mindB_clut
-            self.s_cmax.valinit = self.maxdB_clut
+        if not self.sim_imSwitch_flag:
+            # if this is the first time viewing the sim, set colorbar limits to initial values
+            self.s_cmin.valinit = self.mindB_sim
+            self.s_cmax.valinit = self.maxdB_sim
         else: 
-            # if clutter has been shown before revert to previous colorbar values
-            self.im_clut.set_clim([self.clut_cmin, self.clut_cmax])
-            self.s_cmin.valinit = self.clut_cmin
-            self.s_cmax.valinit = self.clut_cmax
+            # if sim has been shown before revert to previous colorbar values
+            self.im_sim.set_clim([self.sim_cmin, self.sim_cmax])
+            self.s_cmin.valinit = self.sim_cmin
+            self.s_cmax.valinit = self.sim_cmax
 
-        self.s_cmin.valmin = self.mindB_clut - (self.clut_crange/2)
-        self.s_cmin.valmax = self.mindB_clut + (self.clut_crange/2)           
-        self.s_cmax.valmin = self.maxdB_clut - (self.clut_crange/2)
-        self.s_cmax.valmax = self.maxdB_clut + (self.clut_crange/2)
+        self.s_cmin.valmin = self.mindB_sim - (self.sim_crange/2)
+        self.s_cmin.valmax = self.mindB_sim + (self.sim_crange/2)           
+        self.s_cmax.valmin = self.maxdB_sim - (self.sim_crange/2)
+        self.s_cmax.valmax = self.maxdB_sim + (self.sim_crange/2)
         self.update_slider()
         # reverse visilibilty
-        self.im_data.set_visible(False)
-        self.im_clut.set_visible(True)
-        # set flag to indicate that clutter has been viewed for resetting colorbar limits
-        self.clut_imSwitch_flag = True    
-        self.im_status.set("clut")
+        self.im_dat.set_visible(False)
+        self.im_sim.set_visible(True)
+        # set flag to indicate that sim has been viewed for resetting colorbar limits
+        self.sim_imSwitch_flag = True    
+        self.im_status.set("sim")
         # redraw canvas
-        self.update_bg()
-        # self.fig.canvas.draw()
+        # self.update_bg()
+        self.fig.canvas.draw()
+
 
     # show_picks is a method to toggle the visibility of picks on
     def show_picks(self):
         self.show_artists()
         self.safe_draw()
         self.fig.canvas.blit(self.ax.bbox)
+
 
     # hide_picks is a method to toggle the visibility of picks off
     def hide_picks(self):
@@ -753,6 +757,7 @@ class impick(tk.Frame):
                 menu.add_command(label=_i,
                     command=tk._setit(self.segVar,_i))
 
+
     # update clim slider bar
     def update_slider(self):
         self.ax_cmax.clear()
@@ -762,24 +767,26 @@ class impick(tk.Frame):
         self.s_cmin.on_changed(self.cmap_update)
         self.s_cmax.on_changed(self.cmap_update)
 
+
     # update image colormap based on slider values
     def cmap_update(self, s=None):
         try:
-            if self.im_data.get_visible():
+            if self.im_dat.get_visible():
                 # apply slider values to visible image
                 self.data_cmin = self.s_cmin.val
                 self.data_cmax = self.s_cmax.val
-                self.im_data.set_clim([self.data_cmin, self.data_cmax])
+                self.im_dat.set_clim([self.data_cmin, self.data_cmax])
             else:
-                self.clut_cmin = self.s_cmin.val
-                self.clut_cmax = self.s_cmax.val
-                self.im_clut.set_clim([self.clut_cmin, self.clut_cmax])
+                self.sim_cmin = self.s_cmin.val
+                self.sim_cmax = self.s_cmax.val
+                self.im_sim.set_clim([self.sim_cmin, self.sim_cmax])
         except Exception as err:
             print("cmap_update error: " + str(err))
 
+
     # reset sliders to initial values
     def cmap_reset(self, event):
-        if self.im_data.get_visible():
+        if self.im_dat.get_visible():
             self.s_cmin.valmin = self.mindB_data - (self.data_crange/2)
             self.s_cmin.valmax = self.mindB_data + (self.data_crange/2)
             self.s_cmin.valinit = self.mindB_data
@@ -787,13 +794,13 @@ class impick(tk.Frame):
             self.s_cmax.valmax = self.maxdB_data + (self.data_crange/2)
             self.s_cmax.valinit = self.maxdB_data
         else:
-            # if clutter is displayed, change slider bounds
-            self.s_cmin.valmin = self.mindB_clut - (self.clut_crange/2)
-            self.s_cmin.valmax = self.mindB_clut + (self.clut_crange/2)
-            self.s_cmin.valinit = self.mindB_clut
-            self.s_cmax.valmin = self.maxdB_clut - (self.clut_crange/2)
-            self.s_cmax.valmax = self.maxdB_clut + (self.clut_crange/2)
-            self.s_cmax.valinit = self.maxdB_clut
+            # if sim is displayed, change slider bounds
+            self.s_cmin.valmin = self.mindB_sim - (self.sim_crange/2)
+            self.s_cmin.valmax = self.mindB_sim + (self.sim_crange/2)
+            self.s_cmin.valinit = self.mindB_sim
+            self.s_cmax.valmin = self.maxdB_sim - (self.sim_crange/2)
+            self.s_cmax.valmax = self.maxdB_sim + (self.sim_crange/2)
+            self.s_cmax.valinit = self.maxdB_sim
         self.update_slider()
         self.cmap_update()
 
@@ -920,9 +927,9 @@ class impick(tk.Frame):
     # set_im is a method to set which rdata is being displayed
     def set_im(self):
         if self.im_status.get() == "data":
-            self.show_clut()
+            self.show_sim()
 
-        elif self.im_status.get() =="clut":
+        elif self.im_status.get() =="sim":
             self.show_data()
 
 
@@ -936,7 +943,7 @@ class impick(tk.Frame):
         self.f_saveName = f_saveName
         # zoom out to full rgram extent to save pick image
         self.fullExtent()
-        if self.im_status.get() =="clut":
+        if self.im_status.get() =="sim":
             self.show_data()
         # temporarily turn sliders to invisible for saving image
         self.ax_cmax.set_visible(False)

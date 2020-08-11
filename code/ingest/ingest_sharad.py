@@ -10,9 +10,10 @@ import numpy as np
 import os
 
 # method to read PDS SHARAD USRDR data
-def read(fpath, navcrs, body):
+def read(fpath, simpath, navcrs, body):
+    fn = fpath.split("/")[-1]
     print("----------------------------------------")
-    print("Loading: " + fpath.split("/")[-1])
+    print("Loading: " + fn)
     rdata = radar(fpath)
     rdata.dtype = "sharad"
     # convert binary .img PDS RGRAM to numpy array
@@ -29,15 +30,15 @@ def read(fpath, navcrs, body):
     rdata.set_proc(rdata.dat)
     
     # convert binary .img clutter sim product to numpy array
-    clutpath = fpath.replace("rgram","geom_combined")
-    if os.path.isfile(clutpath):
-        with open(clutpath, "rb") as f:
-            clut = np.fromfile(f, dtype)   
-        clut = clut.reshape(rdata.snum,rdata.tnum)
+    simpath = simpath + "/" + fn.replace("rgram","geom_combined")
+    if os.path.isfile(simpath):
+        with open(simpath, "rb") as f:
+            sim = np.fromfile(f, dtype)   
+        sim = sim.reshape(rdata.snum,rdata.tnum)
     else:
-        clut = np.ones(rdata.dat.shape)
+        sim = np.ones(rdata.dat.shape)
     
-    rdata.set_clut(clut)
+    rdata.set_sim(sim)
 
     # open geom nav file for rgram
     geom_path = fpath.replace("rgram","geom").replace("img","tab")

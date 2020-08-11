@@ -1,9 +1,6 @@
 # Pycache
 __pycache__/
 
-# Test data
-testData/
-
 # vscode
 .vscode/
 
@@ -11,4 +8,4 @@ testData/
 *.pyc
 
 # Don't update config file
-config.ini
+# config.ini

@@ -27,7 +27,7 @@ class ingest:
         self.ftype = ftype.lower()
 
 
-    def read(self, fpath, navcrs, body):
+    def read(self, fpath, simpath, navcrs, body):
         # wrapper method for reading in a file
         # better ways to do this than an if/else
         # but for a few file types this is easier
@@ -38,7 +38,7 @@ class ingest:
         elif (self.ftype == "dzt"):
             self.rdata = ingest_gssi.read(fpath, navcrs, body)
         elif (self.ftype == "img"):
-            self.rdata = ingest_sharad.read(fpath, navcrs, body)
+            self.rdata = ingest_sharad.read(fpath, simpath, navcrs, body)
         else:
             print("File reader for format {} not built yet".format(self.ftype))
             exit(1)

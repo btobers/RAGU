@@ -32,7 +32,6 @@ class mainGUI(tk.Frame):
             self.datPath = datPath
         else:
             self.datPath = self.conf["paths"]["datPath"]
-
         # initialize variables
         self.rdata = None
         self.f_loadName = ""
@@ -195,8 +194,8 @@ class mainGUI(tk.Frame):
         # bind keypress events
         self.parent.bind("<Key>", self.key)
 
-        # self.open_data()
-        self.map_loc()
+        self.open_data()
+
 
     # key is a method to handle UI keypress events
     def key(self,event):
@@ -257,7 +256,7 @@ class mainGUI(tk.Frame):
             if self.tab == "profile":
                 self.impick.clear_last()
 
-        # Space key to toggle impick between radar image and clutter
+        # Space key to toggle impick between radar image and sim
         elif event.keysym=="space":
             if self.tab == "profile":
                 self.impick.set_im()
@@ -309,7 +308,7 @@ class mainGUI(tk.Frame):
                 self.impick.update_option_menu()
                 # ingest the data
                 self.igst = ingest(self.f_loadName.split(".")[-1])
-                self.rdata = self.igst.read(self.f_loadName, self.conf["navigation"]["navcrs"], self.conf["params"]["body"])
+                self.rdata = self.igst.read(self.f_loadName, self.conf["paths"]["simPath"], self.conf["navigation"]["navcrs"], self.conf["params"]["body"])
                 # return if no data ingested
                 if not self.rdata:
                     return
@@ -430,7 +429,7 @@ class mainGUI(tk.Frame):
                 self.impick.clear_canvas()
                 self.impick.set_vars()
                 self.impick.update_option_menu()
-                self.rdata = self.igst.read(self.f_loadName, self.conf["navigation"]["navcrs"], self.conf["params"]["body"])
+                self.rdata = self.igst.read(self.f_loadName, self.conf["paths"]["simPath"], self.conf["navigation"]["navcrs"], self.conf["params"]["body"])
                 # return if no data ingested
                 if not self.rdata:
                     return
@@ -504,8 +503,8 @@ class mainGUI(tk.Frame):
                 self.impick.blit()
             elif (self.impick.get_subsurfPickFlag() == True) and (surf == "subsurface") and (tk.messagebox.askokcancel("warning", "clear all subsurface picks?", icon = "warning") == True):
                 # clear current subsurf pick dictionaries
-                self.rdata.pick.current_suubsurf.clear()
-                self.rdata.pick.current_suubsurfOpt.clear()
+                self.rdata.pick.current_subsurf.clear()
+                self.rdata.pick.current_subsurfOpt.clear()
                 self.impick.clear_subsurfPicks()
                 self.impick.plot_picks(surf = "subsurface")
                 self.impick.update_bg()

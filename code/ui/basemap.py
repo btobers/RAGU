@@ -38,10 +38,21 @@ class basemap(tk.Frame):
         if self.map_loadName:
             print("Loading Basemap: ", self.map_loadName.split("/")[-1])
             try:
-                # open geotiff with rasterio
-                dataset = rio.open(self.map_loadName, mode="r")
-                self.bmcrs = dataset.crs
-                im = np.dstack((dataset.read())) # np.dstack((dataset.read(1), dataset.read(2), dataset.read(3), dataset.read(4)))
+                # read in basemap
+                with rio.open(self.map_loadName, mode="r") as dataset:
+                    # downsample if raster is too large
+                    fac = 1
+                    if dataset.height >= 2e3 or dataset.width >= 2e3:
+                        fac = 4
+                    elif dataset.height >= 1e3 or dataset.width >= 1e3:
+                        fac = 2
+                    data = dataset.read(
+                        out_shape=(dataset.count, int(dataset.height // fac), int(dataset.width // fac)),
+                        resampling=rio.enums.Resampling.nearest
+                    )
+                    self.bmcrs = dataset.crs
+                # stack bands into numpy array
+                im = np.dstack((data))
                 if im.shape[-1] == 1:
                     im = im.reshape(im.shape[0], -1)
                 # show basemap figure in basemap window
@@ -122,6 +133,7 @@ class basemap(tk.Frame):
             self.pick_loc.remove()
             self.pick_loc = None
         self.map_fig.canvas.draw()
+
 
     def safe_draw(self):
         """temporarily disconnect the draw_event callback to avoid recursion"""

@@ -5,6 +5,7 @@
 # distributed under terms of the GNU GPL3.0 license.
 ### imports ###
 import numpy as np
+import sys, copy
 
 class radar(object):
     """
@@ -44,7 +45,7 @@ class radar(object):
         #: np.ndarray(snum x tnum) processed radat data - this is what will actually be displayed, as to not modify original data
         self.proc = None
         #: np.ndarray(snum x tnum) clutter simulation stored in dB for viewing
-        self.clut = None
+        self.sim = None
         #: pick object
         self.pick = pick()
 
@@ -61,12 +62,12 @@ class radar(object):
         return
 
 
-    # set clutter simulation data method
-    def set_clut(self, dat):
+    # set simter simulation data method
+    def set_sim(self, dat):
         # dB it
-        self.clut = self.dBscale(dat)
+        self.sim = self.dBscale(dat)
         # generate pyramid arrays
-        self.cPyramid = self.genPyramids(self.clut)
+        self.sPyramid = self.genPyramids(self.sim)
 
         return
 
@@ -86,8 +87,11 @@ class radar(object):
         # downsample in fast time by 2^0, 2^1, 2^2, 2^3
         pyramid = []
         # add pyramid arrays to list
-        for i in range(4):
-            pyramid.append(dat[::2**i,:])
+        if self.fpath.endswith("h5"):
+            for i in range(4):
+                pyramid.append(dat[::2**i,:])
+        else:
+            pyramid.append(dat)
 
         return pyramid
 
