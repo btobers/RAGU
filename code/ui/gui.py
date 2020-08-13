@@ -483,17 +483,9 @@ class mainGUI(tk.Frame):
                 if (((utils.nan_array_equal(self.rdata.pick.current_surf, self.rdata.pick.current_surfOpt)) == False) or \
                         ((utils.dict_compare(self.rdata.pick.current_subsurf, self.rdata.pick.current_subsurfOpt)) == False)) and \
                         (tk.messagebox.askyesno("tab change","import optimized picks to profile from waveform?") == True):
-                    print(self.rdata.pick.current_surf)
-                    print(self.rdata.pick.current_surf.shape)
-                    print(self.rdata.pick.current_surfOpt)
-                    print(self.rdata.pick.current_surfOpt.shape)
                     self.rdata.pick.current_surf = self.rdata.pick.current_surfOpt
-                    print(self.rdata.pick.current_surf)
-                    print(self.rdata.pick.current_surf.shape)
                     self.rdata.pick.current_subsurf = self.rdata.pick.current_subsurfOpt
                     self.impick.set_picks()
-                    self.impick.plot_picks(surf = "surface")
-                    self.impick.plot_picks(surf = "subsurface")
                     self.impick.blit()
 
 
