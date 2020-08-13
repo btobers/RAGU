@@ -79,6 +79,5 @@ def read(fpath, navcrs, body):
 
     # initialize surface pick
     rdata.pick.current_surf = np.repeat(np.nan, rdata.tnum)
-
     
     return rdata

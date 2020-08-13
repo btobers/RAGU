@@ -32,8 +32,8 @@ def read_h5(fpath, navcrs, body):
     # |  |-pick
 
     # pull necessary raw group data
-    rdata.snum = f["raw"]["rx0"].attrs["samplesPerTrace"]               # samples per trace in rgram
-    rdata.tnum = f["raw"]["rx0"].attrs["numTrace"]                      # number of traces in rgram 
+    rdata.snum = int(f["raw"]["rx0"].attrs["samplesPerTrace"])               # samples per trace in rgram
+    rdata.tnum = int(f["raw"]["rx0"].attrs["numTrace"])                      # number of traces in rgram 
     rdata.dt = 1/ f["raw"]["rx0/"].attrs["samplingFrequency-Hz"]        # sampling interval, sec
 
     # pull necessary drv group data

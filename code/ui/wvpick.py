@@ -150,6 +150,7 @@ class wvpick(tk.Frame):
             surf = utils.twtt2sample(self.rdata.pick.existing_twttSurf[self.traceNum[segment]], self.rdata.dt)
         else:
             surf = np.nan
+
         self.ax.plot(self.rdata.proc[:,self.traceNum[segment]], label="trace: " + str(int(self.traceNum[segment] + 1)) + "/" + str(int(self.rdata.tnum)))
 
         if not np.isnan(surf):

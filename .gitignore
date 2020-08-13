@@ -8,4 +8,4 @@ __pycache__/
 *.pyc
 
 # Don't update config file
-# config.ini
+config.ini
