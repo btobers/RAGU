@@ -37,6 +37,7 @@ class mainGUI(tk.Frame):
         self.f_loadName = ""
         self.f_saveName = ""
         self.map_loadName = ""
+        self.tab = "profile"
         # self.userName = tk.StringVar(value="")
         self.eps_r = tk.DoubleVar(value=self.conf["params"]["eps_r"])
         self.figSize = tk.StringVar(value="21,7")
@@ -301,6 +302,9 @@ class mainGUI(tk.Frame):
                 temp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select data file")
             # if input selected, clear impick canvas, ingest data and pass to impick
             if temp_loadName:
+                # ensure we're on profile tab
+                if self.tab == "waveform":
+                    self.nb.select(self.nb.tabs()[0])
                 self.f_loadName = temp_loadName
                 self.f_saveName = ""
                 self.impick.clear_canvas()  

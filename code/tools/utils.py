@@ -141,7 +141,10 @@ def list_insert_idx(list, n):
 
 # nan_array_equal is a method to determine if two arrays which may contain nan values are equivalent
 def nan_array_equal(a, b):
-    return ((a == b) | (np.isnan(a) & np.isnan(b))).all()
+    try:
+        return ((a == b) | (np.isnan(a) & np.isnan(b))).all()
+    except ValueError:
+        return
 
 
 # dict_compare is a method to compare the two pick dictionaries to see if they are equal
