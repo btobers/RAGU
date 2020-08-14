@@ -494,11 +494,6 @@ class mainGUI(tk.Frame):
                     self.rdata.pick.current_surf = self.rdata.pick.current_surfOpt
                     self.rdata.pick.current_subsurf = self.rdata.pick.current_subsurfOpt
                     self.impick.set_picks()
-<<<<<<< HEAD
-                    # self.impick.plot_picks(surf = "surface")
-                    # self.impick.plot_picks(surf = "subsurface")
-=======
->>>>>>> e8ce8357463fcebb3b70209f9c22062fc0f512d1
                     self.impick.blit()
 
 
