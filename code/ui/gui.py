@@ -34,6 +34,7 @@ class mainGUI(tk.Frame):
             self.datPath = self.conf["paths"]["datPath"]
         # initialize variables
         self.rdata = None
+        self.basemap = None
         self.f_loadName = ""
         self.f_saveName = ""
         self.map_loadName = ""
@@ -352,12 +353,15 @@ class mainGUI(tk.Frame):
         else:
             tmp_map_loadName = tk.filedialog.askopenfilename(initialdir = self.conf["paths"]["mapPath"], title = "select basemap file")
         if tmp_map_loadName:
+            # initialize basemap if not currently open
+            if not self.basemap or (self.basemap.get_state() == 0):
+                self.basemap = basemap.basemap(self.parent)
             self.map_loadName = tmp_map_loadName
-            self.basemap = basemap.basemap(self.parent, self.map_loadName)
-            self.basemap.map()
+            self.basemap.map(self.map_loadName)
 
-            if self.f_loadName and self.basemap.get_state() == 1:
+            if self.f_loadName:
                 # pass basemap to impick for plotting pick location
+                self.basemap.clear_nav()
                 self.basemap.set_nav(self.f_loadName, self.rdata.navdf, self.conf["navigation"]["navcrs"])
                 self.impick.get_basemap(self.basemap)
 
@@ -483,17 +487,11 @@ class mainGUI(tk.Frame):
                 if (((utils.nan_array_equal(self.rdata.pick.current_surf, self.rdata.pick.current_surfOpt)) == False) or \
                         ((utils.dict_compare(self.rdata.pick.current_subsurf, self.rdata.pick.current_subsurfOpt)) == False)) and \
                         (tk.messagebox.askyesno("tab change","import optimized picks to profile from waveform?") == True):
-                    print(self.rdata.pick.current_surf)
-                    print(self.rdata.pick.current_surf.shape)
-                    print(self.rdata.pick.current_surfOpt)
-                    print(self.rdata.pick.current_surfOpt.shape)
                     self.rdata.pick.current_surf = self.rdata.pick.current_surfOpt
-                    print(self.rdata.pick.current_surf)
-                    print(self.rdata.pick.current_surf.shape)
                     self.rdata.pick.current_subsurf = self.rdata.pick.current_subsurfOpt
                     self.impick.set_picks()
-                    self.impick.plot_picks(surf = "surface")
-                    self.impick.plot_picks(surf = "subsurface")
+                    # self.impick.plot_picks(surf = "surface")
+                    # self.impick.plot_picks(surf = "subsurface")
                     self.impick.blit()
 
 
