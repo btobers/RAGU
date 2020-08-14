@@ -882,9 +882,6 @@ class impick(tk.Frame):
         self.yln_surf_saved.fill(np.nan)
         self.yln_subsurf_saved.fill(np.nan)
         idx = np.where(~np.isnan(self.rdata.pick.current_surf))[0]
-        print(self.xln_surf_saved)
-        print(idx)
-        print()
         self.xln_surf_saved[idx] = idx
         self.yln_surf_saved[idx] = self.rdata.pick.current_surf[idx]
         for _i in range(len(self.rdata.pick.current_subsurf)):
