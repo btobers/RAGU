@@ -7,6 +7,7 @@ import sys,os
 import pandas as pd
 import rasterio as rio
 import numpy as np
+import scipy.io as scio
 import pyproj, h5py, codecs
 import matplotlib.pyplot as plt
 
@@ -74,7 +75,7 @@ def getnav_oibAK_mat(navfile, navcrs, body):
         f.close()
     except:
         try:
-            f = sp.io.loadmat(fpath)
+            f = scio.loadmat(fpath)
             lon = f["block"]["lon"][0][0].flatten()
             lat = f["block"]["lat"][0][0].flatten()
             alt = f["block"]["elev_air"][0][0].flatten() 

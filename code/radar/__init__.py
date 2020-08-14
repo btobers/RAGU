@@ -16,6 +16,8 @@ class radar(object):
         # basic data file attributes
         #: str, file path
         self.fpath = fpath
+        #: str, file name
+        self.fn = None
         #: str, scientific data type
         self.dtype = None
         #: int, number of samples per trace

@@ -12,9 +12,11 @@ import scipy as sp
 
 # method to ingest OIB-AK radar hdf5 data format
 def read_h5(fpath, navcrs, body):
+    fn = fpath.split("/")[-1]
     print("----------------------------------------")
-    print("Loading: " + fpath.split("/")[-1])
+    print("Loading: " + fn)
     rdata = radar(fpath)
+    rdata.fn = fn.rstrip(fn.split(".")[-1])
     rdata.dtype = "oibak"
     # read in .h5 file
     f = h5py.File(rdata.fpath, "r")                      

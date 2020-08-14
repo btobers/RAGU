@@ -12,10 +12,11 @@ from tools.constants import *
 
 # method to read gssi dzt data
 def read(fpath, navcrs, body):
+    fn = fpath.split("/")[-1]
     print("----------------------------------------")
-    print("Loading: " + fpath.split("/")[-1])
-    
+    print("Loading: " + fn)
     rdata = radar(fpath)
+    rdata.fn = fn.rstrip(fn.split(".")[-1])
     rdata.dtype = "gssi"
 
     # modified readgssi readdzt.dzt reader (credit, DOI: 10.5281/zenodo.3352438)

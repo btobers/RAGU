@@ -15,6 +15,7 @@ def read(fpath, simpath, navcrs, body):
     print("----------------------------------------")
     print("Loading: " + fn)
     rdata = radar(fpath)
+    rdata.fn = fn.rstrip(fn.split("_")[-2])
     rdata.dtype = "sharad"
     # convert binary .img PDS RGRAM to numpy array
     # reshape array with 3600 lines

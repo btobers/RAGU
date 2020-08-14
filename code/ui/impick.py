@@ -202,7 +202,7 @@ class impick(tk.Frame):
         self.dataCanvas.get_tk_widget().pack(in_=self.dataFrame, side="bottom", fill="both", expand=1) 
       
         # set figure title and axes labels
-        self.ax.set_title(self.rdata.fpath.split("/")[-1].split(".")[0])
+        self.ax.set_title(self.rdata.fn)
         self.ax.set(xlabel = "trace", ylabel = "sample")
 
         # initialize data and clutter images with np.ones - set data in drawData
@@ -444,7 +444,7 @@ class impick(tk.Frame):
 
             # pass pick trace location to basemap
             if self.basemap and self.basemap.get_state() == 1:
-                self.basemap.plot_idx(self.pick_trace)
+                self.basemap.plot_idx(self.rdata.fn, self.pick_trace)
 
             # if in debug state, print pick info
             if self.debugState == True:

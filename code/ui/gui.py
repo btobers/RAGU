@@ -34,7 +34,6 @@ class mainGUI(tk.Frame):
             self.datPath = self.conf["paths"]["datPath"]
         # initialize variables
         self.rdata = None
-        self.basemap = None
         self.f_loadName = ""
         self.f_saveName = ""
         self.map_loadName = ""
@@ -197,6 +196,7 @@ class mainGUI(tk.Frame):
         self.parent.bind("<Key>", self.key)
 
         self.open_data()
+        self.map_loc()
 
 
     # key is a method to handle UI keypress events
@@ -327,8 +327,7 @@ class mainGUI(tk.Frame):
 
             # pass basemap to impick for plotting pick location
             if self.map_loadName and self.basemap.get_state() == 1:
-                self.basemap.clear_nav()
-                self.basemap.set_nav(self.f_loadName, self.rdata.navdf, self.conf["navigation"]["navcrs"])
+                self.basemap.set_nav(self.rdata.fn, self.rdata.navdf)
                 self.impick.get_basemap(self.basemap)            
 
 
@@ -358,15 +357,15 @@ class mainGUI(tk.Frame):
             tmp_map_loadName = tk.filedialog.askopenfilename(initialdir = self.conf["paths"]["mapPath"], title = "select basemap file")
         if tmp_map_loadName:
             # initialize basemap if not currently open
-            if not self.basemap or (self.basemap.get_state() == 0):
-                self.basemap = basemap.basemap(self.parent)
+            if not self.map_loadName or self.basemap.get_state() == 0:
+                self.basemap = basemap.basemap(self.parent, self.datPath, self.conf["navigation"]["navcrs"], self.conf["params"]["body"])
             self.map_loadName = tmp_map_loadName
             self.basemap.map(self.map_loadName)
 
             if self.f_loadName:
                 # pass basemap to impick for plotting pick location
                 self.basemap.clear_nav()
-                self.basemap.set_nav(self.f_loadName, self.rdata.navdf, self.conf["navigation"]["navcrs"])
+                self.basemap.set_nav(self.rdata.fn, self.rdata.navdf)
                 self.impick.get_basemap(self.basemap)
 
 
@@ -451,8 +450,7 @@ class mainGUI(tk.Frame):
 
                 # if basemap open, update. Only do this if line is longer than certain threshold to now waste time
                 if self.map_loadName and self.basemap.get_state() == 1:
-                    self.basemap.clear_nav()
-                    self.basemap.set_nav(self.f_loadName, self.rdata.navdf, self.conf["navigation"]["navcrs"])
+                    self.basemap.set_nav(self.rdata.fn, self.rdata.navdf)
                     self.impick.get_basemap(self.basemap)
 
             else:
