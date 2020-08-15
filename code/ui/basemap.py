@@ -61,7 +61,7 @@ class basemap(tk.Frame):
         loadMenu.add_command(label="select folder", command= lambda: self.load_tracks(dir = True))
         fileMenu.add_cascade(label="load tracks", menu = loadMenu)
 
-        fileMenu.add_command(label="clear nav", command=self.clear_nav)
+        fileMenu.add_command(label="clear tracks", command=self.clear_nav)
         fileMenu.add_command(label="preferences", command=self.settings)
         fileMenu.add_command(label="exit       [ctrl+q]", command=self.basemap_close)
         # add items to menubar
