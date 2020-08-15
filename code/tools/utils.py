@@ -139,6 +139,12 @@ def list_insert_idx(list, n):
     return index
 
 
+# find nearest value in array to arg
+def find_nearest(a, val):
+    idx = (np.abs(a - val)).argmin()
+    return idx
+
+
 # nan_array_equal is a method to determine if two arrays which may contain nan values are equivalent
 def nan_array_equal(a, b):
     try:

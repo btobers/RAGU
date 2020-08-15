@@ -7,15 +7,16 @@ from radar import radar
 from nav import navparse
 from tools import utils
 import numpy as np
-import os
+import os, sys
 
 # method to read PDS SHARAD USRDR data
 def read(fpath, simpath, navcrs, body):
     fn = fpath.split("/")[-1]
+    print(fn)
     print("----------------------------------------")
     print("Loading: " + fn)
     rdata = radar(fpath)
-    rdata.fn = fn.rstrip(fn.split("_")[-2])
+    rdata.fn = fn.rstrip("_rgram.img")
     rdata.dtype = "sharad"
     # convert binary .img PDS RGRAM to numpy array
     # reshape array with 3600 lines

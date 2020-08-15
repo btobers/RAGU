@@ -3,6 +3,7 @@ basemap class is a tkinter frame which handles the NOSEpick basemap
 """
 ### imports ###
 from nav import navparse
+from tools import utils
 import numpy as np
 import tkinter as tk
 import rasterio as rio
@@ -68,7 +69,7 @@ class basemap(tk.Frame):
         self.map_fig_ax.set_visible(False)
         self.map_fig_ax.set(xlabel = "x [m]", ylabel = "y [m]")
         # initialize artists
-        self.track, = self.map_fig_ax.plot(self.x, self.y, "k.", ms=.1)    # empty line for track nav
+        self.track, = self.map_fig_ax.plot(self.x, self.y, "k.", ms=.1, picker=True)    # empty line for track nav
         self.track_start, = self.map_fig_ax.plot(self.start_x, self.start_y, "go", ms=3, label="start")
         self.track_end, = self.map_fig_ax.plot(self.end_x, self.end_y, "ro", ms=3, label="end")
         # pack mpl figure in canvas window
@@ -138,25 +139,23 @@ class basemap(tk.Frame):
         self.start_y = np.append(self.start_y, y[0])
         self.end_x = np.append(self.end_x, x[-1])
         self.end_y = np.append(self.end_y, y[-1])
-        # plot lat, lon atop basemap im
+        # set track line data
         self.track.set_data(self.x, self.y)
-        # zoom in to track
-        # annotate each end of the track
+        # set track ending line data
         self.track_start.set_data(self.start_x, self.start_y)
         self.track_end.set_data(self.end_x, self.end_y)
+        self.pick_cid = self.map_fig.canvas.mpl_connect("pick_event", self.on_pick)
         if not self.legend:
             self.legend = self.map_fig_ax.legend()
         if not dirFlag:
                 self.map_fig_ax.axis([(np.amin(x)- 15000),(np.amax(x)+ 15000),(np.amin(y)- 15000),(np.amax(y)+ 15000)])
                 self.map_dataCanvas.draw() 
-        # self.basemap_window.title("NOSEpick - Map Window: " + os.path.splitext(floadName.split("/")[-1])[0])
-
 
 
     # plot_idx is a method to plot the location of a click event on the datacanvas to the basemap
     def plot_idx(self, fn, idx):
         # basemap open, plot picked location regardless of picking state
-        if self.basemap_state == 1:
+        if self.basemap_state == 1 and len(self.x) > 0:
             # plot pick location on basemap
             if self.pick_loc:
                 self.pick_loc.remove()
@@ -179,6 +178,7 @@ class basemap(tk.Frame):
     
     # clear_basemap is a method to clear the basemap 
     def clear_nav(self):
+        self.trackName = np.array(()).astype(dtype=np.str)
         self.x = np.array(())
         self.y = np.array(())
         self.start_x = np.array(())
@@ -291,14 +291,17 @@ class basemap(tk.Frame):
 
     # update settings
     def updateSettings(self):
-
         # pass cmap
         self.bm_im.set_cmap(self.cmap.get())
-
         # redraw
         self.map_dataCanvas.draw() 
 
 
     # on_pick gets the picked track from user click
     def on_pick(self, event):
-        return
+        xdata = event.mouseevent.xdata
+        idx = utils.find_nearest(self.x, xdata)
+        print("selected track:\t", self.trackName[idx])
+        # if track double clicked, pass back to impick
+        if event.mouseevent.dblclick:
+            print("double click")

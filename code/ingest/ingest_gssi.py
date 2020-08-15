@@ -16,7 +16,7 @@ def read(fpath, navcrs, body):
     print("----------------------------------------")
     print("Loading: " + fn)
     rdata = radar(fpath)
-    rdata.fn = fn.rstrip(fn.split(".")[-1])
+    rdata.fn = fn.rstrip(".DZT")
     rdata.dtype = "gssi"
 
     # modified readgssi readdzt.dzt reader (credit, DOI: 10.5281/zenodo.3352438)

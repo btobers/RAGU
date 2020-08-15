@@ -16,7 +16,7 @@ def read_h5(fpath, navcrs, body):
     print("----------------------------------------")
     print("Loading: " + fn)
     rdata = radar(fpath)
-    rdata.fn = fn.rstrip(fn.split(".")[-1])
+    rdata.fn = fn.rstrip(".h5")
     rdata.dtype = "oibak"
     # read in .h5 file
     f = h5py.File(rdata.fpath, "r")                      

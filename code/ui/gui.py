@@ -196,6 +196,7 @@ class mainGUI(tk.Frame):
         self.parent.bind("<Key>", self.key)
 
         self.open_data()
+        self.map_loc()
 
 
     # key is a method to handle UI keypress events
