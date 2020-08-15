@@ -14,11 +14,12 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 
 class basemap(tk.Frame):
-    def __init__(self, parent, datPath, navcrs, body):
+    def __init__(self, parent, datPath, navcrs, body, from_basemap):
         self.parent = parent
         self.datPath = datPath
         self.navcrs = navcrs
         self.body = body
+        self.to_gui = from_basemap
         # create tkinter toplevel window to display basemap
         self.basemap_window = tk.Toplevel(self.parent)
         img = tk.PhotoImage(file="../recs/basemap_icon.png")
@@ -252,13 +253,13 @@ class basemap(tk.Frame):
             for f in flist:
                 if f.endswith("h5"):
                     navdf = navparse.getnav_oibAK_h5(self.datPath + "/" + f, self.navcrs, self.body)
-                    fn = f.rstrip(f.split(".")[-1])
+                    fn = f.rstrip(".h5")
                 elif f.lower().endswith("dzg"):
                     navdf = navparse.getnav_gssi(self.datPath + "/" + f, self.navcrs, self.body)
-                    fn = f.rstrip(f.split(".")[-1])
+                    fn = f.rstrip(".DZG")
                 elif f.endswith("tab"):
                     navdf = navparse.getnav_sharad(self.datPath + "/" + f, self.navcrs, self.body)
-                    fn = f.rstrip(f.split("_")[-2])
+                    fn = f.rstrip("_geom.tab")
                 else:
                     continue
                 self.set_nav(fn, navdf, dirFlag = True)
@@ -299,9 +300,11 @@ class basemap(tk.Frame):
 
     # on_pick gets the picked track from user click
     def on_pick(self, event):
+        # determine which track was selected
         xdata = event.mouseevent.xdata
         idx = utils.find_nearest(self.x, xdata)
-        print("selected track:\t", self.trackName[idx])
+        track = self.trackName[idx]
+        print("selected track:\t", track)
         # if track double clicked, pass back to impick
         if event.mouseevent.dblclick:
-            print("double click")
+            self.to_gui(self.datPath, track)

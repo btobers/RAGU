@@ -293,14 +293,15 @@ class mainGUI(tk.Frame):
 
 
     # open_data is a gui method which has the user select and input data file - then passed to impick.load()
-    def open_data(self):
+    def open_data(self, temp_loadName=None):
         # prompt save warning if picks exist
         if self.impick.saveWarning() == True:
-            # select input file
-            if "linux" in self.os or "win" in self.os:
-                temp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select data file",filetypes = (("all files",".*"),("hd5f files", ".mat .h5"),("segy files", ".sgy"),("image file", ".img"),("gssi files",".DZT")))
-            else:
-                temp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select data file")
+            if not temp_loadName:
+                # select input file
+                if "linux" in self.os or "win" in self.os:
+                    temp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select data file",filetypes = (("all files",".*"),("hd5f files", ".mat .h5"),("segy files", ".sgy"),("image file", ".img"),("gssi files",".DZT")))
+                else:
+                    temp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select data file")
             # if input selected, clear impick canvas, ingest data and pass to impick
             if temp_loadName:
                 # ensure we're on profile tab
@@ -358,7 +359,7 @@ class mainGUI(tk.Frame):
         if tmp_map_loadName:
             # initialize basemap if not currently open
             if not self.map_loadName or self.basemap.get_state() == 0:
-                self.basemap = basemap.basemap(self.parent, self.datPath, self.conf["navigation"]["navcrs"], self.conf["params"]["body"])
+                self.basemap = basemap.basemap(self.parent, self.datPath, self.conf["navigation"]["navcrs"], self.conf["params"]["body"], self.from_basemap)
             self.map_loadName = tmp_map_loadName
             self.basemap.map(self.map_loadName)
 
@@ -367,6 +368,16 @@ class mainGUI(tk.Frame):
                 self.basemap.clear_nav()
                 self.basemap.set_nav(self.rdata.fn, self.rdata.navdf)
                 self.impick.get_basemap(self.basemap)
+
+
+    # return selected track from basemap frame
+    def from_basemap(self, datPath, track):
+        # find matching file to pass to open_loc
+        f = [_i for _i in os.listdir(datPath) if track in _i]
+        # need to select data file from possibly matching nav and datafiles in list
+        f = datPath + "/" + [i for i in f if ".DZT" in i or ".h5" in i or ".img" in i][0]
+        # pass file to open_data
+        self.open_data(f)
 
 
     # start_subsurf_pick is a method which begins a new impick pick layer
