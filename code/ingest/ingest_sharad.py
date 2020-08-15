@@ -12,7 +12,6 @@ import os, sys
 # method to read PDS SHARAD USRDR data
 def read(fpath, simpath, navcrs, body):
     fn = fpath.split("/")[-1]
-    print(fn)
     print("----------------------------------------")
     print("Loading: " + fn)
     rdata = radar(fpath)
