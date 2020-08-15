@@ -105,8 +105,8 @@ class mainGUI(tk.Frame):
         # settings submenu
         settingsMenu = tk.Menu(fileMenu,tearoff=0)
         settingsMenu.add_command(label="preferences", command=self.settings)
-        settingsMenu.add_command(label="set working directory", command=self.set_home)
-        settingsMenu.add_command(label="set output directory", command=self.set_out)
+        settingsMenu.add_command(label="set working folder", command=self.set_home)
+        settingsMenu.add_command(label="set output folder", command=self.set_out)
 
         fileMenu.add_cascade(label="settings", menu = settingsMenu)
 
@@ -196,7 +196,6 @@ class mainGUI(tk.Frame):
         self.parent.bind("<Key>", self.key)
 
         self.open_data()
-        # self.map_loc()
 
 
     # key is a method to handle UI keypress events

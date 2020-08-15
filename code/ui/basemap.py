@@ -7,7 +7,7 @@ from tools import utils
 import numpy as np
 import tkinter as tk
 import rasterio as rio
-import os, pyproj
+import os, pyproj, glob
 import matplotlib as mpl
 mpl.use("TkAgg")
 import matplotlib.pyplot as plt
@@ -54,7 +54,13 @@ class basemap(tk.Frame):
         # generate menubar
         menubar = tk.Menu(self.basemap_window)
         fileMenu = tk.Menu(menubar, tearoff=0)
-        fileMenu.add_command(label="load tracks", command=self.load_tracks)
+
+        # settings submenu
+        loadMenu = tk.Menu(fileMenu,tearoff=0)
+        loadMenu.add_command(label="select files", command=self.load_tracks)
+        loadMenu.add_command(label="select folder", command= lambda: self.load_tracks(dir = True))
+        fileMenu.add_cascade(label="load tracks", menu = loadMenu)
+
         fileMenu.add_command(label="clear nav", command=self.clear_nav)
         fileMenu.add_command(label="preferences", command=self.settings)
         fileMenu.add_command(label="exit       [ctrl+q]", command=self.basemap_close)
@@ -238,35 +244,44 @@ class basemap(tk.Frame):
 
 
     # load all tracks within a directory to basemap
-    def load_tracks(self):
-        tmp_datPath = ""
-        # select input file
-        tmp_datPath = tk.filedialog.askdirectory(title="load tracks",
-                                       initialdir=self.datPath,
-                                       mustexist=True) 
-        # if input selected, clear impick canvas, ingest data and pass to impick
-        if tmp_datPath:
-            self.datPath = tmp_datPath
-            # get list of data files in dir
-            flist = os.listdir(tmp_datPath)
-            # iterate through file list and retrieve navdat from proper getnav function
-            for f in flist:
-                if f.endswith("h5"):
-                    navdf = navparse.getnav_oibAK_h5(self.datPath + "/" + f, self.navcrs, self.body)
-                    fn = f.rstrip(".h5")
-                elif f.lower().endswith("dzg"):
-                    navdf = navparse.getnav_gssi(self.datPath + "/" + f, self.navcrs, self.body)
-                    fn = f.rstrip(".DZG")
-                elif f.endswith("tab"):
-                    navdf = navparse.getnav_sharad(self.datPath + "/" + f, self.navcrs, self.body)
-                    fn = f.rstrip("_geom.tab")
-                else:
-                    continue
-                self.set_nav(fn, navdf, dirFlag = True)
-            # update extent
-            self.map_fig_ax.axis([(np.amin(self.x)- 15000),(np.amax(self.x)+ 15000),(np.amin(self.y)- 15000),(np.amax(self.y)+ 15000)])
-            self.map_dataCanvas.draw() 
+    def load_tracks(self, dir = False):
+        if dir:
+            tmp_datPath = ""
+            # select input file
+            tmp_datPath = tk.filedialog.askdirectory(title="select folder",
+                                        initialdir=self.datPath,
+                                        mustexist=True) 
+            # if input selected, clear impick canvas, ingest data and pass to impick
+            if tmp_datPath:
+                # get list of data files in dir
+                flist = glob.glob(tmp_datPath + "/*")
 
+        else: 
+            flist = ""
+            # select input files
+            flist = tk.filedialog.askopenfilenames(title="select files",
+                                        initialdir=self.datPath, 
+                                        multiple=True) 
+            if flist:
+                flist = list(flist)
+
+            # iterate through file list and retrieve navdat from proper getnav function
+        for f in flist:
+            if f.endswith("h5"):
+                navdf = navparse.getnav_oibAK_h5(f, self.navcrs, self.body)
+                fn = f.split("/")[-1].rstrip(".h5")
+            elif f.lower().endswith("dzg"):
+                navdf = navparse.getnav_gssi(f, self.navcrs, self.body)
+                fn = f.split("/")[-1].rstrip(".DZG")
+            elif f.endswith("tab"):
+                navdf = navparse.getnav_sharad(f, self.navcrs, self.body)
+                fn = f.split("/")[-1].rstrip("_geom.tab")
+            else:
+                continue
+            self.set_nav(fn, navdf, dirFlag = True)
+        # update extent
+        self.map_fig_ax.axis([(np.amin(self.x)- 15000),(np.amax(self.x)+ 15000),(np.amin(self.y)- 15000),(np.amax(self.y)+ 15000)])
+        self.map_dataCanvas.draw() 
 
 
     # settings menu
