@@ -327,7 +327,9 @@ class mainGUI(tk.Frame):
 
             # pass basemap to impick for plotting pick location
             if self.map_loadName and self.basemap.get_state() == 1:
+                self.basemap.set_track(self.rdata.fn)
                 self.basemap.set_nav(self.rdata.fn, self.rdata.navdf)
+                self.basemap.plot_tracks()
                 self.impick.get_basemap(self.basemap)            
 
 
@@ -360,12 +362,15 @@ class mainGUI(tk.Frame):
             if not self.map_loadName or self.basemap.get_state() == 0:
                 self.basemap = basemap.basemap(self.parent, self.datPath, self.conf["navigation"]["navcrs"], self.conf["params"]["body"], self.from_basemap)
             self.map_loadName = tmp_map_loadName
+            self.basemap.set_vars()
             self.basemap.map(self.map_loadName)
 
             if self.f_loadName:
                 # pass basemap to impick for plotting pick location
                 self.basemap.clear_nav()
+                self.basemap.set_track(self.rdata.fn)
                 self.basemap.set_nav(self.rdata.fn, self.rdata.navdf)
+                self.basemap.plot_tracks()
                 self.impick.get_basemap(self.basemap)
 
 
@@ -460,7 +465,9 @@ class mainGUI(tk.Frame):
 
                 # if basemap open, update. Only do this if line is longer than certain threshold to now waste time
                 if self.map_loadName and self.basemap.get_state() == 1:
+                    self.basemap.set_track(self.rdata.fn)
                     self.basemap.set_nav(self.rdata.fn, self.rdata.navdf)
+                    self.basemap.plot_tracks()
                     self.impick.get_basemap(self.basemap)
 
             else:

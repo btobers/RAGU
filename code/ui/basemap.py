@@ -13,6 +13,7 @@ mpl.use("TkAgg")
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 
+
 class basemap(tk.Frame):
     def __init__(self, parent, datPath, navcrs, body, from_basemap):
         self.parent = parent
@@ -32,23 +33,11 @@ class basemap(tk.Frame):
         self.basemap_window.bind("<Control-q>", self.basemap_close)
         # bind x-out to basemap_close()
         self.basemap_window.protocol("WM_DELETE_WINDOW", self.basemap_close)
-        # initialize arrays to hold track nav info
-        self.x = np.array(())
-        self.y = np.array(())
-        self.trackName = np.array(()).astype(dtype=np.str)
-        self.start_x = np.array(())
-        self.start_y = np.array(())
-        self.end_x = np.array(())
-        self.end_y = np.array(())
-        self.legend = None
-        self.pick_loc = None
-        self.track = None
-        self.basemap_state = 0
         self.cmap = tk.StringVar(value="Greys_r")
         self.setup()
 
 
-    # setup the wkinter frame
+    # setup the tkinter window
     def setup(self):
         # show basemap figure in basemap window
         # generate menubar
@@ -68,6 +57,16 @@ class basemap(tk.Frame):
         menubar.add_cascade(label="file", menu=fileMenu)
         # add the menubar to the window
         self.basemap_window.config(menu=menubar)
+
+        # set up info frame
+        infoFrame = tk.Frame(self.basemap_window)
+        infoFrame.pack(side="top",fill="both")
+        # button to toggle track visibility
+        self.track_viz = tk.BooleanVar(value=True)
+        tk.Label(infoFrame, text="track display: ").pack(side="left")
+        tk.Radiobutton(infoFrame,text="all", variable=self.track_viz, value=True, command=self.plot_tracks).pack(side="left")
+        tk.Radiobutton(infoFrame,text="current", variable=self.track_viz, value=False, command=self.plot_tracks).pack(side="left")
+
         # initialize the basemap figure
         self.map_fig = mpl.figure.Figure()
         self.map_fig.patch.set_facecolor(self.parent.cget("bg"))
@@ -76,9 +75,9 @@ class basemap(tk.Frame):
         self.map_fig_ax.set_visible(False)
         self.map_fig_ax.set(xlabel = "x [m]", ylabel = "y [m]")
         # initialize artists
-        self.track, = self.map_fig_ax.plot(self.x, self.y, "k.", ms=.1, picker=True)    # empty line for track nav
-        self.track_start, = self.map_fig_ax.plot(self.start_x, self.start_y, "go", ms=3, label="start")
-        self.track_end, = self.map_fig_ax.plot(self.end_x, self.end_y, "ro", ms=3, label="end")
+        self.track_ln, = self.map_fig_ax.plot([], [], "k.", ms=.1, picker=True)
+        self.track_start_ln, = self.map_fig_ax.plot([], [], "go", ms=3, label="start")
+        self.track_end_ln, = self.map_fig_ax.plot([], [], "ro", ms=3, label="end")
         # pack mpl figure in canvas window
         self.map_dataCanvas = FigureCanvasTkAgg(self.map_fig, self.basemap_window)
         self.map_dataCanvas.get_tk_widget().pack(in_=self.map_display, side="bottom", fill="both", expand=1)
@@ -87,6 +86,21 @@ class basemap(tk.Frame):
         self.basemap_state = 1
         self.draw_cid = self.map_fig.canvas.mpl_connect("draw_event", self.update_bg)
         self.pick_cid = self.map_fig.canvas.mpl_connect("pick_event", self.on_pick)
+
+
+    def set_vars(self):
+        # initialize arrays to hold track nav info
+        self.x = np.array(())
+        self.y = np.array(())
+        self.track_name = np.array(()).astype(dtype=np.str)
+        self.loaded_tracks = np.array(()).astype(dtype=np.str)
+        self.start_x = np.array(())
+        self.start_y = np.array(())
+        self.end_x = np.array(())
+        self.end_y = np.array(())
+        self.legend = None
+        self.pick_loc = None
+        self.profile_track = None
 
 
     # map is a method to plot the basemap in the basemap window
@@ -130,8 +144,17 @@ class basemap(tk.Frame):
                 pass
 
 
+    # set_track is a method to pass the track name loaded in profile view to the basemap class
+    def set_track(self, fn):
+        self.profile_track = fn
+
+
     # set_nav is a method to update the navigation data plotted on the basemap
-    def set_nav(self, fn, navdf, dirFlag = False):
+    def set_nav(self, fn, navdf):
+        # skip if track already loaded to basemap
+        if fn in self.track_name:
+            return
+
         # transform navcrs to basemap crs
         x, y = pyproj.transform(
             self.navcrs,
@@ -141,22 +164,42 @@ class basemap(tk.Frame):
         )
         self.x = np.append(self.x, x)
         self.y = np.append(self.y, y)
-        self.trackName = np.append(self.trackName, np.repeat(fn, len(x)))
+        # add name to array to match with x,y
+        self.track_name = np.append(self.track_name, np.repeat(fn, len(x)))
         self.start_x = np.append(self.start_x, x[0])
         self.start_y = np.append(self.start_y, y[0])
         self.end_x = np.append(self.end_x, x[-1])
         self.end_y = np.append(self.end_y, y[-1])
-        # set track line data
-        self.track.set_data(self.x, self.y)
-        # set track ending line data
-        self.track_start.set_data(self.start_x, self.start_y)
-        self.track_end.set_data(self.end_x, self.end_y)
-        self.pick_cid = self.map_fig.canvas.mpl_connect("pick_event", self.on_pick)
+        # add name to list to match with endpoints
+        self.loaded_tracks = np.append(self.loaded_tracks, fn)
+
+
+    # plot_tracks is a method to plot track geom
+    def plot_tracks(self):
+        # if track_viz variable is true, add all track points to appropriate lines
+        if self.track_viz.get():
+            # set track line data
+            self.track_ln.set_data(self.x, self.y)
+            # set track ending line data
+            self.track_start_ln.set_data(self.start_x, self.start_y)
+            self.track_end_ln.set_data(self.end_x, self.end_y)
+
+            self.map_fig_ax.axis([(np.amin(self.x)- 15000),(np.amax(self.x)+ 15000),(np.amin(self.y)- 15000),(np.amax(self.y)+ 15000)])
+        # otherwise just set track points from last line to appropriate lines
+        else:
+            # set track ending line data
+            idx = np.where(self.loaded_tracks == self.profile_track)[0]
+            self.track_start_ln.set_data(self.start_x[idx], self.start_y[idx])
+            self.track_end_ln.set_data(self.end_x[idx], self.end_y[idx])
+            # set track line data
+            idx = np.where(self.track_name == self.profile_track)[0]
+            self.track_ln.set_data(self.x[idx], self.y[idx])
+            self.map_fig_ax.axis([(np.amin(self.x[idx])- 15000),(np.amax(self.x[idx])+ 15000),(np.amin(self.y[idx])- 15000),(np.amax(self.y[idx])+ 15000)])
+
         if not self.legend:
             self.legend = self.map_fig_ax.legend()
-        if not dirFlag:
-                self.map_fig_ax.axis([(np.amin(x)- 15000),(np.amax(x)+ 15000),(np.amin(y)- 15000),(np.amax(y)+ 15000)])
-                self.map_dataCanvas.draw() 
+        self.map_dataCanvas.draw() 
+        self.blit()
 
 
     # plot_idx is a method to plot the location of a click event on the datacanvas to the basemap
@@ -166,8 +209,8 @@ class basemap(tk.Frame):
             # plot pick location on basemap
             if self.pick_loc:
                 self.pick_loc.remove()
-            self.pick_loc = self.map_fig_ax.scatter(self.x[self.trackName == fn][idx], 
-                                                    self.y[self.trackName == fn][idx], 
+            self.pick_loc = self.map_fig_ax.scatter(self.x[self.track_name == fn][idx], 
+                                                    self.y[self.track_name == fn][idx], 
                                                     c="b", marker="X", zorder=3)
             self.blit()
 
@@ -185,16 +228,19 @@ class basemap(tk.Frame):
     
     # clear_basemap is a method to clear the basemap 
     def clear_nav(self):
-        self.trackName = np.array(()).astype(dtype=np.str)
+        # clear arrays
+        self.track_name = np.array(()).astype(dtype=np.str)
+        self.loaded_tracks = np.array(()).astype(dtype=np.str)
         self.x = np.array(())
         self.y = np.array(())
         self.start_x = np.array(())
         self.start_y = np.array(())
         self.end_x = np.array(())
         self.end_y = np.array(())
-        self.track.set_data(self.x, self.y)
-        self.track_start.set_data(self.start_x, self.start_y)
-        self.track_end.set_data(self.end_x, self.end_y)
+        # set lines
+        self.track_ln.set_data(self.x, self.y)
+        self.track_start_ln.set_data(self.start_x, self.start_y)
+        self.track_end_ln.set_data(self.end_x, self.end_y)
 
         if self.legend:
             self.legend.remove()
@@ -278,10 +324,9 @@ class basemap(tk.Frame):
                 fn = f.split("/")[-1].rstrip("_geom.tab")
             else:
                 continue
-            self.set_nav(fn, navdf, dirFlag = True)
+            self.set_nav(fn, navdf)
         # update extent
-        self.map_fig_ax.axis([(np.amin(self.x)- 15000),(np.amax(self.x)+ 15000),(np.amin(self.y)- 15000),(np.amax(self.y)+ 15000)])
-        self.map_dataCanvas.draw() 
+        self.plot_tracks()
 
 
     # settings menu
@@ -318,8 +363,8 @@ class basemap(tk.Frame):
         # determine which track was selected
         xdata = event.mouseevent.xdata
         idx = utils.find_nearest(self.x, xdata)
-        track = self.trackName[idx]
-        print("selected track:\t", track, " - double-click to open profile")
-        # if track double clicked, pass back to impick
-        if event.mouseevent.dblclick:
+        track = self.track_name[idx]
+        print("selected track:\t", track, " - double-click to load profile")
+        # if track double clicked and differs from track currently laded to profile view, pass back to impick
+        if (event.mouseevent.dblclick) and (track != self.profile_track):
             self.to_gui(self.datPath, track)

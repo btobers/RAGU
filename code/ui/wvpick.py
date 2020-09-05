@@ -243,7 +243,7 @@ class wvpick(tk.Frame):
             max_idx = np.nanargmax(self.rdata.proc[10:,:], axis = 0) + 10
             # remove outliers
             not_outlier = utils.remove_outliers(max_idx)
-            # interpolate over outliers
+            # interpolate, ignoring outliers
             x = np.arange(self.rdata.tnum)
             self.rdata.pick.current_surfOpt = np.interp(x, x[not_outlier], max_idx[not_outlier])
 
