@@ -62,9 +62,13 @@ $ conda env create -f nose_env.yml
 ```
 ### config.ini ###
 [path]
+# str datPath: data directory path
 datPath = /home/btober/Documents/SHARAD_test/
+# str simPath: clutter simulation directory path
 simPath = /home/btober/Documents/SHARAD_test/simc/
+# str mapPath: basemap directory path
 mapPath = /home/btober/Documents/SHARAD_test/MOLA/
+# str outPath: output directory path
 outPath = /home/btober/Documents/SHARAD_test/
 
 [nav]
@@ -82,17 +86,17 @@ amp = True
 csv = True
 # bool shp: export shapefile of picks
 shp = True
-# bool im: export profile image with picks
-im = True
+# bool fig: export profile image with picks
+fig = True
 ```
 
-2. Activate NOSEpick anaconda environment - 'nose' by default:
+2a. Activate NOSEpick anaconda environment - 'nose' by default:
 ```
 $ conda activate nose
 (nose)$ python main.py
 ```
 
-If the default Python environment is not set as Python 3, specify:
+2b. If the default Python environment is not set as Python 3, specify:
 ```
 $ python3 main.py
 ```
