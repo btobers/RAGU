@@ -2,7 +2,7 @@
 impick class is a tkinter frame which handles the NOSEpick profile view and radar data picking
 """
 ### imports ###
-from tools import utils
+from tools import utils, export
 from ui import basemap
 import numpy as np
 import tkinter as tk
@@ -938,8 +938,8 @@ class impick(tk.Frame):
         self.basemap = basemap
 
 
-    # save is a method to receive the pick save location from gui and save using utils.save
-    def save(self, f_saveName, figSize):
+    # save_fig is a method to receive the pick save location from gui and save using utils.save
+    def save_fig(self, f_saveName, figSize):
         self.f_saveName = f_saveName
         # zoom out to full rgram extent to save pick image
         self.fullExtent()
@@ -960,7 +960,7 @@ class impick(tk.Frame):
         # hide existing picks
         self.remove_existing_subsurf()
         self.safe_draw()
-        utils.exportIm(f_saveName, self.fig)
+        export.im(f_saveName, self.fig)
         # return figsize to intial values and make sliders visible again
         self.fig.set_size_inches((w,h))
         self.ax_cmax.set_visible(True)

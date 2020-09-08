@@ -47,7 +47,7 @@ def read(fpath, simpath, navcrs, body):
     # parse nav
     rdata.navdf = navparse.getnav_sharad(geom_path, navcrs, body)
 
-    rdata.elev_gnd = np.repeat(np.nan, rdata.tnum)
+    rdata.gndElev = np.repeat(np.nan, rdata.tnum)
 
     # initialize surface pick
     rdata.pick.current_surf = np.repeat(np.nan, rdata.tnum)

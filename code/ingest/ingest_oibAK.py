@@ -47,10 +47,10 @@ def read_h5(fpath, navcrs, body):
     
     # pull lidar surface elevation if possible
     if "srf0" in f["ext"].keys():
-        rdata.elev_gnd = f["ext"]["srf0"][:]                            # surface elevation from lidar, averaged over radar first fresnel zone per trace (see code within /zippy/MARS/code/xped/hfProc/ext)
+        rdata.gndElev = f["ext"]["srf0"][:]                            # surface elevation from lidar, averaged over radar first fresnel zone per trace (see code within /zippy/MARS/code/xped/hfProc/ext)
     # create empty arrays to hold surface elevation and twtt otherwise
     else:
-        rdata.elev_gnd = np.repeat(np.nan, rdata.tnum)
+        rdata.gndElev = np.repeat(np.nan, rdata.tnum)
 
     if "clutter0" in f["drv"].keys():
         rdata.set_sim(f["drv"]["clutter0"][:])                         # simulated clutter array

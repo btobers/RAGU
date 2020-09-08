@@ -7,7 +7,7 @@
 radar data ingest wrapper
 """
 ### imports ###
-from ingest import ingest_oibAK, ingest_gssi, ingest_sharad
+from ingest import ingest_oibAK, ingest_gssi, ingest_sharad, ingest_marsis
 from tools import utils
 import numpy as np
 
@@ -16,7 +16,7 @@ class ingest:
     def __init__(self, ftype):
         # ftype is a string specifying filetype
         # valid options -
-        # hdf5, mat, segy
+        # hdf5, mat, segy, img
         valid_types = ["h5", "mat", "dzt", "img"] # can add more to this
         if (ftype.lower() not in valid_types):
             print("Invalid file type specifier: " + ftype)
@@ -39,6 +39,8 @@ class ingest:
             self.rdata = ingest_gssi.read(fpath, navcrs, body)
         elif (self.ftype == "img"):
             self.rdata = ingest_sharad.read(fpath, simpath, navcrs, body)
+        # elif (self.ftype == "dat"):
+        #     self.rdata = ingest_marsis.read(fpath, simpath, navcrs, body)
         else:
             print("File reader for format {} not built yet".format(self.ftype))
             exit(1)

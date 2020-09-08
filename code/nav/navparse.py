@@ -83,7 +83,7 @@ def getnav_oibAK_mat(navfile, navcrs, body):
             print("getnav_oibAK_mat Error: " + str(err))
             exit(1)
 
-    df = pd.DataFrame({'lon': gps.lon, 'lat': gps.lat, "elev": gps.z,
+    df = pd.DataFrame({"lon": gps.lon, "lat": gps.lat, "elev": gps.z,
                                 "x": np.nan, "z": np.nan, "z": np.nan,
                                 "dist": np.nan})
 
@@ -105,12 +105,12 @@ def getnav_oibAK_mat(navfile, navcrs, body):
 
 def getnav_gssi(navfile, tnum, navcrs, body):
     if os.path.isfile(navfile):
-        with codecs.open(navfile, 'r', encoding='utf-8', errors='ignore') as f_in:
+        with codecs.open(navfile, "r", encoding="utf-8", errors="ignore") as f_in:
             lines = f_in.readlines()
         # We have to be careful with this to permit other NMEA strings to have been recorded
         # and to be sure that the indices line up
-        gssis_inds = [i for i, line in enumerate(lines) if 'GSSIS' in line]
-        gga_inds = [i for i, line in enumerate(lines) if 'GGA' in line]
+        gssis_inds = [i for i, line in enumerate(lines) if "GSSIS" in line]
+        gga_inds = [i for i, line in enumerate(lines) if "GGA" in line]
         # we may have some records without GGA, so check if this is the case;
         # we keep track of the offset if so
         gssis_inds_keep = []
@@ -123,10 +123,10 @@ def getnav_gssi(navfile, tnum, navcrs, body):
         if gga_inds[-1] > gssis_inds[-1]:
             gssis_inds_keep.append(gssis_inds[-1])
 
-        scans = np.array(list(map(lambda x: int(x.split(',')[1]),
+        scans = np.array(list(map(lambda x: int(x.split(",")[1]),
                                 [line for i, line in enumerate(lines) if i in gssis_inds_keep])))
         gps = GPSdat([line for i, line in enumerate(lines) if i in gga_inds], scans, tnum)
-        df = pd.DataFrame({'lon': gps.lon, 'lat': gps.lat, "elev": gps.elev,
+        df = pd.DataFrame({"lon": gps.lon, "lat": gps.lat, "elev": gps.elev,
                                     "x": np.nan, "y": np.nan, "z": np.nan,
                                     "dist": np.nan})
 
@@ -144,7 +144,7 @@ def getnav_gssi(navfile, tnum, navcrs, body):
             df["z"].to_numpy())
     else:
         nd = np.repeat(np.nan, tnum)
-        df = pd.DataFrame({'lon': nd, 'lat': nd, "elev": nd,
+        df = pd.DataFrame({"lon": nd, "lat": nd, "elev": nd,
                                     "x": nd, "y": nd, "z": nd,
                                     "dist": nd})
 
@@ -168,16 +168,16 @@ def getnav_pulseekko(navfile, tnum, xyzs, body):
     ggis = []
     gga = []
     for line in lines:
-        if line[:5] == 'Trace':
+        if line[:5] == "Trace":
             ggis.append(line)
-        elif line[:6] == '$GPGGA':
+        elif line[:6] == "$GPGGA":
             gga.append(line)
         else:
             continue
     if len(gga) == 0:
-        raise ValueError('I can only do gga sentences right now')
+        raise ValueError("I can only do gga sentences right now")
     scans = np.array(list(map(lambda x: int(float(
-        x.rstrip('\n\r ').split(' ')[-1])), ggis)))
+        x.rstrip("\n\r ").split(" ")[-1])), ggis)))
     data = RadarGPS(gga, scans, trace_nums)
     return data
 

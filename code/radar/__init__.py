@@ -43,13 +43,15 @@ class radar(object):
         #: np.ndarray(tnum,) surface index per trace [samle #]
         self.surf = None
         #: np.ndarray(tnum,) ground elevation per trace [m.a.s.l.]
-        self.elev_gnd = None
+        self.gndElev = None
         #: np.ndarray(snum x tnum) processed radat data - this is what will actually be displayed, as to not modify original data
         self.proc = None
         #: np.ndarray(snum x tnum) clutter simulation stored in dB for viewing
         self.sim = None
         #: pick object
         self.pick = pick()
+        #: pandas dataframe output data
+        self.out = None
 
         return
 
@@ -70,6 +72,13 @@ class radar(object):
         self.sim = self.dBscale(dat)
         # generate pyramid arrays
         self.sPyramid = self.genPyramids(self.sim)
+
+        return
+
+
+    # set output dataframe
+    def set_out(self, dat):
+        self.out = dat
 
         return
 

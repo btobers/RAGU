@@ -9,7 +9,7 @@ mainGUI class is a tkinter frame which runs the NOSEpick master GUI
 """
 ### imports ###
 from ui import impick, wvpick, basemap 
-from tools import utils
+from tools import utils, export
 from radar import processing
 from ingest import ingest
 import os, sys, scipy, glob, configparser
@@ -39,7 +39,7 @@ class mainGUI(tk.Frame):
         self.map_loadName = ""
         self.tab = "profile"
         # self.userName = tk.StringVar(value="")
-        self.eps_r = tk.DoubleVar(value=self.conf["params"]["eps_r"])
+        self.eps_r = tk.DoubleVar(value=self.conf["output"]["eps_r"])
         self.figSize = tk.StringVar(value="21,7")
         self.cmap = tk.StringVar(value="Greys_r")
         self.debugState = tk.BooleanVar()
@@ -99,7 +99,7 @@ class mainGUI(tk.Frame):
         fileMenu.add_command(label="open       [ctrl+o]", command=self.open_data)
         fileMenu.add_command(label="load picks", command=self.load_picks)
         fileMenu.add_command(label="next        [right]", command=self.next_loc)
-        fileMenu.add_command(label="save       [ctrl+s]", command=self.save_loc)
+        fileMenu.add_command(label="save       [ctrl+s]", command=self.save)
 
 
         # settings submenu
@@ -209,7 +209,7 @@ class mainGUI(tk.Frame):
 
         # Ctrl+S save picks
         elif event.state & 4 and event.keysym == "s":
-            self.save_loc()
+            self.save()
 
         # Ctrl+M open map
         elif event.state & 4 and event.keysym == "m":
@@ -313,7 +313,7 @@ class mainGUI(tk.Frame):
                 self.impick.update_option_menu()
                 # ingest the data
                 self.igst = ingest(self.f_loadName.split(".")[-1])
-                self.rdata = self.igst.read(self.f_loadName, self.conf["paths"]["simPath"], self.conf["navigation"]["navcrs"], self.conf["params"]["body"])
+                self.rdata = self.igst.read(self.f_loadName, self.conf["paths"]["simPath"], self.conf["navigation"]["navcrs"], self.conf["navigation"]["body"])
                 # return if no data ingested
                 if not self.rdata:
                     return
@@ -333,21 +333,36 @@ class mainGUI(tk.Frame):
                 self.impick.get_basemap(self.basemap)            
 
 
-    # save_loc is method to receieve the desired pick save location from user input
-    def save_loc(self):
+    # save is method to receieve the desired pick save location from user input
+    def save(self):
         if self.f_loadName:# and ((self.impick.get_subsurfPickFlag() == True) or (self.impick.get_surfPickFlag() == True)):
+            tmp_fn_out = ""
             if "linux" in self.os or "win" in self.os:
-                self.f_saveName = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_pk",
-                                initialdir = self.conf["paths"]["outPath"], title = "save picks",filetypes = (("comma-separated values","*.csv"),))
+                tmp_fn_out = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_pk",
+                                initialdir = self.conf["paths"]["outPath"], title = "save picks", filetypes = (("all files", ".*"),("comma-separated values",".csv"),("esri shapefile", ".shp")))
             else:
-                self.f_saveName = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_pk.csv",
+                tmp_fn_out = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_pk",
                                 initialdir = self.conf["paths"]["outPath"], title = "save picks")
-        if self.f_saveName:
+
+        if tmp_fn_out:
+            self.f_saveName, ext = os.path.splitext(tmp_fn_out)
+
+            # end any current pick segments
             self.end_surf_pick()
             self.end_subsurf_pick()
-            # get updated pick_dict from wvpick and pass back to impick
-            utils.export_pk_csv(self.f_saveName, self.rdata, self.eps_r.get(), self.conf["params"]["amp"])
-            self.impick.save(self.f_saveName, self.figSize.get().split(","))
+            # set output dataframe
+            self.rdata.set_out(export.pick_math(self.rdata, self.eps_r.get(), self.conf["output"]["amp"]))
+
+            # export
+            if (self.conf["output"]["csv"]) or (ext == ".csv"):
+                export.csv(self.f_saveName + ".csv", self.rdata.out)
+            if (self.conf["output"]["shp"]) or (ext == ".shp"):
+                export.shp(self.f_saveName + ".shp", self.rdata.out, self.conf["navigation"]["navcrs"])
+            if self.rdata.fpath.endswith(".h5") and (tk.messagebox.askyesno("export picks", "save picks to data file?") == True):
+                export.h5(rdata.fpath, self.rdata.out)
+
+            # save image
+            self.impick.save_fig(self.f_saveName, self.figSize.get().split(","))
 
 
     # map_loc is a method to get the desired basemap location and initialize
@@ -360,7 +375,7 @@ class mainGUI(tk.Frame):
         if tmp_map_loadName:
             # initialize basemap if not currently open
             if not self.map_loadName or self.basemap.get_state() == 0:
-                self.basemap = basemap.basemap(self.parent, self.datPath, self.conf["navigation"]["navcrs"], self.conf["params"]["body"], self.from_basemap)
+                self.basemap = basemap.basemap(self.parent, self.datPath, self.conf["navigation"]["navcrs"], self.conf["navigation"]["body"], self.from_basemap)
             self.map_loadName = tmp_map_loadName
             self.basemap.set_vars()
             self.basemap.map(self.map_loadName)
@@ -451,7 +466,7 @@ class mainGUI(tk.Frame):
                 self.impick.clear_canvas()
                 self.impick.set_vars()
                 self.impick.update_option_menu()
-                self.rdata = self.igst.read(self.f_loadName, self.conf["paths"]["simPath"], self.conf["navigation"]["navcrs"], self.conf["params"]["body"])
+                self.rdata = self.igst.read(self.f_loadName, self.conf["paths"]["simPath"], self.conf["navigation"]["navcrs"], self.conf["navigation"]["body"])
                 # return if no data ingested
                 if not self.rdata:
                     return
