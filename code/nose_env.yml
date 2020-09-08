@@ -1,4 +1,5 @@
-# This file may be used to create a conda environment using:
+
+# this file may be used to create a conda environment using:
 # $conda env create -f nose_env.yml
 
 name: nose
@@ -10,7 +11,7 @@ dependencies:
   - attrs=19.3.0=py_0
   - blas=1.0=mkl
   - bzip2=1.0.8=h7b6447c_0
-  - ca-certificates=2020.6.24=0
+  - ca-certificates=2020.7.22=0
   - cairo=1.14.12=h8948797_3
   - certifi=2020.6.20=py37_0
   - cfitsio=3.470=hb7c8383_2
@@ -21,9 +22,12 @@ dependencies:
   - cycler=0.10.0=py37_0
   - dbus=1.13.16=hb2f20db_0
   - expat=2.2.9=he6710b0_2
+  - fiona=1.8.13.post1=py37hc820daa_0
   - fontconfig=2.13.0=h9420a91_0
   - freetype=2.10.2=h5ab3b9f_0
   - freexl=1.0.5=h14c3975_0
+  - gdal=3.0.2=py37hbb2a789_0
+  - geopandas=0.8.1=py_0
   - geos=3.8.0=he6710b0_0
   - geotiff=1.5.1=h21e8280_1
   - giflib=5.1.4=h14c3975_1
@@ -53,6 +57,7 @@ dependencies:
   - libnetcdf=4.6.1=h11d0813_2
   - libpng=1.6.37=hbc83047_0
   - libpq=11.2=h20c2e04_0
+  - libspatialindex=1.9.3=he6710b0_0
   - libspatialite=4.3.0a=h793db0d_0
   - libssh2=1.9.0=h1ba5d50_1
   - libstdcxx-ng=9.1.0=hdf63c60_0
@@ -67,6 +72,7 @@ dependencies:
   - mkl-service=2.3.0=py37he904b0f_0
   - mkl_fft=1.1.0=py37h23d657b_0
   - mkl_random=1.1.1=py37h0573a6f_0
+  - munch=2.5.0=py_0
   - ncurses=6.2=he6710b0_1
   - numpy=1.18.5=py37ha1c710e_0
   - numpy-base=1.18.5=py37hde5b4d6_0
@@ -74,7 +80,7 @@ dependencies:
   - openssl=1.1.1g=h7b6447c_0
   - pandas=1.0.5=py37h0573a6f_0
   - pcre=8.44=he6710b0_0
-  - pip=20.1.1=py37_1
+  - pip=20.2.1=py37_0
   - pixman=0.40.0=h7b6447c_0
   - poppler=0.65.0=h581218d_1
   - poppler-data=0.4.9=0
@@ -89,8 +95,10 @@ dependencies:
   - qt=5.9.7=h5867ecd_1
   - rasterio=1.1.0=py37h41e4f33_0
   - readline=7.0=h7b6447c_5
+  - rtree=0.9.4=py37_1
   - scipy=1.5.0=py37h0b6359f_0
-  - setuptools=49.2.0=py37_0
+  - setuptools=49.2.1=py37_0
+  - shapely=1.7.0=py37h98ec03d_0
   - sip=4.19.8=py37hf484d3e_0
   - six=1.15.0=py_0
   - snuggs=1.4.7=py_0
