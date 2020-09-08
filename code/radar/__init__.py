@@ -91,6 +91,7 @@ class radar(object):
         pow[pow == 0] = np.nan
         # dB it
         dB = 10*np.log10(pow)
+
         return dB
 
 

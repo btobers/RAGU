@@ -126,4 +126,7 @@ def h5(fpath, df):
 
 # im is a function for exporting the pick image
 def im(fname, fig, extent=None):
-    fig.savefig(fname.rstrip(".csv") + ".png", dpi = 500, bbox_inches='tight', pad_inches = 0.05, transparent=True)# facecolor = "#d9d9d9")
+    fout = fname.rstrip(".csv") + ".png"
+    fig.savefig(fout, dpi = 500, bbox_inches='tight', pad_inches = 0.05, transparent=True)# facecolor = "#d9d9d9")
+
+    print("figure exported successfully:\t" + fout)

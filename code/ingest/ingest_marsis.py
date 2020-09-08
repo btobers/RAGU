@@ -18,11 +18,6 @@ def read(fpath, simpath, navcrs, body):
     rdata.fn = fn.rstrip("ss3_trk_cmp_m.dat")
     rdata.dtype = "marsis"
 
-
-
-
-
-
     # # convert binary .img PDS RGRAM to numpy array
     # # reshape array with 3600 lines
     # dtype = np.dtype("float32")     

@@ -31,7 +31,7 @@ class mainGUI(tk.Frame):
         if datPath:
             self.datPath = datPath
         else:
-            self.datPath = self.conf["paths"]["datPath"]
+            self.datPath = self.conf["path"]["datPath"]
         # initialize variables
         self.rdata = None
         self.f_loadName = ""
@@ -286,8 +286,8 @@ class mainGUI(tk.Frame):
 
     # set_out is a method to set the session output directory
     def set_out(self):
-        self.conf["paths"]["outPath"] = tk.filedialog.askdirectory(title="output data directory",
-                                       initialdir=self.conf["paths"]["outPath"],
+        self.conf["path"]["outPath"] = tk.filedialog.askdirectory(title="output data directory",
+                                       initialdir=self.conf["path"]["outPath"],
                                        mustexist=True)
 
 
@@ -313,7 +313,7 @@ class mainGUI(tk.Frame):
                 self.impick.update_option_menu()
                 # ingest the data
                 self.igst = ingest(self.f_loadName.split(".")[-1])
-                self.rdata = self.igst.read(self.f_loadName, self.conf["paths"]["simPath"], self.conf["navigation"]["navcrs"], self.conf["navigation"]["body"])
+                self.rdata = self.igst.read(self.f_loadName, self.conf["path"]["simPath"], self.conf["nav"]["crs"], self.conf["nav"]["body"])
                 # return if no data ingested
                 if not self.rdata:
                     return
@@ -339,10 +339,10 @@ class mainGUI(tk.Frame):
             tmp_fn_out = ""
             if "linux" in self.os or "win" in self.os:
                 tmp_fn_out = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_pk",
-                                initialdir = self.conf["paths"]["outPath"], title = "save picks", filetypes = (("all files", ".*"),("comma-separated values",".csv"),("esri shapefile", ".shp")))
+                                initialdir = self.conf["path"]["outPath"], title = "save picks", filetypes = (("all files", ".*"),("comma-separated values",".csv"),("esri shapefile", ".shp")))
             else:
                 tmp_fn_out = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_pk",
-                                initialdir = self.conf["paths"]["outPath"], title = "save picks")
+                                initialdir = self.conf["path"]["outPath"], title = "save picks")
 
         if tmp_fn_out:
             self.f_saveName, ext = os.path.splitext(tmp_fn_out)
@@ -357,25 +357,24 @@ class mainGUI(tk.Frame):
             if (self.conf["output"]["csv"]) or (ext == ".csv"):
                 export.csv(self.f_saveName + ".csv", self.rdata.out)
             if (self.conf["output"]["shp"]) or (ext == ".shp"):
-                export.shp(self.f_saveName + ".shp", self.rdata.out, self.conf["navigation"]["navcrs"])
+                export.shp(self.f_saveName + ".shp", self.rdata.out, self.conf["nav"]["crs"])
             if self.rdata.fpath.endswith(".h5") and (tk.messagebox.askyesno("export picks", "save picks to data file?") == True):
                 export.h5(rdata.fpath, self.rdata.out)
-
-            # save image
-            self.impick.save_fig(self.f_saveName, self.figSize.get().split(","))
+            if self.conf["output"]["fig"]:
+                self.impick.save_fig(self.f_saveName, self.figSize.get().split(","))
 
 
     # map_loc is a method to get the desired basemap location and initialize
     def map_loc(self):
         tmp_map_loadName = ""
         if "linux" in self.os or "win" in self.os:
-            tmp_map_loadName = tk.filedialog.askopenfilename(initialdir = self.conf["paths"]["mapPath"], title = "select basemap file", filetypes = (("geotiff files","*.tif"),("all files","*.*")))
+            tmp_map_loadName = tk.filedialog.askopenfilename(initialdir = self.conf["path"]["mapPath"], title = "select basemap file", filetypes = (("geotiff files","*.tif"),("all files","*.*")))
         else:
-            tmp_map_loadName = tk.filedialog.askopenfilename(initialdir = self.conf["paths"]["mapPath"], title = "select basemap file")
+            tmp_map_loadName = tk.filedialog.askopenfilename(initialdir = self.conf["path"]["mapPath"], title = "select basemap file")
         if tmp_map_loadName:
             # initialize basemap if not currently open
             if not self.map_loadName or self.basemap.get_state() == 0:
-                self.basemap = basemap.basemap(self.parent, self.datPath, self.conf["navigation"]["navcrs"], self.conf["navigation"]["body"], self.from_basemap)
+                self.basemap = basemap.basemap(self.parent, self.datPath, self.conf["nav"]["crs"], self.conf["nav"]["body"], self.from_basemap)
             self.map_loadName = tmp_map_loadName
             self.basemap.set_vars()
             self.basemap.map(self.map_loadName)
@@ -466,7 +465,7 @@ class mainGUI(tk.Frame):
                 self.impick.clear_canvas()
                 self.impick.set_vars()
                 self.impick.update_option_menu()
-                self.rdata = self.igst.read(self.f_loadName, self.conf["paths"]["simPath"], self.conf["navigation"]["navcrs"], self.conf["navigation"]["body"])
+                self.rdata = self.igst.read(self.f_loadName, self.conf["path"]["simPath"], self.conf["nav"]["crs"], self.conf["nav"]["body"])
                 # return if no data ingested
                 if not self.rdata:
                     return
@@ -493,7 +492,7 @@ class mainGUI(tk.Frame):
     def load_picks(self):
         if self.f_loadName:
             pk_file = ""
-            pk_file = tk.filedialog.askopenfilename(initialdir = self.conf["paths"]["outPath"], title = "load picks", filetypes = (("comma separated value", "*.csv"),))
+            pk_file = tk.filedialog.askopenfilename(initialdir = self.conf["path"]["outPath"], title = "load picks", filetypes = (("comma separated value", "*.csv"),))
             if pk_file:
                 self.igst.import_picks(pk_file)
                 self.impick.remove_existing_subsurf()
