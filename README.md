@@ -36,10 +36,10 @@ NOSEpick was originally developed to work with NASA's Operation IceBridge Alaska
 - GSSI
 
 ## System Requirements
-os:
-- linux
-- windows
-- mac
+Supported Operating Systems:
+- Linux (tested on Ubuntu 18.04, 20.04)
+- Windows (tested on Windows 10)
+- Mac (tested on Catalina)
 
 ## Dependencies
 - tkinter
@@ -47,6 +47,7 @@ os:
 - numpy
 - scipy
 - pandas
+- geopandas
 - pyproj
 - rasterio
 - h5py
@@ -57,15 +58,41 @@ $ conda env create -f nose_env.yml
 ```
 
 ## Running NOSEpick
-Prior to running NOSEpick, set appropriate data paths in *config.py*
+1. Prior to running NOSEpick, set appropriate data paths, data coordinate reference system, and output preferences in *config.ini*:
+```
+### config.ini ###
+[path]
+datPath = /home/btober/Documents/SHARAD_test/
+simPath = /home/btober/Documents/SHARAD_test/simc/
+mapPath = /home/btober/Documents/SHARAD_test/MOLA/
+outPath = /home/btober/Documents/SHARAD_test/
 
-To run NOSEpick, first activate NOSEpick anaconda environment - 'nose' by default:
+[nav]
+# str body: planetary body from which radar data was acquired
+body = mars
+# str navcrs: crs string
+crs = +proj=longlat +a=3396190 +b=3376200 +no_defs
+
+[output]
+# float eps_r: relative permittivity (dielectric constant), required for plotting in depth and calculating layer thickness
+eps_r = 3.15
+# bool amp: export pick amplitudes
+amp = True
+# bool csv: export csv file of picks
+csv = True
+# bool shp: export shapefile of picks
+shp = True
+# bool im: export profile image with picks
+im = True
+```
+
+2. Activate NOSEpick anaconda environment - 'nose' by default:
 ```
 $ conda activate nose
 (nose)$ python main.py
 ```
 
-If the default Python environment is not set as Python 3, you will have to specify:
+If the default Python environment is not set as Python 3, specify:
 ```
 $ python3 main.py
 ```
