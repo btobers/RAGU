@@ -102,9 +102,23 @@ $ python3 main.py
 ```
 
 ## Notes
-NOSEpick is still in development, but is in operable standing for interpreting certain datasets. 
-Plans for the future are to complete the wvPick optimization tools, as well as add ingesters for additional datasets. So far, the thought is to add a ingester for PulsEKKO, Mala, and segy data. A SHARAD ingester as well as a GSSI ingester (thanks to https://github.com/iannesbitt/readgssi) have been added and are still in development stages. GSSI data is currently ingested without gps data. A segy ingester is also in the works.
-Furutre development plans also invlude finding a way to render images faster when toggling between radar data and clutter, zooming/resetting the view. This can possible be done by down-sampling the data based on the zoom.
+### Future Development
+Additional dataset ingesters:
+- ESA's MARSIS
+- PulseEKKO GPR
+- Segy
+
+Processing:
+- gain
+- filtering
+- migration
+
+
+Tools:
+- depth conversion
+- dielectric extraction
+- pick amplitude tracking
+
 
 ### Desktop Shortcut
 If desired, pyshorcuts can be used to create a desktop shortcut:
