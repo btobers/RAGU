@@ -12,6 +12,13 @@
 ## Description
 NOSEpick is an open source GUI package developed to interpret radar sounding data, written in Python 3.
 
+### Dataset Capabilities:
+NOSEpick was originally developed to work with NASA's Operation IceBridge Alaska radar sounding data. NOSEpick is also capable of working with SHARAD data acquired onboard NASA's Mars Reconnaissance Orbiter (Reduced Data Record of Radar Backscatter Power (USRDR) & Geographic, Geometric, and Ionospheric Properties (USGEOM) data available at https://pds-geosciences.wustl.edu/missions/mro/sharad.htm). GSSI data can also be interpreted with NOSEpick.
+
+- NASA OIB-AK
+- SHARAD (USRDR, USGEOM, US clutter sims)
+- GSSI
+
 ### File Info
 - *nose_env.yml* contains a list of NOSEpick dependencies
 - *config.ini* contains user-specified configuration file paths and information necessary to run the NOSEpick app
@@ -28,13 +35,26 @@ NOSEpick is an open source GUI package developed to interpret radar sounding dat
 - *tools/utils.py* contains a set of utility functions utilized by the app
 - *tools/constants.py* contains uglobal constants
 
-### Dataset Capabilities:
-NOSEpick was originally developed to work with NASA's Operation IceBridge Alaska radar sounding data. NOSEpick is also capable of working with SHARAD data acquired onboard NASA's Mars Reconnaissance Orbiter (Reduced Data Record of Radar Backscatter Power (USRDR) & Geographic, Geometric, and Ionospheric Properties (USGEOM) data available at https://pds-geosciences.wustl.edu/missions/mro/sharad.htm). GSSI data can also be interpreted with NOSEpick.
+### Outputs
+##### Pick files 
+A csv text file and an ESRI shapefile may be exported containing the following information for each trace in the input radar data:
+- <ins>trace</ins>: trace number
+- <ins>lon</ins>: longitude
+- <ins>lat</ins>: latitude
+- <ins>alt</ins>: altitude
+- <ins>gndElev</ins>: ground elevation
+- <ins>srfTwtt</ins>: two way travel time to the surface return
+- <ins>srfAmp</ins>: surface return amplitude
+- <ins>subsrfTwtt</ins>: two way travel time to the picked subsurface return
+- <ins>subsrfAmp</ins>: subsurface return amplitude
+- <ins>subsrfElev</ins>: subsurface return elevation
+- <ins>thick</ins>: layer thickness (ground elevation - subsurface elevation)
 
-- NASA OIB-AK
-- SHARAD (USRDR, USGEOM, US clutter sims)
-- GSSI
-
+##### Figure
+A figure is also exported displaying any completed picks. Example over Malaspina Glacier, AK:
+<p align="center">
+  <img src="recs/20180819-215243_pk.png" height="400"><br>
+</p>
 ## System Requirements
 Supported Operating Systems:
 - Linux (tested on Ubuntu 18.04, 20.04)
