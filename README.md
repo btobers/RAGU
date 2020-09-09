@@ -127,7 +127,7 @@ $ python3 main.py
 ### Future Development
 Additional dataset ingesters:
 - ESA's MARSIS
-- PulseEKKO GPR
+- PulseEKKO
 - Segy
 
 Processing:
