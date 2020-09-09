@@ -37,25 +37,24 @@ NOSEpick was originally developed to work with NASA's Operation IceBridge Alaska
 
 ### Outputs
 ##### Pick files 
-A csv text file and an ESRI shapefile may be exported containing the following information for each trace in the input radar data:  
-<ins>trace</ins>: trace number  
-<ins>lon</ins>: longitude  
-<ins>lat</ins>: latitude  
-<ins>alt</ins>: altitude  
-<ins>gndElev</ins>: ground elevation  
-<ins>srfTwtt</ins>: two way travel time to the surface return  
-<ins>srfAmp</ins>: surface return amplitude  
-<ins>subsrfTwtt</ins>: two way travel time to the picked subsurface return  
-<ins>subsrfAmp</ins>: subsurface return amplitude  
-<ins>subsrfElev</ins>: subsurface return elevation  
-<ins>thick</ins>: layer thickness (ground elevation - subsurface elevation)  
+A csv text file and an ESRI shapefile may be exported containing the following information for each trace in the input radar data:
+- <ins>trace</ins>: trace number  
+- <ins>lon</ins>: longitude  
+- <ins>lat</ins>: latitude  
+- <ins>alt</ins>: altitude  
+- <ins>gndElev</ins>: ground elevation  
+- <ins>srfTwtt</ins>: two way travel time to the surface return  
+- <ins>srfAmp</ins>: surface return amplitude  
+- <ins>subsrfTwtt</ins>: two way travel time to the picked subsurface return  
+- <ins>subsrfAmp</ins>: subsurface return amplitude  
+- <ins>subsrfElev</ins>: subsurface return elevation  
+- <ins>thick</ins>: layer thickness (ground elevation - subsurface elevation)  
 
 ##### Figure
-A figure is also exported displaying any completed picks. Example over Malaspina Glacier, AK:
+A figure may also be exported displaying any completed picks. Example over Malaspina Glacier, AK:  
 <p align="center">
   <img src="recs/20180819-215243_pk.png" height="400"><br>
 </p>
-
 
 ## Running NOSEpick
 
@@ -80,7 +79,7 @@ To create a conda environment with the required dependencies, run the following 
 ```
 $ conda env create -f nose_env.yml
 ```
-
+### Setup
 1. Prior to running NOSEpick, set appropriate data paths, data coordinate reference system, and output preferences in *config.ini*:
 ```
 ### config.ini ###
