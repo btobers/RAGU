@@ -239,13 +239,16 @@ class wvpick(tk.Frame):
     # surf_autoPick is a method to automatically optimize surface picks by selecting the maximul amplitude sample within the specified window around existing self.rdata.surf
     def surf_autoPick(self):
         if np.all(np.isnan(self.rdata.pick.current_surf)):
-            # if surf idx array is all nans, take max power to define surface 
-            max_idx = np.nanargmax(self.rdata.proc[10:,:], axis = 0) + 10
-            # remove outliers
-            not_outlier = utils.remove_outliers(max_idx)
-            # interpolate, ignoring outliers
-            x = np.arange(self.rdata.tnum)
-            self.rdata.pick.current_surfOpt = np.interp(x, x[not_outlier], max_idx[not_outlier])
+            if self.rdata.flags.sampzero:
+                self.rdata.pick.current_surfOpt = np.zeros(self.rdata.tnum)
+            else:
+                # if surf idx array is all nans, take max power to define surface 
+                max_idx = np.nanargmax(self.rdata.proc[10:,:], axis = 0) + 10
+                # remove outliers
+                not_outlier = utils.remove_outliers(max_idx)
+                # interpolate, ignoring outliers
+                x = np.arange(self.rdata.tnum)
+                self.rdata.pick.current_surfOpt = np.interp(x, x[not_outlier], max_idx[not_outlier])
 
         else:
             # if existing surface pick, find max within specified window form existing pick

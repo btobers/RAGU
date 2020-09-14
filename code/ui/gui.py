@@ -99,8 +99,13 @@ class mainGUI(tk.Frame):
         fileMenu.add_command(label="open       [ctrl+o]", command=self.open_data)
         fileMenu.add_command(label="load picks", command=self.load_picks)
         fileMenu.add_command(label="next        [right]", command=self.next_loc)
-        fileMenu.add_command(label="save       [ctrl+s]", command=self.save)
 
+        # export submenu
+        exportMenu = tk.Menu(fileMenu,tearoff=0)
+        exportMenu.add_command(label="picks       [ctrl+s]", command=self.savePicks)
+        exportMenu.add_command(label="processed data", command=self.saveProc)
+
+        fileMenu.add_cascade(label="export", menu = exportMenu)
 
         # settings submenu
         settingsMenu = tk.Menu(fileMenu,tearoff=0)
@@ -128,6 +133,7 @@ class mainGUI(tk.Frame):
         subsurfacePickMenu.add_command(label="clear        [c]", command=lambda: self.clear(surf = "subsurface"))    
         subsurfacePickMenu.add_command(label="clear file", command=self.delete_datafilePicks)            
         pickMenu.add_cascade(label="subsurface", menu = subsurfacePickMenu)  
+        pickMenu.add_command(label="export  [ctrl+s]", command=self.savePicks)
 
         # pickMenu.add_separator()
         # pickMenu.add_command(label="Optimize", command=self.nb.select(wav))
@@ -210,7 +216,7 @@ class mainGUI(tk.Frame):
 
         # Ctrl+S save picks
         elif event.state & 4 and event.keysym == "s":
-            self.save()
+            self.savePicks()
 
         # Ctrl+M open map
         elif event.state & 4 and event.keysym == "m":
@@ -334,8 +340,8 @@ class mainGUI(tk.Frame):
                 self.impick.get_basemap(self.basemap)            
 
 
-    # save is method to receieve the desired pick save location from user input
-    def save(self):
+    # savePicks is method to receieve the desired pick save location from user input
+    def savePicks(self):
         if self.f_loadName:# and ((self.impick.get_subsurfPickFlag() == True) or (self.impick.get_surfPickFlag() == True)):
             tmp_fn_out = ""
             if "linux" in self.os or "win" in self.os:
@@ -363,6 +369,25 @@ class mainGUI(tk.Frame):
                 export.h5(rdata.fpath, self.rdata.out)
             if self.conf["output"]["fig"]:
                 self.impick.save_fig(self.f_saveName, self.figSize.get().split(","))
+
+
+    # saveProc is a method to save processed radar data
+    def saveProc(self):
+        print("processed data export currently in development")
+        return
+        if self.f_loadName:
+            tmp_fn_out = ""
+            if "linux" in self.os or "win" in self.os:
+                tmp_fn_out = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_pk",
+                                initialdir = self.conf["path"]["outPath"], title = "save picks", filetypes = (("all files", ".*"),("comma-separated values",".csv"),("esri shapefile", ".shp")))
+            else:
+                tmp_fn_out = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_pk",
+                                initialdir = self.conf["path"]["outPath"], title = "save picks")
+
+        if tmp_fn_out:
+            self.f_saveName, ext = os.path.splitext(tmp_fn_out)
+
+            export.proc(self.rdata.proc)
 
 
     # map_loc is a method to get the desired basemap location and initialize
@@ -561,34 +586,54 @@ class mainGUI(tk.Frame):
     def procTools(self, arg = None):
         if self.f_loadName:
             print("warning, processing tools still in dev stage")
+            procFlag = False
             if arg == "tzero":
-                self.rdata.set_proc(processing.set_tzero(self.parent, self.rdata.dat, self.rdata.proc, self.rdata.dt))
+                sampzero, proc = processing.set_tzero(self.rdata.dat, self.rdata.proc, self.rdata.dt)
+                if sampzero > 0:
+                    self.rdata.flags.sampzero = sampzero
+                    procFlag = True
+
             elif arg == "dewow":
                 window = tk.simpledialog.askfloat("input","dewow window size (# samples/" +  str(int(self.rdata.snum)) + ")?")
-                self.rdata.set_proc(processing.dewow(self.rdata.dat, window=10))
+                proc = processing.dewow(self.rdata.dat, window=10)
+                procFlag = True
+
             elif arg == "remMnTr":
                 nraces = tk.simpledialog.askfloat("input","moving average window size (# traces/" +  str(int(self.rdata.tnum)) + ")?")
-                self.rdata.set_proc(processing.remMeanTrace(self.rdata.dat, ntraces=ntraces))
+                proc = processing.remMeanTrace(self.rdata.dat, ntraces=ntraces)
+                procFlag = True
+
             elif arg == "lowpass":
                 cutoff = tk.simpledialog.askfloat("input","butterworth filter cutoff frequency?")
-                self.rdata.set_proc(processing.lowpassFilt(self.rdata.dat, Wn = cutoff, fs = 1/self.rdata.dt))
+                proc = processing.lowpassFilt(self.rdata.dat, Wn = cutoff, fs = 1/self.rdata.dt)
+                procFlag = True
+
             elif arg == "agc":
                 window = tk.simpledialog.askfloat("input","AGC gain window size (# samples/" +  str(int(self.rdata.snum)) + ")?")
-                self.rdata.set_proc(processing.agcGain(self.rdata.dat, window=window))
+                proc = processing.agcGain(self.rdata.dat, window=window)
+                procFlag = True
+
             elif arg == "tpow":
                 power = tk.simpledialog.askfloat("input","power for tpow gain?")
-                self.rdata.set_proc(processing.tpowGain(np.abs(self.rdata.dat), np.arange(self.rdata.snum)*self.rdata.dt, power=power))
+                proc = processing.tpowGain(np.abs(self.rdata.dat), np.arange(self.rdata.snum)*self.rdata.dt, power=power)
+                procFlag = True
+
             elif arg == "restore":
                 # restore origianl rdata
-                self.rdata.set_proc(processing.restore(self.rdata.dtype, self.rdata.dat))
+                proc = processing.restore(self.rdata.dtype, self.rdata.dat)
+                procFlag = True
+
             else:
                 print("undefined processing method")
                 exit(1)
-            self.impick.set_crange()
-            self.impick.drawData(force=True)
-            self.wvpick.clear()
-            self.wvpick.set_vars()
-            self.wvpick.set_data(self.rdata)
+
+            if procFlag:
+                self.rdata.set_proc(proc)
+                self.impick.set_crange()
+                self.impick.drawData(force=True)
+                self.wvpick.clear()
+                self.wvpick.set_vars()
+                self.wvpick.set_data(self.rdata)
 
 
     def settings(self):

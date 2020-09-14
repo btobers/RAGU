@@ -12,7 +12,7 @@ from matplotlib.widgets import Button
 NOSEpick radar data processing tools
 """
 
-def set_tzero(parent, raw, proc, dt):
+def set_tzero(raw, proc, dt):
     """
     set time zero of radar data based on average trace
     INPUT:
@@ -24,14 +24,17 @@ def set_tzero(parent, raw, proc, dt):
     # get mean trace and find max sample
     meanTrace = np.mean(proc, axis=1)
     tzeroSamp = np.nanargmax(meanTrace)
-    
-    # roll data and set last chunk as nan
-    datOut = np.zeros(raw.shape)
-    datOut[:-tzeroSamp,:] = raw[tzeroSamp:,:]
-    datOut[-tzeroSamp:,:] = np.nan
+    if tzeroSamp > 0:    
+        # roll data and set last chunk as nan
+        datOut = np.zeros(raw.shape)
+        datOut[:-tzeroSamp,:] = raw[tzeroSamp:,:]
+        datOut[-tzeroSamp:,:] = np.nan
+
+    else:
+        datOut = None
     print("new time zero:\t" + str(tzeroSamp * dt * 1e9) + " nanoseconds")
 
-    return datOut
+    return tzeroSamp, datOut
 
 def dewow(data,window):
     """
@@ -172,7 +175,7 @@ def restore(dtype, dat):
     if dtype == "oibak":
         return np.abs(dat)
     elif dtype == "gssi":
-        return dat.astype(np.float)
+        return dat
     elif dtype == "sharad":
         return dat
     else:

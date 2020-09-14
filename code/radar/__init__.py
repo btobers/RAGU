@@ -6,6 +6,7 @@
 ### imports ###
 import numpy as np
 import sys, copy
+from radar import flags
 
 class radar(object):
     """
@@ -30,6 +31,8 @@ class radar(object):
         self.dat = None
         #: int, channel number of the data
         self.chan = None
+        #: radar flags object
+        self.flags = flags.flags()
 
         # per-trace attributes
         #: navdf consisting of [lon, lat, elev, x, y, z, dist]

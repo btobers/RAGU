@@ -130,3 +130,8 @@ def im(fname, fig, extent=None):
     fig.savefig(fout, dpi = 500, bbox_inches='tight', pad_inches = 0.05, transparent=True)# facecolor = "#d9d9d9")
 
     print("figure exported successfully:\t" + fout)
+
+
+# proc is a method to export the processed radar data
+def proc(dat):
+    return
