@@ -292,7 +292,7 @@ class impick(tk.Frame):
 
 
     # method to draw radar data
-    def drawData(self, event=None):
+    def drawData(self, force=False, event=None):
         # Get data display window size in inches
         w,h = self.fig.get_size_inches()*self.fig.dpi
         # choose pyramid
@@ -306,7 +306,7 @@ class impick(tk.Frame):
         flag = False
 
         # if ideal pyramid level changed, update image
-        if self.pyramid != p:
+        if self.pyramid != p or force:
             self.pyramid = p
             self.im_dat.set_data(self.rdata.dPyramid[self.pyramid])
             self.im_sim.set_data(self.rdata.sPyramid[self.pyramid])

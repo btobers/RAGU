@@ -133,6 +133,7 @@ class mainGUI(tk.Frame):
         # pickMenu.add_command(label="Optimize", command=self.nb.select(wav))
 
         # processing menu items
+        procMenu.add_command(label="set time zero", command=lambda: self.procTools("tzero"))
         procMenu.add_command(label="dewow", command=lambda: self.procTools("dewow"))
         procMenu.add_command(label="remove mean trace", command=lambda: self.procTools("remMnTr"))
 
@@ -560,7 +561,9 @@ class mainGUI(tk.Frame):
     def procTools(self, arg = None):
         if self.f_loadName:
             print("warning, processing tools still in dev stage")
-            if arg == "dewow":
+            if arg == "tzero":
+                self.rdata.set_proc(processing.set_tzero(self.parent, self.rdata.dat, self.rdata.proc, self.rdata.dt))
+            elif arg == "dewow":
                 window = tk.simpledialog.askfloat("input","dewow window size (# samples/" +  str(int(self.rdata.snum)) + ")?")
                 self.rdata.set_proc(processing.dewow(self.rdata.dat, window=10))
             elif arg == "remMnTr":
@@ -582,7 +585,7 @@ class mainGUI(tk.Frame):
                 print("undefined processing method")
                 exit(1)
             self.impick.set_crange()
-            self.impick.drawData()
+            self.impick.drawData(force=True)
             self.wvpick.clear()
             self.wvpick.set_vars()
             self.wvpick.set_data(self.rdata)

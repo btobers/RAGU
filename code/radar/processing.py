@@ -4,9 +4,34 @@ import numpy.matlib as matlib
 import scipy.interpolate as interp
 import scipy.signal as signal
 import matplotlib.pyplot as plt
+import matplotlib as mpl
+import tkinter as tk
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+from matplotlib.widgets import Button
 """
 NOSEpick radar data processing tools
 """
+
+def set_tzero(parent, raw, proc, dt):
+    """
+    set time zero of radar data based on average trace
+    INPUT:
+    data       data matrix whose columns contain the traces 
+
+    OUTPUT:
+    newdata    data matrix after setting time zero
+    """
+    # get mean trace and find max sample
+    meanTrace = np.mean(proc, axis=1)
+    tzeroSamp = np.nanargmax(meanTrace)
+    
+    # roll data and set last chunk as nan
+    datOut = np.zeros(raw.shape)
+    datOut[:-tzeroSamp,:] = raw[tzeroSamp:,:]
+    datOut[-tzeroSamp:,:] = np.nan
+    print("new time zero:\t" + str(tzeroSamp * dt * 1e9) + " nanoseconds")
+
+    return datOut
 
 def dewow(data,window):
     """
@@ -125,7 +150,7 @@ def agcGain(data, window=50, scaling_factor=50):
 
 
 def tpowGain(data,twtt,power):
-    '''
+    """
     Apply a t-power gain to each trace with the given exponent.
 
     INPUT:
@@ -135,7 +160,7 @@ def tpowGain(data,twtt,power):
 
     OUTPUT:
     newdata   data matrix after t-power gain
-    '''
+    """
     factor = np.reshape(twtt**(float(power)),(len(twtt),1))
     factmat = np.matlib.repmat(factor,1,data.shape[1])
     out = np.multiply(data,factmat)
