@@ -305,7 +305,11 @@ class mainGUI(tk.Frame):
             if not temp_loadName:
                 # select input file
                 if "linux" in self.os or "win" in self.os:
-                    temp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select data file",filetypes = (("all files",".*"),("hd5f files", ".mat .h5"),("segy files", ".sgy"),("image file", ".img"),("gssi files",".DZT")))
+                    temp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select data file",filetypes = [("all files",".*"),
+                                                                                                                                    ("hd5f files", ".mat .h5"),
+                                                                                                                                    ("segy files", ".sgy"),
+                                                                                                                                    ("image file", ".img"),
+                                                                                                                                    ("gssi files",".DZT")])
                 else:
                     temp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select data file")
             # if input selected, clear impick canvas, ingest data and pass to impick
@@ -346,7 +350,9 @@ class mainGUI(tk.Frame):
             tmp_fn_out = ""
             if "linux" in self.os or "win" in self.os:
                 tmp_fn_out = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_pk",
-                                initialdir = self.conf["path"]["outPath"], title = "save picks", filetypes = (("all files", ".*"),("comma-separated values",".csv"),("esri shapefile", ".shp")))
+                                initialdir = self.conf["path"]["outPath"], title = "save picks", filetypes = [("all files", ".*"),
+                                                                                                            ("comma-separated values",".csv"),
+                                                                                                            ("esri shapefile", ".shp")])
             else:
                 tmp_fn_out = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_pk",
                                 initialdir = self.conf["path"]["outPath"], title = "save picks")
@@ -373,28 +379,27 @@ class mainGUI(tk.Frame):
 
     # saveProc is a method to save processed radar data
     def saveProc(self):
-        print("processed data export currently in development")
-        return
         if self.f_loadName:
             tmp_fn_out = ""
             if "linux" in self.os or "win" in self.os:
-                tmp_fn_out = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_pk",
-                                initialdir = self.conf["path"]["outPath"], title = "save picks", filetypes = (("all files", ".*"),("comma-separated values",".csv"),("esri shapefile", ".shp")))
+                tmp_fn_out = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_proc",
+                                initialdir = self.conf["path"]["outPath"], title = "save processed data", filetypes = [("comma-separated values",".csv")])
             else:
-                tmp_fn_out = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_pk",
-                                initialdir = self.conf["path"]["outPath"], title = "save picks")
+                tmp_fn_out = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_proc.csv",
+                                initialdir = self.conf["path"]["outPath"], title = "save processed data")
 
         if tmp_fn_out:
-            self.f_saveName, ext = os.path.splitext(tmp_fn_out)
+            fn, ext = os.path.splitext(tmp_fn_out)
 
-            export.proc(self.rdata.proc)
+            export.proc(fn + ".csv", self.rdata.proc, self.rdata.dtype)
 
 
     # map_loc is a method to get the desired basemap location and initialize
     def map_loc(self):
         tmp_map_loadName = ""
         if "linux" in self.os or "win" in self.os:
-            tmp_map_loadName = tk.filedialog.askopenfilename(initialdir = self.conf["path"]["mapPath"], title = "select basemap file", filetypes = (("geotiff files","*.tif"),("all files","*.*")))
+            tmp_map_loadName = tk.filedialog.askopenfilename(initialdir = self.conf["path"]["mapPath"], title = "select basemap file", filetypes = [("geotiff files","*.tif"),
+                                                                                                                                                    ("all files","*.*")])
         else:
             tmp_map_loadName = tk.filedialog.askopenfilename(initialdir = self.conf["path"]["mapPath"], title = "select basemap file")
         if tmp_map_loadName:

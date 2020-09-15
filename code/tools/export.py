@@ -79,17 +79,17 @@ def pick_math(rdata, eps_r, amp_out = True):
 
 
 # csv is a function to export the output pick dataframe as a csv
-def csv(f_saveName, df):
-    # f_saveName is the path for where the exported csv pick file should be saved [str]
+def csv(fpath, df):
+    # fpath is the path for where the exported csv pick file should be saved [str]
     # df pick output dataframe
-    df.to_csv(f_saveName, index=False)
+    df.to_csv(fpath, index=False)
 
-    print("csv picks exported successfully:\t" + f_saveName)
+    print("csv picks exported successfully:\t" + fpath)
 
 
 # shp is a funciton for saving picks to a shapefile
-def shp(f_saveName, df, crs):
-    # f_saveName is the path for where the exported csv pick file should be saved [str]
+def shp(fpath, df, crs):
+    # fpath is the path for where the exported csv pick file should be saved [str]
     # df pick output dataframe
     # crs is the coordinate reference system for the shapefile output
     df_copy = df.copy()
@@ -99,9 +99,9 @@ def shp(f_saveName, df, crs):
 
     # create geopandas df and export
     gdf = gpd.GeoDataFrame(df, crs=crs, geometry=geometry)
-    gdf.to_file(f_saveName)
+    gdf.to_file(fpath)
 
-    print("shapefile picks exported successfully:\t" + f_saveName)
+    print("shapefile picks exported successfully:\t" + fpath)
 
 
 # h5 is a function for saving twtt_ssrf pick to h5 data file
@@ -125,13 +125,20 @@ def h5(fpath, df):
 
 
 # im is a function for exporting the pick image
-def im(fname, fig, extent=None):
-    fout = fname.rstrip(".csv") + ".png"
+def im(fpath, fig, extent=None):
+    fout = fpath.rstrip(".csv") + ".png"
     fig.savefig(fout, dpi = 500, bbox_inches='tight', pad_inches = 0.05, transparent=True)# facecolor = "#d9d9d9")
 
     print("figure exported successfully:\t" + fout)
 
 
-# proc is a method to export the processed radar data
-def proc(dat):
-    return
+# proc is a method to export the processed radar data - for now just as a csv file array
+def proc(fpath, dat, dtype):
+    # convert from dB to amp
+    amp = utils.powdB2amp(dat)
+    if dtype == "gssi":
+        amp = amp.astype(np.int)
+    ampDB = pd.DataFrame(data=amp)
+    ampDB.to_csv(fpath, index=False, header=False)
+
+    print("processed amplitude data exported successfully:\t" + fpath)

@@ -91,12 +91,17 @@ def sample2twtt(array, dt):
 
 
 # amp2powdB
-def amp2powdB(amparray):
-    powarray = np.power(amparray,2)
+def amp2powdB(array):
+    tmp = np.power(array,2)
     # mask zero-power values
-    powarray[powarray == 0] = np.nan
-    dBarray = 10*np.log10(powarray)
-    return dBarray
+    tmp[tmp == 0] = np.nan
+    out = 10*np.log10(tmp)
+    return out
+
+
+# powdB2amp
+def powdB2amp(array):
+    return np.power(10, (array / 20))
 
 
 def print_pickInfo(data, trace, sample):
