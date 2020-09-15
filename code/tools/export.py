@@ -7,6 +7,7 @@ from shapely.geometry import Point
 import tkinter as tk
 import sys, h5py, fnmatch
 from tools.constants import *
+import matplotlib.pyplot as plt
 """
 pick export functions for NOSEpick GUI
 """
@@ -133,12 +134,9 @@ def im(fpath, fig, extent=None):
 
 
 # proc is a method to export the processed radar data - for now just as a csv file array
-def proc(fpath, dat, dtype):
+def proc(fpath, dat):
     # convert from dB to amp
     amp = utils.powdB2amp(dat)
-    if dtype == "gssi":
-        amp = amp.astype(np.int)
-    ampDB = pd.DataFrame(data=amp)
-    ampDB.to_csv(fpath, index=False, header=False)
+    np.savetxt(fpath, amp, fmt="%s", delimiter=",")
 
     print("processed amplitude data exported successfully:\t" + fpath)

@@ -391,7 +391,7 @@ class mainGUI(tk.Frame):
         if tmp_fn_out:
             fn, ext = os.path.splitext(tmp_fn_out)
 
-            export.proc(fn + ".csv", self.rdata.proc, self.rdata.dtype)
+            export.proc(fn + ".csv", self.rdata.proc)
 
 
     # map_loc is a method to get the desired basemap location and initialize
