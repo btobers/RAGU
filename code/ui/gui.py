@@ -589,8 +589,8 @@ class mainGUI(tk.Frame):
 
     # processing tools
     def procTools(self, arg = None):
+        print("WARNING:\tprocessing tools are still in development!")
         if self.f_loadName:
-            print("warning, processing tools still in dev stage")
             procFlag = False
             if arg == "tzero":
                 sampzero, proc = processing.set_tzero(self.rdata.dat, self.rdata.proc, self.rdata.dt)
@@ -599,14 +599,16 @@ class mainGUI(tk.Frame):
                     procFlag = True
 
             elif arg == "dewow":
-                window = tk.simpledialog.askfloat("input","dewow window size (# samples/" +  str(int(self.rdata.snum)) + ")?")
-                proc = processing.dewow(self.rdata.dat, window=10)
-                procFlag = True
+                print("dewow currently in development")
+                # window = tk.simpledialog.askfloat("input","dewow window size (# samples/" +  str(int(self.rdata.snum)) + ")?")
+                # proc = processing.dewow(self.rdata.dat, window=10)
+                # procFlag = True
 
             elif arg == "remMnTr":
-                nraces = tk.simpledialog.askfloat("input","moving average window size (# traces/" +  str(int(self.rdata.tnum)) + ")?")
-                proc = processing.remMeanTrace(self.rdata.dat, ntraces=ntraces)
-                procFlag = True
+                print("mean trace removal currently in development")
+                # nraces = tk.simpledialog.askfloat("input","moving average window size (# traces/" +  str(int(self.rdata.tnum)) + ")?")
+                # proc = processing.remMeanTrace(self.rdata.dat, ntraces=ntraces)
+                # procFlag = True
 
             elif arg == "lowpass":
                 cutoff = tk.simpledialog.askfloat("input","butterworth filter cutoff frequency?")
@@ -614,9 +616,10 @@ class mainGUI(tk.Frame):
                 procFlag = True
 
             elif arg == "agc":
-                window = tk.simpledialog.askfloat("input","AGC gain window size (# samples/" +  str(int(self.rdata.snum)) + ")?")
-                proc = processing.agcGain(self.rdata.dat, window=window)
-                procFlag = True
+                print("automatic gain control currently in development")
+                # window = tk.simpledialog.askfloat("input","AGC gain window size (# samples/" +  str(int(self.rdata.snum)) + ")?")
+                # proc = processing.agcGain(self.rdata.dat, window=window)
+                # procFlag = True
 
             elif arg == "tpow":
                 power = tk.simpledialog.askfloat("input","power for tpow gain?")
