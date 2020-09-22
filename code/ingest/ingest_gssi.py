@@ -30,7 +30,7 @@ def read(fpath, navcrs, body):
         f.seek(26)
         range_ns = struct.unpack('<f', f.read(4))[0]     # data range [ns] - record time per trace
         f.seek(52)
-        rdata.chan = struct.unpack('<h', f.read(2))[0]   # number of data channels
+        rdata.nchan = struct.unpack('<h', f.read(2))[0]   # number of data channels
         rdata.dt = range_ns / rdata.snum * 1.0e-9           # sampling interval
 
         if bits == 8:

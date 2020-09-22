@@ -306,10 +306,11 @@ class mainGUI(tk.Frame):
                 # select input file
                 if "linux" in self.os or "win" in self.os:
                     temp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select data file",filetypes = [("all files",".*"),
-                                                                                                                                    ("hd5f files", ".mat .h5"),
-                                                                                                                                    ("segy files", ".sgy"),
-                                                                                                                                    ("image file", ".img"),
-                                                                                                                                    ("gssi files",".DZT")])
+                                                                                                                                    ("hd5f", ".mat .h5"),
+                                                                                                                                    ("segy", ".sgy"),
+                                                                                                                                    ("sharad", ".img"),
+                                                                                                                                    ("marsis", ".dat"),
+                                                                                                                                    ("gssi",".DZT")])
                 else:
                     temp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select data file")
             # if input selected, clear impick canvas, ingest data and pass to impick

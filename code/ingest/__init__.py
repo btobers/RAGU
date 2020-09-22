@@ -17,7 +17,7 @@ class ingest:
         # ftype is a string specifying filetype
         # valid options -
         # hdf5, mat, segy, img
-        valid_types = ["h5", "mat", "dzt", "img"]
+        valid_types = ["h5", "mat", "dzt", "img", "dat"]
         if (ftype.lower() not in valid_types):
             print("Invalid file type specifier: " + ftype)
             print("Valid file types:")
@@ -39,8 +39,8 @@ class ingest:
             self.rdata = ingest_gssi.read(fpath, navcrs, body)
         elif (self.ftype == "img"):
             self.rdata = ingest_sharad.read(fpath, simpath, navcrs, body)
-        # elif (self.ftype == "dat"):
-        #     self.rdata = ingest_marsis.read(fpath, simpath, navcrs, body)
+        elif (self.ftype == "dat"):
+            self.rdata = ingest_marsis.read(fpath, simpath, navcrs, body)
 
         else:
             print("File reader for format {} not built yet".format(self.ftype))

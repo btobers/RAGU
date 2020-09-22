@@ -13,3 +13,4 @@ class flags(object):
         # basic data file attributes
         #: sampzero, zero sample data setting following time zero adjustment
         self.sampzero = None
+        

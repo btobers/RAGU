@@ -183,7 +183,6 @@ def getnav_pulseekko(navfile, tnum, xyzs, body):
 
     
 def getnav_sharad(navfile, navcrs, body):
-    c = 299792458
     geomCols = [
         "trace",
         "time",
@@ -217,6 +216,48 @@ def getnav_sharad(navfile, navcrs, body):
         df["z"].to_numpy())
 
     return df[["lon", "lat", "elev", "x", "y", "z", "dist"]]
+
+
+def getnav_marsis(navfile, navcrs, body):
+    geomCols = [
+        "trace",
+        "ephemerisTime",
+        "time",
+        "lat",
+        "lon",
+        "elev",
+        "sza",
+        "ch0",
+        "ch1",
+        "x",
+        "y",
+        "z"
+        "radiVel",
+        "tangVel",
+        "SZA",
+    ]
+    df = pd.read_csv(navfile, names=geomCols)
+
+    # Planetocentric lat, lon, radius to x,y,z - no need for navcrs in this one
+    df["x"] = (
+        (df["elev"] * 1000)
+        * np.cos(np.radians(df["lat"]))
+        * np.cos(np.radians(df["lon"]))
+    )
+    df["y"] = (
+        (df["elev"] * 1000)
+        * np.cos(np.radians(df["lat"]))
+        * np.sin(np.radians(df["lon"]))
+    )
+    df["z"] = (df["elev"] * 1000) * np.sin(np.radians(df["lat"]))
+
+    df["dist"] = euclid_dist(
+        df["x"].to_numpy(),
+        df["y"].to_numpy(),
+        df["z"].to_numpy())
+
+    return df[["lon", "lat", "elev", "x", "y", "z", "dist"]]
+
 
 def euclid_dist(xarray, yarray,zarray):
     dist = np.zeros_like(xarray)

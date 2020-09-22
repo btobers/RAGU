@@ -43,6 +43,13 @@ class impick(tk.Frame):
         tk.ttk.Separator(infoFrame,orient="vertical").pack(side="left", fill="both", padx=10, pady=4)
 
         # add radio buttons for toggling pick visibility
+        self.chan = tk.IntVar()
+        tk.Label(infoFrame, text="channel: ").pack(side="left")
+        tk.Radiobutton(infoFrame,text="0", variable=self.chan, value=0, command=self.switchChan).pack(side="left")
+        tk.Radiobutton(infoFrame,text="1", variable=self.chan, value=1, command=self.switchChan).pack(side="left")
+        tk.ttk.Separator(infoFrame,orient="vertical").pack(side="left", fill="both", padx=10, pady=4)
+
+        # add radio buttons for toggling pick visibility
         self.pick_vis = tk.BooleanVar()
         tk.Label(infoFrame, text="pick visibility: ").pack(side="left")
         tk.Radiobutton(infoFrame,text="on", variable=self.pick_vis, value=True, command=self.show_picks).pack(side="left")
@@ -308,8 +315,11 @@ class impick(tk.Frame):
         # if ideal pyramid level changed, update image
         if self.pyramid != p or force:
             self.pyramid = p
-            self.im_dat.set_data(self.rdata.dPyramid[self.pyramid])
-            self.im_sim.set_data(self.rdata.sPyramid[self.pyramid])
+            if len(self.rdata.dPyramid[self.pyramid].shape) == 3:
+                self.im_dat.set_data(self.rdata.dPyramid[self.pyramid][:,:,self.chan.get()])
+            else:
+                self.im_dat.set_data(self.rdata.dPyramid[self.pyramid][:,:])
+            self.im_sim.set_data(self.rdata.sPyramid[self.pyramid][:,:])
             flag = True
 
         # update cmap if necessary
@@ -678,6 +688,17 @@ class impick(tk.Frame):
         for _i in self.existing_subsurf_lns:
             if _i in self.ax.lines:
                 _i.remove()
+
+
+    def switchChan(self):
+        # check to make sure channel exists before switching
+        if self.chan.get() == 1 and self.rdata.nchan < 2:
+            self.chan.set(0)
+            return
+        elif self.chan.get() == 1 and self.rdata.nchan == 2:
+            self.drawData(force=True)
+        elif self.chan.get() == 0:
+            self.drawData(force=True)
 
 
     # toggle to radar data

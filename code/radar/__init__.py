@@ -29,8 +29,8 @@ class radar(object):
         self.dt = None
         #: np.ndarray(snum x tnum) ingested radar data
         self.dat = None
-        #: int, channel number of the data
-        self.chan = None
+        #: int, number of data channels
+        self.nchan = None
         #: radar flags object
         self.flags = flags.flags()
 

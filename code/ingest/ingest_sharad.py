@@ -27,6 +27,7 @@ def read(fpath, simpath, navcrs, body):
     rdata.snum = 3600
     rdata.tnum = int(len(rdata.dat)/rdata.snum)
     rdata.dt = .0375e-6
+    rdata.nchan = 1
     rdata.dat = rdata.dat.reshape(rdata.snum,rdata.tnum)
     rdata.set_proc(rdata.dat)
     

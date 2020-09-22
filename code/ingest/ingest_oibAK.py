@@ -37,6 +37,7 @@ def read_h5(fpath, navcrs, body):
     rdata.snum = int(f["raw"]["rx0"].attrs["samplesPerTrace"])               # samples per trace in rgram
     rdata.tnum = int(f["raw"]["rx0"].attrs["numTrace"])                      # number of traces in rgram 
     rdata.dt = 1/ f["raw"]["rx0/"].attrs["samplingFrequency-Hz"]        # sampling interval, sec
+    rdata.nchan = 1
 
     # pull necessary drv group data
     rdata.dat = f["drv/proc0"][:]                                       # pulse compressed array
