@@ -53,7 +53,7 @@ class ingest:
     def import_picks(self, fpath):
         if fpath.endswith("csv"):
             dat = np.genfromtxt(fpath, delimiter=",", dtype = None, names = True)
-            twtt_bed = dat["twtt_bed"]
+            twtt_bed = dat["subsrfTwtt"]
             if len(twtt_bed) == self.rdata.tnum:
                 # add to current subsurf dictionary as next segment
                 count = len(self.rdata.pick.current_subsurf)
