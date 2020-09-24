@@ -53,7 +53,7 @@ def read(fpath, navcrs, body):
         f.seek(didx)
 
         # read in data - need to transpose to get correct shape
-        rdata.dat = np.fromfile(f, dtype).reshape(-1,(rdata.snum*rdata.chan)).T
+        rdata.dat = np.fromfile(f, dtype).reshape(-1,(rdata.snum*rdata.nchan)).T
 
     # ensure data file is not empty
     if not np.any(rdata.dat):
