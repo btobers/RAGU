@@ -56,11 +56,13 @@ def pick_math(rdata, eps_r, amp_out = True):
         # export surface and subsurface pick amplitude values
         srfAmp = np.repeat(np.nan, rdata.tnum)
         idx = ~np.isnan(srf)
-        srfAmp[idx] = amp[srf[idx].astype(np.int),idx]
+        # add any applied shift to index to pull proper sample amplitude from data array
+        srfAmp[idx] = amp[(srf[idx].astype(np.int) + rdata.flags.sampzero) ,idx]
 
         subsrfAmp = np.repeat(np.nan, rdata.tnum)
         idx = ~np.isnan(subsurf_pk)
-        subsrfAmp[idx] = amp[subsurf_pk[idx].astype(np.int),idx]
+        # add any applied shift to index to pull proper sample amplitude from data array
+        subsrfAmp[idx] = amp[(subsurf_pk[idx].astype(np.int) + rdata.flags.sampzero), idx]
         
         out = pd.DataFrame({"trace": trace, "lon": lon, "lat": lat, "alt": alt, "gndElev": gndElev,
                             "surfIdx": srf, "srfTwtt": srfTwtt, "srfAmp": srfAmp, 
@@ -74,9 +76,9 @@ def pick_math(rdata, eps_r, amp_out = True):
                             "subsrfElev": subsrfElev, "thick": thick})
 
     # remove alt if ground-based data and update header
-    if np.array_equal(out["alt"], out["gndElev"]):
-        out.drop(columns=["alt"])
-        out.rename(columns={"gndElev": "elev"})
+    if utils.nan_array_equal(alt, gndElev):
+        out = out.drop(columns=["alt"])
+        out = out.rename(columns={"gndElev": "elev"})
 
     return out
 

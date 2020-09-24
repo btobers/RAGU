@@ -597,6 +597,10 @@ class mainGUI(tk.Frame):
                 sampzero, proc = processing.set_tzero(self.rdata.dat, self.rdata.proc, self.rdata.dt)
                 if sampzero > 0:
                     self.rdata.flags.sampzero = sampzero
+                    # set current surface pick to index zer
+                    self.rdata.pick.current_surf.fill(0)
+                    self.impick.set_picks()
+                    self.impick.blit()
                     procFlag = True
 
             elif arg == "dewow":

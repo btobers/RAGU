@@ -12,5 +12,5 @@ class flags(object):
     def __init__(self):
         # basic data file attributes
         #: sampzero, zero sample data setting following time zero adjustment
-        self.sampzero = None
+        self.sampzero = 0
         
