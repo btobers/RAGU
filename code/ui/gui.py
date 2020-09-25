@@ -565,9 +565,9 @@ class mainGUI(tk.Frame):
                 # reset current surf pick array
                 self.rdata.pick.current_surf.fill(np.nan)
                 # reset surf pick flag
-                self.impick.set_surfPickFlag(False)
+                self.impick.clear_surfPicks()
                 self.impick.plot_picks(surf = "surface")
-                self.impick.blit()
+                self.impick.update_bg()
             elif (self.impick.get_subsurfPickFlag() == True) and (surf == "subsurface") and (tk.messagebox.askokcancel("warning", "clear all subsurface picks?", icon = "warning") == True):
                 # clear current subsurf pick dictionaries
                 self.rdata.pick.current_subsurf.clear()

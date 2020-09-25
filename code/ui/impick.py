@@ -518,7 +518,18 @@ class impick(tk.Frame):
             self.tmp_surf_ln.set_data(self.xln_surf, self.yln_surf)
             self.saved_surf_ln.set_data(self.xln_surf_saved, self.yln_surf_saved)
 
+    # clear all surface picks
+    def clear_surfPicks(self):
+        if len(self.xln_surf) + np.count_nonzero(~np.isnan(self.xln_surf_saved)) > 0:
+            # set picking state to false
+            if self.pick_state == True and self.pick_surf == "surface":
+                self.set_pickState(False,surf="surface")
+            # delete pick lists
+            self.yln_surf_saved[:] = np.nan
+            self.xln_surf_saved[:] = np.nan
+            self.pickLabel.config(fg="#d9d9d9")
 
+    
     # clear all subsurface picks
     def clear_subsurfPicks(self):
         if len(self.xln_subsurf) + np.count_nonzero(~np.isnan(self.xln_subsurf_saved)) > 0:

@@ -19,7 +19,7 @@ def pick_math(rdata, eps_r, amp_out = True):
     lon = rdata.navdf["lon"]                    # array to hold longitude
     lat = rdata.navdf["lat"]                    # array to hold latitude
     alt = rdata.navdf["elev"]                   # array to hold aircraft elevation
-    gndElev = rdata.gndElev                     # array to hold ground elevation beneath aircraft sampled from lidar pointcloud
+    gndElev = rdata.gndElev                     # array to hold ground elevation
     subsurf_pk = np.repeat(np.nan, rdata.tnum)  # array to hold indeces of subsurface picks
 
     # if existing surface pick, and no current -> use existing
@@ -47,7 +47,7 @@ def pick_math(rdata, eps_r, amp_out = True):
     subsrfElev = gndElev - thick
 
     if (amp_out) and (rdata.dtype != "marsis"):
-        # if raw data is complex, take abs value to get amplitude
+        # if raw data is complex, take absolute value to get amplitude
         if not np.isreal(rdata.dat).all():
             amp = np.abs(rdata.dat)
         else:
@@ -113,7 +113,7 @@ def shp(fpath, df, crs):
 def h5(fpath, df):
     # fpath is the data file path [str]
     # df pick output dataframe
-    dat = out["subsrfTwtt"]
+    dat = df["subsrfTwtt"].to_numpy()
 
     f = h5py.File(fpath, "a") 
     num_file_pick_lyr = len(fnmatch.filter(f["drv"]["pick"].keys(), "twtt_subsurf*"))
