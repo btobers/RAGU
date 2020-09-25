@@ -1,9 +1,9 @@
-
 # this file may be used to create a conda environment using:
 # $conda env create -f nose_env.yml
 
 name: nose
 channels:
+  - conda-forge
   - defaults
 dependencies:
   - _libgcc_mutex=0.1=main
@@ -11,9 +11,9 @@ dependencies:
   - attrs=19.3.0=py_0
   - blas=1.0=mkl
   - bzip2=1.0.8=h7b6447c_0
-  - ca-certificates=2020.7.22=0
+  - ca-certificates=2020.6.20=hecda079_0
   - cairo=1.14.12=h8948797_3
-  - certifi=2020.6.20=py37_0
+  - certifi=2020.6.20=py37hc8dfbb8_0
   - cfitsio=3.470=hb7c8383_2
   - click=7.1.2=py_0
   - click-plugins=1.1.1=py_0
@@ -38,12 +38,14 @@ dependencies:
   - hdf4=4.2.13=h3ca952b_2
   - hdf5=1.10.4=hb1b8bf9_0
   - icu=58.2=he6710b0_3
+  - imageio=2.9.0=py_0
   - intel-openmp=2020.1=217
   - jpeg=9b=h024ee3a_2
   - json-c=0.13.1=h1bed415_0
   - kealib=1.4.7=hd0c454d_6
   - kiwisolver=1.2.0=py37hfd86e86_0
   - krb5=1.16.4=h173b8e3_0
+  - lcms2=2.11=h396b838_0
   - ld_impl_linux-64=2.33.1=h53a641e_7
   - libboost=1.67.0=h46d08c1_4
   - libcurl=7.67.0=h20c2e04_0
@@ -76,10 +78,12 @@ dependencies:
   - ncurses=6.2=he6710b0_1
   - numpy=1.18.5=py37ha1c710e_0
   - numpy-base=1.18.5=py37hde5b4d6_0
+  - olefile=0.46=py_0
   - openjpeg=2.3.0=h05c96fa_1
-  - openssl=1.1.1g=h7b6447c_0
+  - openssl=1.1.1h=h516909a_0
   - pandas=1.0.5=py37h0573a6f_0
   - pcre=8.44=he6710b0_0
+  - pillow=7.2.0=py37hb39fc2d_0
   - pip=20.2.1=py37_0
   - pixman=0.40.0=h7b6447c_0
   - poppler=0.65.0=h581218d_1
@@ -91,6 +95,7 @@ dependencies:
   - pyqt=5.9.2=py37h05f1152_2
   - python=3.7.7=h191fe78_0_cpython
   - python-dateutil=2.8.1=py_0
+  - python_abi=3.7=1_cp37m
   - pytz=2020.1=py_0
   - qt=5.9.7=h5867ecd_1
   - rasterio=1.1.0=py37h41e4f33_0
