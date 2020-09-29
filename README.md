@@ -43,8 +43,10 @@ A csv text file and an ESRI shapefile may be exported containing the following i
 - <ins>lat</ins>: latitude  
 - <ins>alt</ins>: altitude  
 - <ins>gndElev</ins>: ground elevation  
+- <ins>srfIdx</ins>: surface return sample number
 - <ins>srfTwtt</ins>: two way travel time to the surface return  
 - <ins>srfAmp</ins>: surface return amplitude  
+- <ins>subsrfIdx</ins>: subsurface return sample number
 - <ins>subsrfTwtt</ins>: two way travel time to the picked subsurface return  
 - <ins>subsrfAmp</ins>: subsurface return amplitude  
 - <ins>subsrfElev</ins>: subsurface return elevation  
