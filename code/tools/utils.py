@@ -64,6 +64,22 @@ def dict_compare(a, b):
         return False
 
 
+# srfpick2elev function
+def srfpick2elev(a, b, tnum, dt):
+    """
+    calculate surface elevation from updated surface pick, subtracting distance form navdf["elev"] to surface
+    #: np.ndarray(tnum,) a, surface index per trace [samle #]
+    #: np.ndarray(tnum,) b, radar elevation per trace [m.a.s.l.]
+    #: int tnum, the number of traces in the file
+    #: float dt, spacing between samples in travel time [seconds]
+    """
+    if a.shape == (tnum,):
+        dist = twtt2depth(sample2twtt(a, dt), eps_r=1)
+        gndElev = b - dist
+
+        return gndElev
+
+
 # twtt2depth function
 def twtt2depth(a, eps_r=3.15):
     v = C/np.sqrt(eps_r)

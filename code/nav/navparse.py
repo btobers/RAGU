@@ -75,15 +75,15 @@ def getnav_oibAK_mat(navfile, navcrs, body):
         f.close()
     except:
         try:
-            f = scio.loadmat(fpath)
+            f = scio.loadmat(navfile)
             lon = f["block"]["lon"][0][0].flatten()
             lat = f["block"]["lat"][0][0].flatten()
-            alt = f["block"]["elev_air"][0][0].flatten() 
+            elev = f["block"]["elev_air"][0][0].flatten() 
         except Exception as err:
             print("getnav_oibAK_mat Error: " + str(err))
             exit(1)
 
-    df = pd.DataFrame({"lon": gps.lon, "lat": gps.lat, "elev": gps.z,
+    df = pd.DataFrame({"lon": lon, "lat": lat, "elev": elev,
                                 "x": np.nan, "z": np.nan, "z": np.nan,
                                 "dist": np.nan})
 

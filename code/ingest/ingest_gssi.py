@@ -76,7 +76,7 @@ def read(fpath, navcrs, body):
     rdata.navdf = navparse.getnav_gssi(infile_gps, rdata.tnum, navcrs, body)
 
     # for ground-based GPR, elev_gnd is the same as GPS recorded elev
-    rdata.gndElev = rdata.navdf["elev"]
+    rdata.set_gndElev(rdata.navdf["elev"])
 
     # initialize surface pick
     rdata.pick.current_surf = np.repeat(np.nan, rdata.tnum)

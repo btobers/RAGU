@@ -7,6 +7,7 @@
 import numpy as np
 import sys, copy
 from radar import flags
+from tools import utils
 
 class radar(object):
     """
@@ -75,6 +76,14 @@ class radar(object):
         self.sim = self.dBscale(dat)
         # generate pyramid arrays
         self.sPyramid = self.genPyramids(self.sim)
+
+        return
+
+
+    # set ground elevation
+    def set_gndElev(self,dat):
+        #: np.ndarray(tnum,) data, ground elevation per trace [m.a.s.l.]
+        self.gndElev = dat
 
         return
 

@@ -9,6 +9,7 @@ from tools import utils
 import h5py, fnmatch
 import numpy as np
 import scipy as sp
+import sys
 
 # method to ingest OIB-AK radar hdf5 data format
 def read_h5(fpath, navcrs, body):
@@ -34,13 +35,13 @@ def read_h5(fpath, navcrs, body):
     # |  |-pick
 
     # pull necessary raw group data
-    rdata.snum = int(f["raw"]["rx0"].attrs["samplesPerTrace"])               # samples per trace in rgram
-    rdata.tnum = int(f["raw"]["rx0"].attrs["numTrace"])                      # number of traces in rgram 
-    rdata.dt = 1/ f["raw"]["rx0/"].attrs["samplingFrequency-Hz"]        # sampling interval, sec
+    rdata.snum = int(f["raw"]["rx0"].attrs["samplesPerTrace"])                  # samples per trace in rgram
+    rdata.tnum = int(f["raw"]["rx0"].attrs["numTrace"])                         # number of traces in rgram 
+    rdata.dt = 1/ f["raw"]["rx0/"].attrs["samplingFrequency-Hz"]                # sampling interval, sec
     rdata.nchan = 1
 
     # pull necessary drv group data
-    rdata.dat = f["drv/proc0"][:]                                       # pulse compressed array
+    rdata.dat = f["drv/proc0"][:]                                               # pulse compressed array
     rdata.set_proc(np.abs(rdata.dat))
 
     # parse nav
@@ -48,15 +49,15 @@ def read_h5(fpath, navcrs, body):
     
     # pull lidar surface elevation if possible
     if "srf0" in f["ext"].keys():
-        rdata.gndElev = f["ext"]["srf0"][:]                            # surface elevation from lidar, averaged over radar first fresnel zone per trace (see code within /zippy/MARS/code/xped/hfProc/ext)
+        rdata.set_gndElev(f["ext"]["srf0"][:])                                  # surface elevation from lidar, averaged over radar first fresnel zone per trace (see code within /zippy/MARS/code/xped/hfProc/ext)
     # create empty arrays to hold surface elevation and twtt otherwise
     else:
-        rdata.gndElev = np.repeat(np.nan, rdata.tnum)
+        rdata.set_gndElev(np.repeat(np.nan, rdata.tnum))
 
     if "clutter0" in f["drv"].keys():
-        rdata.set_sim(f["drv"]["clutter0"][:])                         # simulated clutter array
+        rdata.set_sim(f["drv"]["clutter0"][:])                                  # simulated clutter array
     else:
-        rdata.set_sim(np.ones(rdata.dat.shape))                        # empty clutter array if no sim exists
+        rdata.set_sim(np.ones(rdata.dat.shape))                                 # empty clutter array if no sim exists
 
     # read in existing surface picks
     if "twtt_surf" in f["drv"]["pick"].keys():
@@ -78,9 +79,13 @@ def read_h5(fpath, navcrs, body):
 
 # method to ingest .mat files OIB-AK. for older matlab files, sp.io seems to work while h5py does not. for newer files, h5py seems to work while sp.io does not 
 def read_mat(fpath, navcrs, body):
+    fn = fpath.split("/")[-1]
     print("----------------------------------------")
-    print("Loading: " + fpath.split("/")[-1])
+    print("Loading: " + fn)
     rdata = radar(fpath)
+    rdata.fn = fn.rstrip(".mat")
+    rdata.dtype = "oibak"
+    # read in .mat file
     try:
         f = h5py.File(rdata.fpath, "r")
         rdata.snum = int(f["block"]["num_sample"][0])[-1]
@@ -92,7 +97,7 @@ def read_mat(fpath, navcrs, body):
         rdata.navdf = navparse.getnav_oibAK_mat(fpath, navcrs, body)
         rdata.set_sim(np.array(f["block"]["clutter"]))
 
-        rdata.pick.existing.twtt_surf = f["block"]["twtt_surf"].flatten()
+        rdata.pick.existing_twttSurf = f["block"]["twtt_surf"].flatten()
         f.close()
 
     except:
@@ -102,21 +107,19 @@ def read_mat(fpath, navcrs, body):
             rdata.tnum = int(f["block"]["num_trace"][0])
             rdata.dt = float(f["block"]["dt"][0])
             rdata.dat = f["block"]["amp"][0][0]
-            rdata.proc(rdata.dat)
+            rdata.set_proc(rdata.dat)
 
-            rdata.navdf = navparse.getnav_oibAK_mat(fpath,navcrs,body)
+            rdata.navdf = navparse.getnav_oibAK_mat(fpath, navcrs, body)
             rdata.set_sim(f["block"]["clutter"][0][0])
 
-            rdata.pick.existing.twtt_surf = f["block"]["twtt_surf"][0][0].flatten().astype(np.float64)
+            rdata.pick.existing_twttSurf = f["block"]["twtt_surf"][0][0].flatten()
 
         except Exception as err:
             print("ingest Error: " + str(err))
             pass
 
-    print("----------------------------------------")
-    print("Loading: " + fpath.split("/")[-1])
-    
     # calculate surface elevation 
-    rdata.elev_gnd = rdata.navdf["elev"] - (rdata.pick.existing.twtt_surf*C/2)
+    dist = utils.twtt2depth(rdata.pick.existing_twttSurf, eps_r=1)
+    rdata.set_gndElev(rdata.navdf["elev"].to_numpy() - dist)
 
     return rdata

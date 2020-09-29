@@ -373,7 +373,7 @@ class mainGUI(tk.Frame):
             if (self.conf["output"]["shp"]) or (ext == ".shp"):
                 export.shp(self.f_saveName + ".shp", self.rdata.out, self.conf["nav"]["crs"])
             if self.rdata.fpath.endswith(".h5") and (tk.messagebox.askyesno("export picks", "save picks to data file?") == True):
-                export.h5(rdata.fpath, self.rdata.out)
+                export.h5(self.rdata.fpath, self.rdata.out)
             if self.conf["output"]["fig"]:
                 self.impick.save_fig(self.f_saveName, self.figSize.get().split(","))
 
@@ -471,6 +471,11 @@ class mainGUI(tk.Frame):
             self.impick.pick_interp(surf = "surface")
             self.impick.plot_picks(surf = "surface")
             self.impick.update_bg()
+            # update gnd_elevation
+            self.rdata.set_gndElev(utils.srfpick2elev(self.rdata.pick.current_surf, 
+                                                      self.rdata.navdf["elev"].to_numpy(), 
+                                                      self.rdata.tnum,
+                                                      self.rdata.dt))
 
 
     # next_loc is a method to get the filename of the next data file in the directory then call impick.load()
@@ -553,6 +558,11 @@ class mainGUI(tk.Frame):
                         ((utils.dict_compare(self.rdata.pick.current_subsurf, self.rdata.pick.current_subsurfOpt)) == False)) and \
                         (tk.messagebox.askyesno("tab change","import optimized picks to profile from waveform?") == True):
                     self.rdata.pick.current_surf = self.rdata.pick.current_surfOpt
+                    # update gnd_elevation
+                    self.rdata.set_gndElev(utils.srfpick2elev(self.rdata.pick.current_surf, 
+                                                            self.rdata.navdf["elev"].to_numpy(), 
+                                                            self.rdata.tnum,
+                                                            self.rdata.dt))
                     self.rdata.pick.current_subsurf = self.rdata.pick.current_subsurfOpt
                     self.impick.set_picks()
                     self.impick.blit()
