@@ -772,6 +772,8 @@ class mainGUI(tk.Frame):
         \n[ctrl+m]\topen basemap window
         \n[spacebar]\ttoggle between radar and\n\t\tclutter images
         \n[h]\t\treturn to home extent
+        \n[r]\t\pan right
+        \n[l]\t\tpan left
         \n[ctrl+s]\texport pick data
         \n[→]\t\topen next file in\n\t\tworking directory
         \n[ctrl+q]\tquit NOSEpick

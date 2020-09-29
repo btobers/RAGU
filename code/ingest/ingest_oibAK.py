@@ -122,4 +122,7 @@ def read_mat(fpath, navcrs, body):
     dist = utils.twtt2depth(rdata.pick.existing_twttSurf, eps_r=1)
     rdata.set_gndElev(rdata.navdf["elev"].to_numpy() - dist)
 
+    # initialize surface pick
+    rdata.pick.current_surf = np.repeat(np.nan, rdata.tnum)
+    
     return rdata
