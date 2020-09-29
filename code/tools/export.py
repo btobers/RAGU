@@ -65,14 +65,14 @@ def pick_math(rdata, eps_r, amp_out = True):
         subsrfAmp[idx] = amp[(subsurf_pk[idx].astype(np.int) + rdata.flags.sampzero), idx]
         
         out = pd.DataFrame({"trace": trace, "lon": lon, "lat": lat, "alt": alt, "gndElev": gndElev,
-                            "surfIdx": srf, "srfTwtt": srfTwtt, "srfAmp": srfAmp, 
-                            "subsurfIdx": subsurf_pk, "subsrfTwtt": subsrfTwtt, 
+                            "srfIdx": srf, "srfTwtt": srfTwtt, "srfAmp": srfAmp, 
+                            "subsrfIdx": subsurf_pk, "subsrfTwtt": subsrfTwtt, 
                             "subsrfAmp": subsrfAmp, "subsrfElev": subsrfElev, "thick": thick})
 
     else:
         out = pd.DataFrame({"trace": trace, "lon": lon, "lat": lat, "alt": alt, "gndElev": gndElev, 
-                            "surfIdx": srf, "srfTwtt": srfTwtt, 
-                            "subsurfIdx": subsurf_pk, "subsrfTwtt": subsrfTwtt, 
+                            "srfIdx": srf, "srfTwtt": srfTwtt, 
+                            "subsrfIdx": subsurf_pk, "subsrfTwtt": subsrfTwtt, 
                             "subsrfElev": subsrfElev, "thick": thick})
 
     # remove alt if ground-based data and update header
