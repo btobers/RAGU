@@ -295,7 +295,38 @@ class impick(tk.Frame):
     def fullExtent(self):
         self.ax.set_xlim(0, self.rdata.tnum)
         self.ax.set_ylim(self.rdata.snum, 0)
+        self.set_axes()
         self.dataCanvas.draw()
+
+
+    # method to pan right
+    def panRight(self):
+        xlim1 = self.ax.get_xlim()
+        xlim2 = self.secaxx.get_xlim()
+        if xlim1[1] < self.rdata.tnum:
+            step1 = (xlim1[1] - xlim1[0]) / 2
+            step2 = (xlim2[1] - xlim2[0]) / 2
+            if (xlim1[1] + step1) > self.rdata.tnum:
+                step1 = self.rdata.tnum - xlim1[1]
+                step2 = self.rdata.navdf["dist"].iloc[-1]*1e-3 - xlim2[1]
+            self.ax.set_xlim(xlim1[0] + step1, xlim1[1] + step1)
+            self.secaxx.set_xlim(xlim2[0] + step2, xlim2[1] + step2)
+            self.dataCanvas.draw()
+
+
+    # method to pan left
+    def panLeft(self):
+        xlim1 = self.ax.get_xlim()
+        xlim2 = self.secaxx.get_xlim()
+        if xlim1[0] > 0:
+            step1 = (xlim1[1] - xlim1[0]) / 2
+            step2 = (xlim2[1] - xlim2[0]) / 2
+            if (xlim1[0] - step1) < 0:
+                step1 = xlim1[0]
+                step2 = xlim2[0]
+            self.ax.set_xlim(xlim1[0] - step1, xlim1[1] - step1)
+            self.secaxx.set_xlim(xlim2[0] - step2, xlim2[1] - step2)
+            self.dataCanvas.draw()
 
 
     # method to draw radar data
