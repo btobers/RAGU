@@ -132,8 +132,9 @@ class basemap(tk.Frame):
                 cmax = np.nanmax(im)
                 self.bm_im.set_clim([cmin, cmax])
                 self.bm_im.set_data(im)
-                self.bm_im.set_extent([dataset.bounds.left, dataset.bounds.right,
-                dataset.bounds.bottom, dataset.bounds.top])
+                # set bm image extent based on raster bounds - convert from m to km
+                self.bm_im.set_extent([_i*1e-3 for _i in[dataset.bounds.left, dataset.bounds.right,
+                dataset.bounds.bottom, dataset.bounds.top]])
                 # save un-zoomed view to toolbar
                 self.map_toolbar.push_current()
                 self.map_fig_ax.set_visible(True)
@@ -162,6 +163,10 @@ class basemap(tk.Frame):
             navdf["lon"].to_numpy(),
             navdf["lat"].to_numpy(),
         )
+        # convert from m to km
+        x = x*1e-3
+        y = y*1e-3
+        # add x and y coords to x and y coord arrays
         self.x = np.append(self.x, x)
         self.y = np.append(self.y, y)
         # add name to array to match with x,y
@@ -184,7 +189,7 @@ class basemap(tk.Frame):
             self.track_start_ln.set_data(self.start_x, self.start_y)
             self.track_end_ln.set_data(self.end_x, self.end_y)
 
-            self.map_fig_ax.axis([(np.amin(self.x)- 15000),(np.amax(self.x)+ 15000),(np.amin(self.y)- 15000),(np.amax(self.y)+ 15000)])
+            self.map_fig_ax.axis([(np.amin(self.x)- 15),(np.amax(self.x)+ 15),(np.amin(self.y)- 15),(np.amax(self.y)+ 15)])
         # otherwise just set track points from last line to appropriate lines
         else:
             # set track ending line data
@@ -194,7 +199,7 @@ class basemap(tk.Frame):
             # set track line data
             idx = np.where(self.track_name == self.profile_track)[0]
             self.track_ln.set_data(self.x[idx], self.y[idx])
-            self.map_fig_ax.axis([(np.amin(self.x[idx])- 15000),(np.amax(self.x[idx])+ 15000),(np.amin(self.y[idx])- 15000),(np.amax(self.y[idx])+ 15000)])
+            self.map_fig_ax.axis([(np.amin(self.x[idx])- 15),(np.amax(self.x[idx])+ 15),(np.amin(self.y[idx])- 15),(np.amax(self.y[idx])+ 15)])
 
         if not self.legend:
             self.legend = self.map_fig_ax.legend()
