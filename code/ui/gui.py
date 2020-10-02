@@ -543,8 +543,7 @@ class mainGUI(tk.Frame):
     def import_picks(self):
         if self.f_loadName:
             pk_file = ""
-            # pk_file = tk.filedialog.askopenfilename(initialdir = self.conf["path"]["outPath"], title = "load picks", filetypes = (("comma separated value", "*.csv"),))
-            pk_file = tk.filedialog.askopenfilename(initialdir = "/home/btober/Downloads/", title = "load picks", filetypes = (("comma separated value", "*.csv"),))
+            pk_file = tk.filedialog.askopenfilename(initialdir = self.conf["path"]["outPath"], title = "load picks", filetypes = (("comma separated value", "*.csv"),))
             if pk_file:
                 self.igst.import_picks(pk_file)
                 self.impick.plot_existing(surf = "subsurface")
@@ -607,7 +606,7 @@ class mainGUI(tk.Frame):
     def delete_datafilePicks(self):
             if self.f_loadName and tk.messagebox.askokcancel("warning", "delte any existing data file subsurface picks?", icon = "warning") == True:
                 utils.delete_savedPicks(self.f_loadName)
-                self.impick.remove_existing_susurf()
+                self.impick.remove_existing_subsurf()
                 self.impick.update_bg()
 
 
