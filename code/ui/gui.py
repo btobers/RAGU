@@ -97,8 +97,14 @@ class mainGUI(tk.Frame):
 
         # file menu items
         fileMenu.add_command(label="open       [ctrl+o]", command=self.open_data)
-        fileMenu.add_command(label="load picks", command=self.load_picks)
+        fileMenu.add_command(label="load picks", command=self.import_picks)
         fileMenu.add_command(label="next        [right]", command=self.next_loc)
+
+        # import submenu
+        importMenu = tk.Menu(fileMenu,tearoff=0)
+        importMenu.add_command(label="picks", command=self.import_picks)
+
+        fileMenu.add_cascade(label="import", menu = importMenu)
 
         # export submenu
         exportMenu = tk.Menu(fileMenu,tearoff=0)
@@ -133,6 +139,7 @@ class mainGUI(tk.Frame):
         subsurfacePickMenu.add_command(label="clear        [c]", command=lambda: self.clear(surf = "subsurface"))    
         subsurfacePickMenu.add_command(label="clear file", command=self.delete_datafilePicks)            
         pickMenu.add_cascade(label="subsurface", menu = subsurfacePickMenu)  
+        pickMenu.add_command(label="import", command=self.import_picks)
         pickMenu.add_command(label="export  [ctrl+s]", command=self.savePicks)
 
         # pickMenu.add_separator()
@@ -532,16 +539,15 @@ class mainGUI(tk.Frame):
                 print("Note: " + self.f_loadName.split("/")[-1] + " is the last file in " + file_path + "*." + self.f_loadName.split(".")[-1])
 
 
-    # load_picks is a method to load and plot picks saved to a csv file
-    def load_picks(self):
+    # import_picks is a method to load and plot picks saved to a csv file
+    def import_picks(self):
         if self.f_loadName:
             pk_file = ""
-            pk_file = tk.filedialog.askopenfilename(initialdir = self.conf["path"]["outPath"], title = "load picks", filetypes = (("comma separated value", "*.csv"),))
+            # pk_file = tk.filedialog.askopenfilename(initialdir = self.conf["path"]["outPath"], title = "load picks", filetypes = (("comma separated value", "*.csv"),))
+            pk_file = tk.filedialog.askopenfilename(initialdir = "/home/btober/Downloads/", title = "load picks", filetypes = (("comma separated value", "*.csv"),))
             if pk_file:
                 self.igst.import_picks(pk_file)
-                self.impick.remove_existing_subsurf()
-                self.impick.set_picks()
-                self.impick.update_option_menu()
+                self.impick.plot_existing(surf = "subsurface")
                 self.impick.blit()
 
 

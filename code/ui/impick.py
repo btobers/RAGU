@@ -227,17 +227,14 @@ class impick(tk.Frame):
         self.xln_subsurf_saved = np.repeat(np.nan, self.rdata.tnum)
         self.yln_subsurf_saved = np.repeat(np.nan, self.rdata.tnum)
 
-        # initialize lines to hold existing picks
+        # plot existing subsurface pick layers
         self.existing_subsurf_lns = []
         count = len(self.rdata.pick.existing_twttSubsurf.items())
-        if count > 0:
-            x,y = zip(*self.rdata.pick.existing_twttSubsurf.items())
-            y = np.hstack(y)
-            x = np.repeat(np.arange(self.rdata.tnum), count)
-            self.ax.plot(x, utils.twtt2sample(y, self.rdata.dt), "b")
-        for _i in self.ax.lines:
-            self.existing_subsurf_lns.append(_i)
+        for _i in range(count):
+            self.ax.plot(np.arange(rdata.tnum), utils.twtt2sample(self.rdata.pick.existing_twttSubsurf[str(_i)], self.rdata.dt))
+            self.existing_subsurf_lns.append(self.ax.lines[_i])
 
+        # plot existing surface pick layer
         if np.any(self.rdata.pick.existing_twttSurf):
             self.existing_surf_ln = self.ax.plot(np.arange(self.rdata.tnum), utils.twtt2sample(self.rdata.pick.existing_twttSurf, self.rdata.dt), "c")
 
@@ -549,6 +546,25 @@ class impick(tk.Frame):
             self.tmp_surf_ln.set_data(self.xln_surf, self.yln_surf)
             self.saved_surf_ln.set_data(self.xln_surf_saved, self.yln_surf_saved)
 
+
+    # plot_existing is a method to plot existing picks
+    def plot_existing(self, surf = None):
+        if surf == "subsurface":
+            count = len(self.rdata.pick.existing_twttSubsurf)
+            n = len(self.existing_subsurf_lns)
+            for _i in range(count - n):
+                self.ax.plot(np.arange(self.rdata.tnum), utils.twtt2sample(self.rdata.pick.existing_twttSubsurf[str(n - _i)], self.rdata.dt))
+                self.existing_subsurf_lns.append(self.ax.lines[-1])
+
+
+    # remove_imported_picks is a method to remove any imported data file picks from the image
+    def remove_existing_subsurf(self):
+        for _i in self.existing_subsurf_lns:
+            if _i in self.ax.lines:
+                _i.remove()
+        self.existing_subsurf_lns = []
+
+
     # clear all surface picks
     def clear_surfPicks(self):
         if len(self.xln_surf) + np.count_nonzero(~np.isnan(self.xln_surf_saved)) > 0:
@@ -723,13 +739,6 @@ class impick(tk.Frame):
             self.ann_list.append(ann)
             if self.pick_ann_vis.get() == False:
                 ann.set_visible(False)
-
-
-    # remove_imported_picks is a method to remove any imported data file picks from the image
-    def remove_existing_subsurf(self):
-        for _i in self.existing_subsurf_lns:
-            if _i in self.ax.lines:
-                _i.remove()
 
 
     def switchChan(self):
