@@ -38,7 +38,6 @@ class mainGUI(tk.Frame):
         self.f_saveName = ""
         self.map_loadName = ""
         self.tab = "profile"
-        # self.userName = tk.StringVar(value="")
         self.eps_r = tk.DoubleVar(value=self.conf["output"]["eps_r"])
         self.figSize = tk.StringVar(value="21,7")
         self.cmap = tk.StringVar(value="Greys_r")
@@ -314,49 +313,55 @@ class mainGUI(tk.Frame):
 
     # open_data is a gui method which has the user select and input data file - then passed to impick.load()
     def open_data(self, temp_loadName=None):
-        # prompt save warning if picks exist
-        if self.impick.saveWarning() == True:
-            if not temp_loadName:
-                # select input file
-                if "linux" in self.os or "win" in self.os:
-                    temp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select data file",filetypes = [("all files",".*"),
-                                                                                                                                    ("hd5f", ".mat .h5"),
-                                                                                                                                    ("segy", ".sgy"),
-                                                                                                                                    ("sharad", ".img"),
-                                                                                                                                    ("marsis", ".dat"),
-                                                                                                                                    ("gssi",".DZT")])
-                else:
-                    temp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select data file")
-            # if input selected, clear impick canvas, ingest data and pass to impick
-            if temp_loadName:
-                # ensure we're on profile tab
-                if self.tab == "waveform":
-                    self.nb.select(self.nb.tabs()[0])
-                self.f_loadName = temp_loadName
-                self.f_saveName = ""
-                self.impick.clear_canvas()  
-                self.impick.set_vars()
-                self.impick.update_option_menu()
-                # ingest the data
-                self.igst = ingest(self.f_loadName.split(".")[-1])
-                self.rdata = self.igst.read(self.f_loadName, self.conf["path"]["simPath"], self.conf["nav"]["crs"], self.conf["nav"]["body"])
-                # return if no data ingested
-                if not self.rdata:
-                    return
-                self.impick.load(self.rdata)
-                self.impick.set_axes()
-                self.impick.drawData()
-                self.impick.update_bg()
-                self.wvpick.set_vars()
-                self.wvpick.clear()
-                self.wvpick.set_data(self.rdata)
+        try:
+            # prompt save warning if picks exist
+            if self.impick.saveWarning() == True:
+                if not temp_loadName:
+                    # select input file
+                    if "linux" in self.os or "win" in self.os:
+                        temp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select data file",filetypes = [("all files",".*"),
+                                                                                                                                        ("hd5f", ".mat .h5"),
+                                                                                                                                        ("segy", ".sgy"),
+                                                                                                                                        ("sharad", ".img"),
+                                                                                                                                        ("marsis", ".dat"),
+                                                                                                                                        ("gssi",".DZT")])
+                    else:
+                        temp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select data file")
+                # if input selected, clear impick canvas, ingest data and pass to impick
+                if temp_loadName:
+                    # ensure we're on profile tab
+                    if self.tab == "waveform":
+                        self.nb.select(self.nb.tabs()[0])
+                    self.f_loadName = temp_loadName
+                    self.f_saveName = ""
+                    self.impick.clear_canvas()  
+                    self.impick.set_vars()
+                    self.impick.update_option_menu()
+                    # ingest the data
+                    self.igst = ingest(self.f_loadName.split(".")[-1])
+                    self.rdata = self.igst.read(self.f_loadName, self.conf["path"]["simPath"], self.conf["nav"]["crs"], self.conf["nav"]["body"])
+                    # return if no data ingested
+                    if not self.rdata:
+                        return
+                    self.impick.load(self.rdata)
+                    self.impick.set_axes()
+                    self.impick.drawData()
+                    self.impick.update_bg()
+                    self.wvpick.set_vars()
+                    self.wvpick.clear()
+                    self.wvpick.set_data(self.rdata)
 
-            # pass basemap to impick for plotting pick location
-            if self.map_loadName and self.basemap.get_state() == 1:
-                self.basemap.set_track(self.rdata.fn)
-                self.basemap.set_nav(self.rdata.fn, self.rdata.navdf)
-                self.basemap.plot_tracks()
-                self.impick.get_basemap(self.basemap)            
+                # pass basemap to impick for plotting pick location
+                if self.map_loadName and self.basemap.get_state() == 1:
+                    self.basemap.set_track(self.rdata.fn)
+                    self.basemap.set_nav(self.rdata.fn, self.rdata.navdf)
+                    self.basemap.plot_tracks()
+                    self.impick.get_basemap(self.basemap)
+
+        # recall open_data if wrong file type is selected 
+        except Exception as err:
+            print(err)
+            self.open_data() 
 
 
     # savePicks is method to receieve the desired pick save location from user input
@@ -435,13 +440,18 @@ class mainGUI(tk.Frame):
 
 
     # return selected track from basemap frame
-    def from_basemap(self, datPath, track):
-        # find matching file to pass to open_loc
-        f = [_i for _i in os.listdir(datPath) if track in _i]
-        # need to select data file from possibly matching nav and datafiles in list
-        f = datPath + "/" + [i for i in f if ".DZT" in i or ".h5" in i or ".img" in i][0]
+    def from_basemap(self, path, track):
+        # find matching file to pass to open_loc - ensure valid ftype
+        f = [_i for _i in os.listdir(path) if track in _i]
+        for _i in f:
+            try:
+                ingest(_i.split(".")[-1])
+                break
+            except Exception:
+                continue
+
         # pass file to open_data
-        self.open_data(f)
+        self.open_data(path + _i)
 
 
     # start_subsurf_pick is a method which begins a new impick pick layer
@@ -501,7 +511,7 @@ class mainGUI(tk.Frame):
 
             # step through files in current directory of same extension as currently loaded data
             # determine index of currently loaded data within directory 
-            for count,file in enumerate(sorted(glob.glob(file_path + "*." + self.f_loadName.split(".")[-1]))):
+            for count,file in enumerate(sorted(glob.glob(file_path + "*." + self.igst.ftype))):
                 file_list.append(file)
                 if file == self.f_loadName:
                     file_index = count
@@ -674,13 +684,6 @@ class mainGUI(tk.Frame):
     def settings(self):
         settingsWindow = tk.Toplevel(self.parent)
 
-        # row = tk.Frame(settingsWindow)
-        # row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-        # lab = tk.Label(row, width=25, text="user", anchor='w')
-        # lab.pack(side=tk.LEFT)
-        # self.userEnt = tk.Entry(row,textvariable=self.userName)
-        # self.userEnt.pack(side=tk.RIGHT, expand=tk.YES, fill=tk.X)
-
         row = tk.Frame(settingsWindow)
         row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
         lab = tk.Label(row, width=25, text="dielectric const.", anchor='w')
@@ -720,7 +723,6 @@ class mainGUI(tk.Frame):
 
 
     def updateSettings(self):
-        # self.userName.set(self.userEnt.get())
         self.figSize.set(self.figEnt.get())
         try:
             float(self.epsEnt.get())

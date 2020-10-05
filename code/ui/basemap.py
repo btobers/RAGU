@@ -369,7 +369,6 @@ class basemap(tk.Frame):
         xdata = event.mouseevent.xdata
         idx = utils.find_nearest(self.x, xdata)
         track = self.track_name[idx]
-        print("selected track:\t", track, " - double-click to load profile")
-        # if track double clicked and differs from track currently laded to profile view, pass back to impick
-        if (event.mouseevent.dblclick) and (track != self.profile_track):
+        # pass track to impick
+        if (track != self.profile_track) and (tk.messagebox.askyesno("load track","load track: " + str(track) + "?") == True):
             self.to_gui(self.datPath, track)

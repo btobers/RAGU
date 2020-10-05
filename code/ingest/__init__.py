@@ -19,10 +19,10 @@ class ingest:
         # hdf5, mat, segy, img
         valid_types = ["h5", "mat", "dzt", "img", "dat"]
         if (ftype.lower() not in valid_types):
-            print("Invalid file type specifier: " + ftype)
-            print("Valid file types:")
-            print(valid_types)
-            exit(1)
+
+            raise ValueError("Invalid file type specifier: " + ftype + 
+                            "\nValid file types: " + str(valid_types))
+
 
         self.ftype = ftype.lower()
 
