@@ -19,7 +19,7 @@ def read(fpath, simpath, navcrs, body):
     print("----------------------------------------")
     print("Loading: " + orbit + "/" + fn)
     rdata = radar(fpath)
-    rdata.fn = orbit.split("_")[1] + fn.rstrip(".dat")
+    rdata.fn = orbit.split("_")[1] + fn[:-4]
     rdata.dtype = "marsis"
 
     # convert binary RGRAM to numpy array
