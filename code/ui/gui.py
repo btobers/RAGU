@@ -418,11 +418,12 @@ class mainGUI(tk.Frame):
     # map_loc is a method to get the desired basemap location and initialize
     def map_loc(self):
         tmp_map_loadName = ""
-        if "linux" in self.os or "win" in self.os:
+        if self.os == "darwin":
+            tmp_map_loadName = tk.filedialog.askopenfilename(initialdir = self.conf["path"]["mapPath"], title = "select basemap file")
+
+        else:
             tmp_map_loadName = tk.filedialog.askopenfilename(initialdir = self.conf["path"]["mapPath"], title = "select basemap file", filetypes = [("geotiff files","*.tif"),
                                                                                                                                                     ("all files","*.*")])
-        else:
-            tmp_map_loadName = tk.filedialog.askopenfilename(initialdir = self.conf["path"]["mapPath"], title = "select basemap file")
         if tmp_map_loadName:
             # initialize basemap if not currently open
             if not self.map_loadName or self.basemap.get_state() == 0:
