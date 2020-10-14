@@ -280,11 +280,11 @@ class mainGUI(tk.Frame):
             self.impick.fullExtent()
 
         # r key to set axes limits to home extent
-        elif event.keysym=="r":
+        elif event.keysym=="d":
             self.impick.panRight()
 
         # l key to set axes limits to home extent
-        elif event.keysym=="l":
+        elif event.keysym=="a":
             self.impick.panLeft()
 
     # close_window is a gui method to exit NOSEpick
@@ -780,8 +780,8 @@ class mainGUI(tk.Frame):
         \n[ctrl+m]\topen basemap window
         \n[spacebar]\ttoggle between radar and\n\t\tclutter images
         \n[h]\t\treturn to home extent
-        \n[r]\t\pan right
-        \n[l]\t\tpan left
+        \n[a]\t\tpan left
+        \n[d]\t\tpan right
         \n[ctrl+s]\texport pick data
         \n[→]\t\topen next file in\n\t\tworking directory
         \n[ctrl+q]\tquit NOSEpick
