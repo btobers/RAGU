@@ -13,14 +13,15 @@ import matplotlib.pyplot as plt
 
 # method to read JPL multilook MARSIS data
 def read(fpath, simpath, navcrs, body):
-    orbit = "orbit_6549"
+    print(fpath)
+    orbit = fpath.split("/")[-2]
     fn = fpath.split("/")[-1]
     root = fpath.rstrip(fn)
-    print("----------------------------------------")
-    print("Loading: " + orbit + "/" + fn)
     rdata = radar(fpath)
-    rdata.fn = orbit.split("_")[1] + fn[:-4]
+    rdata.fn = orbit + "_" + fn.replace(".","_")[:-4]
     rdata.dtype = "marsis"
+    print("----------------------------------------")
+    print("Loading: " + rdata.fn)
 
     # convert binary RGRAM to numpy array
     # # reshape array
