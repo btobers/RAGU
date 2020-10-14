@@ -318,15 +318,15 @@ class mainGUI(tk.Frame):
             if self.impick.saveWarning() == True:
                 if not temp_loadName:
                     # select input file
-                    if "linux" in self.os or "win" in self.os:
+                    if self.os == "darwin":
+                        temp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select data file")
+                    else:
                         temp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select data file",filetypes = [("all files",".*"),
                                                                                                                                         ("hd5f", ".mat .h5"),
                                                                                                                                         ("segy", ".sgy"),
                                                                                                                                         ("sharad", ".img"),
                                                                                                                                         ("marsis", ".dat"),
                                                                                                                                         ("gssi",".DZT")])
-                    else:
-                        temp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select data file")
                 # if input selected, clear impick canvas, ingest data and pass to impick
                 if temp_loadName:
                     # ensure we're on profile tab
@@ -368,50 +368,51 @@ class mainGUI(tk.Frame):
     def savePicks(self):
         if self.f_loadName:# and ((self.impick.get_subsurfPickFlag() == True) or (self.impick.get_surfPickFlag() == True)):
             tmp_fn_out = ""
-            if "linux" in self.os or "win" in self.os:
+            if self.os == "darwin":
+                tmp_fn_out = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_pk",
+                                initialdir = self.conf["path"]["outPath"], title = "save picks")
+                                
+            else:
                 tmp_fn_out = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_pk",
                                 initialdir = self.conf["path"]["outPath"], title = "save picks", filetypes = [("all files", ".*"),
                                                                                                             ("comma-separated values",".csv"),
                                                                                                             ("esri shapefile", ".shp")])
-            else:
-                tmp_fn_out = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_pk",
-                                initialdir = self.conf["path"]["outPath"], title = "save picks")
 
-        if tmp_fn_out:
-            self.f_saveName, ext = os.path.splitext(tmp_fn_out)
 
-            # end any current pick segments
-            self.end_surf_pick()
-            self.end_subsurf_pick()
-            # set output dataframe
-            self.rdata.set_out(export.pick_math(self.rdata, self.eps_r.get(), self.conf["output"]["amp"]))
+            if tmp_fn_out:
+                self.f_saveName, ext = os.path.splitext(tmp_fn_out)
 
-            # export
-            if (self.conf["output"]["csv"]) or (ext == ".csv"):
-                export.csv(self.f_saveName + ".csv", self.rdata.out)
-            if (self.conf["output"]["shp"]) or (ext == ".shp"):
-                export.shp(self.f_saveName + ".shp", self.rdata.out, self.conf["nav"]["crs"])
-            if self.rdata.fpath.endswith(".h5") and (tk.messagebox.askyesno("export picks", "save picks to data file?") == True):
-                export.h5(self.rdata.fpath, self.rdata.out)
-            if self.conf["output"]["fig"]:
-                self.impick.save_fig(self.f_saveName, self.figSize.get().split(","))
+                # end any current pick segments
+                self.end_surf_pick()
+                self.end_subsurf_pick()
+                # set output dataframe
+                self.rdata.set_out(export.pick_math(self.rdata, self.eps_r.get(), self.conf["output"]["amp"]))
+
+                # export
+                if (self.conf["output"]["csv"]) or (ext == ".csv"):
+                    export.csv(self.f_saveName + ".csv", self.rdata.out)
+                if (self.conf["output"]["shp"]) or (ext == ".shp"):
+                    export.shp(self.f_saveName + ".shp", self.rdata.out, self.conf["nav"]["crs"])
+                if self.rdata.fpath.endswith(".h5") and (tk.messagebox.askyesno("export picks", "save picks to data file?") == True):
+                    export.h5(self.rdata.fpath, self.rdata.out)
+                if self.conf["output"]["fig"]:
+                    self.impick.save_fig(self.f_saveName, self.figSize.get().split(","))
 
 
     # saveProc is a method to save processed radar data
     def saveProc(self):
         if self.f_loadName:
             tmp_fn_out = ""
-            if "linux" in self.os or "win" in self.os:
-                tmp_fn_out = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_proc",
-                                initialdir = self.conf["path"]["outPath"], title = "save processed data", filetypes = [("comma-separated values",".csv")])
-            else:
+            if self.os == "darwin":
                 tmp_fn_out = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_proc.csv",
                                 initialdir = self.conf["path"]["outPath"], title = "save processed data")
+            else:
+                tmp_fn_out = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_proc",
+                                initialdir = self.conf["path"]["outPath"], title = "save processed data", filetypes = [("comma-separated values",".csv")])
+            if tmp_fn_out:
+                fn, ext = os.path.splitext(tmp_fn_out)
 
-        if tmp_fn_out:
-            fn, ext = os.path.splitext(tmp_fn_out)
-
-            export.proc(fn + ".csv", self.rdata.proc)
+                export.proc(fn + ".csv", self.rdata.proc)
 
 
     # map_loc is a method to get the desired basemap location and initialize
