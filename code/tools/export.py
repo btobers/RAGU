@@ -1,3 +1,11 @@
+# NOSEpick - Nearly Optimal Subsurface Extractor
+#
+# copyright © 2020 btobers <tobers.brandon@gmail.com>
+#
+# distributed under terms of the GNU GPL3.0 license
+"""
+pick export functions for NOSEpick GUI
+"""
 ### imports ###
 from tools import utils
 import numpy as np
@@ -8,9 +16,7 @@ import tkinter as tk
 import sys, h5py, fnmatch
 from tools.constants import *
 import matplotlib.pyplot as plt
-"""
-pick export functions for NOSEpick GUI
-"""
+
 # pick_math is a function to perform all the necessary mathematics on a set of picks and save data as a pandas dataframe
 def pick_math(rdata, eps_r, amp_out = True):
     v = C/(np.sqrt(eps_r))                      # wave veloity
@@ -70,10 +76,10 @@ def pick_math(rdata, eps_r, amp_out = True):
                             "subsrfAmp": subsrfAmp, "subsrfElev": subsrfElev, "thick": thick})
 
     else:
-        out = pd.DataFrame({"trace": trace, "lon": lon, "lat": lat, "alt": alt, "gndElev": gndElev, 
-                            "srfIdx": srf, "srfTwtt": srfTwtt, 
+        out = pd.DataFrame({"trace": trace, "lon": lon, "lat": lat, "alt": alt, "gndElev": gndElev,
+                            "srfIdx": srf, "srfTwtt": srfTwtt, "srfAmp": np.nan, 
                             "subsrfIdx": subsurf_pk, "subsrfTwtt": subsrfTwtt, 
-                            "subsrfElev": subsrfElev, "thick": thick})
+                            "subsrfAmp": np.nan, "subsrfElev": subsrfElev, "thick": thick})
 
     # remove alt if ground-based data and update header
     if utils.nan_array_equal(alt, gndElev):

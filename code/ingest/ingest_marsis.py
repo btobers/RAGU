@@ -1,6 +1,11 @@
+# NOSEpick - Nearly Optimal Subsurface Extractor
+#
+# copyright © 2020 btobers <tobers.brandon@gmail.com>
+#
+# distributed under terms of the GNU GPL3.0 license
 """
 ingest_marsis is a module developed to ingest JPL MARSIS radar sounding data. 
-data format is binary 32-bit floating point pulse compressed power-dB data acquired from CO-SHARPS
+data format is binary 32-bit floating point pulse compressed data
 """
 ### imports ###
 from radar import radar

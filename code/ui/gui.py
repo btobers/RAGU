@@ -1,3 +1,8 @@
+# NOSEpick - Nearly Optimal Subsurface Extractor
+#
+# copyright © 2020 btobers <tobers.brandon@gmail.com>
+#
+# distributed under terms of the GNU GPL3.0 license
 """
 NOSEpick - Nearly Optimal Subsurface Extractor
 created by: Brandon S. Tober and Michael S. Christoffersen
@@ -323,9 +328,9 @@ class mainGUI(tk.Frame):
                 else:
                     temp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select data file",filetypes = [("all files",".*"),
                                                                                                                                     ("hd5f", ".mat .h5"),
-                                                                                                                                    ("segy", ".sgy"),
                                                                                                                                     ("sharad", ".img"),
                                                                                                                                     ("marsis", ".dat"),
+                                                                                                                                    ("pulseekko", ".DT1"),
                                                                                                                                     ("gssi",".DZT")])
             # if input selected, clear impick canvas, ingest data and pass to impick
             if temp_loadName:

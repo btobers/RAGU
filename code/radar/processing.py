@@ -1,3 +1,11 @@
+# NOSEpick - Nearly Optimal Subsurface Extractor
+#
+# copyright © 2020 btobers <tobers.brandon@gmail.com>
+#
+# distributed under terms of the GNU GPL3.0 license
+"""
+NOSEpick radar data processing tools
+"""
 ### imports ###
 import numpy as np
 import numpy.matlib as matlib
@@ -8,9 +16,7 @@ import matplotlib as mpl
 import tkinter as tk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.widgets import Button
-"""
-NOSEpick radar data processing tools
-"""
+
 
 def set_tzero(raw, proc, dt):
     """

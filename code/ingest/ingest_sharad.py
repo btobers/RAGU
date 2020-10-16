@@ -1,3 +1,8 @@
+# NOSEpick - Nearly Optimal Subsurface Extractor
+#
+# copyright © 2020 btobers <tobers.brandon@gmail.com>
+#
+# distributed under terms of the GNU GPL3.0 license
 """
 ingest_sharad is a module developed to ingest NASA MRO-SHARAD FPB radar sounding data. 
 data format is binary 32-bit floating point pulse compressed amplitude data acquired from the PDS

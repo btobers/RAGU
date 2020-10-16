@@ -1,3 +1,12 @@
+# NOSEpick - Nearly Optimal Subsurface Extractor
+#
+# copyright © 2020 btobers <tobers.brandon@gmail.com>
+#
+# distributed under terms of the GNU GPL3.0 license
+""" 
+constants
+"""
+### imports ###
 import pytz
 
 # some physical constants for Maxwell's equation for speed of light in a dielectric medium

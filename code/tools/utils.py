@@ -1,3 +1,11 @@
+# NOSEpick - Nearly Optimal Subsurface Extractor
+#
+# copyright © 2020 btobers <tobers.brandon@gmail.com>
+#
+# distributed under terms of the GNU GPL3.0 license
+"""
+utility functions for NOSEpick GUI
+"""
 ### imports ###
 import numpy as np
 import pandas as pd
@@ -5,9 +13,7 @@ import geopandas as gpd
 import tkinter as tk
 import sys, h5py, fnmatch
 from tools.constants import *
-"""
-utility functions for NOSEpick GUI
-"""
+
 # remove_outliers is a function to remove outliers from an array
 # returns bool array
 def remove_outliers(array):

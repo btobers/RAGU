@@ -1,3 +1,8 @@
+# NOSEpick - Nearly Optimal Subsurface Extractor
+#
+# copyright © 2020 btobers <tobers.brandon@gmail.com>
+#
+# distributed under terms of the GNU GPL3.0 license
 """
 nav library contains various fucntions for reading radar nav data and transforming crs
 """
@@ -151,35 +156,65 @@ def getnav_gssi(navfile, tnum, navcrs, body):
     return df[["lon", "lat", "elev", "x", "y", "z", "dist"]]
 
 
-def getnav_pulseekko(navfile, tnum, xyzs, body):
-    """Read GPS data associated with a Pulse Ekko .GPS file.
-
-    Parameters
-    ----------
-    fn_gps: str
-        A dzg file with ggis and gga strings.
-
-    Returns
-    -------
-    data: :class:`~impdar.lib.gpslib.nmea_info`
+def getnav_pulseekko(navfile, tnum, navcrs, body):
     """
-    with open(fn_gps) as f_in:
-        lines = f_in.readlines()
-    ggis = []
-    gga = []
-    for line in lines:
-        if line[:5] == "Trace":
-            ggis.append(line)
-        elif line[:6] == "$GPGGA":
-            gga.append(line)
-        else:
-            continue
-    if len(gga) == 0:
-        raise ValueError("I can only do gga sentences right now")
-    scans = np.array(list(map(lambda x: int(float(
-        x.rstrip("\n\r ").split(" ")[-1])), ggis)))
-    data = RadarGPS(gga, scans, trace_nums)
-    return data
+    read GPS data associated with a pulseEkko .GPS file
+    adapted from ImpDAR/lib/load/load_pulse_ekko._get_gps_data - David Lilien
+
+    """
+    if os.path.isfile(navfile):
+        try:
+            with open(navfile) as f_in:
+                lines = f_in.readlines()
+            ggis = []
+            gga = []
+            for line in lines:
+                if line[:5] == "Trace":
+                    ggis.append(line)
+                elif line[:6] == "$GPGGA":
+                    gga.append(line)
+                else:
+                    continue
+            if len(gga) == 0:
+                raise ValueError("Can currently only work with gga strings")
+            # scans = np.array(list(map(lambda x: int(float(
+            #     x.rstrip("\n\r ").split(" ")[-1])), ggis)))
+            # i believe that this is what we want for scans, with the actual trace number for each scan
+            scans = np.array(list(map(lambda x: int(float(
+                x.rstrip("\n\r ").split(" ")[1][1:])), ggis))) - 1
+
+            gps = GPSdat([line for line in lines if line in gga], scans, tnum)
+            df = pd.DataFrame({"lon": gps.lon, "lat": gps.lat, "elev": gps.elev,
+                                        "x": np.nan, "y": np.nan, "z": np.nan,
+                                        "dist": np.nan})
+
+            df["x"], df["y"], df["z"] = pyproj.transform(
+                navcrs,
+                xyzsys[body],
+                df["lon"].to_numpy(),
+                df["lat"].to_numpy(),
+                df["elev"].to_numpy(),
+            )
+
+            df["dist"] = euclid_dist(
+                df["x"].to_numpy(),
+                df["y"].to_numpy(),
+                df["z"].to_numpy())
+
+        except Exception as err:
+            print("getnav_pulsekko error: " + str(err))
+            nd = np.repeat(np.nan, tnum)
+            df = pd.DataFrame({"lon": nd, "lat": nd, "elev": nd,
+                                        "x": nd, "y": nd, "z": nd,
+                                        "dist": nd})
+
+    else:
+        nd = np.repeat(np.nan, tnum)
+        df = pd.DataFrame({"lon": nd, "lat": nd, "elev": nd,
+                                    "x": nd, "y": nd, "z": nd,
+                                    "dist": nd})
+
+    return df[["lon", "lat", "elev", "x", "y", "z", "dist"]]
 
     
 def getnav_sharad(navfile, navcrs, body):

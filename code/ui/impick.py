@@ -1,3 +1,8 @@
+# NOSEpick - Nearly Optimal Subsurface Extractor
+#
+# copyright © 2020 btobers <tobers.brandon@gmail.com>
+#
+# distributed under terms of the GNU GPL3.0 license
 """
 impick class is a tkinter frame which handles the NOSEpick profile view and radar data picking
 """
@@ -983,6 +988,7 @@ class impick(tk.Frame):
 
         # update along-track distance
         if not np.all(np.isnan(self.rdata.navdf["dist"])) or  np.all((self.rdata.navdf["dist"] == 0)):
+            self.secaxx.set_visible(True)
             # use km if distance exceeds 1 km
             if self.rdata.navdf.iloc[-1]["dist"] >= 1e3:
                 self.secaxx.set_xlabel("along-track distance [km]")

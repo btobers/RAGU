@@ -6,6 +6,7 @@ modified from ImpDAR - DOI:10.5281/zenodo.3833057
 import numpy as np
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
+import sys
 
 class nmea_info:
     """Container for general information about lat, lon, etc.
