@@ -1,11 +1,11 @@
-# Pycache
+# pycache
 __pycache__/
 
 # vscode
 .vscode/
 
-# Python bytecode
+# python bytecode
 *.pyc
 
-# Don't update config file
+# config file
 config.ini
