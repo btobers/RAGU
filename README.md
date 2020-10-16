@@ -157,3 +157,8 @@ Use pyshortcuts to setup desktop shortcut (make sure NOSEpick conda environment 
 $ conda activate nose
 (nose)$ pyshortcut -n NOSEpick -i ~/NOSEpick/recs/NOSEpick.ico ~/NOSEpick/code/main.py
 ```
+
+Add the following line to your .desktop foler (located in ~/.local/share/applications on Ubuntu) to handle duplicate instances:
+```
+StartupWMClass=Tk
+```
