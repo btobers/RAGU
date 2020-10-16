@@ -13,11 +13,13 @@
 NOSEpick is an open source GUI package developed to interpret radar sounding data, written in Python 3.
 
 ### Dataset Capabilities:
-NOSEpick was originally developed to work with NASA's Operation IceBridge Alaska radar sounding data. NOSEpick is also capable of working with SHARAD data acquired onboard NASA's Mars Reconnaissance Orbiter (Reduced Data Record of Radar Backscatter Power (USRDR) & Geographic, Geometric, and Ionospheric Properties (USGEOM) data available at https://pds-geosciences.wustl.edu/missions/mro/sharad.htm). GSSI data can also be interpreted with NOSEpick.
+NOSEpick was originally developed to work with NASA's Operation IceBridge Alaska radar sounding data. The dataset capabilities have since been expanded to include the following:
 
 - NASA OIB-AK
 - SHARAD (USRDR, USGEOM, US clutter sims)
+- MARSIS (JPL multilook products)
 - GSSI
+- pulseEKKO
 
 ### File Info
 - *nose_env.yml* contains a list of NOSEpick dependencies
@@ -128,8 +130,6 @@ $ python3 main.py
 ## Notes
 ### Future Development
 Additional dataset ingesters:
-- ESA's MARSIS
-- PulseEKKO
 - Segy
 
 Processing:
