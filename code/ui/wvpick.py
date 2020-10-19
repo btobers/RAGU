@@ -116,6 +116,7 @@ class wvpick(tk.Frame):
         # get data in dB
         self.rdata = rdata
 
+
     # set_pickDict is a method which holds the picked segment data for optimization
     def set_picks(self):
         # create a copy of passed from imPick as to not modify original values
@@ -175,10 +176,18 @@ class wvpick(tk.Frame):
             self.toolbar.push_current()
 
             # # zoom in to window around current pick sample
-            self.ax.set(xlim=(int(pick_idx0-(winSize)),int(pick_idx0+(winSize))))
+            self.ax.set(xlim=(int(pick_idx0-(2*winSize)),int(pick_idx0+(2*winSize))))
 
         self.ax.legend()
 
+        self.dataCanvas.draw()
+
+
+    # full extent for trace
+    def fullExtent(self):
+        segment = self.segmentVar.get()
+        self.ax.set_xlim(0, self.rdata.snum)
+        self.ax.set_ylim(self.rdata.proc[:,self.traceNum[segment]].min(), self.rdata.proc[:,self.traceNum[segment]].max())
         self.dataCanvas.draw()
 
 

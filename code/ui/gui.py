@@ -218,9 +218,10 @@ class mainGUI(tk.Frame):
 
     # key is a method to handle UI keypress events
     def key(self,event):
-        # event.state & 4 True for Ctrl+Key    confDict = ingest.readConfig(argDict)
-
+        # event.state & 4 True for Ctrl+Key
         # event.state & 1 True for Shift+Key
+        # general keps for either tab
+
         # Ctrl+O open file
         if event.state & 4 and event.keysym == "o":
             self.open_data()
@@ -233,76 +234,75 @@ class mainGUI(tk.Frame):
         elif event.state & 4 and event.keysym == "m":
             self.map_loc()
 
-        # Ctrl+N begin subsurface pick
-        elif event.state & 4 and event.keysym == "n":
-            if self.tab == "profile":
-                self.start_subsurf_pick()
-
-        # Ctrl+Shift+N begin surface pick
-        elif event.state & 5 == 5 and event.keysym == "N":
-            if self.tab == "profile":
-                self.start_surf_pick()
-
         # Ctrl+Q close NOSEpick
         elif event.state & 4 and event.keysym == "q":
             self.close_window()
 
-        elif event.keysym =="Left":
-            if self.tab == "waveform":
-                self.wvpick.stepBackward()
-
-        # shift+. (>) next file
-        elif event.keysym =="Right":
-            if self.tab == "profile":
-                self.next_loc()
-            elif self.tab == "waveform":
-                self.wvpick.stepForward()
-
-
-        # Escape key to stop picking current layer
-        elif event.keysym == "Escape":
-            if self.tab == "profile":
-                self.end_subsurf_pick()
-                self.end_surf_pick()
-
-        # c key to clear all picks in impick
-        if event.keysym =="c":
-            # clear the drawing of line segments
-            self.clear(surf = "subsurface")
-            
-        # BackSpace to clear last pick 
-        elif event.keysym =="BackSpace":
-            if self.tab == "profile":
-                self.impick.clear_last()
-
-        # Space key to toggle impick between radar image and sim
-        elif event.keysym=="space":
-            if self.tab == "profile":
+        # profile view keys
+        if self.tab == "profile":
+            # Space key to toggle impick between radar image and sim
+            if event.keysym=="space":
                 self.impick.set_im()
 
-        # h key to set axes limits to home extent
-        elif event.keysym=="h":
-            self.impick.fullExtent()
+            elif event.state & 4 and event.keysym == "n":
+                self.start_subsurf_pick()
 
-        # d key to set axes limits to home extent
-        elif event.keysym=="d":
-            if self.tab == "profile":
+            # Ctrl+Shift+N begin surface pick
+            elif event.state & 5 == 5 and event.keysym == "N":
+                self.start_surf_pick()
+
+            # Escape key to stop picking current layer
+            elif event.keysym == "Escape":
+                    self.end_subsurf_pick()
+                    self.end_surf_pick()
+
+            # BackSpace to clear last pick 
+            elif event.keysym =="BackSpace":
+                self.impick.clear_last()
+
+            # c key to clear all picks in impick
+            elif event.keysym =="c":
+                # clear the drawing of line segments
+                self.clear(surf = "subsurface")
+
+            # right key next file
+            elif event.keysym =="Right":
+                self.next_loc()
+
+            # h key to set axes limits to home extent
+            elif event.keysym=="h":
+                self.impick.fullExtent()
+
+            # d key to set axes limits to home extent
+            elif event.keysym=="d":
                 self.impick.panRight()
 
-        # a key to set axes limits to home extent
-        elif event.keysym=="a":
-            if self.tab == "profile":
+            # a key to set axes limits to home extent
+            elif event.keysym=="a":
                 self.impick.panLeft()
 
-        # w key to set axes limits to home extent
-        elif event.keysym=="w":
-            if self.tab == "profile":
+            # w key to set axes limits to home extent
+            elif event.keysym=="w":
                 self.impick.panUp()
 
-        # s key to set axes limits to home extent
-        elif event.keysym=="s":
-            if self.tab == "profile":
+            # s key to set axes limits to home extent
+            elif event.keysym=="s":
                 self.impick.panDown()
+
+        # waveform view keys
+        if self.tab == "waveform":
+            # h key to set axes limits to home extent
+            if event.keysym=="h":
+                self.wvpick.fullExtent()
+    
+            # a key to step back in trace count
+            elif event.keysym=="a":
+                self.wvpick.stepBackward()
+
+            # d key to step forward in trace count
+            elif event.keysym=="d":
+                self.wvpick.stepForward()
+
 
     # close_window is a gui method to exit NOSEpick
     def close_window(self):
@@ -800,6 +800,8 @@ class mainGUI(tk.Frame):
         \n[h]\t\treturn to home extent
         \n[a]\t\tpan left
         \n[d]\t\tpan right
+        \n[w]\t\tpan up
+        \n[s]\t\tpan down
         \n[ctrl+s]\texport pick data
         \n[→]\t\topen next file in\n\t\tworking directory
         \n[ctrl+q]\tquit NOSEpick
