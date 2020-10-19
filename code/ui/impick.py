@@ -349,6 +349,7 @@ class impick(tk.Frame):
             self.secaxy1.set_ylim(ylim3[0] - step3, ylim3[1] - step3)
             self.dataCanvas.draw()
 
+
     # method to pan down
     def panDown(self):
         ylim1 = self.ax.get_ylim()
