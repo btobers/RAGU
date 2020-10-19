@@ -331,6 +331,43 @@ class impick(tk.Frame):
             self.dataCanvas.draw()
 
 
+    # method to pan up
+    def panUp(self):
+        ylim1 = self.ax.get_ylim()
+        ylim2 = self.secaxy0.get_ylim()
+        ylim3 = self.secaxy1.get_ylim()
+        if ylim1[1] > 0:
+            step1 = (ylim1[0] - ylim1[1]) / 2
+            step2 = (ylim2[0] - ylim2[1]) / 2
+            step3 = (ylim3[0] - ylim3[1]) / 2
+            if (ylim1[1] - step1) < 0:
+                step1 = ylim1[1]
+                step2 = ylim2[1]
+                step3 = ylim3[1]
+            self.ax.set_ylim(ylim1[0] - step1, ylim1[1] - step1)
+            self.secaxy0.set_ylim(ylim1[0] - step2, ylim2[1] - step2)
+            self.secaxy1.set_ylim(ylim3[0] - step3, ylim3[1] - step3)
+            self.dataCanvas.draw()
+
+    # method to pan down
+    def panDown(self):
+        ylim1 = self.ax.get_ylim()
+        ylim2 = self.secaxy0.get_ylim()
+        ylim3 = self.secaxy1.get_ylim()
+        if ylim1[0] < self.rdata.snum:
+            step1 = (ylim1[0] - ylim1[1]) / 2
+            step2 = (ylim2[0] - ylim2[1]) / 2
+            step3 = (ylim3[0] - ylim3[1]) / 2
+            if (ylim1[0] + step1) > self.rdata.snum:
+                step1 = self.rdata.snum - ylim1[0]
+                step2 = (self.rdata.snum*self.rdata.dt) - ylim2[0]
+                step3 = utils.twtt2depth(self.rdata.snum*self.rdata.dt, self.eps_r) - ylim3[0]
+            self.ax.set_ylim(ylim1[0] + step1, ylim1[1] + step1)
+            self.secaxy0.set_ylim(ylim1[0] + step2, ylim2[1] + step2)
+            self.secaxy1.set_ylim(ylim3[0] + step3, ylim3[1] + step3)
+            self.dataCanvas.draw()
+
+
     # method to draw radar data
     def drawData(self, force=False, event=None):
         # Get data display window size in inches

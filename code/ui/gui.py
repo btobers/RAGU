@@ -284,13 +284,25 @@ class mainGUI(tk.Frame):
         elif event.keysym=="h":
             self.impick.fullExtent()
 
-        # r key to set axes limits to home extent
+        # d key to set axes limits to home extent
         elif event.keysym=="d":
-            self.impick.panRight()
+            if self.tab == "profile":
+                self.impick.panRight()
 
-        # l key to set axes limits to home extent
+        # a key to set axes limits to home extent
         elif event.keysym=="a":
-            self.impick.panLeft()
+            if self.tab == "profile":
+                self.impick.panLeft()
+
+        # w key to set axes limits to home extent
+        elif event.keysym=="w":
+            if self.tab == "profile":
+                self.impick.panUp()
+
+        # s key to set axes limits to home extent
+        elif event.keysym=="s":
+            if self.tab == "profile":
+                self.impick.panDown()
 
     # close_window is a gui method to exit NOSEpick
     def close_window(self):
