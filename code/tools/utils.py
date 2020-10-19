@@ -129,15 +129,18 @@ def powdB2amp(array):
 def print_pickInfo(data, trace, sample):
     v = C/(np.sqrt(3.15))        # EM wave veloity in ice - for thickness calculation
 
-    fields = ["trace","sample","alt","twtt_surf","elev_gnd","twtt_bed","elev_bed","thick"]
+    fields = ["trace","sample","alt","gndElev","srfTwtt","subsrfTwtt","subsrfElev","thick"]
 
-    alt = data["navdat"].navdat[trace,2]
-    twtt_surf = data["pick"]["twtt_surf"][trace]
-    elev_gnd = data["elev_gnd"][trace]
-    twtt_bed = sample * data["dt"]
-    thick = (((twtt_bed - twtt_surf) * v) / 2)
-    elev_bed = elev_gnd - thick
+    if not np.isnan(data.pick.current_surf).all():
+        srfTwtt = sample2twtt(data.pick.current_surf[trace],data.dt)
+    else:
+        srfTwtt = data.pick.existing_twttSurf[trace]
+    alt = data.navdf["elev"].iloc[trace]    
+    gndElev = data.gndElev[trace]
+    subsrfTwtt = sample * data.dt
+    thick = (((subsrfTwtt - srfTwtt) * v) / 2)
+    subsrfElev = gndElev - thick
 
-    print(*fields, sep="\t")
-    print("%d\t%d\t%8.4f\t%8.4e\t%8.4f\t%8.4e\t%8.4f\t%8.4f" % (trace,sample,alt,twtt_surf,elev_gnd,twtt_bed,elev_bed,thick))
+    print(*fields, sep="\t\t")
+    print("%d\t\t%d\t\t%8.4f\t\t%8.4e\t\t%8.4f\t\t%8.4e\t\t%8.4f\t\t%8.4f" % (trace,sample,alt,gndElev,srfTwtt,subsrfTwtt,subsrfElev,thick))
     print()
