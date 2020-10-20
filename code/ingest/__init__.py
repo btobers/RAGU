@@ -17,7 +17,6 @@ class ingest:
         # ftype is a string specifying filetype
         # valid options -
         # hdf5, mat, segy, img
-        print(ftype)
         valid_types = ["h5", "mat", "img", "dat", "DT1", "DZT" ]
         if (ftype not in valid_types):
 
