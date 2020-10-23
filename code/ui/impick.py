@@ -89,7 +89,6 @@ class impick(tk.Frame):
         tk.Label(infoFrame, text = "window size [#samples]: ").pack(side="right")
         tk.ttk.Separator(infoFrame,orient="vertical").pack(side="right", fill="both", padx=10, pady=4)
 
-
         # create matplotlib figure data canvas
         self.fig = mpl.figure.Figure()
         self.fig.patch.set_facecolor("#d9d9d9")
@@ -545,12 +544,22 @@ class impick(tk.Frame):
         # if there are at least two picked points, interpolate
         try:
             if surf == "subsurface":
-                if len(self.xln_subsurf) >= 2:                   
+                if len(self.xln_subsurf) >= 2:
+                    # get current window size - handle non int entry
+                    try:
+                        winSize = self.winSize.get()  
+                    except:
+                        winSize = 0
+                        self.winSize.set(0)             
                     # cubic spline between picks
                     cs = CubicSpline(self.xln_subsurf, self.yln_subsurf)
                     # generate array between first and last pick indices on current layer
                     picked_traces = np.arange(self.xln_subsurf[0], self.xln_subsurf[-1] + 1)
                     sample = cs(picked_traces).astype(int)
+                    # if windize >=2, loop over segment and take maximum sample within window of cubic spline interp
+                    if winSize >= 2:
+                        for _i in range(len(picked_traces)):
+                            sample[_i] = int(sample[_i] - (winSize/2)) + np.argmax(self.rdata.proc[int(sample[_i] - (winSize/2)):int(sample[_i] + (winSize/2)), picked_traces[_i]])
                     # add cubic spline output interpolation to pick dictionary - force output to integer for index of pick
                     if self.edit_flag == True:
                         self.rdata.pick.current_subsurf[str(self.segVar.get())][picked_traces] = sample
@@ -566,11 +575,21 @@ class impick(tk.Frame):
 
             elif surf == "surface":
                 if len(self.xln_surf) >= 2:
+                    # get current window size - handle non int entry
+                    try:
+                        winSize = self.winSize.get()  
+                    except:
+                        winSize = 0
+                        self.winSize.set(0)    
                     # cubic spline between surface picks
                     cs = CubicSpline(self.xln_surf,self.yln_surf)
                     # generate array between first and last pick indices on current layer
                     picked_traces = np.arange(self.xln_surf[0], self.xln_surf[-1] + 1)
                     sample = cs(picked_traces).astype(int)
+                    # if windize >=2, loop over segment and take maximum sample within window of cubic spline interp
+                    if winSize >= 2:
+                        for _i in range(len(picked_traces)):
+                            sample[_i] = int(sample[_i] - (winSize/2)) + np.argmax(self.rdata.proc[int(sample[_i] - (winSize/2)):int(sample[_i] + (winSize/2)), picked_traces[_i]])
                     # input cubic spline output surface twtt array - force output to integer for index of pick
                     self.rdata.pick.current_surf[picked_traces] = sample
                     # add pick interpolation to saved pick array
