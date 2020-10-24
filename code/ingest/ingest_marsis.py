@@ -18,7 +18,6 @@ import matplotlib.pyplot as plt
 
 # method to read JPL multilook MARSIS data
 def read(fpath, simpath, navcrs, body):
-    print(fpath)
     orbit = fpath.split("/")[-2]
     fn = fpath.split("/")[-1]
     root = fpath.rstrip(fn)
@@ -55,9 +54,12 @@ def read(fpath, simpath, navcrs, body):
     # apparently data arrays are already power values, so revert to amplitude (abs(amplitude))
     rdata.dat = np.sqrt(rdata.dat)
     rdata.set_proc(rdata.dat)
-    
+
     # convert png clutter sim product to numpy array
-    simpath = glob.glob(simpath + "*clutterSim_multilook_analysis*")[0]
+    if simpath:
+        simpath = glob.glob(simpath + "*clutterSim_multilook_analysis*")[0]
+    else:
+        simpath = glob.glob(root + "*clutterSim_multilook_analysis*")[0]
 
     if os.path.isfile(simpath):
         image = Image.open(simpath)

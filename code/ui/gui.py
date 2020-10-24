@@ -330,67 +330,69 @@ class mainGUI(tk.Frame):
 
     # open_data is a gui method which has the user select and input data file - then passed to impick.load()
     def open_data(self, temp_loadName=None):
-        # try:
+        try:
             # prompt save warning if picks exist
-        if self.impick.saveWarning() == True:
-            if not temp_loadName:
-                # select input file
-                if self.os == "darwin":
-                    temp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select data file")
-                else:
-                    temp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select data file",filetypes = [("all files",".*"),
-                                                                                                                                    ("hd5f", ".mat .h5"),
-                                                                                                                                    ("sharad", ".img"),
-                                                                                                                                    ("marsis", ".dat"),
-                                                                                                                                    ("pulseekko", ".DT1"),
-                                                                                                                                    ("gssi",".DZT")])
-            # if input selected, clear impick canvas, ingest data and pass to impick
-            if temp_loadName:
-                # ensure we're on profile tab
-                if self.tab == "waveform":
-                    self.nb.select(self.nb.tabs()[0])
-                self.f_loadName = temp_loadName
-                self.f_saveName = ""
-                self.impick.clear_canvas()  
-                self.impick.set_vars()
-                self.impick.update_option_menu()
-                # ingest the data
-                self.igst = ingest(self.f_loadName.split(".")[-1])
-                self.rdata = self.igst.read(self.f_loadName, self.conf["path"]["simPath"], self.conf["nav"]["crs"], self.conf["nav"]["body"])
-                # return if no data ingested
-                if not self.rdata:
-                    return
-                self.impick.load(self.rdata)
-                self.impick.set_axes()
-                self.impick.drawData()
-                self.impick.update_bg()
-                self.wvpick.set_vars()
-                self.wvpick.clear()
-                self.wvpick.set_data(self.rdata)
+            if self.impick.saveWarning() == True:
+                if not temp_loadName:
+                    # select input file
+                    if self.os == "darwin":
+                        temp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select data file")
+                    else:
+                        temp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select data file",filetypes = [("all files",".*"),
+                                                                                                                                        ("hd5f", ".mat .h5"),
+                                                                                                                                        ("sharad", ".img"),
+                                                                                                                                        ("marsis", ".dat"),
+                                                                                                                                        ("pulseekko", ".DT1"),
+                                                                                                                                        ("gssi",".DZT")])
+                # if input selected, clear impick canvas, ingest data and pass to impick
+                if temp_loadName:
+                    # ensure we're on profile tab
+                    if self.tab == "waveform":
+                        self.nb.select(self.nb.tabs()[0])
+                    self.f_loadName = temp_loadName
+                    self.f_saveName = ""
+                    self.impick.clear_canvas()  
+                    self.impick.set_vars()
+                    self.impick.update_option_menu()
+                    # ingest the data
+                    self.igst = ingest(self.f_loadName.split(".")[-1])
+                    self.rdata = self.igst.read(self.f_loadName, self.conf["path"]["simPath"], self.conf["nav"]["crs"], self.conf["nav"]["body"])
+                    # return if no data ingested
+                    if not self.rdata:
+                        return
+                    self.impick.load(self.rdata)
+                    self.impick.set_axes()
+                    self.impick.drawData()
+                    self.impick.update_bg()
+                    self.wvpick.set_vars()
+                    self.wvpick.clear()
+                    self.wvpick.set_data(self.rdata)
 
-            # pass basemap to impick for plotting pick location
-            if self.map_loadName and self.basemap.get_state() == 1:
-                self.basemap.set_track(self.rdata.fn)
-                self.basemap.set_nav(self.rdata.fn, self.rdata.navdf)
-                self.basemap.plot_tracks()
-                self.impick.get_basemap(self.basemap)
+                # pass basemap to impick for plotting pick location
+                if self.map_loadName and self.basemap.get_state() == 1:
+                    self.basemap.set_track(self.rdata.fn)
+                    self.basemap.set_nav(self.rdata.fn, self.rdata.navdf)
+                    self.basemap.plot_tracks()
+                    self.impick.get_basemap(self.basemap)
 
         # recall open_data if wrong file type is selected 
-        # except Exception as err:
-        #     print(err)
-        #     self.open_data() 
+        except Exception as err:
+            print(err)
+            self.open_data() 
 
 
     # savePicks is method to receieve the desired pick save location from user input
     def savePicks(self):
-        if self.f_loadName:# and ((self.impick.get_subsurfPickFlag() == True) or (self.impick.get_surfPickFlag() == True)):
+        if self.f_loadName:
+            print(self.f_loadName)
+            print(self.rdata.fn)
             tmp_fn_out = ""
             if self.os == "darwin":
-                tmp_fn_out = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_pk",
+                tmp_fn_out = tk.filedialog.asksaveasfilename(initialfile = self.rdata.fn + "_pk",
                                 initialdir = self.conf["path"]["outPath"], title = "save picks")
                                 
             else:
-                tmp_fn_out = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_pk",
+                tmp_fn_out = tk.filedialog.asksaveasfilename(initialfile = self.rdata.fn + "_pk",
                                 initialdir = self.conf["path"]["outPath"], title = "save picks", filetypes = [("all files", ".*"),
                                                                                                             ("comma-separated values",".csv"),
                                                                                                             ("esri shapefile", ".shp")])
