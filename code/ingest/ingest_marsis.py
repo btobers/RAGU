@@ -56,13 +56,10 @@ def read(fpath, simpath, navcrs, body):
     rdata.set_proc(rdata.dat)
 
     # convert png clutter sim product to numpy array
-    print("simpath:",simpath,"root:",root)
     if simpath:
-        print(glob.glob(simpath + "*clutter*.png"))
-        simpath = glob.glob(simpath + "*clutterSim_multilook_analysis*")[0]
+        simpath = glob.glob(simpath + "*clutterSim_multilook_analysis.png")[0]
     else:
-        print(glob.glob(root + "*clutter*.png"))
-        simpath = glob.glob(root + "*clutterSim_multilook_analysis*")[0]
+        simpath = glob.glob(root + "*clutterSim_multilook_analysis.png")[0]
 
     if os.path.isfile(simpath):
         image = Image.open(simpath)
