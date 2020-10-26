@@ -57,9 +57,9 @@ def read(fpath, simpath, navcrs, body):
 
     # convert png clutter sim product to numpy array
     if simpath:
-        simpath = glob.glob(simpath + "*clutterSim_multilook_analysis.png")[0]
+        simpath = simpath + "/" + orbit + "_clutterSim_multilook_analysis.png"
     else:
-        simpath = glob.glob(root + "*clutterSim_multilook_analysis.png")[0]
+        simpath = root + "/" + orbit + "_clutterSim_multilook_analysis.png"
 
     if os.path.isfile(simpath):
         image = Image.open(simpath)
@@ -67,7 +67,8 @@ def read(fpath, simpath, navcrs, body):
         sim = np.asarray(image)
         sim = sim[int(rdata.snum/2):-int(rdata.snum/2),:]
     else:
-        sim = np.ones(rdata.dat.shape)
+        sim = np.ones((rdata.snum,rdata.tnum))
+
     rdata.set_sim(sim)
 
     # open geom nav file for rgram

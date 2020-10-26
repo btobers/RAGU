@@ -17,6 +17,7 @@ import os, sys
 # method to read PDS SHARAD USRDR data
 def read(fpath, simpath, navcrs, body):
     fn = fpath.split("/")[-1]
+    root = fpath.rstrip(fn)
     print("----------------------------------------")
     print("Loading: " + fn)
     rdata = radar(fpath)
@@ -37,14 +38,18 @@ def read(fpath, simpath, navcrs, body):
     rdata.set_proc(rdata.dat)
     
     # convert binary .img clutter sim product to numpy array
-    simpath = simpath + "/" + fn.replace("rgram","geom_combined")
+    if simpath:
+        simpath = simpath + "/" + fn.replace("rgram","geom_combined")
+    else:
+        simpath = root + "/" + fn.replace("rgram","geom_combined")
+
     if os.path.isfile(simpath):
         with open(simpath, "rb") as f:
             sim = np.fromfile(f, dtype)   
         sim = sim.reshape(rdata.snum,rdata.tnum)
     else:
         sim = np.ones(rdata.dat.shape)
-    
+
     rdata.set_sim(sim)
 
     # open geom nav file for rgram
