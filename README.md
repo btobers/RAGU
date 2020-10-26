@@ -84,7 +84,7 @@ To create a conda environment with the required dependencies, run the following 
 $ conda env create -f nose_env.yml
 ```
 ### Setup
-1. Prior to running NOSEpick, set appropriate data paths, data coordinate reference system, and output preferences in *config.ini*:
+1. Prior to running NOSEpick, set appropriate data paths, data coordinate reference system, and output preferences in *config.ini*. **Path variables may be left blank, but must remain uncommented**.
 ```
 ### config.ini ###
 [path]
