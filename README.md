@@ -89,13 +89,13 @@ $ conda env create -f nose_env.yml
 ### config.ini ###
 [path]
 # str datPath: data directory path
-datPath = /home/btober/Documents/SHARAD_test/
+datPath =
 # str simPath: clutter simulation directory path
-simPath = /home/btober/Documents/SHARAD_test/simc/
+simPath =
 # str mapPath: basemap directory path
-mapPath = /home/btober/Documents/SHARAD_test/MOLA/
+mapPath =
 # str outPath: output directory path
-outPath = /home/btober/Documents/SHARAD_test/
+outPath =
 
 [nav]
 # str body: planetary body from which radar data was acquired
