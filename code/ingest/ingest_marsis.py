@@ -55,6 +55,10 @@ def read(fpath, simpath, navcrs, body):
     rdata.dat = np.sqrt(rdata.dat)
     rdata.set_proc(rdata.dat)
 
+    # assign signal info
+    rdata.sig = {}
+    rdata.sig["signal type"] = "chirp"
+
     # convert png clutter sim product to numpy array
     if simpath:
         simpath = simpath + "/" + orbit + "_clutterSim_multilook_analysis.png"

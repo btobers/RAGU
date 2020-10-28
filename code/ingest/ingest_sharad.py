@@ -36,6 +36,10 @@ def read(fpath, simpath, navcrs, body):
     rdata.nchan = 1
     rdata.dat = rdata.dat.reshape(rdata.snum,rdata.tnum)
     rdata.set_proc(rdata.dat)
+
+    # assign signal info
+    rdata.sig = {}
+    rdata.sig["signal type"] = "chirp"
     
     # convert binary .img clutter sim product to numpy array
     if simpath:

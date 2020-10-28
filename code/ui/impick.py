@@ -84,7 +84,7 @@ class impick(tk.Frame):
         tk.ttk.Separator(infoFrame,orient="vertical").pack(side="right", fill="both", padx=10, pady=4)
 
         # add entry box for peak finder window size
-        self.winSize = tk.IntVar(value=10)
+        self.winSize = tk.IntVar(value=0)
         tk.Entry(infoFrame, textvariable=self.winSize, width = 5).pack(side="right")
         tk.Label(infoFrame, text = "window size [#samples]: ").pack(side="right")
         tk.ttk.Separator(infoFrame,orient="vertical").pack(side="right", fill="both", padx=10, pady=4)

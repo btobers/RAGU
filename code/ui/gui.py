@@ -207,6 +207,13 @@ class mainGUI(tk.Frame):
         self.wvpick = wvpick.wvpick(self.wvTab)
         self.wvpick.set_vars()
 
+        # set up  info frame
+        infoFrame = tk.Frame(self.parent)
+        infoFrame.pack(side="bottom",fill="both")
+
+        self.siglbl = tk.Label(infoFrame, text="signal type: ", font= "Verdana 10")
+        self.siglbl.pack(side="left")
+
         # handle x-button closing of window
         self.parent.protocol("WM_DELETE_WINDOW", self.close_window)
 
@@ -367,6 +374,7 @@ class mainGUI(tk.Frame):
                     self.wvpick.set_vars()
                     self.wvpick.clear()
                     self.wvpick.set_data(self.rdata)
+                    self.siglbl.config(text = '\t\t'.join('{}: {}'.format(k, d) for k, d in self.rdata.sig.items()))
 
                 # pass basemap to impick for plotting pick location
                 if self.map_loadName and self.basemap.get_state() == 1:
@@ -558,6 +566,8 @@ class mainGUI(tk.Frame):
                 self.wvpick.clear()
                 self.wvpick.set_vars()
                 self.wvpick.set_data(self.rdata)
+                self.siglbl.config(text = '\t\t'.join('{}: {}'.format(k, d) for k, d in self.rdata.sig.items()))
+
 
                 # if basemap open, update. Only do this if line is longer than certain threshold to now waste time
                 if self.map_loadName and self.basemap.get_state() == 1:

@@ -32,6 +32,8 @@ class radar(object):
         self.dat = None
         #: int, number of data channels
         self.nchan = None
+        #:sig, signal type
+        self.sig = None
         #: radar flags object
         self.flags = flags.flags()
 

@@ -21,7 +21,7 @@ def read(fpath, navcrs, body):
     print("----------------------------------------")
     print("Loading: " + fn)
     rdata = radar(fpath)
-    rdata.fn = fn.rstrip(".DZT")
+    rdata.fn = fn[:-4]
     rdata.dtype = "gssi"
 
     # modified readgssi readdzt.dzt reader (credit, DOI: 10.5281/zenodo.3352438)
@@ -29,15 +29,17 @@ def read(fpath, navcrs, body):
 
         # skip around and read necessary attributes
         f.seek(2)
-        data_offset = struct.unpack("<h", f.read(2))[0]    # offset to data array [bits]
-        rdata.snum = struct.unpack('<h', f.read(2))[0]     # number of samples per trace
-        bits = struct.unpack('<h', f.read(2))[0]           # number of bits - datatype
+        data_offset = struct.unpack("<h", f.read(2))[0]     # offset to data array [bits]
+        rdata.snum = struct.unpack('<h', f.read(2))[0]      # number of samples per trace
+        bits = struct.unpack('<h', f.read(2))[0]            # number of bits - datatype
         f.seek(26)
-        range_ns = struct.unpack('<f', f.read(4))[0]     # data range [ns] - record time per trace
+        range_ns = struct.unpack('<f', f.read(4))[0]        # data range [ns] - record time per trace
         f.seek(52)
-        rdata.nchan = struct.unpack('<h', f.read(2))[0]   # number of data channels
+        rdata.nchan = struct.unpack('<h', f.read(2))[0]     # number of data channels
         rdata.dt = range_ns / rdata.snum * 1.0e-9           # sampling interval
-
+        # assign signal info
+        rdata.sig = {}
+        rdata.sig["signal type"] = "impulse"
         if bits == 8:
             dtype = np.uint8    # 8-bit unsigned
         elif bits == 16:
