@@ -392,8 +392,6 @@ class mainGUI(tk.Frame):
     # savePicks is method to receieve the desired pick save location from user input
     def savePicks(self):
         if self.f_loadName:
-            print(self.f_loadName)
-            print(self.rdata.fn)
             tmp_fn_out = ""
             if self.os == "darwin":
                 tmp_fn_out = tk.filedialog.asksaveasfilename(initialfile = self.rdata.fn + "_pk",
