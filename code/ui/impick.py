@@ -21,11 +21,12 @@ from scipy.interpolate import CubicSpline
 
 class impick(tk.Frame):
     # initialize impick frame with variables passed from mainGUI
-    def __init__(self, parent, cmap, eps_r, *args, **kwargs):
+    def __init__(self, parent, cmap, eps_r, fontsize, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
         self.set_cmap(cmap)
         self.eps_r = eps_r
+        self.fontsize = fontsize
         self.setup()
 
 
@@ -90,6 +91,7 @@ class impick(tk.Frame):
         tk.ttk.Separator(infoFrame,orient="vertical").pack(side="right", fill="both", padx=10, pady=4)
 
         # create matplotlib figure data canvas
+        plt.rcParams.update({'font.size': str(self.fontsize)})
         self.fig = mpl.figure.Figure()
         self.fig.patch.set_facecolor("#d9d9d9")
         self.dataCanvas = FigureCanvasTkAgg(self.fig, self.parent)
@@ -110,7 +112,7 @@ class impick(tk.Frame):
         self.secaxy0 = self.ax.twinx()
         self.secaxy0.yaxis.set_ticks_position("left")
         self.secaxy0.yaxis.set_label_position("left")
-        self.secaxy0.spines["left"].set_position(("outward", 52))
+        self.secaxy0.spines["left"].set_position(("outward", 80))
 
         # initiate a twin axis that shares the same x-axis and shows approximate depth
         self.secaxy1 = self.ax.twinx()
@@ -121,7 +123,7 @@ class impick(tk.Frame):
         self.secaxx = self.ax.twiny()
         self.secaxx.xaxis.set_ticks_position("bottom")
         self.secaxx.xaxis.set_label_position("bottom")
-        self.secaxx.spines["bottom"].set_position(("outward", 42))
+        self.secaxx.spines["bottom"].set_position(("outward", 60))
 
 
         # set zorder of secondary axes to be behind main axis (self.ax)
@@ -243,18 +245,18 @@ class impick(tk.Frame):
         self.existing_subsurf_lns = []
         count = len(self.rdata.pick.existing_twttSubsurf.items())
         for _i in range(count):
-            self.ax.plot(np.arange(rdata.tnum), utils.twtt2sample(self.rdata.pick.existing_twttSubsurf[str(_i)], self.rdata.dt))
+            self.ax.plot(np.arange(self.rdata.tnum), utils.twtt2sample(self.rdata.pick.existing_twttSubsurf[str(_i)], self.rdata.dt), linewidth=2)
             self.existing_subsurf_lns.append(self.ax.lines[_i])
 
         # plot existing surface pick layer
         if np.any(self.rdata.pick.existing_twttSurf):
-            self.existing_surf_ln = self.ax.plot(np.arange(self.rdata.tnum), utils.twtt2sample(self.rdata.pick.existing_twttSurf, self.rdata.dt), "c")
+            self.existing_surf_ln = self.ax.plot(np.arange(self.rdata.tnum), utils.twtt2sample(self.rdata.pick.existing_twttSurf, self.rdata.dt), "c", linewidth=2)
 
         # initialize lines to hold current pick segments
         self.tmp_surf_ln, = self.ax.plot(self.xln_surf,self.yln_surf,"mx")                          # empty line for surface pick segment
-        self.saved_subsurf_ln, = self.ax.plot(self.xln_subsurf_saved,self.yln_subsurf_saved,"g")    # empty line for saved subsurface pick
+        self.saved_surf_ln, = self.ax.plot(self.xln_surf_saved, self.yln_subsurf_saved, "y")        # emplty line for saved surface pick segment
         self.tmp_subsurf_ln, = self.ax.plot(self.xln_subsurf,self.yln_subsurf,"rx")                 # empty line for current pick segment
-        self.saved_surf_ln, = self.ax.plot(self.xln_surf_saved, self.yln_subsurf_saved, "y")        # plot lidar surface
+        self.saved_subsurf_ln, = self.ax.plot(self.xln_subsurf_saved,self.yln_subsurf_saved,"g")    # empty line for saved subsurface pick
 
         # update the canvas
         self.dataCanvas._tkcanvas.pack()
@@ -305,6 +307,11 @@ class impick(tk.Frame):
         self.ax.set_xlim(0, self.rdata.tnum)
         self.ax.set_ylim(self.rdata.snum, 0)
         self.set_axes()
+        self.dataCanvas.draw()
+
+    # method to clip rgam to top half for export
+    def halfExtent(self):
+        self.ax.set_ylim(self.rdata.snum//2, 0)
         self.dataCanvas.draw()
 
 
@@ -623,7 +630,7 @@ class impick(tk.Frame):
             count = len(self.rdata.pick.existing_twttSubsurf)
             n = len(self.existing_subsurf_lns)
             for _i in range(count - n):
-                self.ax.plot(np.arange(self.rdata.tnum), utils.twtt2sample(self.rdata.pick.existing_twttSubsurf[str(n - _i)], self.rdata.dt))
+                self.ax.plot(np.arange(self.rdata.tnum), utils.twtt2sample(self.rdata.pick.existing_twttSubsurf[str(n - _i)], self.rdata.dt), "g", linewidth=2)
                 self.existing_subsurf_lns.append(self.ax.lines[-1])
 
 
@@ -1038,6 +1045,14 @@ class impick(tk.Frame):
         self.add_pickLabels()
 
 
+    # set_fontsize
+    def set_fontsize(self, val):
+        for item in ([self.ax.title, self.ax.xaxis.label, self.ax.yaxis.label, self.secaxx.xaxis.label, self.secaxy0.yaxis.label, self.secaxy1.yaxis.label] +
+                    self.ax.get_xticklabels() + self.ax.get_yticklabels() + self.secaxx.get_xticklabels() + self.secaxy0.get_yticklabels() + self.secaxy1.get_yticklabels()):
+            item.set_fontsize(val)
+        self.fig.canvas.draw()
+
+
     # set axis labels
     def set_axes(self):
         # update twtt and depth (subradar dist.)
@@ -1082,12 +1097,12 @@ class impick(tk.Frame):
 
 
     # save_fig is a method to receive the pick save location from gui and save using utils.save
-    def save_fig(self, f_saveName, figSize):
+    def save_fig(self, f_saveName, figSize, figClip):
         self.f_saveName = f_saveName
         # zoom out to full rgram extent to save pick image
         self.fullExtent()
-        if self.im_status.get() =="sim":
-            self.show_data()
+        if figClip:
+            self.halfExtent()
         # temporarily turn sliders to invisible for saving image
         self.ax_cmax.set_visible(False)
         self.ax_cmin.set_visible(False)
@@ -1102,10 +1117,28 @@ class impick(tk.Frame):
         self.fig.set_size_inches((float(figSize[0]),float(figSize[1])))    # set figsize to wide aspect ratio
         # hide existing picks
         self.remove_existing_subsurf()
+
+        # save data fig with picks
+        if self.im_status.get() =="sim":
+            self.show_data()
         self.safe_draw()
-        export.im(f_saveName, self.fig)
+        export.im(f_saveName, self.fig, imtype="dat")
+
+        # save sim fig if sim exists
+        if not (self.rdata.sim == 0).all():
+            self.show_sim()
+            # ensure picks are hidden
+            self.pick_vis.set(False)
+            self.hide_picks()
+            self.safe_draw()
+            export.im(f_saveName, self.fig, imtype="sim")
+            self.pick_vis.set(True)
+            self.show_picks()
+            self.show_data()
+
         # return figsize to intial values and make sliders visible again
         self.fig.set_size_inches((w,h))
+        self.fullExtent()
         self.ax_cmax.set_visible(True)
         self.ax_cmin.set_visible(True)
         self.reset_ax.set_visible(True)

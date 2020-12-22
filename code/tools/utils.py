@@ -126,6 +126,20 @@ def powdB2amp(array):
     return np.power(10, (array / 20))
 
 
+# pkampwind
+def pkampwind(array, idx, windsize):
+    # loop through array columns and find peak greater than 1  row idx within window of given idx
+    # use gradient to find maximum index where absolute value of derivative is greater than 1 sigma
+    out = np.repeat(np.nan, array.shape[1])
+    grad = np.gradient(array, axis = 1)
+    std = np.std(array, axis = 0)
+    for _i in range(array.shape[1]):
+        if np.isnan(idx[_i]):
+            continue
+        out[_i] = int(idx[_i] - (windsize/2)) + np.argmax(np.abs(grad[int(idx[_i] - (windsize/2)):int(idx[_i] + (windsize/2)), _i]) > std[_i])
+    return out
+
+
 def print_pickInfo(data, trace, sample):
     v = C/(np.sqrt(3.15))        # EM wave veloity in ice - for thickness calculation
 

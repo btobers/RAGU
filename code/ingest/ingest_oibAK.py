@@ -30,6 +30,7 @@ def read_h5(fpath, navcrs, body):
     # h5 radar data group structure        
     # |-raw
     # |  |-rx0
+    # |  |-tx0    
     # |  |-loc0
     # |-ext
     # |  |-nav0
@@ -42,7 +43,7 @@ def read_h5(fpath, navcrs, body):
     # pull necessary raw group data
     rdata.snum = int(f["raw"]["rx0"].attrs["samplesPerTrace"])                  # samples per trace in rgram
     rdata.tnum = int(f["raw"]["rx0"].attrs["numTrace"])                         # number of traces in rgram 
-    rdata.dt = 1/ f["raw"]["rx0"].attrs["samplingFrequency-Hz"]                 # sampling interval, sec
+    rdata.dt = 1/ f["raw"]["rx0"].attrs["samplingFrequency"]                 # sampling interval, sec
     rdata.nchan = 1
 
     # pull necessary drv group data
@@ -51,12 +52,12 @@ def read_h5(fpath, navcrs, body):
 
     # assign signal info
     rdata.sig = {}
-    rdata.sig["signal type"] = f["raw"]["tx0"].attrs["Signal"].decode() 
-    rdata.sig["cf [MHz]"] = f["raw"]["tx0"].attrs["CenterFrequency-Hz"] * 1e-6
+    rdata.sig["signal type"] = f["raw"]["tx0"].attrs["signal"].decode() 
+    rdata.sig["cf [MHz]"] = f["raw"]["tx0"].attrs["centerFrequency"] * 1e-6
     if rdata.sig["signal type"] == "chirp":
-        rdata.sig["badwidth [%]"] = f["raw"]["tx0"].attrs["Bandwidth-Pct"] * 100
-    if rdata.sig["signal type"] != "impulse":
-        rdata.sig["pulse length [\u03BCs]"] = f["raw"]["tx0"].attrs["Length-S"] * 1e6
+        rdata.sig["badwidth [%]"] = f["raw"]["tx0"].attrs["bandwidth"] * 100
+        rdata.sig["pulse length [\u03BCs]"] = f["raw"]["tx0"].attrs["length"] * 1e6
+    rdata.sig["prf [kHz]"] = f["raw"]["tx0"].attrs["pulseRepetitionFrequency"] * 1e-3
 
     # parse nav
     rdata.navdf = navparse.getnav_oibAK_h5(fpath, navcrs, body)
@@ -88,6 +89,14 @@ def read_h5(fpath, navcrs, body):
     rdata.pick.current_surf = np.repeat(np.nan, rdata.tnum)
 
     f.close()                                                   # close the file
+
+    # # temporary fix to roll array for impulse data to line up with surface - find offset by windowing around lidar surface
+    # if (rdata.sig["signal type"] == "impulse") and (not np.isnan(rdata.pick.existing_twttSurf).all()):
+    #     lidarsrf = utils.twtt2sample(rdata.pick.existing_twttSurf, rdata.dt)
+    #     pksrf = utils.pkampwind(rdata.dat, lidarsrf, 60)
+    #     avoffset = np.nanmean(lidarsrf - pksrf)
+    #     rdata.dat = np.roll(rdata.dat, int(round(avoffset)), axis=0)
+    #     rdata.set_proc(np.abs(rdata.dat))
 
     return rdata
 

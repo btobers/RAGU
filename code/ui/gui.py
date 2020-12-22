@@ -45,6 +45,9 @@ class mainGUI(tk.Frame):
         self.tab = "profile"
         self.eps_r = tk.DoubleVar(value=self.conf["output"]["eps_r"])
         self.figSize = tk.StringVar(value="21,7")
+        self.figfontSize = tk.DoubleVar(value="14")
+        self.figclip = tk.BooleanVar()
+        self.figclip.set(False)
         self.cmap = tk.StringVar(value="Greys_r")
         self.debugState = tk.BooleanVar()
         self.debugState.set(False)
@@ -200,7 +203,7 @@ class mainGUI(tk.Frame):
         self.nb.bind("<<NotebookTabChanged>>", self.tab_change)
 
         # initialize impick
-        self.impick = impick.impick(self.imTab, self.cmap.get(), self.eps_r.get())
+        self.impick = impick.impick(self.imTab, self.cmap.get(), self.eps_r.get(), self.figfontSize.get())
         self.impick.set_vars()
 
         # initialize wvpick
@@ -394,14 +397,15 @@ class mainGUI(tk.Frame):
         if self.f_loadName:
             tmp_fn_out = ""
             if self.os == "darwin":
-                tmp_fn_out = tk.filedialog.asksaveasfilename(initialfile = self.rdata.fn + "_pk",
+                tmp_fn_out = tk.filedialog.asksaveasfilename(initialfile = self.rdata.fn + "_pk_" + self.conf["param"]["uid"],
                                 initialdir = self.conf["path"]["outPath"], title = "save picks")
                                 
             else:
-                tmp_fn_out = tk.filedialog.asksaveasfilename(initialfile = self.rdata.fn + "_pk",
+                tmp_fn_out = tk.filedialog.asksaveasfilename(initialfile = self.rdata.fn + "_pk_" + self.conf["param"]["uid"],
                                 initialdir = self.conf["path"]["outPath"], title = "save picks", filetypes = [("all files", ".*"),
                                                                                                             ("comma-separated values",".csv"),
-                                                                                                            ("esri shapefile", ".shp")])
+                                                                                                            ("esri shapefile", ".shp"),
+                                                                                                            ("png image", ".png")])
 
 
             if tmp_fn_out:
@@ -416,13 +420,12 @@ class mainGUI(tk.Frame):
                 # export
                 if (self.conf["output"]["csv"]) or (ext == ".csv"):
                     export.csv(self.f_saveName + ".csv", self.rdata.out)
-                if (self.conf["output"]["shp"]) or (ext == ".shp"):
+                if (self.conf["output"].getboolean("shp")) or (ext == ".shp"):
                     export.shp(self.f_saveName + ".shp", self.rdata.out, self.conf["nav"]["crs"])
-                if self.rdata.fpath.endswith(".h5") and (tk.messagebox.askyesno("export picks", "save picks to data file?") == True):
-                    export.h5(self.rdata.fpath, self.rdata.out)
-                if self.conf["output"]["fig"]:
-                    self.impick.save_fig(self.f_saveName, self.figSize.get().split(","))
-
+                if (self.conf["output"].getboolean("fig")) or (ext == ".png"):
+                    self.impick.save_fig(self.f_saveName + ".png", self.figSize.get().split(","), self.figclip.get())
+                # if (self.rdata.fpath.endswith(".h5")) and (tk.messagebox.askyesno("export picks", "save picks to data file?") == True):
+                #     export.h5(self.rdata.fpath, self.rdata.out)
 
     # saveProc is a method to save processed radar data
     def saveProc(self):
@@ -722,6 +725,14 @@ class mainGUI(tk.Frame):
 
         row = tk.Frame(settingsWindow)
         row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+        lab = tk.Label(row, width=25, text="cmap", anchor='w')
+        lab.pack(side=tk.LEFT)
+        tk.Radiobutton(row,text="greys_r", variable=self.cmap, value="Greys_r").pack(side="top",anchor="w")
+        tk.Radiobutton(row,text="gray", variable=self.cmap, value="gray").pack(side="top",anchor="w")
+        tk.Radiobutton(row,text="seismic", variable=self.cmap, value="seismic").pack(side="top",anchor="w")
+
+        row = tk.Frame(settingsWindow)
+        row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
         lab = tk.Label(row, width=25, text="export fig. size [w,h]", anchor='w')
         lab.pack(side=tk.LEFT)
         self.figEnt = tk.Entry(row,textvariable=self.figSize)
@@ -729,11 +740,18 @@ class mainGUI(tk.Frame):
 
         row = tk.Frame(settingsWindow)
         row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-        lab = tk.Label(row, width=25, text="cmap", anchor='w')
+        lab = tk.Label(row, width=25, text="fig. font size", anchor='w')
         lab.pack(side=tk.LEFT)
-        tk.Radiobutton(row,text="greys_r", variable=self.cmap, value="Greys_r").pack(side="top",anchor="w")
-        tk.Radiobutton(row,text="gray", variable=self.cmap, value="gray").pack(side="top",anchor="w")
-        tk.Radiobutton(row,text="seismic", variable=self.cmap, value="seismic").pack(side="top",anchor="w")
+        self.figEnt = tk.Entry(row,textvariable=self.figfontSize)
+        self.figEnt.pack(side=tk.RIGHT, expand=tk.YES, fill=tk.X)
+
+        row = tk.Frame(settingsWindow)
+        row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+        lab = tk.Label(row, width=25, text="export fig. clip", anchor='w')
+        lab.pack(side=tk.LEFT)
+        tk.Radiobutton(row,text="yes", variable=self.figclip, value=True).pack(side="left")
+        tk.Radiobutton(row,text="no", variable=self.figclip, value=False).pack(side="left")
+
 
         row = tk.Frame(settingsWindow)
         row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
@@ -752,7 +770,6 @@ class mainGUI(tk.Frame):
 
 
     def updateSettings(self):
-        self.figSize.set(self.figEnt.get())
         try:
             float(self.epsEnt.get())
             self.eps_r.set(self.epsEnt.get())
@@ -768,7 +785,10 @@ class mainGUI(tk.Frame):
             float(size[1])
         except:
             self.figSize.set("21,7")
-        
+
+        # set font size
+        self.impick.set_fontsize(self.figfontSize.get())
+
         # pass updated dielectric to impick
         self.impick.set_eps_r(self.eps_r.get())
         self.impick.set_axes()

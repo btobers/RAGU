@@ -78,7 +78,7 @@ class basemap(tk.Frame):
         self.map_fig_ax = self.map_fig.add_subplot(111)
         self.bm_im = self.map_fig_ax.imshow(np.ones((100,100)), cmap=self.cmap.get(), aspect="auto")
         self.map_fig_ax.set_visible(False)
-        self.map_fig_ax.set(xlabel = "x [m]", ylabel = "y [m]")
+        self.map_fig_ax.set(xlabel = "x [km]", ylabel = "y [km]")
         # initialize artists
         self.track_ln, = self.map_fig_ax.plot([], [], "k.", ms=.1, picker=True)
         self.track_start_ln, = self.map_fig_ax.plot([], [], "go", ms=3, label="start")

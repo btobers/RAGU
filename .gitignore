@@ -8,4 +8,4 @@ __pycache__/
 *.pyc
 
 # config file
-config.ini
+# config.ini

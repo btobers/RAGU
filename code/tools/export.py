@@ -53,9 +53,12 @@ def pick_math(rdata, eps_r, amp_out = True):
     subsrfElev = gndElev - thick
 
     if (amp_out) and (rdata.dtype != "marsis"):
+
         # if raw data is complex, take absolute value to get amplitude
-        if not np.isreal(rdata.dat).all():
+        if np.iscomplex(rdata.dat).all():
             amp = np.abs(rdata.dat)
+        elif np.iscomplexobj(rdata.dat):
+            amp = np.real(rdata.dat)
         else:
             amp = rdata.dat
 
@@ -136,11 +139,15 @@ def h5(fpath, df):
 
 
 # im is a function for exporting the pick image
-def im(fpath, fig, extent=None):
-    fout = fpath.rstrip(".csv") + ".png"
-    fig.savefig(fout, dpi = 500, bbox_inches='tight', pad_inches = 0.05, transparent=True)# facecolor = "#d9d9d9")
+def im(fpath, fig, imtype = "dat"):
+    # update fname
+    if imtype == "sim":
+        fpath_split = fpath.split("_pk")
+        fpath = fpath_split[0] + "_sim" + fpath_split[1][-4:]
 
-    print("figure exported successfully:\t" + fout)
+    fig.savefig(fpath, dpi = 500, bbox_inches='tight', pad_inches = 0.05, transparent=True)# facecolor = "#d9d9d9")
+
+    print(imtype + " figure exported successfully:\t" + fpath)
 
 
 # proc is a method to export the processed radar data - for now just as a csv file array
