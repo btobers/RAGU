@@ -87,6 +87,10 @@ $ conda env create -f nose_env.yml
 1. Prior to running NOSEpick, set appropriate data paths, data coordinate reference system, and output preferences in *config.ini*. **Path variables may be left blank, but must remain uncommented**.
 ```
 ### config.ini ###
+[param]
+# str uid: user id 
+uid = uid
+
 [path]
 # str datPath: data directory path
 datPath =
