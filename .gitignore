@@ -6,6 +6,3 @@ __pycache__/
 
 # python bytecode
 *.pyc
-
-# config file
-# config.ini
