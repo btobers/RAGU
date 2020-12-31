@@ -18,13 +18,13 @@ import sys
 
 # method to ingest OIB-AK radar hdf5 data format
 def read_h5(fpath, navcrs, body):
-    fn = fpath.split("/")[-1]
-    print("----------------------------------------")
-    print("Loading: " + fn)
     rdata = radar(fpath)
-    rdata.fn = fn[:-3]
+    rdata.fn = fpath.split("/")[-1][:-3]
     rdata.dtype = "oibak"
+
     # read in .h5 file
+    print("----------------------------------------")
+    print("Loading: " + rdata.fn)
     f = h5py.File(rdata.fpath, "r")                      
 
     # h5 radar data group structure        
@@ -43,12 +43,16 @@ def read_h5(fpath, navcrs, body):
     # pull necessary raw group data
     rdata.snum = int(f["raw"]["rx0"].attrs["samplesPerTrace"])                  # samples per trace in rgram
     rdata.tnum = int(f["raw"]["rx0"].attrs["numTrace"])                         # number of traces in rgram 
-    rdata.dt = 1/ f["raw"]["rx0"].attrs["samplingFrequency"]                 # sampling interval, sec
+    rdata.dt = 1/ f["raw"]["rx0"].attrs["samplingFrequency"]                    # sampling interval, sec
     rdata.nchan = 1
 
-    # pull necessary drv group data
+    # pull radar proc and sim arrays
     rdata.dat = f["drv/proc0"][:]                                               # pulse compressed array
     rdata.set_proc(np.abs(rdata.dat))
+    if "clutter0" in f["drv"].keys():
+        rdata.set_sim(f["drv"]["clutter0"][:])                                  # simulated clutter array
+    else:
+        rdata.set_sim(np.ones(rdata.dat.shape))                                 # empty clutter array if no sim exists
 
     # assign signal info
     rdata.sig = {}
@@ -62,21 +66,18 @@ def read_h5(fpath, navcrs, body):
     # parse nav
     rdata.navdf = navparse.getnav_oibAK_h5(fpath, navcrs, body)
     
-    # pull lidar surface elevation if possible
+    # pull lidar surface elevation
     if "srf0" in f["ext"].keys():
         rdata.set_gndElev(f["ext"]["srf0"][:])                                  # surface elevation from lidar, averaged over radar first fresnel zone per trace (see code within /zippy/MARS/code/xped/hfProc/ext)
+        # read in existing surface pick
+        if "twtt_surf" in f["drv"]["pick"].keys():
+            rdata.pick.existing_twttSurf = f["drv"]["pick"]["twtt_surf"][:]
+        else:
+            # calculate twtt_surf
+            rdata.pick.existing_twttSurf = utils.depth2twtt(rdata.navdf["elev"] - rdata.gndElev, eps_r=1)
     # create empty arrays to hold surface elevation and twtt otherwise
     else:
         rdata.set_gndElev(np.repeat(np.nan, rdata.tnum))
-
-    if "clutter0" in f["drv"].keys():
-        rdata.set_sim(f["drv"]["clutter0"][:])                                  # simulated clutter array
-    else:
-        rdata.set_sim(np.ones(rdata.dat.shape))                                 # empty clutter array if no sim exists
-
-    # read in existing surface picks
-    if "twtt_surf" in f["drv"]["pick"].keys():
-        rdata.pick.existing_twttSurf =f["drv"]["pick"]["twtt_surf"][:]
 
     # read in existing subsurface picks
     num_file_pick_lyr = len(fnmatch.filter(f["drv"]["pick"].keys(), "twtt_subsurf*"))
