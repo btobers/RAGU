@@ -170,6 +170,7 @@ class mainGUI(tk.Frame):
         gainMenu.add_command(label="t-pow", command=lambda:self.procTools("tpow"))
         procMenu.add_cascade(label="gain", menu = gainMenu)
 
+        procMenu.add_command(label="shift sim", command=lambda: self.procTools("shiftSim"))
         procMenu.add_command(label="restore original data", command=lambda:self.procTools("restore"))
 
         # map menu items
@@ -654,9 +655,9 @@ class mainGUI(tk.Frame):
 
     # processing tools
     def procTools(self, arg = None):
-        print("WARNING:\tprocessing tools are still in development!")
         if self.f_loadName:
-            procFlag = False
+            procFlag = None
+            simFlag = None
             if arg == "tzero":
                 sampzero, proc = processing.set_tzero(self.rdata.dat, self.rdata.proc, self.rdata.dt)
                 if sampzero > 0:
@@ -695,6 +696,14 @@ class mainGUI(tk.Frame):
                 proc = processing.tpowGain(np.abs(self.rdata.dat), np.arange(self.rdata.snum)*self.rdata.dt, power=power)
                 procFlag = True
 
+            elif arg == "shiftSim":
+                shift = tk.simpledialog.askinteger("input","clutter sim lateral shift (# traces)?")
+                if shift:
+                    sim = processing.shiftSim(self.rdata.sim, shift)
+                    self.rdata.flags.simshift += shift
+                    simFlag = True
+                    print("clutter simulation shifted by a total of " + str(self.rdata.flags.simshift) + " traces, or " + str(self.rdata.flags.simshift * self.rdata.sig["prf [kHz]"] * 1e3) + " seconds")
+
             elif arg == "restore":
                 # restore origianl rdata
                 proc = processing.restore(self.rdata.dtype, self.rdata.dat)
@@ -711,6 +720,11 @@ class mainGUI(tk.Frame):
                 self.wvpick.clear()
                 self.wvpick.set_vars()
                 self.wvpick.set_data(self.rdata)
+
+            if simFlag:
+                self.rdata.set_sim(utils.powdB2amp(sim))
+                self.impick.set_crange()
+                self.impick.drawData(force=True)
 
 
     def settings(self):

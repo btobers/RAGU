@@ -12,3 +12,6 @@ class flags(object):
         # basic data file attributes
         #: sampzero, zero sample data setting following time zero adjustment
         self.sampzero = 0
+
+        #: simshift, number of traces sim has been shifted to line up with data
+        self.simshift = 0

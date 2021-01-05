@@ -158,7 +158,7 @@ def agcGain(data, window=50, scaling_factor=50):
     return newdata
 
 
-def tpowGain(data,twtt,power):
+def tpowGain(data, twtt, power):
     """
     Apply a t-power gain to each trace with the given exponent.
 
@@ -174,6 +174,21 @@ def tpowGain(data,twtt,power):
     factmat = np.matlib.repmat(factor,1,data.shape[1])
     out = np.multiply(data,factmat)
     print("t^" + str(power) + " gain applied")
+    return out
+
+
+def shiftSim(data, shift):
+    """
+    apply lateral shift to clutter sim to line up with data.
+    INPUT:
+    data      data matrix whose columns contain the traces
+    shift     lateral shift [# columns]
+    prf       pulse repitition frequency to get total time of shift
+    
+    OUTPUT:
+    out_sim rolled sim array
+    """
+    out = np.roll(data, shift, axis=1)
     return out
 
 
