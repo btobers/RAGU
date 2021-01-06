@@ -194,7 +194,7 @@ def read(fpath, navcrs, body):
 
     # assign signal info
     rdata.sig = {}
-    rdata.sig["signal type"] = impulse
+    rdata.sig["signal type"] = "impulse"
 
     # convert signed int amplitude to floating point for displaying
     rdata.set_proc(rdata.dat.astype(np.float))
