@@ -37,9 +37,7 @@ def read(fpath, navcrs, body):
         f.seek(52)
         rdata.nchan = struct.unpack('<h', f.read(2))[0]     # number of data channels
         rdata.dt = range_ns / rdata.snum * 1.0e-9           # sampling interval
-        # assign signal info
-        rdata.sig = {}
-        rdata.sig["signal type"] = "impulse"
+
         if bits == 8:
             dtype = np.uint8    # 8-bit unsigned
         elif bits == 16:
@@ -87,5 +85,9 @@ def read(fpath, navcrs, body):
 
     # initialize surface pick
     rdata.pick.current_surf = np.repeat(np.nan, rdata.tnum)
+
+    # assign signal info
+    rdata.sig = {}
+    rdata.sig["signal type"] = "impulse"
     
     return rdata

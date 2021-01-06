@@ -55,10 +55,6 @@ def read(fpath, simpath, navcrs, body):
     rdata.dat = np.sqrt(rdata.dat)
     rdata.set_proc(rdata.dat)
 
-    # assign signal info
-    rdata.sig = {}
-    rdata.sig["signal type"] = "chirp"
-
     # convert png clutter sim product to numpy array
     if simpath:
         simpath = simpath + "/" + orbit + "_clutterSim_multilook_analysis.png"
@@ -74,6 +70,10 @@ def read(fpath, simpath, navcrs, body):
         sim = np.ones((rdata.snum,rdata.tnum))
 
     rdata.set_sim(sim)
+
+    # assign signal info
+    rdata.sig = {}
+    rdata.sig["signal type"] = "chirp"
 
     # open geom nav file for rgram
     geom_path = glob.glob(root + "*tab")[0]
