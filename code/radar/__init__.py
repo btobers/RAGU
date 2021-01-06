@@ -46,8 +46,6 @@ class radar(object):
         self.twtt = None
 
         # optional attributes
-        #: np.ndarray(tnum,) surface index per trace [samle #]
-        self.surf = None
         #: np.ndarray(tnum,) ground elevation per trace [m.a.s.l.]
         self.gndElev = None
         #: np.ndarray(snum x tnum) processed radat data - this is what will actually be displayed, as to not modify original data

@@ -70,9 +70,11 @@ def read(fpath, navcrs, body):
     # convert gssi signed int amplitude to floating point for displaying
     rdata.set_proc(rdata.dat.astype(np.float))
 
-    rdata.set_sim(np.ones(rdata.dat.shape))                # place holder for clutter data
+    rdata.set_sim(np.ones(rdata.dat.shape))                 # place holder for clutter data
 
-    rdata.surf = np.repeat(np.nan, rdata.tnum)              # place holder for surface index
+    # assign signal info
+    rdata.sig = {}
+    rdata.sig["signal type"] = "impulse"
 
     # read in gps data if exists
     infile_gps = fpath.replace(".DZT",".DZG")
@@ -85,9 +87,5 @@ def read(fpath, navcrs, body):
 
     # initialize surface pick
     rdata.pick.current_surf = np.repeat(np.nan, rdata.tnum)
-
-    # assign signal info
-    rdata.sig = {}
-    rdata.sig["signal type"] = "impulse"
     
     return rdata
