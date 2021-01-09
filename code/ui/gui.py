@@ -44,11 +44,18 @@ class mainGUI(tk.Frame):
         self.map_loadName = ""
         self.tab = "profile"
         self.eps_r = tk.DoubleVar(value=self.conf["output"]["eps_r"])
-        self.figSize = tk.StringVar(value="21,7")
-        self.figfontSize = tk.DoubleVar(value="14")
-        self.figclip = tk.BooleanVar()
-        self.figclip.set(False)
-        self.cmap = tk.StringVar(value="Greys_r")
+        # dictionary to hold figure settings
+        self.figsettings = {"cmap": tk.StringVar(value="Greys_r"),
+                            "figsize": tk.StringVar(value="21,7"), 
+                            "fontsize": tk.DoubleVar(value="14"),
+                            "figtitle": tk.BooleanVar(),
+                            "figxaxis": tk.BooleanVar(),
+                            "figyaxis": tk.BooleanVar(),
+                            "figclip": tk.BooleanVar()}
+        self.figsettings["figxaxis"].set(True)        
+        self.figsettings["figyaxis"].set(True)        
+        self.figsettings["figtitle"].set(True)        
+        self.figsettings["figclip"].set(False)
         self.debugState = tk.BooleanVar()
         self.debugState.set(False)
         self.os = sys.platform
@@ -204,7 +211,7 @@ class mainGUI(tk.Frame):
         self.nb.bind("<<NotebookTabChanged>>", self.tab_change)
 
         # initialize impick
-        self.impick = impick.impick(self.imTab, self.cmap.get(), self.eps_r.get(), self.figfontSize.get())
+        self.impick = impick.impick(self.imTab, self.figsettings, self.eps_r.get())
         self.impick.set_vars()
 
         # initialize wvpick
@@ -419,12 +426,12 @@ class mainGUI(tk.Frame):
                 self.rdata.set_out(export.pick_math(self.rdata, self.eps_r.get(), self.conf["output"]["amp"]))
 
                 # export
-                if (self.conf["output"]["csv"]) or (ext == ".csv"):
+                if (self.conf["output"].getboolean("csv")) or (ext == ".csv"):
                     export.csv(self.f_saveName + ".csv", self.rdata.out)
                 if (self.conf["output"].getboolean("shp")) or (ext == ".shp"):
                     export.shp(self.f_saveName + ".shp", self.rdata.out, self.conf["nav"]["crs"])
                 if (self.conf["output"].getboolean("fig")) or (ext == ".png"):
-                    self.impick.save_fig(self.f_saveName + ".png", self.figSize.get().split(","), self.figclip.get())
+                    self.impick.save_fig(self.f_saveName + ".png")
                 # if (self.rdata.fpath.endswith(".h5")) and (tk.messagebox.askyesno("export picks", "save picks to data file?") == True):
                 #     export.h5(self.rdata.fpath, self.rdata.out)
 
@@ -732,6 +739,14 @@ class mainGUI(tk.Frame):
 
         row = tk.Frame(settingsWindow)
         row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+        label = tk.Label(row, text = "general")
+        label.pack(side=tk.TOP)
+        f = tk.font.Font(label, label.cget("font"))
+        f.configure(underline=True)
+        label.configure(font=f)
+
+        row = tk.Frame(settingsWindow)
+        row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
         lab = tk.Label(row, width=25, text="dielectric const.", anchor='w')
         lab.pack(side=tk.LEFT)
         self.epsEnt = tk.Entry(row,textvariable=self.eps_r)
@@ -739,40 +754,73 @@ class mainGUI(tk.Frame):
 
         row = tk.Frame(settingsWindow)
         row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-        lab = tk.Label(row, width=25, text="cmap", anchor='w')
+        lab = tk.Label(row, width=25, text="debug mode", anchor='w')
         lab.pack(side=tk.LEFT)
-        tk.Radiobutton(row,text="greys_r", variable=self.cmap, value="Greys_r").pack(side="top",anchor="w")
-        tk.Radiobutton(row,text="gray", variable=self.cmap, value="gray").pack(side="top",anchor="w")
-        tk.Radiobutton(row,text="seismic", variable=self.cmap, value="seismic").pack(side="top",anchor="w")
+        tk.Radiobutton(row,text="on", variable=self.debugState, value=True).pack(side="left")
+        tk.Radiobutton(row,text="off", variable=self.debugState, value=False).pack(side="left")
 
         row = tk.Frame(settingsWindow)
         row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-        lab = tk.Label(row, width=25, text="export fig. size [w,h]", anchor='w')
+        label = tk.Label(row, text = "image")
+        label.pack(side=tk.TOP)
+        f = tk.font.Font(label, label.cget("font"))
+        f.configure(underline=True)
+        label.configure(font=f)
+
+        row = tk.Frame(settingsWindow)
+        row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+        lab = tk.Label(row, width=25, text="color map", anchor='w')
         lab.pack(side=tk.LEFT)
-        self.figEnt = tk.Entry(row,textvariable=self.figSize)
+        tk.Radiobutton(row,text="greys_r", variable=self.figsettings["cmap"], value="Greys_r").pack(side="top",anchor="w")
+        tk.Radiobutton(row,text="gray", variable=self.figsettings["cmap"], value="gray").pack(side="top",anchor="w")
+        tk.Radiobutton(row,text="seismic", variable=self.figsettings["cmap"], value="seismic").pack(side="top",anchor="w")
+
+        row = tk.Frame(settingsWindow)
+        row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+        lab = tk.Label(row, width=25, text="fig. size [w,h]", anchor='w')
+        lab.pack(side=tk.LEFT)
+        self.figEnt = tk.Entry(row,textvariable=self.figsettings["figsize"])
         self.figEnt.pack(side=tk.RIGHT, expand=tk.YES, fill=tk.X)
 
         row = tk.Frame(settingsWindow)
         row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-        lab = tk.Label(row, width=25, text="fig. font size", anchor='w')
+        lab = tk.Label(row, width=25, text="font size", anchor='w')
         lab.pack(side=tk.LEFT)
-        self.figEnt = tk.Entry(row,textvariable=self.figfontSize)
+        self.figEnt = tk.Entry(row,textvariable=self.figsettings["fontsize"])
         self.figEnt.pack(side=tk.RIGHT, expand=tk.YES, fill=tk.X)
+        
+        row = tk.Frame(settingsWindow)
+        row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+        lab = tk.Label(row, width=25, text="fig. labels:", anchor='w')
+        lab.pack(side=tk.LEFT)
+
+        row = tk.Frame(settingsWindow)
+        row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+        lab = tk.Label(row, width=25, text="\ttitle:", anchor='w')
+        lab.pack(side=tk.LEFT)
+        tk.Radiobutton(row,text="on", variable=self.figsettings["figtitle"], value=True).pack(side="left")
+        tk.Radiobutton(row,text="off", variable=self.figsettings["figtitle"], value=False).pack(side="left")
+
+        row = tk.Frame(settingsWindow)
+        row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+        lab = tk.Label(row, width=25, text="\tx-axis:", anchor='w')
+        lab.pack(side=tk.LEFT)
+        tk.Radiobutton(row,text="on", variable=self.figsettings["figxaxis"], value=True).pack(side="left")
+        tk.Radiobutton(row,text="off", variable=self.figsettings["figxaxis"], value=False).pack(side="left")
+
+        row = tk.Frame(settingsWindow)
+        row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+        lab = tk.Label(row, width=25, text="\ty-axis:", anchor='w')
+        lab.pack(side=tk.LEFT)
+        tk.Radiobutton(row,text="on", variable=self.figsettings["figyaxis"], value=True).pack(side="left")
+        tk.Radiobutton(row,text="off", variable=self.figsettings["figyaxis"], value=False).pack(side="left")
 
         row = tk.Frame(settingsWindow)
         row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
         lab = tk.Label(row, width=25, text="export fig. clip", anchor='w')
         lab.pack(side=tk.LEFT)
-        tk.Radiobutton(row,text="yes", variable=self.figclip, value=True).pack(side="left")
-        tk.Radiobutton(row,text="no", variable=self.figclip, value=False).pack(side="left")
-
-
-        row = tk.Frame(settingsWindow)
-        row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-        lab = tk.Label(row, width=25, text="debug mode", anchor='w')
-        lab.pack(side=tk.LEFT)
-        tk.Radiobutton(row,text="on", variable=self.debugState, value=True).pack(side="left")
-        tk.Radiobutton(row,text="off", variable=self.debugState, value=False).pack(side="left")
+        tk.Radiobutton(row,text="yes", variable=self.figsettings["figclip"], value=True).pack(side="left")
+        tk.Radiobutton(row,text="no", variable=self.figsettings["figclip"], value=False).pack(side="left")
 
         row = tk.Frame(settingsWindow)
         row.pack(side=tk.TOP, anchor='c')
@@ -791,24 +839,21 @@ class mainGUI(tk.Frame):
             self.eps_r.set(3.15)
 
         # make sure fig size is of correct format
-        size = self.figSize.get().split(",")
+        size = self.figsettings["figsize"].get().split(",")
         if len(size) != 2:
-            self.figSize.set("21,7")
+            self.figsettings["figsize"].set("21,7")
         try:
             float(size[0])
             float(size[1])
         except:
-            self.figSize.set("21,7")
+            self.figsettings["figsize"].set("21,7")
 
-        # set font size
-        self.impick.set_fontsize(self.figfontSize.get())
+        # update impick figure settings
+        self.impick.update_figsettings(self.figsettings)
 
         # pass updated dielectric to impick
         self.impick.set_eps_r(self.eps_r.get())
         self.impick.set_axes()
-
-        # pass cmap
-        self.impick.set_cmap(self.cmap.get())
 
         # pass updated debug state to impick
         self.impick.set_debugState(self.debugState.get())

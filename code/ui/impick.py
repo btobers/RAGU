@@ -21,12 +21,11 @@ from scipy.interpolate import CubicSpline
 
 class impick(tk.Frame):
     # initialize impick frame with variables passed from mainGUI
-    def __init__(self, parent, cmap, eps_r, fontsize, *args, **kwargs):
+    def __init__(self, parent, figsettings, eps_r, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
-        self.set_cmap(cmap)
+        self.figsettings = figsettings
         self.eps_r = eps_r
-        self.fontsize = fontsize
         self.setup()
 
 
@@ -91,7 +90,7 @@ class impick(tk.Frame):
         tk.ttk.Separator(infoFrame,orient="vertical").pack(side="right", fill="both", padx=10, pady=4)
 
         # create matplotlib figure data canvas
-        plt.rcParams.update({'font.size': str(self.fontsize)})
+        plt.rcParams.update({'font.size': str(self.figsettings["fontsize"].get())})
         self.fig = mpl.figure.Figure()
         self.fig.patch.set_facecolor("#d9d9d9")
         self.dataCanvas = FigureCanvasTkAgg(self.fig, self.parent)
@@ -124,7 +123,6 @@ class impick(tk.Frame):
         self.secaxx.xaxis.set_ticks_position("bottom")
         self.secaxx.xaxis.set_label_position("bottom")
         self.secaxx.spines["bottom"].set_position(("outward", 60))
-
 
         # set zorder of secondary axes to be behind main axis (self.ax)
         self.secaxx.set_zorder(-100)
@@ -195,13 +193,39 @@ class impick(tk.Frame):
         self.debugState = False
         self.pickLabel.config(fg="#d9d9d9")
 
+        # set figure cmap
+        self.set_cmap(self.figsettings["cmap"].get())
+
+
+    # update_figsettings
+    def update_figsettings(self, figsettings):
+        self.figsettings = figsettings
+
+        self.set_cmap(self.figsettings["cmap"].get())
+
+        for item in ([self.ax.title, self.ax.xaxis.label, self.ax.yaxis.label, self.secaxx.xaxis.label, self.secaxy0.yaxis.label, self.secaxy1.yaxis.label] +
+                    self.ax.get_xticklabels() + self.ax.get_yticklabels() + self.secaxx.get_xticklabels() + self.secaxy0.get_yticklabels() + self.secaxy1.get_yticklabels()):
+            item.set_fontsize(self.figsettings["fontsize"].get())
+
+        self.ax.title.set_visible(self.figsettings["figtitle"].get())
+        # update x-axes
+        val = self.figsettings["figxaxis"].get()
+        self.ax.xaxis.set_visible(val)
+        self.secaxx.axis(self.figsettings["figxaxis"].get())
+        # update y-axes
+        val = self.figsettings["figyaxis"].get()
+        self.ax.yaxis.set_visible(val)
+        self.secaxy0.axis(val)
+        self.secaxy1.axis(val)
+        self.fig.canvas.draw()
+
 
     # get debug state from gui settings
     def set_debugState(self, debugState):
         self.debugState = debugState
 
 
-    # get cmap settings from gui settings
+    # set image cmap
     def set_cmap(self, cmap):
         self.cmap = mpl.cm.get_cmap(cmap)
         # set nodata value as darkest color in cmap
@@ -1045,14 +1069,6 @@ class impick(tk.Frame):
         self.add_pickLabels()
 
 
-    # set_fontsize
-    def set_fontsize(self, val):
-        for item in ([self.ax.title, self.ax.xaxis.label, self.ax.yaxis.label, self.secaxx.xaxis.label, self.secaxy0.yaxis.label, self.secaxy1.yaxis.label] +
-                    self.ax.get_xticklabels() + self.ax.get_yticklabels() + self.secaxx.get_xticklabels() + self.secaxy0.get_yticklabels() + self.secaxy1.get_yticklabels()):
-            item.set_fontsize(val)
-        self.fig.canvas.draw()
-
-
     # set axis labels
     def set_axes(self):
         # update twtt and depth (subradar dist.)
@@ -1097,11 +1113,12 @@ class impick(tk.Frame):
 
 
     # save_fig is a method to receive the pick save location from gui and save using utils.save
-    def save_fig(self, f_saveName, figSize, figClip):
+    def save_fig(self, f_saveName):
         self.f_saveName = f_saveName
         # zoom out to full rgram extent to save pick image
         self.fullExtent()
-        if figClip:
+        if self.figsettings["figclip"].get():
+            # clip to top half
             self.halfExtent()
         # temporarily turn sliders to invisible for saving image
         self.ax_cmax.set_visible(False)
@@ -1113,8 +1130,9 @@ class impick(tk.Frame):
         # ensure picks are visible
         self.pick_vis.set(True)
         self.show_picks()
-        w,h = self.fig.get_size_inches()    # get pre-save figure size
-        self.fig.set_size_inches((float(figSize[0]),float(figSize[1])))    # set figsize to wide aspect ratio
+        w0 ,h0 = self.fig.get_size_inches()    # get pre-save figure size
+        w, h = self.figsettings["figsize"].get().split(",")
+        self.fig.set_size_inches((float(w),float(h)))    # set figsize to wide aspect ratio
         # hide existing picks
         self.remove_existing_subsurf()
 
@@ -1137,7 +1155,7 @@ class impick(tk.Frame):
             self.show_data()
 
         # return figsize to intial values and make sliders visible again
-        self.fig.set_size_inches((w,h))
+        self.fig.set_size_inches((w0, h0))
         self.fullExtent()
         self.ax_cmax.set_visible(True)
         self.ax_cmin.set_visible(True)
