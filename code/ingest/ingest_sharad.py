@@ -36,10 +36,6 @@ def read(fpath, simpath, navcrs, body):
     rdata.nchan = 1
     rdata.dat = rdata.dat.reshape(rdata.snum,rdata.tnum)
     rdata.set_proc(rdata.dat)
-
-    # assign signal info
-    rdata.sig = {}
-    rdata.sig["signal type"] = "chirp"
     
     # convert binary .img clutter sim product to numpy array
     if simpath:
@@ -55,6 +51,14 @@ def read(fpath, simpath, navcrs, body):
         sim = np.ones(rdata.dat.shape)
 
     rdata.set_sim(sim)
+
+    # assign signal info
+    rdata.sig = {}
+    rdata.sig["signal type"] = "chirp"
+    rdata.sig["cf [MHz]"] = 20
+    rdata.sig["badwidth [%]"] = 50
+    rdata.sig["pulse length [\u03BCs]"] = 85
+    rdata.sig["prf [Hz]"] = 700.28
 
     # open geom nav file for rgram
     geom_path = fpath.replace("rgram","geom").replace("img","tab")

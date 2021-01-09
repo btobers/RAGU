@@ -192,16 +192,14 @@ def read(fpath, navcrs, body):
     # Power some more real variables
     rdata.dt = window / rdata.snum * 1.0e-9
 
-    # assign signal info
-    rdata.sig = {}
-    rdata.sig["signal type"] = impulse
-
     # convert signed int amplitude to floating point for displaying
     rdata.set_proc(rdata.dat.astype(np.float))
 
     rdata.set_sim(np.ones(rdata.dat.shape))                # place holder for clutter data
 
-    rdata.surf = np.repeat(np.nan, rdata.tnum)              # place holder for surface index
+    # assign signal info
+    rdata.sig = {}
+    rdata.sig["signal type"] = "impulse"
 
     # create nav object to hold lon, lat, elev
     rdata.navdf = navparse.getnav_pulseekko(infile_gps, rdata.tnum, navcrs, body)
