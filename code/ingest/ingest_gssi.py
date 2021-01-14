@@ -1,11 +1,11 @@
-# NOSEpick - Nearly Optimal Subsurface Extractor
+# RAGU - Radar Analysis Graphical Utility
 #
 # copyright © 2020 btobers <tobers.brandon@gmail.com>
 #
 # distributed under terms of the GNU GPL3.0 license
 """
-this module contains functions parsed from https://github.com/iannesbitt/readgssi to read gssi dzt files and associated dzg files for use in NOSEpick
-much of the header data which is not necessary for NOSEpick use has been removed
+this module contains functions parsed from https://github.com/iannesbitt/readgssi to read gssi dzt files and associated dzg files for use in RAGU
+much of the header data which is not necessary for RAGU use has been removed
 """
 ### imports ###
 from radar import radar

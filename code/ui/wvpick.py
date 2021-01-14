@@ -1,10 +1,10 @@
-# NOSEpick - Nearly Optimal Subsurface Extractor
+# RAGU - Radar Analysis Graphical Utility
 #
 # copyright © 2020 btobers <tobers.brandon@gmail.com>
 #
 # distributed under terms of the GNU GPL3.0 license
 """
-wvpick class is a tkinter frame which handles the NOSEpick waveform view and radar pick optimization
+wvpick class is a tkinter frame which handles the RAGU waveform view and radar pick optimization
 """
 ### imports ###
 from tools import utils

@@ -1,16 +1,16 @@
-# NOSEpick - Nearly Optimal Subsurface Extractor
+# RAGU - Radar Analysis Graphical Utility
 #
 # copyright © 2020 btobers <tobers.brandon@gmail.com>
 #
 # distributed under terms of the GNU GPL3.0 license
 """
-NOSEpick - Nearly Optimal Subsurface Extractor
+RAGU - Radar Analysis Graphical Utility
 created by: Brandon S. Tober and Michael S. Christoffersen
 date: 25JUN19
 last updated: 05FEB20
 environment requirements in nose_env.yml
 
-mainGUI class is a tkinter frame which runs the NOSEpick master GUI
+mainGUI class is a tkinter frame which runs the RAGU master GUI
 """
 ### imports ###
 from ui import impick, wvpick, basemap 
@@ -252,7 +252,7 @@ class mainGUI(tk.Frame):
         elif event.state & 4 and event.keysym == "m":
             self.map_loc()
 
-        # Ctrl+Q close NOSEpick
+        # Ctrl+Q close RAGU
         elif event.state & 4 and event.keysym == "q":
             self.close_window()
 
@@ -322,11 +322,11 @@ class mainGUI(tk.Frame):
                 self.wvpick.stepForward()
 
 
-    # close_window is a gui method to exit NOSEpick
+    # close_window is a gui method to exit RAGU
     def close_window(self):
         # check if picks have been made and saved
         if ((self.impick.get_subsurfPickFlag() == True) or (self.impick.get_surfPickFlag == True)) and (self.f_saveName == ""):
-            if tk.messagebox.askokcancel("Warning", "exit NOSEpick without saving picks?", icon = "warning") == True:
+            if tk.messagebox.askokcancel("Warning", "exit RAGU without saving picks?", icon = "warning") == True:
                 self.parent.destroy()
         else:
             self.parent.destroy()
@@ -895,7 +895,7 @@ class mainGUI(tk.Frame):
         \n[s]\t\tpan down
         \n[ctrl+s]\texport pick data
         \n[→]\t\topen next file in\n\t\tworking directory
-        \n[ctrl+q]\tquit NOSEpick
+        \n[ctrl+q]\tquit RAGU
         \n\n---picking---
         \n[ctrl+n]\tbegin new subsurface pick\n\t\tsegment
         \n[ctrl+shift+n]\tbegin new surface pick\n\t\tsegment

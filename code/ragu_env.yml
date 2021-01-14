@@ -1,7 +1,7 @@
 # this file may be used to create a conda environment using:
-# $conda env create -f nose.yml
+# $conda env create -f ragu.yml
 
-name: nose
+name: ragu
 channels:
   - defaults
 dependencies:

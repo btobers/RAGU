@@ -3,17 +3,17 @@
 ### Authors: Brandon Tober and Michael Christoffersen
 [![DOI](https://zenodo.org/badge/193940796.svg)](https://zenodo.org/badge/latestdoi/193940796)
 
-<p align="center">
+<!-- <p align="center">
   <img src="recs/NOSEpick.png" height="200"><br>
-  NOSEpick logo artist: Eric Petersen<br><br>
+  RAGU logo artist: Eric Petersen<br><br>
   <img src="recs/NOSEpick_demo.gif" height="500">
-</p>
+</p> -->
 
 ## Description
-NOSEpick is an open source GUI package developed to interpret radar sounding data, written in Python 3.
+RAGU is an open source GUI package developed to interpret radar sounding data, written in Python 3.
 
 ### Dataset Capabilities:
-NOSEpick was originally developed to work with NASA's Operation IceBridge Alaska radar sounding data. The dataset capabilities have since been expanded to include the following:
+RAGU was originally developed to work with NASA's Operation IceBridge Alaska radar sounding data. The dataset capabilities have since been expanded to include the following:
 
 - NASA OIB-AK
 - SHARAD (USRDR, USGEOM, US clutter sims)
@@ -22,9 +22,9 @@ NOSEpick was originally developed to work with NASA's Operation IceBridge Alaska
 - pulseEKKO
 
 ### File Info
-- *nose_env.yml* contains a list of NOSEpick dependencies
-- *config.ini* contains user-specified configuration file paths and information necessary to run the NOSEpick app
-- *main.py* is run to start the NOSEpick app
+- *ragu_env.yml* contains a list of RAGU dependencies
+- *config.ini* contains user-specified configuration file paths and information necessary to run the RAGU app
+- *main.py* is run to start the RAGU app
 - *ui/gui.py* handles the graphical user-interface and sets up the app
 - *ui/impick.py* handles profile-view, radargram image picking
 - *ui/wvpick.py* handles waveform-view picking optimization
@@ -60,7 +60,7 @@ A figure may also be exported displaying any completed picks. Example over Malas
   <img src="recs/20180819-215243_pk.png" height="400"><br>
 </p>
 
-## Running NOSEpick
+## Running RAGU
 
 ### System Requirements
 Supported Operating Systems:
@@ -81,10 +81,10 @@ Supported Operating Systems:
 
 To create a conda environment with the required dependencies, run the following command:
 ```
-$ conda env create -f nose_env.yml
+$ conda env create -f ragu_env.yml
 ```
 ### Setup
-1. Prior to running NOSEpick, set appropriate data paths, data coordinate reference system, and output preferences in *config.ini*. **Path variables may be left blank, but must remain uncommented**.
+1. Prior to running RAGU, set appropriate data paths, data coordinate reference system, and output preferences in *config.ini*. **Path variables may be left blank, but must remain uncommented**.
 ```
 ### config.ini ###
 [param]
@@ -120,10 +120,10 @@ shp = True
 fig = True
 ```
 
-2a. Activate NOSEpick anaconda environment - 'nose' by default:
+2a. Activate RAGU anaconda environment - 'ragu' by default:
 ```
-$ conda activate nose
-(nose)$ python main.py
+$ conda activate ragu
+(ragu)$ python main.py
 ```
 
 2b. If the default Python environment is not set as Python 3, specify:
@@ -156,10 +156,10 @@ If not already installed, install pyshortcuts:
 $ pip install pyshortcuts
 ```
 
-Use pyshortcuts to setup desktop shortcut (make sure NOSEpick conda environment is activated - 'nose' by default):
+Use pyshortcuts to setup desktop shortcut (make sure RAGU conda environment is activated - 'ragu' by default):
 ```
-$ conda activate nose
-(nose)$ pyshortcut -n NOSEpick -i ~/NOSEpick/recs/NOSEpick.ico ~/NOSEpick/code/main.py
+$ conda activate ragu
+(ragu)$ pyshortcut -n RAGU -i ~/RAGU/recs/RAGU.ico ~/RAGU/code/main.py
 ```
 
 On Ubuntu, add the following line to your .desktop file (located in ~/.local/share/applications) to handle duplicate instances:

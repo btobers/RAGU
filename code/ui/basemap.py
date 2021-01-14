@@ -1,10 +1,10 @@
-# NOSEpick - Nearly Optimal Subsurface Extractor
+# RAGU - Radar Analysis Graphical Utility
 #
 # copyright © 2020 btobers <tobers.brandon@gmail.com>
 #
 # distributed under terms of the GNU GPL3.0 license
 """
-basemap class is a tkinter frame which handles the NOSEpick basemap
+basemap class is a tkinter frame which handles the RAGU basemap
 """
 ### imports ###
 from nav import navparse
@@ -31,7 +31,7 @@ class basemap(tk.Frame):
         img = tk.PhotoImage(file="../recs/basemap_icon.png")
         self.basemap_window.tk.call("wm", "iconphoto", self.basemap_window._w, img)
         self.basemap_window.config(bg="#d9d9d9")
-        self.basemap_window.title("NOSEpick - Map Window")
+        self.basemap_window.title("RAGU - Map Window")
         self.map_display = tk.Frame(self.basemap_window)
         self.map_display.pack(side="bottom", fill="both", expand=1)
         # bind ctrl-q key to basemap_close()

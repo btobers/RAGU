@@ -1,14 +1,14 @@
-# NOSEpick - Nearly Optimal Subsurface Extractor
+# RAGU - Radar Analysis Graphical Utility
 #
 # copyright © 2020 btobers <tobers.brandon@gmail.com>
 #
 # distributed under terms of the GNU GPL3.0 license
 """
-NOSEpick - Nearly Optimal Subsurface Extractor
+RAGU - Radar Analysis Graphical Utility
 created by: Brandon S. Tober and Michael S. Christoffersen
 date: 25JUN19
 last updated: 08JUL2020
-environment requirements in nose_env.yml
+environment requirements in ragu_env.yml
 """
 ### imports ###
 import os,sys,configparser
@@ -23,7 +23,7 @@ def main():
     else:
         datPath = None
 
-    # change dir to NOSEpick code directory 
+    # change dir to RAGU code directory 
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
     # initialize tkinter
@@ -32,11 +32,11 @@ def main():
     # get screen size - open root window half screen
     w, h = root.winfo_screenwidth(), root.winfo_screenheight()
     root.geometry("%dx%d+0+0" % (.5*w, .5*h))
-    root.title("NOSEpick")
+    root.title("RAGU")
     root.config(bg="#d9d9d9")
-    img = tk.PhotoImage(file='../recs/NOSEpick_zoom.png')
-    root.tk.call('wm', 'iconphoto', root._w, img)
-    # call the NOSEpick mainGUI class
+    # img = tk.PhotoImage(file='../recs/NOSEpick_zoom.png')
+    # root.tk.call('wm', 'iconphoto', root._w, img)
+    # call the RAGU mainGUI class
     gui.mainGUI(root, datPath = datPath)
     root.mainloop()
 

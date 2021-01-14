@@ -1,4 +1,4 @@
-# NOSEpick - Nearly Optimal Subsurface Extractor
+# RAGU - Radar Analysis Graphical Utility
 #
 # Copyright © 2020 btobers <tobers.brandon@gmail.com>
 #

@@ -1,10 +1,10 @@
-# NOSEpick - Nearly Optimal Subsurface Extractor
+# RAGU - Radar Analysis Graphical Utility
 #
 # copyright © 2020 btobers <tobers.brandon@gmail.com>
 #
 # distributed under terms of the GNU GPL3.0 license
 """
-utility functions for NOSEpick GUI
+utility functions for RAGU
 """
 ### imports ###
 import numpy as np
