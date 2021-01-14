@@ -46,8 +46,8 @@ class mainGUI(tk.Frame):
         self.eps_r = tk.DoubleVar(value=self.conf["output"]["eps_r"])
         # dictionary to hold figure settings
         self.figsettings = {"cmap": tk.StringVar(value="Greys_r"),
-                            "figsize": tk.StringVar(value="21,7"), 
-                            "fontsize": tk.DoubleVar(value="14"),
+                            "figsize": tk.StringVar(value="6.5,1.5"), 
+                            "fontsize": tk.DoubleVar(value="12"),
                             "figtitle": tk.BooleanVar(),
                             "figxaxis": tk.BooleanVar(),
                             "figyaxis": tk.BooleanVar(),
@@ -379,6 +379,7 @@ class mainGUI(tk.Frame):
                     if not self.rdata:
                         return
                     self.impick.load(self.rdata)
+                    self.impick.update_figsettings(self.figsettings)
                     self.impick.set_axes()
                     self.impick.drawData()
                     self.impick.update_bg()
@@ -569,6 +570,7 @@ class mainGUI(tk.Frame):
                 if not self.rdata:
                     return
                 self.impick.load(self.rdata)
+                self.impick.update_figsettings(self.figsettings)
                 self.impick.set_axes()
                 self.impick.drawData()
                 self.impick.update_bg()

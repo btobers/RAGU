@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 from matplotlib.widgets import Cursor
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from scipy.interpolate import CubicSpline
+plt.rcParams["font.family"] = "Times New Roman"
 
 class impick(tk.Frame):
     # initialize impick frame with variables passed from mainGUI
@@ -122,7 +123,7 @@ class impick(tk.Frame):
         self.secaxx = self.ax.twiny()
         self.secaxx.xaxis.set_ticks_position("bottom")
         self.secaxx.xaxis.set_label_position("bottom")
-        self.secaxx.spines["bottom"].set_position(("outward", 60))
+        self.secaxx.spines["bottom"].set_position(("outward", 35))
 
         # set zorder of secondary axes to be behind main axis (self.ax)
         self.secaxx.set_zorder(-100)
@@ -269,12 +270,12 @@ class impick(tk.Frame):
         self.existing_subsurf_lns = []
         count = len(self.rdata.pick.existing_twttSubsurf.items())
         for _i in range(count):
-            self.ax.plot(np.arange(self.rdata.tnum), utils.twtt2sample(self.rdata.pick.existing_twttSubsurf[str(_i)], self.rdata.dt), linewidth=2)
+            self.ax.plot(np.arange(self.rdata.tnum), utils.twtt2sample(self.rdata.pick.existing_twttSubsurf[str(_i)], self.rdata.dt), "g", linewidth=1)
             self.existing_subsurf_lns.append(self.ax.lines[_i])
 
         # plot existing surface pick layer
         if np.any(self.rdata.pick.existing_twttSurf):
-            self.existing_surf_ln = self.ax.plot(np.arange(self.rdata.tnum), utils.twtt2sample(self.rdata.pick.existing_twttSurf, self.rdata.dt), "c", linewidth=2)
+            self.existing_surf_ln = self.ax.plot(np.arange(self.rdata.tnum), utils.twtt2sample(self.rdata.pick.existing_twttSurf, self.rdata.dt), "c", linewidth=1)
 
         # initialize lines to hold current pick segments
         self.tmp_surf_ln, = self.ax.plot(self.xln_surf,self.yln_surf,"mx")                          # empty line for surface pick segment
@@ -654,7 +655,7 @@ class impick(tk.Frame):
             count = len(self.rdata.pick.existing_twttSubsurf)
             n = len(self.existing_subsurf_lns)
             for _i in range(count - n):
-                self.ax.plot(np.arange(self.rdata.tnum), utils.twtt2sample(self.rdata.pick.existing_twttSubsurf[str(n - _i)], self.rdata.dt), "g", linewidth=2)
+                self.ax.plot(np.arange(self.rdata.tnum), utils.twtt2sample(self.rdata.pick.existing_twttSubsurf[str(n - _i)], self.rdata.dt), "g", linewidth=1)
                 self.existing_subsurf_lns.append(self.ax.lines[-1])
 
 
@@ -1076,7 +1077,7 @@ class impick(tk.Frame):
             self.secaxy0.set_ylabel("two-way travel time [nanosec.]")
             self.secaxy0.set_ylim(self.rdata.snum * self.rdata.dt * 1e9, 0)
         else:
-            self.secaxy0.set_ylabel("two-way travel time [microsec.]")
+            self.secaxy0.set_ylabel("twtt [\u03BCs]")
             self.secaxy0.set_ylim(self.rdata.snum * self.rdata.dt * 1e6, 0)
 
         self.secaxy1.set_ylabel("approx. subradar distance [m] ($\epsilon_{}$ = {}".format("r",self.eps_r))
@@ -1134,7 +1135,7 @@ class impick(tk.Frame):
         w, h = self.figsettings["figsize"].get().split(",")
         self.fig.set_size_inches((float(w),float(h)))    # set figsize to wide aspect ratio
         # hide existing picks
-        self.remove_existing_subsurf()
+        # self.remove_existing_subsurf()
 
         # save data fig with picks
         if self.im_status.get() =="sim":
