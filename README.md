@@ -1,5 +1,5 @@
-# NOSEpick
-## Nearly Optimal Subsurface Extractor GUI
+# RAGUi
+## Radar Analysis Graphical User interface
 ### Authors: Brandon Tober and Michael Christoffersen
 [![DOI](https://zenodo.org/badge/193940796.svg)](https://zenodo.org/badge/latestdoi/193940796)
 
