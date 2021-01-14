@@ -10,7 +10,7 @@
 </p> -->
 
 ## Description
-RAGU is an open source GUI package developed to interpret radar sounding data, written in Python 3.
+RAGU is an open source user-interface package developed to interpret radar sounding data, written in Python 3.
 
 ### Dataset Capabilities:
 RAGU was originally developed to work with NASA's Operation IceBridge Alaska radar sounding data. The dataset capabilities have since been expanded to include the following:
