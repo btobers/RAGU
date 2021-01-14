@@ -1,5 +1,5 @@
 # this file may be used to create a conda environment using:
-# $conda env create -f ragu.yml
+# $conda env create -f ragu_env.yml
 
 name: ragu
 channels:
