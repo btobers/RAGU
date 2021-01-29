@@ -148,7 +148,7 @@ class wvpick(tk.Frame):
         winSize = self.winSize.get()
         # if self.pick_dict1:
         self.ax.clear()
-        self.ax.set(xlabel = "sample", ylabel = "power [dB]")
+        self.ax.set(xlabel = "Sample", ylabel = "Power [dB]", title="Trace: " + str(int(self.traceNum[segment] + 1)) + "/" + str(int(self.rdata.tnum)))
         # get surface index for trace - use current if exists
         if not np.isnan(self.rdata.pick.current_surfOpt).all():
             surf = self.rdata.pick.current_surfOpt[self.traceNum[segment]]
@@ -157,10 +157,10 @@ class wvpick(tk.Frame):
         else:
             surf = np.nan
 
-        self.ax.plot(self.rdata.proc[:,self.traceNum[segment]], label="trace: " + str(int(self.traceNum[segment] + 1)) + "/" + str(int(self.rdata.tnum)))
+        self.ax.plot(self.rdata.proc[:,self.traceNum[segment]])
 
         if not np.isnan(surf):
-            self.ax.axvline(x = surf, c='c', label="surface")
+            self.ax.axvline(x = surf, c='c', label="Surface")
 
         if self.num_pksegs > 0:
             # get sample index of pick for given trace

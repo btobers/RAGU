@@ -238,7 +238,6 @@ class mainGUI(tk.Frame):
         # event.state & 4 True for Ctrl+Key
         # event.state & 1 True for Shift+Key
         # general keps for either tab
-
         # Ctrl+O open file
         if event.state & 4 and event.keysym == "o":
             self.open_data()
@@ -313,12 +312,12 @@ class mainGUI(tk.Frame):
                 self.wvpick.fullExtent()
     
             # a key to step back in trace count
-            elif event.keysym=="a":
-                self.wvpick.stepBackward()
+            elif event.keysym=="Right":
+                self.wvpick.stepForward()
 
             # d key to step forward in trace count
-            elif event.keysym=="d":
-                self.wvpick.stepForward()
+            elif event.keysym=="Left":
+                self.wvpick.stepBackward()
 
 
     # saveCheck is a method to check if picks have been saved
@@ -913,39 +912,63 @@ class mainGUI(tk.Frame):
 
     def help(self):
         # help message box
-        tk.messagebox.showinfo("instructions",
-        """---nearly optimal subsurface extractor---
-        \n\n1. file->load to load data file
-        \n2. map->open to load basemap
-        \n3. pick->surface/subsurface->new to begin\n   new pick segment 
-        \n4. click along reflector surface to pick\n   horizon
-        \n\t\u2022[backspace] to remove the last
-        \n\t\u2022[c] to remove all subsurface\n\t picks
-        \n5. pick->surface/subsurface->stop to end\n   current pick segment
-        \n6. radio buttons to toggle between radar\n   and clutter images
-        \n7. file->save to export picks
-        \n8. file->next to load next data file
-        \n9. file->quit to exit application""")
+        helpWindow = tk.Toplevel(self.parent)
+        helpWindow.title("instructions")
+        helpWindow.config(bg="#d9d9d9")
+        S = tk.Scrollbar(helpWindow)
+        T = tk.Text(helpWindow, height=32, width=64, bg="#d9d9d9")
+        S.pack(side=tk.RIGHT, fill=tk.Y)
+        T.pack(side=tk.LEFT, fill=tk.Y)
+        S.config(command=T.yview)
+        T.config(yscrollcommand=S.set)
+        note = """---Radar Analysis Graphical Utility---
+        \n\n1.\tfile->open->data file: load data file
+        \n2.\tfile->open->basemap file: load basemap
+        \n3.\tpick->surface/subsurface->new: begin new pick segment 
+        \n4.\t[spacebar]: toggle between radar and clutter images
+        \n5.\tclick along reflector surface to pick horizon
+        \n\t\u2022[backspace]: remove last pick
+        \n\t\u2022[c]: remove all subsurface picks
+        \n6.\tpick->surface/subsurface->stop: end current pick segment
+        \n7.\t[spacebar]: toggle between radar and clutter images
+        \n8.\tfile->save->picks: export picks
+        \n9.\tfile->next: load next data file
+        \n10.\tfile->quit: texit application"""
+        T.insert(tk.END, note)
 
 
     def shortcuts(self):
-        # shortcut list
-        tk.messagebox.showinfo("keyboard shortcuts",
-        """---general---
-        \n[ctrl+o]\topen radar data file
-        \n[ctrl+m]\topen basemap window
-        \n[spacebar]\ttoggle between radar and\n\t\tclutter images
-        \n[h]\t\treturn to home extent
-        \n[a]\t\tpan left
-        \n[d]\t\tpan right
-        \n[w]\t\tpan up
-        \n[s]\t\tpan down
-        \n[ctrl+s]\texport pick data
-        \n[→]\t\topen next file in\n\t\tworking directory
-        \n[ctrl+q]\tquit RAGU
-        \n\n---picking---
-        \n[ctrl+n]\tbegin new subsurface pick\n\t\tsegment
-        \n[ctrl+shift+n]\tbegin new surface pick\n\t\tsegment
-        \n[escape]\tend current surface/\n\t\tsubsurface pick segment
-        \n[backspace]\tremove last pick event
-        \n[c]\t\tremove all picked\n\t\tsubsurface segments""")
+        # shortcut info
+        shortcutWindow = tk.Toplevel(self.parent)
+        shortcutWindow.title("keyboard shortcuts")
+        shortcutWindow.config(bg="#d9d9d9")
+        S = tk.Scrollbar(shortcutWindow)
+        T = tk.Text(shortcutWindow, height=32, width=64, bg="#d9d9d9")
+        S.pack(side=tk.RIGHT, fill=tk.Y)
+        T.pack(side=tk.LEFT, fill=tk.Y)
+        S.config(command=T.yview)
+        T.config(yscrollcommand=S.set)
+        note = """---general---
+                \n[ctrl+o]\t\t\topen data file
+                \n[ctrl+m]\t\t\topen basemap
+                \n[ctrl+s]\t\t\tsave picks
+                \n[ctrl+q]\t\t\texit RAGU
+                \n\n---profile view---
+                \n[spacebar]\t\t\ttoggle between radar/clutter
+                \n[h]\t\t\treturn to home extent
+                \n[a]\t\t\tpan left
+                \n[d]\t\t\tpan right
+                \n[w]\t\t\tpan up
+                \n[s]\t\t\tpan down
+                \n[right]\t\t\topen next file in working directory
+                \n---picking---
+                \n[ctrl+n]\t\t\tbegin new subsurface pick segment
+                \n[ctrl+shift+n]\t\t\tbegin new surface pick segment
+                \n[escape]\t\t\tend current surface/subsurface\n\t\t\tpick segment
+                \n[backspace]\t\t\tremove last pick event
+                \n[c]\t\t\tremove all subsurface picks
+                \n\n---waveform view---
+                \n[h]\t\t\treturn to home extent
+                \n[right]\t\t\tstep forward left
+                \n[left]\t\t\tstep backward"""
+        T.insert(tk.END, note)

@@ -1036,11 +1036,13 @@ class impick(tk.Frame):
         self.draw_cid = canvas.mpl_connect("draw_event", self.update_bg)
 
 
-    # when the figure is resized, hide picks, draw everything, and update the background
+    # when the figure is resized, hide picks, draw everything, and update the background image
     def update_bg(self, event=None):
+        # temporarily hide artists
         self.show_artists(False)
         self.safe_draw()
         self.axbg = self.dataCanvas.copy_from_bbox(self.ax.bbox)
+        # return artists visiblity to former state
         self.show_artists(self.pick_vis.get())
         self.blit()
 
