@@ -139,14 +139,8 @@ def h5(fpath, df):
 
 
 # im is a function for exporting the pick image
-def im(fpath, fig, imtype = "dat"):
-    # update fname
-    if imtype == "sim":
-        fpath_split = fpath.split("_pk")
-        fpath = fpath_split[0] + "_sim" + fpath_split[1][-4:]
-
+def im(fpath, fig, imtype = None):
     fig.savefig(fpath, dpi = 500, bbox_inches='tight', pad_inches = 0.05, transparent=True)# facecolor = "#d9d9d9")
-
     print(imtype + " figure exported successfully:\t" + fpath)
 
 

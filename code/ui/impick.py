@@ -11,22 +11,24 @@ from tools import utils, export
 from ui import basemap
 import numpy as np
 import tkinter as tk
-import sys,os,time,fnmatch
+import sys,os,time,fnmatch,copy
 import matplotlib as mpl
 mpl.use("TkAgg")
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Cursor
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from scipy.interpolate import CubicSpline
-plt.rcParams["font.family"] = "Times New Roman"
+try:
+    plt.rcParams["font.family"] = "Times New Roman"
+except:
+    pass
 
 class impick(tk.Frame):
     # initialize impick frame with variables passed from mainGUI
-    def __init__(self, parent, figsettings, eps_r, *args, **kwargs):
+    def __init__(self, parent, figsettings, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
         self.figsettings = figsettings
-        self.eps_r = eps_r
         self.setup()
 
 
@@ -59,7 +61,7 @@ class impick(tk.Frame):
         self.pick_vis = tk.BooleanVar()
         tk.Label(infoFrame, text="pick visibility: ").pack(side="left")
         tk.Radiobutton(infoFrame,text="on", variable=self.pick_vis, value=True, command=self.show_picks).pack(side="left")
-        tk.Radiobutton(infoFrame,text="off", variable=self.pick_vis, value=False, command=self.hide_picks).pack(side="left")
+        tk.Radiobutton(infoFrame,text="off", variable=self.pick_vis, value=False, command=self.show_picks).pack(side="left")
         tk.ttk.Separator(infoFrame,orient="vertical").pack(side="left", fill="both", padx=10, pady=4)
 
         # add radio buttons for toggling pick labels
@@ -110,14 +112,14 @@ class impick(tk.Frame):
 
         # initiate a twin axis that shows twtt
         self.secaxy0 = self.ax.twinx()
-        self.secaxy0.yaxis.set_ticks_position("left")
-        self.secaxy0.yaxis.set_label_position("left")
-        self.secaxy0.spines["left"].set_position(("outward", 80))
+        self.secaxy0.yaxis.set_ticks_position("right")
+        self.secaxy0.yaxis.set_label_position("right")
 
         # initiate a twin axis that shares the same x-axis and shows approximate depth
         self.secaxy1 = self.ax.twinx()
-        self.secaxy1.yaxis.set_ticks_position("right")
-        self.secaxy1.yaxis.set_label_position("right")
+        self.secaxy1.yaxis.set_ticks_position("left")
+        self.secaxy1.yaxis.set_label_position("left")
+        self.secaxy1.spines["left"].set_position(("outward", 50))
 
         # initiate a twin axis that shows along-track distance
         self.secaxx = self.ax.twiny()
@@ -143,7 +145,6 @@ class impick(tk.Frame):
 
     # set_vars is a method to set impick variables which need to reset upon each load
     def set_vars(self):
-        self.f_saveName = ""
         self.basemap = None
         self.pick_surf = None
 
@@ -184,7 +185,7 @@ class impick(tk.Frame):
 
         # necessary flags
         self.sim_imSwitch_flag = False
-        self.surf_pickFlag = False
+        self.surfpkFlag = False
         self.edit_flag = False
 
         self.edit_segmentNum = 0
@@ -198,45 +199,13 @@ class impick(tk.Frame):
         self.set_cmap(self.figsettings["cmap"].get())
 
 
-    # update_figsettings
-    def update_figsettings(self, figsettings):
-        self.figsettings = figsettings
-
-        self.set_cmap(self.figsettings["cmap"].get())
-
-        for item in ([self.ax.title, self.ax.xaxis.label, self.ax.yaxis.label, self.secaxx.xaxis.label, self.secaxy0.yaxis.label, self.secaxy1.yaxis.label] +
-                    self.ax.get_xticklabels() + self.ax.get_yticklabels() + self.secaxx.get_xticklabels() + self.secaxy0.get_yticklabels() + self.secaxy1.get_yticklabels()):
-            item.set_fontsize(self.figsettings["fontsize"].get())
-
-        self.ax.title.set_visible(self.figsettings["figtitle"].get())
-        # update x-axes
-        val = self.figsettings["figxaxis"].get()
-        self.ax.xaxis.set_visible(val)
-        self.secaxx.axis(self.figsettings["figxaxis"].get())
-        # update y-axes
-        val = self.figsettings["figyaxis"].get()
-        self.ax.yaxis.set_visible(val)
-        self.secaxy0.axis(val)
-        self.secaxy1.axis(val)
-        self.fig.canvas.draw()
-
-
-    # get debug state from gui settings
-    def set_debugState(self, debugState):
-        self.debugState = debugState
-
-
     # set image cmap
     def set_cmap(self, cmap):
+        cmap = copy.copy(mpl.cm.get_cmap(cmap))
         self.cmap = mpl.cm.get_cmap(cmap)
         # set nodata value as darkest color in cmap
         nd = self.cmap(np.linspace(0,1,256))[0]
         self.cmap.set_bad(nd)
-
-
-    # get eps_r setting from gui settings
-    def set_eps_r(self, eps_r):
-        self.eps_r = eps_r
 
 
     # load calls ingest() on the data file and sets the datacanvas
@@ -249,7 +218,7 @@ class impick(tk.Frame):
       
         # set figure title and axes labels
         self.ax.set_title(self.rdata.fn)
-        self.ax.set(xlabel = "trace", ylabel = "sample")
+        self.ax.set(xlabel = "Trace", ylabel = "Sample")
 
         # initialize data and clutter images with np.ones - set data in drawData
         self.im_dat  = self.ax.imshow(np.ones((100,100)), aspect="auto", 
@@ -327,6 +296,116 @@ class impick(tk.Frame):
         self.update_slider()
 
 
+    # update clim slider bar
+    def update_slider(self):
+        self.ax_cmax.clear()
+        self.ax_cmin.clear()
+        self.s_cmin.__init__(self.ax_cmin, "min", valmin=self.s_cmin.valmin, valmax=self.s_cmin.valmax, valinit=self.s_cmin.valinit, orientation="vertical")
+        self.s_cmax.__init__(self.ax_cmax, "max", valmin=self.s_cmax.valmin, valmax=self.s_cmax.valmax, valinit=self.s_cmax.valinit, orientation="vertical")
+        self.s_cmin.on_changed(self.cmap_update)
+        self.s_cmax.on_changed(self.cmap_update)
+
+
+    # update image colormap based on slider values
+    def cmap_update(self, s=None):
+        try:
+            if self.im_dat.get_visible():
+                # apply slider values to visible image
+                self.data_cmin = self.s_cmin.val
+                self.data_cmax = self.s_cmax.val
+                self.im_dat.set_clim([self.data_cmin, self.data_cmax])
+            else:
+                self.sim_cmin = self.s_cmin.val
+                self.sim_cmax = self.s_cmax.val
+                self.im_sim.set_clim([self.sim_cmin, self.sim_cmax])
+        except Exception as err:
+            print("cmap_update error: " + str(err))
+
+
+    # reset sliders to initial values
+    def cmap_reset(self, event):
+        if self.im_dat.get_visible():
+            self.s_cmin.valmin = self.mindB_data - (self.data_crange/2)
+            self.s_cmin.valmax = self.mindB_data + (self.data_crange/2)
+            self.s_cmin.valinit = self.mindB_data
+            self.s_cmax.valmin = self.maxdB_data - (self.data_crange/2)
+            self.s_cmax.valmax = self.maxdB_data + (self.data_crange/2)
+            self.s_cmax.valinit = self.maxdB_data
+        else:
+            # if sim is displayed, change slider bounds
+            self.s_cmin.valmin = self.mindB_sim - (self.sim_crange/2)
+            self.s_cmin.valmax = self.mindB_sim + (self.sim_crange/2)
+            self.s_cmin.valinit = self.mindB_sim
+            self.s_cmax.valmin = self.maxdB_sim - (self.sim_crange/2)
+            self.s_cmax.valmax = self.maxdB_sim + (self.sim_crange/2)
+            self.s_cmax.valinit = self.maxdB_sim
+        self.update_slider()
+        self.cmap_update()
+
+
+    # method to draw radar data
+    def drawData(self, force=False, event=None):
+        # Get data display window size in inches
+        w,h = self.fig.get_size_inches()*self.fig.dpi
+        # choose pyramid
+        p = -1
+        for i in range(len(self.rdata.dPyramid)-1, -1, -1):
+            if(self.rdata.dPyramid[i].shape[0] > h):
+                p = i
+                break
+
+        # set flag to detect if canvas needs redrawing
+        flag = False
+
+        # if ideal pyramid level changed, update image
+        if self.pyramid != p or force:
+            self.pyramid = p
+            if len(self.rdata.dPyramid[self.pyramid].shape) == 3:
+                self.im_dat.set_data(self.rdata.dPyramid[self.pyramid][:,:,self.chan.get()])
+            else:
+                self.im_dat.set_data(self.rdata.dPyramid[self.pyramid][:,:])
+            self.im_sim.set_data(self.rdata.sPyramid[self.pyramid][:,:])
+            flag = True
+
+        # update cmap if necessary
+        if self.im_dat.get_cmap().name != self.cmap.name:
+            self.im_dat.set_cmap(self.cmap)
+            self.im_sim.set_cmap(self.cmap)
+            flag = True
+
+        if flag:
+            self.dataCanvas.draw()
+
+
+    # set axis labels
+    def set_axes(self):
+        # update twtt and depth (subradar dist.)
+        if self.rdata.dt < 1e-9:
+            self.secaxy0.set_ylabel("TWTT [ns]")
+            self.secaxy0.set_ylim(self.rdata.snum * self.rdata.dt * 1e9, 0)
+        else:
+            self.secaxy0.set_ylabel("TWTT [\u03BCs]")
+            self.secaxy0.set_ylim(self.rdata.snum * self.rdata.dt * 1e6, 0)
+
+        self.secaxy1.set_ylabel("Depth [m] ($\epsilon_{}$ = {})".format("r",self.eps_r))
+        self.secaxy1.set_ylim(utils.twtt2depth(self.rdata.snum * self.rdata.dt, self.eps_r), 0)
+
+        # update along-track distance
+        if not np.all(np.isnan(self.rdata.navdf["dist"])) or  np.all((self.rdata.navdf["dist"] == 0)):
+            self.secaxx.set_visible(True)
+            # use km if distance exceeds 1 km
+            if self.rdata.navdf.iloc[-1]["dist"] >= 1e3:
+                self.secaxx.set_xlabel("Along-Track Distance [km]")
+                self.secaxx.set_xlim(0, self.rdata.navdf.iloc[-1]["dist"]*1e-3)
+
+            else:
+                self.secaxx.set_xlabel("Along-Track Distance [m]")
+                self.secaxx.set_xlim(0, self.rdata.navdf.iloc[-1]["dist"])
+        
+        else:
+            self.secaxx.set_visible(False)
+
+
     # method to zoom to full image extent
     def fullExtent(self):
         self.ax.set_xlim(0, self.rdata.tnum)
@@ -334,9 +413,14 @@ class impick(tk.Frame):
         self.set_axes()
         self.dataCanvas.draw()
 
-    # method to clip rgam to top half for export
-    def halfExtent(self):
-        self.ax.set_ylim(self.rdata.snum//2, 0)
+
+    # method to vertically clip rgam for export
+    def verticalClip(self, val=.3):
+        self.ax.set_ylim(self.rdata.snum*val, 0)
+        ylim2 = self.secaxy0.get_ylim()
+        ylim3 = self.secaxy1.get_ylim()
+        self.secaxy0.set_ylim(ylim2[0]*val,)
+        self.secaxy1.set_ylim(ylim3[0]*val,)
         self.dataCanvas.draw()
 
 
@@ -408,38 +492,97 @@ class impick(tk.Frame):
             self.dataCanvas.draw()
 
 
-    # method to draw radar data
-    def drawData(self, force=False, event=None):
-        # Get data display window size in inches
-        w,h = self.fig.get_size_inches()*self.fig.dpi
-        # choose pyramid
-        p = -1
-        for i in range(len(self.rdata.dPyramid)-1, -1, -1):
-            if(self.rdata.dPyramid[i].shape[0] > h):
-                p = i
-                break
+    def switchChan(self):
+        # check to make sure channel exists before switching
+        if self.chan.get() == 1 and self.rdata.nchan < 2:
+            self.chan.set(0)
+            return
+        elif self.chan.get() == 1 and self.rdata.nchan == 2:
+            self.drawData(force=True)
+        elif self.chan.get() == 0:
+            self.drawData(force=True)
 
-        # set flag to detect if canvas needs redrawing
-        flag = False
 
-        # if ideal pyramid level changed, update image
-        if self.pyramid != p or force:
-            self.pyramid = p
-            if len(self.rdata.dPyramid[self.pyramid].shape) == 3:
-                self.im_dat.set_data(self.rdata.dPyramid[self.pyramid][:,:,self.chan.get()])
-            else:
-                self.im_dat.set_data(self.rdata.dPyramid[self.pyramid][:,:])
-            self.im_sim.set_data(self.rdata.sPyramid[self.pyramid][:,:])
-            flag = True
+    # toggle to radar data
+    def show_data(self):
+        # get sim colormap slider values for reviewing
+        self.sim_cmin = self.s_cmin.val
+        self.sim_cmax = self.s_cmax.val
+        # set colorbar initial values to previous values
+        self.s_cmin.valinit = self.data_cmin
+        self.s_cmax.valinit = self.data_cmax
+        # set colorbar bounds
+        self.s_cmin.valmin = self.mindB_data - (self.data_crange/2)
+        self.s_cmin.valmax = self.mindB_data + (self.data_crange/2)
+        self.s_cmax.valmin = self.maxdB_data - (self.data_crange/2)
+        self.s_cmax.valmax = self.maxdB_data + (self.data_crange/2)
+        self.update_slider()
+        # reverse visilibilty
+        self.im_sim.set_visible(False)
+        self.im_dat.set_visible(True)
+        self.im_status.set("data")
+        # redraw canvas
+        # self.update_bg()
+        self.fig.canvas.draw()
 
-        # update cmap if necessary
-        if self.im_dat.get_cmap().name != self.cmap.name:
-            self.im_dat.set_cmap(self.cmap)
-            self.im_sim.set_cmap(self.cmap)
-            flag = True
 
-        if flag:
-            self.dataCanvas.draw()
+    # toggle to sim viewing
+    def show_sim(self):
+        # get radar data colormap slider values for reviewing
+        self.data_cmin = self.s_cmin.val
+        self.data_cmax = self.s_cmax.val
+
+        if not self.sim_imSwitch_flag:
+            # if this is the first time viewing the sim, set colorbar limits to initial values
+            self.s_cmin.valinit = self.mindB_sim
+            self.s_cmax.valinit = self.maxdB_sim
+        else: 
+            # if sim has been shown before revert to previous colorbar values
+            self.im_sim.set_clim([self.sim_cmin, self.sim_cmax])
+            self.s_cmin.valinit = self.sim_cmin
+            self.s_cmax.valinit = self.sim_cmax
+
+        self.s_cmin.valmin = self.mindB_sim - (self.sim_crange/2)
+        self.s_cmin.valmax = self.mindB_sim + (self.sim_crange/2)           
+        self.s_cmax.valmin = self.maxdB_sim - (self.sim_crange/2)
+        self.s_cmax.valmax = self.maxdB_sim + (self.sim_crange/2)
+        self.update_slider()
+        # reverse visilibilty
+        self.im_dat.set_visible(False)
+        self.im_sim.set_visible(True)
+        # set flag to indicate that sim has been viewed for resetting colorbar limits
+        self.sim_imSwitch_flag = True    
+        self.im_status.set("sim")
+        # redraw canvas
+        # self.update_bg()
+        self.fig.canvas.draw()
+
+
+   # set_im is a method to set which rdata is being displayed
+    def set_im(self):
+        if self.im_status.get() == "data":
+            self.show_sim()
+
+        elif self.im_status.get() =="sim":
+            self.show_data()
+
+
+    # get_subsurfpkFlag is a method which returns true if manual subsurface picks exist, and false otherwise   
+    def get_subsurfpkFlag(self):
+        if len(self.xln_subsurf) + np.count_nonzero(~np.isnan(self.xln_subsurf_saved)) > 0:
+            return True
+        else:
+            return False
+
+
+    # get_surfPickFlag is a method which returns true if manual surface picks exist, and false otherwise
+    def get_surfpkFlag(self):
+        return self.surfpkFlag
+
+
+    # set_surfPickFlag is a method which sets a boolean object for whether the surface has been picked
+    def set_surfpkFlag(self,flag):
+        self.surfpkFlag = flag
 
 
     # get_pickState is a method to return the current picking state
@@ -557,8 +700,8 @@ class impick(tk.Frame):
 
                     # set self.tmp_surf_ln data to plot pick on image
                     self.tmp_surf_ln.set_data(self.xln_surf, self.yln_surf)
-                    # Set surf_pickFlag to True to show that a surface pick has been made
-                    self.surf_pickFlag = True
+                    # Set surfpkFlag to True to show that a surface pick has been made
+                    self.set_surfpkFlag(True)
 
                 self.blit()
 
@@ -719,7 +862,7 @@ class impick(tk.Frame):
                 if len(self.xln_surf) >= 1:
                     self.pick_trace = self.xln_surf[-1]
                 if len(self.xln_surf) == 0:
-                    self.surf_pickFlag = False
+                    self.surfpkFlag(False)
 
 
     # edit selected pick segment
@@ -820,6 +963,26 @@ class impick(tk.Frame):
             self.update_bg()
 
 
+    # set_picks is a method to update the saved pick arrays based on the current picks
+    def set_picks(self):
+        # reset yln_saved arrays to replace with new dictionary values for replotting
+        self.yln_surf_saved.fill(np.nan)
+        self.yln_subsurf_saved.fill(np.nan)
+        idx = np.where(~np.isnan(self.rdata.pick.current_surf))[0]
+        self.xln_surf_saved[idx] = idx
+        self.yln_surf_saved[idx] = self.rdata.pick.current_surf[idx]
+        for _i in range(len(self.rdata.pick.current_subsurf)):
+            idx = np.where(~np.isnan(self.rdata.pick.current_subsurf[str(_i)]))[0]
+            self.xln_subsurf_saved[idx] = idx
+            self.yln_subsurf_saved[idx] = self.rdata.pick.current_subsurf[str(_i)][idx]
+        self.saved_surf_ln.set_data(self.xln_surf_saved, self.yln_surf_saved)
+        self.saved_subsurf_ln.set_data(self.xln_subsurf_saved, self.yln_subsurf_saved)
+        # update pick segment count
+        self.pick_segment = len(self.rdata.pick.current_subsurf)
+        # update pick labels
+        self.add_pickLabels()
+
+
     def show_pickLabels(self):
         if self.pick_ann_vis.get() == True:
             for _i in self.ann_list:
@@ -843,86 +1006,6 @@ class impick(tk.Frame):
                 ann.set_visible(False)
 
 
-    def switchChan(self):
-        # check to make sure channel exists before switching
-        if self.chan.get() == 1 and self.rdata.nchan < 2:
-            self.chan.set(0)
-            return
-        elif self.chan.get() == 1 and self.rdata.nchan == 2:
-            self.drawData(force=True)
-        elif self.chan.get() == 0:
-            self.drawData(force=True)
-
-
-    # toggle to radar data
-    def show_data(self):
-        # get sim colormap slider values for reviewing
-        self.sim_cmin = self.s_cmin.val
-        self.sim_cmax = self.s_cmax.val
-        # set colorbar initial values to previous values
-        self.s_cmin.valinit = self.data_cmin
-        self.s_cmax.valinit = self.data_cmax
-        # set colorbar bounds
-        self.s_cmin.valmin = self.mindB_data - (self.data_crange/2)
-        self.s_cmin.valmax = self.mindB_data + (self.data_crange/2)
-        self.s_cmax.valmin = self.maxdB_data - (self.data_crange/2)
-        self.s_cmax.valmax = self.maxdB_data + (self.data_crange/2)
-        self.update_slider()
-        # reverse visilibilty
-        self.im_sim.set_visible(False)
-        self.im_dat.set_visible(True)
-        self.im_status.set("data")
-        # redraw canvas
-        # self.update_bg()
-        self.fig.canvas.draw()
-
-
-    # toggle to sim viewing
-    def show_sim(self):
-        # get radar data colormap slider values for reviewing
-        self.data_cmin = self.s_cmin.val
-        self.data_cmax = self.s_cmax.val
-
-        if not self.sim_imSwitch_flag:
-            # if this is the first time viewing the sim, set colorbar limits to initial values
-            self.s_cmin.valinit = self.mindB_sim
-            self.s_cmax.valinit = self.maxdB_sim
-        else: 
-            # if sim has been shown before revert to previous colorbar values
-            self.im_sim.set_clim([self.sim_cmin, self.sim_cmax])
-            self.s_cmin.valinit = self.sim_cmin
-            self.s_cmax.valinit = self.sim_cmax
-
-        self.s_cmin.valmin = self.mindB_sim - (self.sim_crange/2)
-        self.s_cmin.valmax = self.mindB_sim + (self.sim_crange/2)           
-        self.s_cmax.valmin = self.maxdB_sim - (self.sim_crange/2)
-        self.s_cmax.valmax = self.maxdB_sim + (self.sim_crange/2)
-        self.update_slider()
-        # reverse visilibilty
-        self.im_dat.set_visible(False)
-        self.im_sim.set_visible(True)
-        # set flag to indicate that sim has been viewed for resetting colorbar limits
-        self.sim_imSwitch_flag = True    
-        self.im_status.set("sim")
-        # redraw canvas
-        # self.update_bg()
-        self.fig.canvas.draw()
-
-
-    # show_picks is a method to toggle the visibility of picks on
-    def show_picks(self):
-        self.show_artists()
-        self.safe_draw()
-        self.fig.canvas.blit(self.ax.bbox)
-
-
-    # hide_picks is a method to toggle the visibility of picks off
-    def hide_picks(self):
-        self.hide_artists()
-        self.safe_draw()
-        self.fig.canvas.blit(self.ax.bbox)
-
-
     # update the pick layer menu based on how many segments exist
     def update_option_menu(self):
             menu = self.segMenu["menu"]
@@ -932,51 +1015,17 @@ class impick(tk.Frame):
                     command=tk._setit(self.segVar,_i))
 
 
-    # update clim slider bar
-    def update_slider(self):
-        self.ax_cmax.clear()
-        self.ax_cmin.clear()
-        self.s_cmin.__init__(self.ax_cmin, "min", valmin=self.s_cmin.valmin, valmax=self.s_cmin.valmax, valinit=self.s_cmin.valinit, orientation="vertical")
-        self.s_cmax.__init__(self.ax_cmax, "max", valmin=self.s_cmax.valmin, valmax=self.s_cmax.valmax, valinit=self.s_cmax.valinit, orientation="vertical")
-        self.s_cmin.on_changed(self.cmap_update)
-        self.s_cmax.on_changed(self.cmap_update)
+    # show_picks is a method to toggle the visibility of picks on
+    def show_picks(self):
+        self.show_artists(self.pick_vis.get())
+        self.safe_draw()
+        self.fig.canvas.blit(self.ax.bbox)
 
 
-    # update image colormap based on slider values
-    def cmap_update(self, s=None):
-        try:
-            if self.im_dat.get_visible():
-                # apply slider values to visible image
-                self.data_cmin = self.s_cmin.val
-                self.data_cmax = self.s_cmax.val
-                self.im_dat.set_clim([self.data_cmin, self.data_cmax])
-            else:
-                self.sim_cmin = self.s_cmin.val
-                self.sim_cmax = self.s_cmax.val
-                self.im_sim.set_clim([self.sim_cmin, self.sim_cmax])
-        except Exception as err:
-            print("cmap_update error: " + str(err))
-
-
-    # reset sliders to initial values
-    def cmap_reset(self, event):
-        if self.im_dat.get_visible():
-            self.s_cmin.valmin = self.mindB_data - (self.data_crange/2)
-            self.s_cmin.valmax = self.mindB_data + (self.data_crange/2)
-            self.s_cmin.valinit = self.mindB_data
-            self.s_cmax.valmin = self.maxdB_data - (self.data_crange/2)
-            self.s_cmax.valmax = self.maxdB_data + (self.data_crange/2)
-            self.s_cmax.valinit = self.maxdB_data
-        else:
-            # if sim is displayed, change slider bounds
-            self.s_cmin.valmin = self.mindB_sim - (self.sim_crange/2)
-            self.s_cmin.valmax = self.mindB_sim + (self.sim_crange/2)
-            self.s_cmin.valinit = self.mindB_sim
-            self.s_cmax.valmin = self.maxdB_sim - (self.sim_crange/2)
-            self.s_cmax.valmax = self.maxdB_sim + (self.sim_crange/2)
-            self.s_cmax.valinit = self.maxdB_sim
-        self.update_slider()
-        self.cmap_update()
+    # show plotted lines
+    def show_artists(self,val=True):
+        for _i in self.ax.lines:
+            _i.set_visible(val)
 
 
     # temporarily disconnect the draw_event callback to avoid recursion
@@ -987,43 +1036,21 @@ class impick(tk.Frame):
         self.draw_cid = canvas.mpl_connect("draw_event", self.update_bg)
 
 
-    # hide plotted lines
-    def hide_artists(self):
-        for _i in self.ax.lines:
-            _i.set_visible(False)
-
-
-    # show plotted lines
-    def show_artists(self):
-        for _i in self.ax.lines:
-            _i.set_visible(True)
-
-
-    # when the figure is resized, hide picks, draw everything, and update the background.
+    # when the figure is resized, hide picks, draw everything, and update the background
     def update_bg(self, event=None):
-        self.hide_artists()
+        self.show_artists(False)
         self.safe_draw()
         self.axbg = self.dataCanvas.copy_from_bbox(self.ax.bbox)
-        self.show_artists()
+        self.show_artists(self.pick_vis.get())
         self.blit()
 
 
-    # update the figure, without needing to redraw the "axbg" artists.
+    # update the figure, without needing to redraw the "axbg" artists
     def blit(self):
         self.fig.canvas.restore_region(self.axbg)
         for _i in self.ax.lines:
             self.ax.draw_artist(_i)
         self.fig.canvas.blit(self.ax.bbox)
-
-
-    # saveWarning is a method which checks if picks exist or if the user would like to discard existing picks before moving to the next track
-    def saveWarning(self):
-        # check if picks have been made and saved
-        if ((self.get_subsurfPickFlag() == True) or (self.surf_pickFlag == True)) and (self.f_saveName == ""):
-            if tk.messagebox.askyesno("Warning", "Load next track without saving picks?", icon = "warning") == True:
-                return True
-        else: 
-            return True
 
 
     # clear_canvas is a method to clear the data canvas and figures to reset app
@@ -1032,99 +1059,67 @@ class impick(tk.Frame):
         self.ax.cla()
 
 
-    # get_subsurfPickFlag is a method which returns true if manual subsurface picks exist, and false otherwise   
-    def get_subsurfPickFlag(self):
-        if len(self.xln_subsurf) + np.count_nonzero(~np.isnan(self.xln_subsurf_saved)) > 0:
-            return True
-        else:
-            return False
-
-
-    # get_surfPickFlag is a method which returns true if manual surface picks exist, and false otherwise
-    def get_surfPickFlag(self):
-        return self.surf_pickFlag
-
-
-    # set_surfPickFlag is a method which sets a boolean object for whether the surface has been picked
-    def set_surfPickFlag(self,flag):
-        self.surf_pickFlag = flag
-
-
-    # set_picks is a method to update the saved pick arrays based on the current picks
-    def set_picks(self):
-        # reset yln_saved arrays to replace with new dictionary values for replotting
-        self.yln_surf_saved.fill(np.nan)
-        self.yln_subsurf_saved.fill(np.nan)
-        idx = np.where(~np.isnan(self.rdata.pick.current_surf))[0]
-        self.xln_surf_saved[idx] = idx
-        self.yln_surf_saved[idx] = self.rdata.pick.current_surf[idx]
-        for _i in range(len(self.rdata.pick.current_subsurf)):
-            idx = np.where(~np.isnan(self.rdata.pick.current_subsurf[str(_i)]))[0]
-            self.xln_subsurf_saved[idx] = idx
-            self.yln_subsurf_saved[idx] = self.rdata.pick.current_subsurf[str(_i)][idx]
-        self.saved_surf_ln.set_data(self.xln_surf_saved, self.yln_surf_saved)
-        self.saved_subsurf_ln.set_data(self.xln_subsurf_saved, self.yln_subsurf_saved)
-        # update pick segment count
-        self.pick_segment = len(self.rdata.pick.current_subsurf)
-        # update pick labels
-        self.add_pickLabels()
-
-
-    # set axis labels
-    def set_axes(self):
-        # update twtt and depth (subradar dist.)
-        if self.rdata.dt < 1e-9:
-            self.secaxy0.set_ylabel("two-way travel time [nanosec.]")
-            self.secaxy0.set_ylim(self.rdata.snum * self.rdata.dt * 1e9, 0)
-        else:
-            self.secaxy0.set_ylabel("twtt [\u03BCs]")
-            self.secaxy0.set_ylim(self.rdata.snum * self.rdata.dt * 1e6, 0)
-
-        self.secaxy1.set_ylabel("approx. subradar distance [m] ($\epsilon_{}$ = {}".format("r",self.eps_r))
-        self.secaxy1.set_ylim(utils.twtt2depth(self.rdata.snum * self.rdata.dt, self.eps_r), 0)
-
-        # update along-track distance
-        if not np.all(np.isnan(self.rdata.navdf["dist"])) or  np.all((self.rdata.navdf["dist"] == 0)):
-            self.secaxx.set_visible(True)
-            # use km if distance exceeds 1 km
-            if self.rdata.navdf.iloc[-1]["dist"] >= 1e3:
-                self.secaxx.set_xlabel("along-track distance [km]")
-                self.secaxx.set_xlim(0, self.rdata.navdf.iloc[-1]["dist"]*1e-3)
-
-            else:
-                self.secaxx.set_xlabel("along-track distance [m]")
-                self.secaxx.set_xlim(0, self.rdata.navdf.iloc[-1]["dist"])
-        
-        else:
-            self.secaxx.set_visible(False)
-
-
-    # set_im is a method to set which rdata is being displayed
-    def set_im(self):
-        if self.im_status.get() == "data":
-            self.show_sim()
-
-        elif self.im_status.get() =="sim":
-            self.show_data()
-
-
     # get_basemap is a method to hold the basemap object passed from gui
     def get_basemap(self, basemap):
         self.basemap = basemap
 
 
-    # save_fig is a method to receive the pick save location from gui and save using utils.save
+    # onpress gets the time of the button_press_event
+    def onpress(self,event):
+        self.time_onclick = time.time()
+
+
+    # onrelease calls addseg() if the time between the button press and release events
+    # is below a threshold so that segments are not drawn while trying to zoom or pan
+    def onrelease(self,event):
+        if event.inaxes == self.ax:
+            if event.button == 1 and ((time.time() - self.time_onclick) < 0.25):
+                self.addseg(event)
+
+
+    # update_figsettings
+    def update_figsettings(self, figsettings):
+        self.figsettings = figsettings
+
+        self.set_cmap(self.figsettings["cmap"].get())
+
+        for item in ([self.ax.title, self.ax.xaxis.label, self.ax.yaxis.label, self.secaxx.xaxis.label, self.secaxy0.yaxis.label, self.secaxy1.yaxis.label] +
+                    self.ax.get_xticklabels() + self.ax.get_yticklabels() + self.secaxx.get_xticklabels() + self.secaxy0.get_yticklabels() + self.secaxy1.get_yticklabels()):
+            item.set_fontsize(self.figsettings["fontsize"].get())
+
+        self.ax.title.set_visible(self.figsettings["figtitle"].get())
+        # update x-axes
+        val = self.figsettings["figxaxis"].get()
+        self.ax.xaxis.set_visible(val)
+        self.secaxx.axis(self.figsettings["figxaxis"].get())
+        # update y-axes
+        val = self.figsettings["figyaxis"].get()
+        self.ax.yaxis.set_visible(val)
+        self.secaxy0.axis(val)
+        self.secaxy1.axis(val)
+        self.fig.canvas.draw()
+
+
+    # get debug state from gui settings
+    def set_debugState(self, debugState):
+        self.debugState = debugState
+
+
+    # get eps_r setting from gui settings
+    def set_eps_r(self, eps_r):
+        self.eps_r = eps_r
+
+
+    # save_fig is a method to receive the pick save location from gui export the radar figure
     def save_fig(self, f_saveName):
-        self.f_saveName = f_saveName
         # zoom out to full rgram extent to save pick image
         self.fullExtent()
-        if self.figsettings["figclip"].get():
-            # clip to top half
-            self.halfExtent()
+        self.verticalClip(self.figsettings["figclip"].get())
         # temporarily turn sliders to invisible for saving image
         self.ax_cmax.set_visible(False)
         self.ax_cmin.set_visible(False)
         self.reset_ax.set_visible(False)
+        self.secaxy1.set_visible(False)
         # hide pick annotations
         self.pick_ann_vis.set(False)
         self.show_pickLabels()     
@@ -1140,7 +1135,6 @@ class impick(tk.Frame):
         # save data fig with picks
         if self.im_status.get() =="sim":
             self.show_data()
-        self.safe_draw()
         export.im(f_saveName, self.fig, imtype="dat")
 
         # save sim fig if sim exists
@@ -1148,9 +1142,8 @@ class impick(tk.Frame):
             self.show_sim()
             # ensure picks are hidden
             self.pick_vis.set(False)
-            self.hide_picks()
-            self.safe_draw()
-            export.im(f_saveName, self.fig, imtype="sim")
+            self.show_picks()
+            export.im(f_saveName.rstrip(f_saveName.split("/")[-1]) + self.rdata.fn + "_sim.png", self.fig, imtype="sim")
             self.pick_vis.set(True)
             self.show_picks()
             self.show_data()
@@ -1161,17 +1154,4 @@ class impick(tk.Frame):
         self.ax_cmax.set_visible(True)
         self.ax_cmin.set_visible(True)
         self.reset_ax.set_visible(True)
-        self.update_bg()
-
-
-    # onpress gets the time of the button_press_event
-    def onpress(self,event):
-        self.time_onclick = time.time()
-
-
-    # onrelease calls addseg() if the time between the button press and release events
-    # is below a threshold so that segments are not drawn while trying to zoom or pan
-    def onrelease(self,event):
-        if event.inaxes == self.ax:
-            if event.button == 1 and ((time.time() - self.time_onclick) < 0.25):
-                self.addseg(event)
+        self.secaxy1.set_visible(True)

@@ -3,11 +3,11 @@
 ### Authors: Brandon Tober and Michael Christoffersen
 [![DOI](https://zenodo.org/badge/193940796.svg)](https://zenodo.org/badge/latestdoi/193940796)
 
-<!-- <p align="center">
-  <img src="recs/NOSEpick.png" height="200"><br>
-  RAGU logo artist: Eric Petersen<br><br>
+<p align="center">
+  <!-- <img src="recs/NOSEpick.png" height="200"><br> -->
+  <!-- RAGU logo artist: Eric Petersen<br><br> -->
   <img src="recs/NOSEpick_demo.gif" height="500">
-</p> -->
+</p>
 
 ## Description
 RAGU is an open source user-interface package developed to interpret radar sounding data, written in Python 3.
