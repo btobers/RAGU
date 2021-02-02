@@ -39,7 +39,7 @@ RAGU was originally developed to work with NASA's Operation IceBridge Alaska rad
 
 ### Outputs
 ##### Pick files 
-A csv text file and an ESRI shapefile may be exported containing the following information for each trace in the input radar data:
+A CSV text file and geopackage file may be exported containing the following information for each trace in the input radar data:
 - <ins>trace</ins>: trace number  
 - <ins>lon</ins>: longitude  
 - <ins>lat</ins>: latitude  
@@ -52,7 +52,9 @@ A csv text file and an ESRI shapefile may be exported containing the following i
 - <ins>subsrfTwtt</ins>: two way travel time to the picked subsurface return  
 - <ins>subsrfAmp</ins>: subsurface return amplitude  
 - <ins>subsrfElev</ins>: subsurface return elevation  
-- <ins>thick</ins>: layer thickness (ground elevation - subsurface elevation)  
+- <ins>thick</ins>: layer thickness (ground elevation - subsurface elevation)
+
+For HDF5 data, a dataset containing the two-way travel time to the interpreted subsurface return may be exported to the /drv/pick/ data group.
 
 ##### Figure
 A figure may also be exported displaying any completed picks. Example over Malaspina Glacier, AK:  
