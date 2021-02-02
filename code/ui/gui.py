@@ -480,7 +480,7 @@ class mainGUI(tk.Frame):
                 tmp_fn_out = tk.filedialog.asksaveasfilename(initialfile = fn,
                                 initialdir = self.conf["path"]["outPath"], title = "save picks", filetypes = [("all files", ".*"),
                                                                                                             ("comma-separated values",".csv"),
-                                                                                                            ("esri shapefile", ".shp"),
+                                                                                                            ("geopackage", ".gpkg"),
                                                                                                             ("png image", ".png")])
 
             if tmp_fn_out:
@@ -495,12 +495,12 @@ class mainGUI(tk.Frame):
                 # export
                 if (self.conf["output"].getboolean("csv")) or (ext == ".csv"):
                     export.csv(self.f_saveName + ".csv", self.rdata.out)
-                if (self.conf["output"].getboolean("shp")) or (ext == ".shp"):
-                    export.shp(self.f_saveName + ".shp", self.rdata.out, self.conf["nav"]["crs"])
+                if (self.conf["output"].getboolean("gpkg")) or (ext == ".gpkg"):
+                    export.gpkg(self.f_saveName + ".gpkg", self.rdata.out, self.conf["nav"]["crs"])
                 if (self.conf["output"].getboolean("fig")) or (ext == ".png"):
                     self.impick.save_fig(self.f_saveName + ".png")
-                # if (self.rdata.fpath.endswith(".h5")) and (tk.messagebox.askyesno("export picks", "save picks to data file?") == True):
-                #     export.h5(self.rdata.fpath, self.rdata.out)
+                if (self.rdata.fpath.endswith(".h5")) and (tk.messagebox.askyesno("export picks", "export picks to HDF5 data file?") == True):
+                    export.h5(self.rdata.fpath, self.rdata.out)
 
 
     # saveProc is a method to save processed radar data
@@ -922,18 +922,18 @@ class mainGUI(tk.Frame):
         S.config(command=T.yview)
         T.config(yscrollcommand=S.set)
         note = """---Radar Analysis Graphical Utility---
-        \n\n1.\tfile->open->data file: load data file
-        \n2.\tfile->open->basemap file: load basemap
-        \n3.\tpick->surface/subsurface->new: begin new pick segment 
-        \n4.\t[spacebar]: toggle between radar and clutter images
-        \n5.\tclick along reflector surface to pick horizon
-        \n\t\u2022[backspace]: remove last pick
-        \n\t\u2022[c]: remove all subsurface picks
-        \n6.\tpick->surface/subsurface->stop: end current pick segment
-        \n7.\t[spacebar]: toggle between radar and clutter images
-        \n8.\tfile->save->picks: export picks
-        \n9.\tfile->next: load next data file
-        \n10.\tfile->quit: texit application"""
+                \n\n1.\tfile->open->data file: load data file
+                \n2.\tfile->open->basemap file: load basemap
+                \n3.\tpick->surface/subsurface->new: begin new pick segment 
+                \n4.\t[spacebar]: toggle between radar and clutter images
+                \n5.\tclick along reflector surface to pick horizon
+                \n\t\u2022[backspace]: remove last pick
+                \n\t\u2022[c]: remove all subsurface picks
+                \n6.\tpick->surface/subsurface->stop: end current pick segment
+                \n7.\t[spacebar]: toggle between radar and clutter images
+                \n8.\tfile->save->picks: export picks
+                \n9.\tfile->next: load next data file
+                \n10.\tfile->quit: texit application"""
         T.insert(tk.END, note)
 
 

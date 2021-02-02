@@ -101,8 +101,8 @@ def csv(fpath, df):
     print("csv picks exported successfully:\t" + fpath)
 
 
-# shp is a funciton for saving picks to a shapefile
-def shp(fpath, df, crs):
+# gpkg is a funciton for saving picks to a geopackage/shapefile
+def gpkg(fpath, df, crs):
     # fpath is the path for where the exported csv pick file should be saved [str]
     # df pick output dataframe
     # crs is the coordinate reference system for the shapefile output
@@ -113,9 +113,9 @@ def shp(fpath, df, crs):
 
     # create geopandas df and export
     gdf = gpd.GeoDataFrame(df, crs=crs, geometry=geometry)
-    gdf.to_file(fpath)
+    gdf.to_file(fpath, driver="GPKG")
 
-    print("shapefile picks exported successfully:\t" + fpath)
+    print("geopackage exported successfully:\t" + fpath)
 
 
 # h5 is a function for saving twtt_ssrf pick to h5 data file
