@@ -39,9 +39,9 @@ RAGU was originally developed to work with NASA's Operation IceBridge Alaska rad
 
 ### Outputs
 #### Pick files:
-- **.csv:** comma-separated value text file
-- **.gpkg:** geopackage
-- **.h5:** HDF5 dataset 
+- **Comma-Separated Value (.csv)** file
+- **Geopackage (.gpkg)** file
+- **HDF5 (.h5)** file dataset
 
 For **CSV** and **Geopackage** files, the following information may be exported for each trace in the input radar data:
 - <ins>trace</ins>: trace number  
