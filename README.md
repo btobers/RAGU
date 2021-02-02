@@ -39,11 +39,11 @@ RAGU was originally developed to work with NASA's Operation IceBridge Alaska rad
 
 ### Outputs
 #### Pick files:
-- *.csv* comma-separated value text file
-- *.gpkg* geopackage
-- *.h5* HDF5 dataset 
+- **.csv:** comma-separated value text file
+- **.gpkg:** geopackage
+- **.h5:** HDF5 dataset 
 
-For *CSV* and *Geopackage* files, the following information may be exported for each trace in the input radar data:
+For **CSV** and **Geopackage** files, the following information may be exported for each trace in the input radar data:
 - <ins>trace</ins>: trace number  
 - <ins>lon</ins>: longitude  
 - <ins>lat</ins>: latitude  
@@ -58,12 +58,12 @@ For *CSV* and *Geopackage* files, the following information may be exported for 
 - <ins>subsrfElev</ins>: subsurface return elevation  
 - <ins>thick</ins>: layer thickness (ground elevation - subsurface elevation)
 
-For *HDF5* data, a dataset containing the two-way travel time to the interpreted subsurface return may be exported to the /drv/pick/ data group.
+For **HDF5** data, a dataset containing the two-way travel time to the interpreted subsurface return may be exported to the /drv/pick/ data group.
 
 #### Figure:
 A figure each may also be exported for the uninterpreted radar profile, the accompanying clutter simulation, and the interpreted radar profile. Example over Malaspina Glacier, AK:  
 <p align="center">
-  <img src="recs/20190928-235534_compiled.jpg height="400"><br>
+  <img src="recs/20190928-235534_compiled.jpg" height="500"><br>
 </p>
 
 ## Running RAGU
