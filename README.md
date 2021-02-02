@@ -38,8 +38,12 @@ RAGU was originally developed to work with NASA's Operation IceBridge Alaska rad
 - *tools/constants.py* contains uglobal constants
 
 ### Outputs
-##### Pick files 
-A CSV text file and geopackage file may be exported containing the following information for each trace in the input radar data:
+#### Pick files:
+- *.csv* comma-separated value text file
+- *.gpkg* geopackage
+- *.h5* HDF5 dataset 
+
+For *CSV* and *Geopackage* files, the following information may be exported for each trace in the input radar data:
 - <ins>trace</ins>: trace number  
 - <ins>lon</ins>: longitude  
 - <ins>lat</ins>: latitude  
@@ -54,12 +58,12 @@ A CSV text file and geopackage file may be exported containing the following inf
 - <ins>subsrfElev</ins>: subsurface return elevation  
 - <ins>thick</ins>: layer thickness (ground elevation - subsurface elevation)
 
-For HDF5 data, a dataset containing the two-way travel time to the interpreted subsurface return may be exported to the /drv/pick/ data group.
+For *HDF5* data, a dataset containing the two-way travel time to the interpreted subsurface return may be exported to the /drv/pick/ data group.
 
-##### Figure
-A figure may also be exported displaying any completed picks. Example over Malaspina Glacier, AK:  
+#### Figure:
+A figure each may also be exported for the uninterpreted radar profile, the accompanying clutter simulation, and the interpreted radar profile. Example over Malaspina Glacier, AK:  
 <p align="center">
-  <img src="recs/20180819-215243_pk.png" height="400"><br>
+  <img src="recs/20180819-215243_compiled.jpg"><br>
 </p>
 
 ## Running RAGU
