@@ -63,7 +63,7 @@ For *HDF5* data, a dataset containing the two-way travel time to the interpreted
 #### Figure:
 A figure each may also be exported for the uninterpreted radar profile, the accompanying clutter simulation, and the interpreted radar profile. Example over Malaspina Glacier, AK:  
 <p align="center">
-  <img src="recs/20190928-235534_compiled.jpg"><br>
+  <img src="recs/20190928-235534_compiled.jpg height="400"><br>
 </p>
 
 ## Running RAGU
