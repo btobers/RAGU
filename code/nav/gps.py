@@ -17,14 +17,14 @@ class nmea_info:
         wgs84 latitude of points
     lon: np.ndarray_
         wgs84 longitude of points
-    elev: np.ndarray
-        elevation
+    hgt: np.ndarray
+        height
     """
 
     all_data = None
     lat = None
     lon = None
-    elev = None
+    hgt = None
     times = None
     scans = None
 
@@ -32,7 +32,7 @@ class nmea_info:
         """Populate all the values from the input data."""
         self.glat()
         self.glon()
-        self.gelev()
+        self.ghgt()
         self.gtimes()
 
     def glat(self):
@@ -51,10 +51,10 @@ class nmea_info:
                     self.all_data[:, 3] % 100) / 60)
         return self.lon
 
-    def gelev(self):
-        """Populate z (elevation)."""
-        self.elev = self.all_data[:, 8]
-        return self.elev
+    def ghgt(self):
+        """Populate z (height)."""
+        self.hgt = self.all_data[:, 8]
+        return self.hgt
 
     def gtimes(self):
         """Populate times."""
@@ -140,7 +140,7 @@ class GPSdat(nmea_info):
                                    kgps_mask)
         kgps_where = np.where(kgps_mask)[0]
         kgps_indx = np.hstack((np.array([0]), 1 + kgps_where))
-        # linearly interpolate lat,lon,elev,time - linearly extrapolate to fill tails 
+        # linearly interpolate lat,lon,hgt,time - linearly extrapolate to fill tails 
         self.lat = interp1d(self.nmea_info.scans[kgps_indx],
                             self.nmea_info.lat[kgps_indx],
                             kind='linear',
@@ -149,8 +149,8 @@ class GPSdat(nmea_info):
                             self.nmea_info.lon[kgps_indx],
                             kind='linear',
                             fill_value='extrapolate')(np.arange(trace_num))
-        self.elev = interp1d(self.nmea_info.scans[kgps_indx],
-                          self.nmea_info.elev[kgps_indx], kind='linear',
+        self.hgt = interp1d(self.nmea_info.scans[kgps_indx],
+                          self.nmea_info.hgt[kgps_indx], kind='linear',
                           fill_value='extrapolate')(np.arange(trace_num))
         self.times = interp1d(self.nmea_info.scans[kgps_indx],
                               self.nmea_info.times[kgps_indx],

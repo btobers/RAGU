@@ -81,7 +81,7 @@ def read(fpath, simpath, navcrs, body):
     # parse nav
     rdata.navdf = navparse.getnav_marsis(geom_path, navcrs, body)
 
-    rdata.set_gndElev(np.repeat(np.nan, rdata.tnum))
+    rdata.set_gndHgt(np.repeat(np.nan, rdata.tnum))
 
     # initialize surface pick
     rdata.pick.current_surf = np.repeat(np.nan, rdata.tnum)

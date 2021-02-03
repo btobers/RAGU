@@ -24,8 +24,8 @@ def pick_math(rdata, eps_r, amp_out = True):
     trace = np.arange(rdata.tnum)               # array to hold trace number
     lon = rdata.navdf["lon"]                    # array to hold longitude
     lat = rdata.navdf["lat"]                    # array to hold latitude
-    alt = rdata.navdf["elev"]                   # array to hold aircraft elevation
-    gndElev = rdata.gndElev                     # array to hold ground elevation
+    alt = rdata.navdf["hgt"]                   # array to hold aircraft elevation
+    gndElev = rdata.gndHgt                     # array to hold ground elevation
     subsurf_pk = np.repeat(np.nan, rdata.tnum)  # array to hold indeces of subsurface picks
 
     # if existing surface pick, and no current -> use existing
@@ -50,7 +50,7 @@ def pick_math(rdata, eps_r, amp_out = True):
     thick = (((subsrfTwtt - srfTwtt) * v) / 2)
 
     # calculate bed elevation
-    subsrfElev = gndElev - thick
+    subsrfElev = rdata.gndHgt - thick
 
     if (amp_out) and (rdata.dtype != "marsis"):
 
@@ -73,19 +73,19 @@ def pick_math(rdata, eps_r, amp_out = True):
         # add any applied shift to index to pull proper sample amplitude from data array
         subsrfAmp[idx] = amp[(subsurf_pk[idx].astype(np.int) + rdata.flags.sampzero), idx]
         
-        out = pd.DataFrame({"trace": trace, "lon": lon, "lat": lat, "alt": alt, "gndElev": gndElev,
+        out = pd.DataFrame({"trace": trace, "lon": lon, "lat": lat, "alt": alt, "gndElev": rdata.gndHgt,
                             "srfIdx": srf, "srfTwtt": srfTwtt, "srfAmp": srfAmp, 
                             "subsrfIdx": subsurf_pk, "subsrfTwtt": subsrfTwtt, 
                             "subsrfAmp": subsrfAmp, "subsrfElev": subsrfElev, "thick": thick})
 
     else:
-        out = pd.DataFrame({"trace": trace, "lon": lon, "lat": lat, "alt": alt, "gndElev": gndElev,
+        out = pd.DataFrame({"trace": trace, "lon": lon, "lat": lat, "alt": alt, "gndElev": rdata.gndHgt,
                             "srfIdx": srf, "srfTwtt": srfTwtt, "srfAmp": np.nan, 
                             "subsrfIdx": subsurf_pk, "subsrfTwtt": subsrfTwtt, 
                             "subsrfAmp": np.nan, "subsrfElev": subsrfElev, "thick": thick})
 
     # remove alt if ground-based data and update header
-    if utils.nan_array_equal(alt, gndElev):
+    if utils.nan_array_equal(alt, rdata.gndHgt):
         out = out.drop(columns=["alt"])
         out = out.rename(columns={"gndElev": "elev"})
 

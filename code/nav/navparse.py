@@ -17,7 +17,7 @@ import pyproj, h5py, codecs
 import matplotlib.pyplot as plt
 
 # various getnav functions must return a pandas dataframe consisting of the following cols -
-# ["lon", "lat", "elev", "x", "y", "z", "dist"], where xyz are planetocentric radar platform location
+# ["lon", "lat", "hgt", "x", "y", "z", "dist"], where xyz are planetocentric radar platform location
 # and dist is along track distance in meters
 
 # geocentric crd dict
@@ -43,7 +43,7 @@ def getnav_oibAK_h5(navfile, navcrs, body):
         uidx[-1] = len(hsh) - 1  # Handle end of array
         df["lat"] = np.interp(idx, uidx, df["lat"][uidx])
         df["lon"] = np.interp(idx, uidx, df["lon"][uidx])
-        df["altM"] = np.interp(idx, uidx, df["altM"][uidx])
+        df["hgt"] = np.interp(idx, uidx, df["hgt"][uidx])
 
     else:
         h5.close()
@@ -52,15 +52,12 @@ def getnav_oibAK_h5(navfile, navcrs, body):
 
     h5.close()
 
-    # set altM series name to elev for consistency with other datasets
-    df = df.rename(columns={"altM": "elev"})
-
     df["x"], df["y"], df["z"] = pyproj.transform(
         navcrs,
         xyzsys[body],
         df["lon"].to_numpy(),
         df["lat"].to_numpy(),
-        df["elev"].to_numpy(),
+        df["hgt"].to_numpy(),
     )
 
     df["dist"] = euclid_dist(
@@ -68,7 +65,7 @@ def getnav_oibAK_h5(navfile, navcrs, body):
         df["y"].to_numpy(),
         df["z"].to_numpy())
 
-    return df[["lon", "lat", "elev", "x", "y", "z", "dist"]]
+    return df[["lon", "lat", "hgt", "x", "y", "z", "dist"]]
 
 
 def getnav_oibAK_mat(navfile, navcrs, body):
@@ -76,19 +73,19 @@ def getnav_oibAK_mat(navfile, navcrs, body):
         f = h5py.File(navfile, "r")
         lon = f["block"]["lon"].flatten()
         lat = f["block"]["lat"].flatten()
-        elev = f["block"]["elev_air"].flatten()     
+        hgt = f["block"]["elev_air"].flatten()     
         f.close()
     except:
         try:
             f = scio.loadmat(navfile)
             lon = f["block"]["lon"][0][0].flatten()
             lat = f["block"]["lat"][0][0].flatten()
-            elev = f["block"]["elev_air"][0][0].flatten() 
+            hgt = f["block"]["elev_air"][0][0].flatten() 
         except Exception as err:
             print("getnav_oibAK_mat Error: " + str(err))
             exit(1)
 
-    df = pd.DataFrame({"lon": lon, "lat": lat, "elev": elev,
+    df = pd.DataFrame({"lon": lon, "lat": lat, "hgt": hgt,
                                 "x": np.nan, "z": np.nan, "z": np.nan,
                                 "dist": np.nan})
 
@@ -97,7 +94,7 @@ def getnav_oibAK_mat(navfile, navcrs, body):
         xyzsys[body],
         df["lon"].to_numpy(),
         df["lat"].to_numpy(),
-        df["elev"].to_numpy(),
+        df["hgt"].to_numpy(),
     )
 
     df["dist"] = euclid_dist(
@@ -105,7 +102,7 @@ def getnav_oibAK_mat(navfile, navcrs, body):
         df["y"].to_numpy(),
         df["z"].to_numpy())
 
-    return df[["lon", "lat", "elev", "x", "y", "z", "dist"]]
+    return df[["lon", "lat", "hgt", "x", "y", "z", "dist"]]
 
 
 def getnav_gssi(navfile, tnum, navcrs, body):
@@ -131,7 +128,7 @@ def getnav_gssi(navfile, tnum, navcrs, body):
         scans = np.array(list(map(lambda x: int(x.split(",")[1]),
                                 [line for i, line in enumerate(lines) if i in gssis_inds_keep])))
         gps = GPSdat([line for i, line in enumerate(lines) if i in gga_inds], scans, tnum)
-        df = pd.DataFrame({"lon": gps.lon, "lat": gps.lat, "elev": gps.elev,
+        df = pd.DataFrame({"lon": gps.lon, "lat": gps.lat, "hgt": gps.hgt,
                                     "x": np.nan, "y": np.nan, "z": np.nan,
                                     "dist": np.nan})
 
@@ -140,7 +137,7 @@ def getnav_gssi(navfile, tnum, navcrs, body):
             xyzsys[body],
             df["lon"].to_numpy(),
             df["lat"].to_numpy(),
-            df["elev"].to_numpy(),
+            df["hgt"].to_numpy(),
         )
 
         df["dist"] = euclid_dist(
@@ -149,11 +146,11 @@ def getnav_gssi(navfile, tnum, navcrs, body):
             df["z"].to_numpy())
     else:
         nd = np.repeat(np.nan, tnum)
-        df = pd.DataFrame({"lon": nd, "lat": nd, "elev": nd,
+        df = pd.DataFrame({"lon": nd, "lat": nd, "hgt": nd,
                                     "x": nd, "y": nd, "z": nd,
                                     "dist": nd})
 
-    return df[["lon", "lat", "elev", "x", "y", "z", "dist"]]
+    return df[["lon", "lat", "hgt", "x", "y", "z", "dist"]]
 
 
 def getnav_pulseekko(navfile, tnum, navcrs, body):
@@ -184,7 +181,7 @@ def getnav_pulseekko(navfile, tnum, navcrs, body):
                 x.rstrip("\n\r ").split(" ")[1][1:])), ggis))) - 1
 
             gps = GPSdat([line for line in lines if line in gga], scans, tnum)
-            df = pd.DataFrame({"lon": gps.lon, "lat": gps.lat, "elev": gps.elev,
+            df = pd.DataFrame({"lon": gps.lon, "lat": gps.lat, "hgt": gps.hgt,
                                         "x": np.nan, "y": np.nan, "z": np.nan,
                                         "dist": np.nan})
 
@@ -193,7 +190,7 @@ def getnav_pulseekko(navfile, tnum, navcrs, body):
                 xyzsys[body],
                 df["lon"].to_numpy(),
                 df["lat"].to_numpy(),
-                df["elev"].to_numpy(),
+                df["hgt"].to_numpy(),
             )
 
             df["dist"] = euclid_dist(
@@ -204,17 +201,17 @@ def getnav_pulseekko(navfile, tnum, navcrs, body):
         except Exception as err:
             print("getnav_pulsekko error: " + str(err))
             nd = np.repeat(np.nan, tnum)
-            df = pd.DataFrame({"lon": nd, "lat": nd, "elev": nd,
+            df = pd.DataFrame({"lon": nd, "lat": nd, "hgt": nd,
                                         "x": nd, "y": nd, "z": nd,
                                         "dist": nd})
 
     else:
         nd = np.repeat(np.nan, tnum)
-        df = pd.DataFrame({"lon": nd, "lat": nd, "elev": nd,
+        df = pd.DataFrame({"lon": nd, "lat": nd, "hgt": nd,
                                     "x": nd, "y": nd, "z": nd,
                                     "dist": nd})
 
-    return df[["lon", "lat", "elev", "x", "y", "z", "dist"]]
+    return df[["lon", "lat", "hgt", "x", "y", "z", "dist"]]
 
     
 def getnav_sharad(navfile, navcrs, body):
@@ -224,7 +221,7 @@ def getnav_sharad(navfile, navcrs, body):
         "lat",
         "lon",
         "marsRad",
-        "elev",
+        "hgt",
         "radiVel",
         "tangVel",
         "SZA",
@@ -234,23 +231,23 @@ def getnav_sharad(navfile, navcrs, body):
 
     # Planetocentric lat, lon, radius to x,y,z - no need for navcrs in this one
     df["x"] = (
-        (df["elev"] * 1000)
+        (df["hgt"] * 1000)
         * np.cos(np.radians(df["lat"]))
         * np.cos(np.radians(df["lon"]))
     )
     df["y"] = (
-        (df["elev"] * 1000)
+        (df["hgt"] * 1000)
         * np.cos(np.radians(df["lat"]))
         * np.sin(np.radians(df["lon"]))
     )
-    df["z"] = (df["elev"] * 1000) * np.sin(np.radians(df["lat"]))
+    df["z"] = (df["hgt"] * 1000) * np.sin(np.radians(df["lat"]))
 
     df["dist"] = euclid_dist(
         df["x"].to_numpy(),
         df["y"].to_numpy(),
         df["z"].to_numpy())
 
-    return df[["lon", "lat", "elev", "x", "y", "z", "dist"]]
+    return df[["lon", "lat", "hgt", "x", "y", "z", "dist"]]
 
 
 def getnav_marsis(navfile, navcrs, body):
@@ -260,7 +257,7 @@ def getnav_marsis(navfile, navcrs, body):
         "time",
         "lat",
         "lon",
-        "elev",
+        "hgt",
         "sza",
         "ch0",
         "ch1",
@@ -300,7 +297,7 @@ def getnav_marsis(navfile, navcrs, body):
         df["y"].to_numpy(),
         df["z"].to_numpy())
 
-    return df[["lon", "lat", "elev", "x", "y", "z", "dist"]]
+    return df[["lon", "lat", "hgt", "x", "y", "z", "dist"]]
 
 
 def euclid_dist(xarray, yarray,zarray):

@@ -26,7 +26,7 @@ class radar(object):
         self.snum = None
         #: int, the number of traces in the file
         self.tnum = None
-        #: float, spacing between samples in travel time [seconds]
+        #: float, time between samples
         self.dt = None
         #: np.ndarray(snum x tnum) ingested radar data
         self.dat = None
@@ -38,7 +38,7 @@ class radar(object):
         self.flags = flags.flags()
 
         # per-trace attributes
-        #: navdf consisting of [lon, lat, elev, x, y, z, dist]
+        #: navdf consisting of [lon, lat, hgt, x, y, z, dist]
         self.navdf = None
 
         # sample-wise attributes
@@ -46,8 +46,8 @@ class radar(object):
         self.twtt = None
 
         # optional attributes
-        #: np.ndarray(tnum,) ground elevation per trace [m.a.s.l.]
-        self.gndElev = None
+        #: np.ndarray(tnum,) ground height per trace
+        self.gndHgt = None
         #: np.ndarray(snum x tnum) processed radat data - this is what will actually be displayed, as to not modify original data
         self.proc = None
         #: np.ndarray(snum x tnum) clutter simulation stored in dB for viewing
@@ -80,10 +80,10 @@ class radar(object):
         return
 
 
-    # set ground elevation
-    def set_gndElev(self,dat):
-        #: np.ndarray(tnum,) data, ground elevation per trace [m.a.s.l.]
-        self.gndElev = dat
+    # set ground height
+    def set_gndHgt(self, dat):
+        #: np.ndarray(tnum,) data, ground height per trace
+        self.gndHgt = dat
 
         return
 
