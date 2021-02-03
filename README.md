@@ -39,26 +39,27 @@ RAGU was originally developed to work with NASA's Operation IceBridge Alaska rad
 
 ### Outputs
 #### Pick files:
-- **.csv:** comma-separated value text file
-- **.gpkg:** geopackage
-- **.h5:** HDF5 dataset 
+1. **Comma-Separated Value (.csv)**
+2. **Geopackage (.gpkg)**
 
-For **CSV** and **Geopackage** files, the following information may be exported for each trace in the input radar data:
-- <ins>trace</ins>: trace number  
-- <ins>lon</ins>: longitude  
-- <ins>lat</ins>: latitude  
-- <ins>alt</ins>: altitude  
-- <ins>gndElev</ins>: ground elevation  
-- <ins>srfIdx</ins>: surface return sample number
-- <ins>srfTwtt</ins>: two way travel time to the surface return  
-- <ins>srfAmp</ins>: surface return amplitude  
-- <ins>subsrfIdx</ins>: subsurface return sample number
-- <ins>subsrfTwtt</ins>: two way travel time to the picked subsurface return  
-- <ins>subsrfAmp</ins>: subsurface return amplitude  
-- <ins>subsrfElev</ins>: subsurface return elevation  
-- <ins>thick</ins>: layer thickness (ground elevation - subsurface elevation)
+    For **CSV** and **Geopackage** files, the following information may be exported for each trace in the input radar data:
+    - <ins>trace</ins>: trace number  
+    - <ins>lon</ins>: longitude  
+    - <ins>lat</ins>: latitude  
+    - <ins>alt</ins>: altitude  
+    - <ins>gndElev</ins>: ground elevation  
+    - <ins>srfIdx</ins>: surface return sample number
+    - <ins>srfTwtt</ins>: two way travel time to the surface return  
+    - <ins>srfAmp</ins>: surface return amplitude  
+    - <ins>subsrfIdx</ins>: subsurface return sample number
+    - <ins>subsrfTwtt</ins>: two way travel time to the picked subsurface return  
+    - <ins>subsrfAmp</ins>: subsurface return amplitude  
+    - <ins>subsrfElev</ins>: subsurface return elevation  
+    - <ins>thick</ins>: layer thickness (ground elevation - subsurface elevation)
 
-For **HDF5** data, a dataset containing the two-way travel time to the interpreted subsurface return may be exported to the /drv/pick/ data group.
+3. **HDF5 (.h5)**
+
+    For **HDF5** data, a dataset containing the two-way travel time to the interpreted subsurface return may be exported to the /drv/pick/ data group.
 
 #### Figure:
 A figure each may also be exported for the uninterpreted radar profile, the accompanying clutter simulation, and the interpreted radar profile. Example over Malaspina Glacier, AK:  
