@@ -56,7 +56,7 @@ class mainGUI(tk.Frame):
         self.figsettings["figyaxis"].set(True)        
         self.figsettings["figtitle"].set(True)        
         self.debugState = tk.BooleanVar()
-        self.debugState.set(False)
+        self.debugState.set(True)
         self.os = sys.platform
         # setup tkinter frame
         self.setup()
@@ -354,59 +354,59 @@ class mainGUI(tk.Frame):
 
     # open_data is a gui method which has the user select and input data file - then passed to impick.load()
     def open_data(self, temp_loadName=None):
-        try:
+        # try:
             # prompt save check
-            if (self.save_check() == False) and (tk.messagebox.askyesno("Warning", "Discard unsaved picks?", icon = "warning") == False):
-                return
-            else:
-                if not temp_loadName:
-                    # select input file
-                    if self.os == "darwin":
-                        temp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select data file")
-                    else:
-                        temp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select data file",filetypes = [("all files",".*"),
-                                                                                                                                        ("hd5f", ".mat .h5"),
-                                                                                                                                        ("sharad", ".img"),
-                                                                                                                                        ("marsis", ".dat"),
-                                                                                                                                        ("pulseekko", ".DT1"),
-                                                                                                                                        ("gssi",".DZT")])
-                # if input selected, clear impick canvas, ingest data and pass to impick
-                if temp_loadName:
-                    # ensure we're on profile tab
-                    if self.tab == "waveform":
-                        self.nb.select(self.nb.tabs()[0])
-                    self.f_loadName = temp_loadName
-                    self.f_saveName = ""
-                    self.impick.clear_canvas()  
-                    self.impick.set_vars()
-                    self.impick.update_option_menu()
-                    # ingest the data
-                    self.igst = ingest(self.f_loadName.split(".")[-1])
-                    self.rdata = self.igst.read(self.f_loadName, self.conf["path"]["simPath"], self.conf["nav"]["crs"], self.conf["nav"]["body"])
-                    # return if no data ingested
-                    if not self.rdata:
-                        return
-                    self.impick.load(self.rdata)
-                    self.impick.update_figsettings(self.figsettings)
-                    self.impick.set_axes()
-                    self.impick.drawData()
-                    self.impick.update_bg()
-                    self.wvpick.set_vars()
-                    self.wvpick.clear()
-                    self.wvpick.set_data(self.rdata)
-                    self.siglbl.config(text = '\t\t'.join('{}: {}'.format(k, d) for k, d in self.rdata.sig.items()))
+        if (self.save_check() == False) and (tk.messagebox.askyesno("Warning", "Discard unsaved picks?", icon = "warning") == False):
+            return
+        else:
+            if not temp_loadName:
+                # select input file
+                if self.os == "darwin":
+                    temp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select data file")
+                else:
+                    temp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select data file",filetypes = [("all files",".*"),
+                                                                                                                                    ("hd5f", ".mat .h5"),
+                                                                                                                                    ("sharad", ".img"),
+                                                                                                                                    ("marsis", ".dat"),
+                                                                                                                                    ("pulseekko", ".DT1"),
+                                                                                                                                    ("gssi",".DZT")])
+            # if input selected, clear impick canvas, ingest data and pass to impick
+            if temp_loadName:
+                # ensure we're on profile tab
+                if self.tab == "waveform":
+                    self.nb.select(self.nb.tabs()[0])
+                self.f_loadName = temp_loadName
+                self.f_saveName = ""
+                self.impick.clear_canvas()  
+                self.impick.set_vars()
+                self.impick.update_option_menu()
+                # ingest the data
+                self.igst = ingest(self.f_loadName.split(".")[-1])
+                self.rdata = self.igst.read(self.f_loadName, self.conf["path"]["simPath"], self.conf["nav"]["crs"], self.conf["nav"]["body"])
+                # return if no data ingested
+                if not self.rdata:
+                    return
+                self.impick.load(self.rdata)
+                self.impick.update_figsettings(self.figsettings)
+                self.impick.set_axes()
+                self.impick.drawData()
+                self.impick.update_bg()
+                self.wvpick.set_vars()
+                self.wvpick.clear()
+                self.wvpick.set_data(self.rdata)
+                self.siglbl.config(text = '\t\t'.join('{}: {}'.format(k, d) for k, d in self.rdata.sig.items()))
 
-                # pass basemap to impick for plotting pick location
-                if self.map_loadName and self.basemap.get_state() == 1:
-                    self.basemap.set_track(self.rdata.fn)
-                    self.basemap.set_nav(self.rdata.fn, self.rdata.navdf)
-                    self.basemap.plot_tracks()
-                    self.impick.get_basemap(self.basemap)
+            # pass basemap to impick for plotting pick location
+            if self.map_loadName and self.basemap.get_state() == 1:
+                self.basemap.set_track(self.rdata.fn)
+                self.basemap.set_nav(self.rdata.fn, self.rdata.navdf)
+                self.basemap.plot_tracks()
+                self.impick.get_basemap(self.basemap)
 
         # recall open_data if wrong file type is selected 
-        except Exception as err:
-            print(err)
-            self.open_data() 
+        # except Exception as err:
+        #     print(err)
+        #     self.open_data() 
 
 
     # next_loc is a method to get the filename of the next data file in the directory then call impick.load()
@@ -581,11 +581,11 @@ class mainGUI(tk.Frame):
         if self.f_loadName:
             # end surface picking if currently active
             self.end_surf_pick()
-            self.impick.set_pickState(True,surf="subsurface")
+            self.impick.set_pickState(True, surf="subsurface")
             self.impick.pick_interp(surf = "subsurface")
             self.impick.plot_picks(surf = "subsurface")
             # add pick annotations
-            self.impick.add_pickLabels()
+            self.impick.update_pickLabels()
             self.impick.update_bg()
             self.impick.update_option_menu()
 
@@ -593,11 +593,11 @@ class mainGUI(tk.Frame):
     # end_subsurf_pick is a method which terminates the current impick pick layer
     def end_subsurf_pick(self):
         if (self.impick.get_pickState() is True) and (self.impick.get_pickSurf() == "subsurface"):
-            self.impick.set_pickState(False,surf="subsurface")
+            self.impick.set_pickState(False, surf="subsurface")
             self.impick.pick_interp(surf = "subsurface")
             self.impick.plot_picks(surf = "subsurface")
             # add pick annotations
-            self.impick.add_pickLabels()
+            self.impick.update_pickLabels()
             self.impick.update_bg()
             self.impick.update_option_menu()
 
@@ -617,8 +617,8 @@ class mainGUI(tk.Frame):
             self.impick.pick_interp(surf = "surface")
             self.impick.plot_picks(surf = "surface")
             self.impick.update_bg()
-            # update gnd_elevation
-            self.rdata.set_gndElev(utils.srfpick2elev(self.rdata.pick.current_surf, 
+            # update surf_elevation
+            self.rdata.set_surfElev(utils.surfpick2elev(self.rdata.pick.current_surf, 
                                                       self.rdata.navdf["elev"].to_numpy(), 
                                                       self.rdata.tnum,
                                                       self.rdata.dt))
@@ -655,8 +655,8 @@ class mainGUI(tk.Frame):
                         ((utils.dict_compare(self.rdata.pick.current_subsurf, self.rdata.pick.current_subsurfOpt)) == False)) and \
                         (tk.messagebox.askyesno("tab change","import optimized picks to profile from waveform?") == True):
                     self.rdata.pick.current_surf = self.rdata.pick.current_surfOpt
-                    # update gnd_elevation
-                    self.rdata.set_gndElev(utils.srfpick2elev(self.rdata.pick.current_surf, 
+                    # update surf_elevation
+                    self.rdata.set_surfElev(utils.surfpick2elev(self.rdata.pick.current_surf, 
                                                             self.rdata.navdf["elev"].to_numpy(), 
                                                             self.rdata.tnum,
                                                             self.rdata.dt))
@@ -668,7 +668,7 @@ class mainGUI(tk.Frame):
     # clear is a method to clear all picks
     def clear(self, surf = None):
         if self.f_loadName:
-            if (surf == "surface") and (tk.messagebox.askokcancel("warning", "clear all surface picks?", icon = "warning") == True):
+            if (surf == "surface") and (self.impick.get_surfpkFlag == True) and (tk.messagebox.askokcancel("warning", "clear all surface picks?", icon = "warning") == True):
                 # reset current surf pick array
                 self.rdata.pick.current_surf.fill(np.nan)
                 # reset surf pick flag
@@ -680,7 +680,7 @@ class mainGUI(tk.Frame):
                 self.rdata.pick.current_subsurf.clear()
                 self.rdata.pick.current_subsurfOpt.clear()
                 self.impick.clear_subsurfPicks()
-                self.impick.plot_picks(surf = "subsurface")
+                # self.impick.plot_picks(surf = "subsurface")
                 self.impick.update_bg()
                 self.impick.update_option_menu()
                 self.wvpick.set_vars()

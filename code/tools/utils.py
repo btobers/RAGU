@@ -51,6 +51,10 @@ def find_nearest(a, val):
     return idx
 
 
+# nonan_idx returns the index of values in an array which are not nan
+def nonan_idx(a):
+    return np.where(~np.isnan(a))[0]
+
 # nan_array_equal is a method to determine if two arrays which may contain nan values are equivalent
 def nan_array_equal(a, b):
     try:
@@ -65,13 +69,13 @@ def dict_compare(a, b):
         return True
     else:
         for _i in range(len(a)):
-            if nan_array_equal(a[str(_i)],b[str(_i)]):
+            if nan_array_equal(a[_i],b[_i]):
                 return True
         return False
 
 
-# srfpick2elev function
-def srfpick2elev(a, b, tnum, dt):
+# surfpick2elev function
+def surfpick2elev(a, b, tnum, dt):
     """
     calculate surface elevation from updated surface pick, subtracting distance form navdf["elev"] to surface
     #: np.ndarray(tnum,) a, surface index per trace [samle #]
@@ -81,9 +85,9 @@ def srfpick2elev(a, b, tnum, dt):
     """
     if a.shape == (tnum,):
         dist = twtt2depth(sample2twtt(a, dt), eps_r=1)
-        gndElev = b - dist
+        surfElev = b - dist
 
-        return gndElev
+        return surfElev
 
 
 # twtt2depth function
@@ -140,21 +144,25 @@ def pkampwind(array, idx, windsize):
     return out
 
 
-def print_pickInfo(data, trace, sample):
-    v = C/(np.sqrt(3.15))        # EM wave veloity in ice - for thickness calculation
-
-    fields = ["trace","sample","alt","gndElev","srfTwtt","subsrfTwtt","subsrfElev","thick"]
+def print_pickInfo(data, trace, sample, eps_r=3.15):
+    v = C/(np.sqrt(eps_r))        # EM wave veloity in ice - for thickness calculation
 
     if not np.isnan(data.pick.current_surf).all():
-        srfTwtt = sample2twtt(data.pick.current_surf[trace],data.dt)
+        surfTwtt = sample2twtt(data.pick.current_surf[trace],data.dt)
     else:
-        srfTwtt = data.pick.existing_twttSurf[trace]
+        surfTwtt = data.pick.existing_twttSurf[trace]
     alt = data.navdf["elev"].iloc[trace]    
-    gndElev = data.gndElev[trace]
-    subsrfTwtt = sample * data.dt
-    thick = (((subsrfTwtt - srfTwtt) * v) / 2)
-    subsrfElev = gndElev - thick
+    surfElev = data.surfelev[trace]
+    subsurfTwtt = sample * data.dt
+    thick = (((subsurfTwtt - surfTwtt) * v) / 2)
+    subsurfelev = surfelev - thick
 
-    print(*fields, sep="\t\t")
-    print("%d\t\t%d\t\t%8.4f\t\t%8.4e\t\t%8.4f\t\t%8.4e\t\t%8.4f\t\t%8.4f" % (trace,sample,alt,gndElev,srfTwtt,subsrfTwtt,subsrfElev,thick))
+    print("trace:\t\t",trace)
+    print("sample:\t\t",sample)
+    print("alt:\t\t%8.2f" % (alt))
+    print("surfelev:\t\t%8.2f" % (surfelev))
+    print("surfTwtt:\t\t%8.2e" % (surfTwtt))
+    print("subsurfTwtt:\t\t%8.2e" % (subsurfTwtt))
+    print("subsurfelev:\t\t%8.2f" % (subsurfelev))
+    print("thick:\t\t%8.2f" % (thick))
     print()

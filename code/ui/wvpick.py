@@ -134,7 +134,7 @@ class wvpick(tk.Frame):
         self.traceNum = []
         if self.num_pksegs > 0:
             for _i in range(self.num_pksegs):
-                picked_traces = np.where(~np.isnan(self.rdata.pick.current_subsurfOpt[str(_i)]))[0]
+                picked_traces = np.where(~np.isnan(self.rdata.pick.current_subsurfOpt[_i]))[0]
                 self.segment_trace_first.append(picked_traces[0])
                 self.segment_trace_last.append(picked_traces[-1])
                 self.traceNum.append(picked_traces[0])
@@ -164,8 +164,8 @@ class wvpick(tk.Frame):
 
         if self.num_pksegs > 0:
             # get sample index of pick for given trace
-            pick_idx0 = self.rdata.pick.current_subsurf[str(segment)][self.traceNum[segment]]
-            pick_idx1 = self.rdata.pick.current_subsurfOpt[str(segment)][self.traceNum[segment]]
+            pick_idx0 = self.rdata.pick.current_subsurf[segment][self.traceNum[segment]]
+            pick_idx1 = self.rdata.pick.current_subsurfOpt[segment][self.traceNum[segment]]
 
             self.ax.axvline(x = pick_idx0, c="k", label="initial subsurface pick")
 
@@ -247,7 +247,7 @@ class wvpick(tk.Frame):
             menu.delete(0, "end")
             for _i in range(self.num_pksegs):
                 menu.add_command(label=_i, command=tk._setit(self.segmentVar,_i))
-                self.rePick_idx[str(_i)] = []
+                self.rePick_idx[_i] = []
 
 
     # surf_autoPick is a method to automatically optimize surface picks by selecting the maximul amplitude sample within the specified window around existing self.rdata.surf
@@ -282,13 +282,13 @@ class wvpick(tk.Frame):
         if self.num_pksegs > 0:
             winSize = self.winSize.get()
             for _i in range(self.num_pksegs):
-                x = np.where(~np.isnan(self.rdata.pick.current_subsurf[str(_i)]))[0]
-                y = self.rdata.pick.current_subsurf[str(_i)][x]
+                x = np.where(~np.isnan(self.rdata.pick.current_subsurf[_i]))[0]
+                y = self.rdata.pick.current_subsurf[_i][x]
                 for _j in range(len(x)):
                     # find argmax for window for given data trace in pick
                     max_idx = np.argmax(self.rdata.proc[int(y[_j] - (winSize/2)):int(y[_j] + (winSize/2)), x[_j]])
                     # add argmax index to pick_dict1 - account for window index shift
-                    self.rdata.pick.current_subsurfOpt[str(_i)][x[_j]] = max_idx + int(y[_j] - (winSize/2))
+                    self.rdata.pick.current_subsurfOpt[_i][x[_j]] = max_idx + int(y[_j] - (winSize/2))
             self.plot_wv()
 
 
@@ -298,10 +298,10 @@ class wvpick(tk.Frame):
             return
         segment = self.segmentVar.get()
         # append trace number to rePick_idx list to keep track of indeces for interpolation
-        if (len(self.rePick_idx[str(segment)]) == 0) or (self.rePick_idx[str(segment)][-1] != self.traceNum[segment]):
-            self.rePick_idx[str(segment)].append(self.traceNum[segment])
+        if (len(self.rePick_idx[segment]) == 0) or (self.rePick_idx[segment][-1] != self.traceNum[segment]):
+            self.rePick_idx[segment].append(self.traceNum[segment])
         
-        self.rdata.pick.current_subsurfOpt[str(segment)][self.traceNum[segment]] = int(event.xdata)        
+        self.rdata.pick.current_subsurfOpt[segment][self.traceNum[segment]] = int(event.xdata)        
         self.plot_wv()
 
 
@@ -312,29 +312,29 @@ class wvpick(tk.Frame):
         interp = self.subsurf_interpType.get()
         if interp == "linear":
             for _i in range(self.num_pksegs):
-                if len(self.rePick_idx[str(_i)]) >= 2:
+                if len(self.rePick_idx[_i]) >= 2:
                     # get indices where picks exist for pick segment
-                    rePick_idx = self.rePick_idx[str(_i)]
+                    rePick_idx = self.rePick_idx[_i]
                     # add cubic spline output interpolation to pick dictionary
                     interp_idx = np.arange(rePick_idx[0],rePick_idx[-1] + 1)
                     # get indeces of repicked traces
-                    xp = self.rePick_idx[str(_i)]
+                    xp = self.rePick_idx[_i]
                     # get twtt values at repicked indicesself.pick_dict1
-                    fp = self.rdata.pick.current_subsurfOpt[str(_i)][xp]
+                    fp = self.rdata.pick.current_subsurfOpt[_i][xp]
                     # interpolate repicked values for segment
-                    self.rdata.pick.current_subsurfOpt[str(_i)][interp_idx] = np.interp(interp_idx, xp, fp)            
+                    self.rdata.pick.current_subsurfOpt[_i][interp_idx] = np.interp(interp_idx, xp, fp)            
 
 
         elif interp == "cubic":
             for _i in range(self.num_pksegs):
-                if len(self.rePick_idx[str(_i)]) >= 2:
+                if len(self.rePick_idx[_i]) >= 2:
                     # cubic spline between picks
-                    rePick_idx = self.rePick_idx[str(_i)]
-                    cs = CubicSpline(rePick_idx, self.rdata.pick.current_subsurfOpt[str(_i)][rePick_idx])
+                    rePick_idx = self.rePick_idx[_i]
+                    cs = CubicSpline(rePick_idx, self.rdata.pick.current_subsurfOpt[_i][rePick_idx])
                     # generate array of indices between first and last optimized pick
                     interp_idx = np.arange(rePick_idx[0],rePick_idx[-1] + 1)
                     # add cubic spline output interpolation to pick dictionary
-                    self.rdata.pick.current_subsurfOpt[str(_i)][interp_idx] = cs([interp_idx]).astype(int)
+                    self.rdata.pick.current_subsurfOpt[_i][interp_idx] = cs([interp_idx]).astype(int)
 
 
     # onpress gets the time of the button_press_event

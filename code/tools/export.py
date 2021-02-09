@@ -18,40 +18,67 @@ from tools.constants import *
 import matplotlib.pyplot as plt
 
 # pick_math is a function to perform all the necessary mathematics on a set of picks and save data as a pandas dataframe
+# if overlapping pick segments exist, save as separate layers
 def pick_math(rdata, eps_r, amp_out = True):
-    v = C/(np.sqrt(eps_r))                      # wave veloity
-
-    trace = np.arange(rdata.tnum)               # array to hold trace number
-    lon = rdata.navdf["lon"]                    # array to hold longitude
-    lat = rdata.navdf["lat"]                    # array to hold latitude
-    alt = rdata.navdf["hgt"]                   # array to hold aircraft elevation
-    gndElev = rdata.gndHgt                     # array to hold ground elevation
-    subsurf_pk = np.repeat(np.nan, rdata.tnum)  # array to hold indeces of subsurface picks
-
+    v = C/(np.sqrt(eps_r))                              # wave veloity
+    trace = np.arange(rdata.tnum)                       # array to hold trace number
+    picked_traces = {}
+    subsurf_idx = {}          
+    subsurfTwtt = {} 
+    thick = {}          
+    subsurfelev = {}
+    subsurfAmp = {}
+    lyr = 0
+    
     # if existing surface pick, and no current -> use existing
     if np.isnan(rdata.pick.current_surf).all() and not np.isnan(rdata.pick.existing_twttSurf).all():
-        srfTwtt = rdata.pick.existing_twttSurf
-        srf = utils.twtt2sample(srfTwtt, rdata.dt)
+        surfTwtt = rdata.pick.existing_twttSurf
+        surf_idx = utils.twtt2sample(surfTwtt, rdata.dt)
 
+    # else if the user created surface pick use that surface
     else:
-        srf = rdata.pick.current_surf
-        srfTwtt = utils.sample2twtt(srf, rdata.dt)
+        surf_idx = rdata.pick.current_surf
+        surfTwtt = utils.sample2twtt(surf, rdata.dt)
 
-    # iterate through pick segments adding data to export arrays
-    for _i in rdata.pick.current_subsurf.keys():
-        picked_traces = np.where(~np.isnan(rdata.pick.current_subsurf[str(_i)]))[0]
+    # iterate through pick segments adding data to export array
+    for key, arr in rdata.pick.current_subsurf.items():
+        picked_traces[key] = np.where(~np.isnan(arr))[0]
+        # if segment overlaps previous segment, create new dict layer to hold pick
+        if (key > 0) and (np.intersect1d(picked_traces[key], picked_traces[key - 1]).shape[0] > 0):
+            lyr += 1
+        
+        if lyr not in subsurf_idx:
+            subsurf_idx[lyr] = np.repeat(np.nan, rdata.tnum)
+            subsurf_idx[lyr][picked_traces[key]] = arr[picked_traces[key]]
 
-        subsurf_pk[picked_traces] = rdata.pick.current_subsurf[str(_i)][picked_traces]
+    # iterate through total number of subsurface pick layers
+    for key, arr in subsurf_idx.items():
+        # convert pick sample to twtt
+        subsurfTwtt[key] = utils.sample2twtt(arr, rdata.dt)
 
-    # convert pick sample to twtt
-    subsrfTwtt = utils.sample2twtt(subsurf_pk, rdata.dt)
+        # calculate cumulative thickness
+        h = (((subsurfTwtt[key] - surfTwtt) * v) / 2)
 
-    # calculate ice thickness
-    thick = (((subsrfTwtt - srfTwtt) * v) / 2)
+        # calculate layer bed elevation
+        subsurfelev[key] = rdata.surfElev - h
 
-    # calculate bed elevation
-    subsrfElev = rdata.gndHgt - thick
+        # if not 0th layer, reference above layer for thickness
+        if key > 0:
+            # calculate layer thickness
+            thick[key] = subsurfelev[key - 1] - subsurfelev[key]
+        else:
+            thick[key] = h
 
+    # initilize output dataframe
+    out = pd.DataFrame({"trace": trace, 
+                    "lon": rdata.navdf["lon"], 
+                    "lat": rdata.navdf["lat"], 
+                    "radelev": rdata.navdf["elev"], 
+                    "surfElev": rdata.surfElev,
+                    "surfIdx": surf_idx, 
+                    "surfTwtt": surfTwtt})
+
+    # get amplitude values for picks
     if (amp_out) and (rdata.dtype != "marsis"):
 
         # if raw data is complex, take absolute value to get amplitude
@@ -63,31 +90,41 @@ def pick_math(rdata, eps_r, amp_out = True):
             amp = rdata.dat
 
         # export surface and subsurface pick amplitude values
-        srfAmp = np.repeat(np.nan, rdata.tnum)
-        idx = ~np.isnan(srf)
+        surfAmp = np.repeat(np.nan, rdata.tnum)
+        idx = ~np.isnan(surf_idx)
         # add any applied shift to index to pull proper sample amplitude from data array
-        srfAmp[idx] = amp[(srf[idx].astype(np.int) + rdata.flags.sampzero) ,idx]
+        surfAmp[idx] = amp[(surf_idx[idx].astype(np.int) + rdata.flags.sampzero) ,idx]
 
-        subsrfAmp = np.repeat(np.nan, rdata.tnum)
-        idx = ~np.isnan(subsurf_pk)
-        # add any applied shift to index to pull proper sample amplitude from data array
-        subsrfAmp[idx] = amp[(subsurf_pk[idx].astype(np.int) + rdata.flags.sampzero), idx]
-        
-        out = pd.DataFrame({"trace": trace, "lon": lon, "lat": lat, "alt": alt, "gndElev": rdata.gndHgt,
-                            "srfIdx": srf, "srfTwtt": srfTwtt, "srfAmp": srfAmp, 
-                            "subsrfIdx": subsurf_pk, "subsrfTwtt": subsrfTwtt, 
-                            "subsrfAmp": subsrfAmp, "subsrfElev": subsrfElev, "thick": thick})
+        out["surfAmp"] = surfAmp
+
+        for key, arr in subsurf_idx.items():
+            subsurfAmp[key] = np.repeat(np.nan, rdata.tnum)
+            idx = ~np.isnan(arr)
+            # add any applied shift to index to pull proper sample amplitude from data array
+            subsurfAmp[key][idx] = amp[(arr[idx].astype(np.int) + rdata.flags.sampzero), idx]
+
+            # add to output dataframe
+            out["lyr" + str(key) + "Idx"] = arr
+            out["lyr" + str(key) + "Twtt"] = subsurfTwtt[key]
+            out["lyr" + str(key) + "elev"] = subsurfelev[key]
+            out["lyr" + str(key) + "Thick"] = thick[key]
+            out["lyr" + str(key) + "Amp"] = subsurfAmp[key]
 
     else:
-        out = pd.DataFrame({"trace": trace, "lon": lon, "lat": lat, "alt": alt, "gndElev": rdata.gndHgt,
-                            "srfIdx": srf, "srfTwtt": srfTwtt, "srfAmp": np.nan, 
-                            "subsrfIdx": subsurf_pk, "subsrfTwtt": subsrfTwtt, 
-                            "subsrfAmp": np.nan, "subsrfElev": subsrfElev, "thick": thick})
+        out["surfAmp"] = np.nan
+        for key, arr in subsurf_idx.items():
+            # add to output dataframe
+            out["lyr" + str(key) + "Idx"] = arr
+            out["lyr" + str(key) + "Twtt"] = subsurfTwtt[key]
+            out["lyr" + str(key) + "elev"] = subsurfelev[key]
+            out["lyr" + str(key) + "Thick"] = thick[key]
+            out["lyr" + str(key) + "Amp"] = np.nan
+
 
     # remove alt if ground-based data and update header
-    if utils.nan_array_equal(alt, rdata.gndHgt):
-        out = out.drop(columns=["alt"])
-        out = out.rename(columns={"gndElev": "elev"})
+    if utils.nan_array_equal(rdata.navdf["elev"], rdata.surfElev):
+        out = out.drop(columns=["elev"])
+        out = out.rename(columns={"surfElev": "elev"})
 
     return out
 
@@ -118,11 +155,11 @@ def gpkg(fpath, df, crs):
     print("geopackage exported successfully:\t" + fpath)
 
 
-# h5 is a function for saving twtt_ssrf pick to h5 data file
+# h5 is a function for saving twtt_ssurf pick to h5 data file
 def h5(fpath, df):
     # fpath is the data file path [str]
     # df pick output dataframe
-    dat = df["subsrfTwtt"].to_numpy()
+    dat = df["subsurfTwtt"].to_numpy()
 
     f = h5py.File(fpath, "a") 
     num_file_pick_lyr = len(fnmatch.filter(f["drv"]["pick"].keys(), "twtt_subsurf*"))

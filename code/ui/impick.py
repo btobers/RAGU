@@ -71,19 +71,15 @@ class impick(tk.Frame):
         tk.Radiobutton(infoFrame,text="off", variable=self.pick_ann_vis, value=False, command=self.show_pickLabels).pack(side="left")
         tk.ttk.Separator(infoFrame,orient="vertical").pack(side="left", fill="both", padx=10, pady=4)
 
-        tk.Button(infoFrame, text="edit", command=self.edit_pkSeg).pack(side="right")
+        # subsurface pick segment options
         tk.Button(infoFrame, text="delete", command=self.delete_pkSeg).pack(side="right")
-
+        tk.Button(infoFrame, text="edit", command=self.edit_pkSeg).pack(side="right")
         # initialize pick segment vars with dropdown menu
         self.segVar = tk.IntVar()
         self.segments=[None]
         self.segMenu = tk.OptionMenu(infoFrame, self.segVar, *self.segments)
         self.segMenu.pack(side="right",pady=0)
         tk.Label(infoFrame,text="subsurface pick segment: ").pack(side="right")
-
-        self.pickLabel = tk.Label(toolbarFrame, font= "Verdana 10")
-        self.pickLabel.pack(side="right")
-        tk.Label(toolbarFrame, text="\t").pack(side="right")
         tk.ttk.Separator(infoFrame,orient="vertical").pack(side="right", fill="both", padx=10, pady=4)
 
         # add entry box for peak finder window size
@@ -91,6 +87,11 @@ class impick(tk.Frame):
         tk.Entry(infoFrame, textvariable=self.winSize, width = 5).pack(side="right")
         tk.Label(infoFrame, text = "window size [#samples]: ").pack(side="right")
         tk.ttk.Separator(infoFrame,orient="vertical").pack(side="right", fill="both", padx=10, pady=4)
+
+        # pick segment info label
+        self.pickLabel = tk.Label(toolbarFrame, font= "Verdana 10")
+        self.pickLabel.pack(side="right")
+        tk.Label(toolbarFrame, text="\t").pack(side="right")
 
         # create matplotlib figure data canvas
         plt.rcParams.update({'font.size': str(self.figsettings["fontsize"].get())})
@@ -162,26 +163,25 @@ class impick(tk.Frame):
         self.data_crange = None
         self.sim_crange = None
 
-        # initialize lists to hold temporary picks
-        self.xln_subsurf = []
-        self.yln_subsurf = []
-        self.xln_surf = []
-        self.yln_surf = []
+        # initialize path objects to hold temporary pick lists
+        self.surf_tmp_path = path([],[])
+        self.subsurf_tmp_path = path([],[])
 
         # initialize list of pick annotations
         self.ann_list= []
 
-        # initialize arrays to hold saved picks
-        self.xln_surf_saved = np.array(())
-        self.yln_surf_saved = np.array(())
-        self.xln_subsurf_saved = np.array(())
-        self.yln_subsurf_saved = np.array(())
+        # initialize arrays to hold saved surface picks
+        self.surf_saved_path = path(np.array(()),np.array(()))
+
+        # initialize dictionary to hold saved subsurface pick path objects
+        self.subsurf_saved_path = {}
+        self.subsurf_saved_path[self.pick_segment] = path(np.array(()),np.array(()))
 
         # initialize lines to hold picks
-        self.tmp_subsurf_ln = None
-        self.saved_subsurf_ln = None
-        self.tmp_surf_ln = None
-        self.saved_surf_ln = None
+        self.subsurf_tmp_ln = None
+        self.subsurf_saved_ln = None
+        self.surf_tmp_ln = None
+        self.surf_saved_ln = None
 
         # necessary flags
         self.sim_imSwitch_flag = False
@@ -229,11 +229,8 @@ class impick(tk.Frame):
         # # set clutter sim visibility to false
         self.im_sim.set_visible(False)
 
-        # initialize arrays to hold saved picks
-        self.xln_surf_saved = np.repeat(np.nan, self.rdata.tnum)
-        self.yln_surf_saved = np.repeat(np.nan, self.rdata.tnum)
-        self.xln_subsurf_saved = np.repeat(np.nan, self.rdata.tnum)
-        self.yln_subsurf_saved = np.repeat(np.nan, self.rdata.tnum)
+        # initialize arrays to hold saved surface picks
+        self.surf_saved_path = path(np.repeat(np.nan, self.rdata.tnum), np.repeat(np.nan, self.rdata.tnum))
 
         # plot existing subsurface pick layers
         self.existing_subsurf_lns = []
@@ -247,10 +244,10 @@ class impick(tk.Frame):
             self.existing_surf_ln = self.ax.plot(np.arange(self.rdata.tnum), utils.twtt2sample(self.rdata.pick.existing_twttSurf, self.rdata.dt), "c", linewidth=1)
 
         # initialize lines to hold current pick segments
-        self.tmp_surf_ln, = self.ax.plot(self.xln_surf,self.yln_surf,"mx")                          # empty line for surface pick segment
-        self.saved_surf_ln, = self.ax.plot(self.xln_surf_saved, self.yln_subsurf_saved, "y")        # emplty line for saved surface pick segment
-        self.tmp_subsurf_ln, = self.ax.plot(self.xln_subsurf,self.yln_subsurf,"rx")                 # empty line for current pick segment
-        self.saved_subsurf_ln, = self.ax.plot(self.xln_subsurf_saved,self.yln_subsurf_saved,"g")    # empty line for saved subsurface pick
+        self.surf_tmp_ln, = self.ax.plot(self.surf_tmp_path.x, self.surf_tmp_path.y, "mx")                                              # empty line for surface pick segment
+        self.surf_saved_ln, = self.ax.plot(self.surf_saved_path.x, self.surf_saved_path.y, "y")                                         # emplty line for saved surface pick segment
+        self.subsurf_tmp_ln, = self.ax.plot(self.subsurf_tmp_path.x, self.subsurf_tmp_path.y, "rx")                                     # empty line for current pick segment
+        self.subsurf_saved_ln = {}                                                                                                      # dictionary to hold individual subsurface pick lines
 
         # update the canvas
         self.dataCanvas._tkcanvas.pack()
@@ -569,7 +566,7 @@ class impick(tk.Frame):
 
     # get_subsurfpkFlag is a method which returns true if manual subsurface picks exist, and false otherwise   
     def get_subsurfpkFlag(self):
-        if len(self.xln_subsurf) + np.count_nonzero(~np.isnan(self.xln_subsurf_saved)) > 0:
+        if len(self.subsurf_tmp_path.x) + np.count_nonzero(~np.isnan(self.subsurf_saved_path[0].x)) > 0:
             return True
         else:
             return False
@@ -581,7 +578,7 @@ class impick(tk.Frame):
 
 
     # set_surfPickFlag is a method which sets a boolean object for whether the surface has been picked
-    def set_surfpkFlag(self,flag):
+    def set_surfpkFlag(self, flag):
         self.surfpkFlag = flag
 
 
@@ -595,30 +592,49 @@ class impick(tk.Frame):
         return self.pick_surf
 
 
-    # set_pickState is a method to generate a new pick dictionary layer and plot the data
+    # init_subsurfpk is a method to initialize the objects necessary to hold subsurface picks
+    def init_subsurfpk(self):
+        # initialize subsurface pick index array for current segment
+        self.rdata.pick.current_subsurf[self.pick_segment] = np.repeat(np.nan, self.rdata.tnum)
+        # initialize saved subsurface pick path object and line object for current segment
+        self.subsurf_saved_path[self.pick_segment] = path(np.repeat(np.nan, self.rdata.tnum), np.repeat(np.nan, self.rdata.tnum))
+        self.subsurf_saved_ln[self.pick_segment], = self.ax.plot(self.subsurf_saved_path[self.pick_segment].x, self.subsurf_saved_path[self.pick_segment].y, "g")
+
+
+    # set_pickState is a method to handle the pick state for a given surface as well as pick labels
     def set_pickState(self, state, surf = None):
         self.pick_state = state
         self.pick_surf = surf
         if self.pick_surf == "subsurface":
+            l = len(self.subsurf_tmp_path.x)        # temporary path object length
+            # handle pick state true for subsurface
             if self.pick_state == True:
-                # if a layer was already being picked, advance the pick segment count to begin new layer
-                if len(self.xln_subsurf) >= 2:
-                    self.pick_segment += 1
-                # if current subsurface pick layer has only one pick, remove
-                else:
+                # if segment was already active and only has one pick, just clear and return. don't initialize new segment
+                if l == 1:
                     self.clear_last()
+                    return
+                else:
+                    # if segment was already active and has 2+ picks, advance and initialize next segment
+                    if l >= 2:
+                        self.pick_segment += 1
+                    # if a subsurface pick array and line has already been initialized for this segment, just update pick label
+                    if self.pick_segment in self.rdata.pick.current_subsurf.keys():
+                        self.pickLabel.config(text="subsurface pick segment " + str(self.pick_segment) + ":\t active", fg="red")
+                        return
+                # initilize subsurface pick objects
+                self.init_subsurfpk()
+                # update pick label
                 self.pickLabel.config(text="subsurface pick segment " + str(self.pick_segment) + ":\t active", fg="red")
-                # initialize pick index and twtt dictionaries for current picking layer
-                self.rdata.pick.current_subsurf[str(self.pick_segment)] = np.repeat(np.nan, self.rdata.tnum)
 
+            # handla pick state false for subsurface
             elif self.pick_state == False and self.edit_flag == False:
-                if len(self.xln_subsurf) >=  2:
+                if l >=  2:
                     self.pick_segment += 1
                     self.pickLabel.config(text="subsurface pick segment " + str(self.pick_segment - 1) + ":\t inactive", fg="black")
                 # if surface pick layer has only one pick, remove
                 else:
                     self.clear_last()
-                    del self.rdata.pick.current_subsurf[str(self.pick_segment)]
+                    del self.rdata.pick.current_subsurf[self.pick_segment]
                     self.pickLabel.config(text="subsurface pick segment " + str(self.pick_segment) + ":\t inactive", fg="black")
 
             else:
@@ -651,56 +667,56 @@ class impick(tk.Frame):
                 if (self.pick_surf == "subsurface"):# and ((pick_sample > self.rdata["surf_idx"][self.pick_trace]) or (np.isnan(self.rdata["surf_idx"][self.pick_trace]))):
                     # determine if trace already contains pick - if so, replace with current sample
 
-                    if self.pick_trace in self.xln_subsurf:
-                        self.yln_subsurf[self.xln_subsurf.index(self.pick_trace)] = pick_sample
+                    if self.pick_trace in self.subsurf_tmp_path.x:
+                        self.subsurf_tmp_path.y[self.subsurf_tmp_path.x.index(self.pick_trace)] = pick_sample
 
                     else:
                         # if pick falls before previous pix, prepend to pick list
-                        if (len(self.xln_subsurf) >= 1) and (self.pick_trace < self.xln_subsurf[0]):
-                            self.xln_subsurf.insert(0, self.pick_trace)
-                            self.yln_subsurf.insert(0, pick_sample)
+                        if (len(self.subsurf_tmp_path.x) >= 1) and (self.pick_trace < self.subsurf_tmp_path.x[0]):
+                            self.subsurf_tmp_path.x.insert(0, self.pick_trace)
+                            self.subsurf_tmp_path.y.insert(0, pick_sample)
 
                         # if pick falls in between previous picks, insert in proper location of pick list
-                        elif (len(self.xln_subsurf) >= 1) and (self.pick_trace > self.xln_subsurf[0]) and (self.pick_trace < self.xln_subsurf[-1]):
+                        elif (len(self.subsurf_tmp_path.x) >= 1) and (self.pick_trace > self.subsurf_tmp_path.x[0]) and (self.pick_trace < self.subsurf_tmp_path.x[-1]):
                             # find proper index to add new pick 
-                            idx = utils.list_insert_idx(self.xln_subsurf, self.pick_trace)   
-                            self.xln_subsurf = self.xln_subsurf[:idx] + [self.pick_trace] + self.xln_subsurf[idx:] 
-                            self.yln_subsurf = self.yln_subsurf[:idx] + [pick_sample] + self.yln_subsurf[idx:] 
+                            idx = utils.list_insert_idx(self.subsurf_tmp_path.x, self.pick_trace)   
+                            self.subsurf_tmp_path.x = self.subsurf_tmp_path.x[:idx] + [self.pick_trace] + self.subsurf_tmp_path.x[idx:] 
+                            self.subsurf_tmp_path.y = self.subsurf_tmp_path.y[:idx] + [pick_sample] + self.subsurf_tmp_path.y[idx:] 
 
                         # else append new pick to end of pick list
                         else:
-                            self.xln_subsurf.append(self.pick_trace)
-                            self.yln_subsurf.append(pick_sample)
+                            self.subsurf_tmp_path.x.append(self.pick_trace)
+                            self.subsurf_tmp_path.y.append(pick_sample)
 
                     # set self.pick data to plot pick on image
-                    self.tmp_subsurf_ln.set_data(self.xln_subsurf, self.yln_subsurf)
+                    self.subsurf_tmp_ln.set_data(self.subsurf_tmp_path.x, self.subsurf_tmp_path.y)
 
                 elif self.pick_surf == "surface":
                     # determine if trace already contains pick - if so, replace with current sample
-                    if self.pick_trace in self.xln_surf:
-                        self.yln_surf[self.xln_surf.index(self.pick_trace)] = pick_sample
+                    if self.pick_trace in self.surf_tmp_path.x:
+                        self.surf_tmp_path.y[self.surf_tmp_path.x.index(self.pick_trace)] = pick_sample
                     
                     else:
                         # if pick falls before previous pix, prepend to pick list
-                        if (len(self.xln_surf) >= 1) and (self.pick_trace < self.xln_surf[0]):
-                            self.xln_surf.insert(0, self.pick_trace)
-                            self.yln_surf.insert(0, pick_sample)
+                        if (len(self.surf_tmp_path.x) >= 1) and (self.pick_trace < self.surf_tmp_path.x[0]):
+                            self.surf_tmp_path.x.insert(0, self.pick_trace)
+                            self.surf_tmp_path.y.insert(0, pick_sample)
 
                         # if pick falls in between previous picks, insert in proper location of pick list
-                        elif (len(self.xln_surf) >= 1) and (self.pick_trace > self.xln_surf[0]) and (self.pick_trace < self.xln_surf[-1]):
+                        elif (len(self.surf_tmp_path.x) >= 1) and (self.pick_trace > self.surf_tmp_path.x[0]) and (self.pick_trace < self.surf_tmp_path.x[-1]):
                             # find proper index to add new pick 
-                            idx = utils.list_insert_idx(self.xln_surf, self.pick_trace)   
-                            self.xln_surf = self.xln_surf[:idx] + [self.pick_trace] + self.xln_surf[idx:] 
-                            self.yln_surf = self.yln_surf[:idx] + [pick_sample] + self.yln_surf[idx:] 
+                            idx = utils.list_insert_idx(self.surf_tmp_path.x, self.pick_trace)   
+                            self.surf_tmp_path.x = self.surf_tmp_path.x[:idx] + [self.pick_trace] + self.surf_tmp_path.x[idx:] 
+                            self.surf_tmp_path.y = self.surf_tmp_path.y[:idx] + [pick_sample] + self.surf_tmp_path.y[idx:] 
 
                         # else append new pick to end of pick list
                         else:
-                            self.xln_surf.append(self.pick_trace)
-                            self.yln_surf.append(pick_sample)
+                            self.surf_tmp_path.x.append(self.pick_trace)
+                            self.surf_tmp_path.y.append(pick_sample)
 
-                    # set self.tmp_surf_ln data to plot pick on image
-                    self.tmp_surf_ln.set_data(self.xln_surf, self.yln_surf)
-                    # Set surfpkFlag to True to show that a surface pick has been made
+                    # set self.surf_tmp_ln data to plot pick on image
+                    self.surf_tmp_ln.set_data(self.surf_tmp_path.x, self.surf_tmp_path.y)
+                    # set surfpkFlag to True to show that a surface pick has been made
                     self.set_surfpkFlag(True)
 
                 self.blit()
@@ -711,85 +727,79 @@ class impick(tk.Frame):
 
             # if in debug state, print pick info
             if self.debugState == True:
-                utils.print_pickInfo(self.rdata, self.pick_trace, pick_sample)
+                utils.print_pickInfo(self.rdata, self.pick_trace, pick_sample, self.eps_r)
 
 
     # pick_interp is a method for cubic spline interpolation of twtt between pick locations
-    def pick_interp(self,surf = None):
-        # if there are at least two picked points, interpolate
+    def pick_interp(self, surf=None):
+        # get current window size - handle non int entry
         try:
-            if surf == "subsurface":
-                if len(self.xln_subsurf) >= 2:
-                    # get current window size - handle non int entry
-                    try:
-                        winSize = self.winSize.get()  
-                    except:
-                        winSize = 0
-                        self.winSize.set(0)             
-                    # cubic spline between picks
-                    cs = CubicSpline(self.xln_subsurf, self.yln_subsurf)
-                    # generate array between first and last pick indices on current layer
-                    picked_traces = np.arange(self.xln_subsurf[0], self.xln_subsurf[-1] + 1)
-                    sample = cs(picked_traces).astype(int)
-                    # if windize >=2, loop over segment and take maximum sample within window of cubic spline interp
-                    if winSize >= 2:
-                        for _i in range(len(picked_traces)):
-                            sample[_i] = int(sample[_i] - (winSize/2)) + np.argmax(self.rdata.proc[int(sample[_i] - (winSize/2)):int(sample[_i] + (winSize/2)), picked_traces[_i]])
-                    # add cubic spline output interpolation to pick dictionary - force output to integer for index of pick
-                    if self.edit_flag == True:
-                        self.rdata.pick.current_subsurf[str(self.segVar.get())][picked_traces] = sample
-                        # add pick interpolation to saved pick array
-                        self.xln_subsurf_saved[picked_traces] = picked_traces
-                        self.yln_subsurf_saved[picked_traces] = sample
-                        self.edit_flag = False
-                    else:
-                        self.rdata.pick.current_subsurf[str(self.pick_segment - 1)][picked_traces] = cs(picked_traces).astype(int)
-                        # add pick interpolation to saved pick array
-                        self.xln_subsurf_saved[picked_traces] = picked_traces
-                        self.yln_subsurf_saved[picked_traces] = sample    
+            winSize = self.winSize.get()  
+        except:
+            winSize = 0
+            self.winSize.set(0) 
+        if surf == "subsurface":
+            # if there are at least two picked points, interpolate
+            if len(self.subsurf_tmp_path.x) >= 2:
+                # cubic spline between picks
+                cs = CubicSpline(self.subsurf_tmp_path.x, self.subsurf_tmp_path.y)
+                # generate array between first and last pick indices on current layer
+                picked_traces = np.arange(self.subsurf_tmp_path.x[0], self.subsurf_tmp_path.x[-1] + 1)
+                sample = cs(picked_traces).astype(int)
+                # if windize >=2, loop over segment and take maximum sample within window of cubic spline interp
+                if winSize >= 2:
+                    for _i in range(len(picked_traces)):
+                        sample[_i] = int(sample[_i] - (winSize/2)) + np.argmax(self.rdata.proc[int(sample[_i] - (winSize/2)):int(sample[_i] + (winSize/2)), picked_traces[_i]])
+                # add cubic spline output interpolation to pick dictionary - force output to integer for index of pick
+                if self.edit_flag == True:
+                    seg = self.segVar.get()
+                else:
+                    seg = self.pick_segment - 1
+                self.rdata.pick.current_subsurf[seg][picked_traces] = sample
+                # add pick interpolation to saved pick array
+                self.subsurf_saved_path[seg].x[picked_traces] = picked_traces
+                self.subsurf_saved_path[seg].y[picked_traces] = sample
 
-            elif surf == "surface":
-                if len(self.xln_surf) >= 2:
-                    # get current window size - handle non int entry
-                    try:
-                        winSize = self.winSize.get()  
-                    except:
-                        winSize = 0
-                        self.winSize.set(0)    
-                    # cubic spline between surface picks
-                    cs = CubicSpline(self.xln_surf,self.yln_surf)
-                    # generate array between first and last pick indices on current layer
-                    picked_traces = np.arange(self.xln_surf[0], self.xln_surf[-1] + 1)
-                    sample = cs(picked_traces).astype(int)
-                    # if windize >=2, loop over segment and take maximum sample within window of cubic spline interp
-                    if winSize >= 2:
-                        for _i in range(len(picked_traces)):
-                            sample[_i] = int(sample[_i] - (winSize/2)) + np.argmax(self.rdata.proc[int(sample[_i] - (winSize/2)):int(sample[_i] + (winSize/2)), picked_traces[_i]])
-                    # input cubic spline output surface twtt array - force output to integer for index of pick
-                    self.rdata.pick.current_surf[picked_traces] = sample
-                    # add pick interpolation to saved pick array
-                    self.xln_surf_saved[picked_traces] = picked_traces
-                    self.yln_surf_saved[picked_traces] = sample
-
-        except Exception as err:
-            print("Pick interp error: " + str(err))
+        elif surf == "surface":
+            if len(self.surf_tmp_path.x) >= 2:
+                # cubic spline between surface picks
+                cs = CubicSpline(self.surf_tmp_path.x,self.surf_tmp_path.y)
+                # generate array between first and last pick indices on current layer
+                picked_traces = np.arange(self.surf_tmp_path.x[0], self.surf_tmp_path.x[-1] + 1)
+                sample = cs(picked_traces).astype(int)
+                # if windize >=2, loop over segment and take maximum sample within window of cubic spline interp
+                if winSize >= 2:
+                    for _i in range(len(picked_traces)):
+                        sample[_i] = int(sample[_i] - (winSize/2)) + np.argmax(self.rdata.proc[int(sample[_i] - (winSize/2)):int(sample[_i] + (winSize/2)), picked_traces[_i]])
+                # input cubic spline output surface twtt array - force output to integer for index of pick
+                self.rdata.pick.current_surf[picked_traces] = sample
+                # add pick interpolation to saved pick array
+                self.surf_saved_path.x[picked_traces] = picked_traces
+                self.surf_saved_path.y[picked_traces] = sample
 
 
     # plot_picks is a method to remove current pick list and add saved picks to plot
     def plot_picks(self, surf = None):
         if surf == "subsurface":
             # remove temporary picks
-            del self.xln_subsurf[:]
-            del self.yln_subsurf[:]
-            self.tmp_subsurf_ln.set_data(self.xln_subsurf, self.yln_subsurf)
-            self.saved_subsurf_ln.set_data(self.xln_subsurf_saved, self.yln_subsurf_saved)
+            del self.subsurf_tmp_path.x[:]
+            del self.subsurf_tmp_path.y[:]
+            self.subsurf_tmp_ln.set_data(self.subsurf_tmp_path.x, self.subsurf_tmp_path.y)
+            seg = self.pick_segment
+            if self.pick_segment > 0:
+                seg = self.pick_segment - 1
+            if self.edit_flag:
+                seg = self.segVar.get()
+            self.subsurf_saved_ln[seg].set_data(self.subsurf_saved_path[seg].x, self.subsurf_saved_path[seg].y)
+            if self.edit_flag:
+                self.edit_flag = False
 
         elif surf == "surface":
             # remove temporary picks
-            del self.xln_surf[:]
-            del self.yln_surf[:]
-            self.tmp_surf_ln.set_data(self.xln_surf, self.yln_surf)
-            self.saved_surf_ln.set_data(self.xln_surf_saved, self.yln_surf_saved)
+            del self.surf_tmp_path.x[:]
+            del self.surf_tmp_path.y[:]
+            self.surf_tmp_ln.set_data(self.surf_tmp_path.x, self.surf_tmp_path.y)
+            self.surf_saved_ln.set_data(self.surf_saved_path.x, self.surf_saved_path.y)
 
 
     # plot_existing is a method to plot existing picks
@@ -812,30 +822,35 @@ class impick(tk.Frame):
 
     # clear all surface picks
     def clear_surfPicks(self):
-        if len(self.xln_surf) + np.count_nonzero(~np.isnan(self.xln_surf_saved)) > 0:
+        if len(self.surf_tmp_path.x) + np.count_nonzero(~np.isnan(self.surf_saved_path.x)) > 0:
             # set picking state to false
             if self.pick_state == True and self.pick_surf == "surface":
                 self.set_pickState(False,surf="surface")
-            # delete pick lists
-            self.yln_surf_saved[:] = np.nan
-            self.xln_surf_saved[:] = np.nan
+            # delete saved surface picks
+            self.surf_saved_path.x[:] = np.nan
+            self.surf_saved_path.y[:] = np.nan
             self.pickLabel.config(fg="#d9d9d9")
 
     
     # clear all subsurface picks
     def clear_subsurfPicks(self):
-        if len(self.xln_subsurf) + np.count_nonzero(~np.isnan(self.xln_subsurf_saved)) > 0:
+        if len(self.subsurf_tmp_path.x) + np.count_nonzero(~np.isnan(self.subsurf_saved_path[0].x)) > 0:
             # set picking state to false
             if self.pick_state == True and self.pick_surf == "subsurface":
-                self.set_pickState(False,surf="subsurface")
-            # delete pick lists
-            self.yln_subsurf_saved[:] = np.nan
-            self.xln_subsurf_saved[:] = np.nan
+                self.set_pickState(False, surf="subsurface")
             # reset pick segment increment to 0
             self.pick_segment = 0
+            # delete saved picks
+            self.subsurf_saved_path = {}
+            self.subsurf_saved_path[self.pick_segment] = path(np.repeat(np.nan, self.rdata.tnum),np.repeat(np.nan, self.rdata.tnum))
+            # update pick label
             self.pickLabel.config(fg="#d9d9d9")
             self.segVar.set(self.pick_segment)
-            # remove pick annotations
+            # remove subsurface pick lines
+            for _i in self.subsurf_saved_ln.values():
+                _i.remove()
+            self.subsurf_saved_ln.clear()
+            # remove subsurface pick annotations
             for _i in self.ann_list:
                 _i.remove()
             del self.ann_list[:]
@@ -844,31 +859,31 @@ class impick(tk.Frame):
     # clear last pick
     def clear_last(self):
         if self.pick_state == True:
-            if self.pick_surf == "subsurface" and len(self.xln_subsurf) >= 1:
-                del self.xln_subsurf[-1:]
-                del self.yln_subsurf[-1:]
+            if self.pick_surf == "subsurface" and len(self.subsurf_tmp_path.x) >= 1:
+                del self.subsurf_tmp_path.x[-1:]
+                del self.subsurf_tmp_path.y[-1:]
                 # reset self.pick, then blit
-                self.tmp_subsurf_ln.set_data(self.xln_subsurf, self.yln_subsurf)
+                self.subsurf_tmp_ln.set_data(self.subsurf_tmp_path.x, self.subsurf_tmp_path.y)
                 self.blit()
-                if len(self.xln_subsurf) >= 1:
-                    self.pick_trace = self.xln_subsurf[-1]
+                if len(self.subsurf_tmp_path.x) >= 1:
+                    self.pick_trace = self.subsurf_tmp_path.x[-1]
 
-            if self.pick_surf == "surface" and len(self.xln_surf) >= 1:
-                del self.xln_surf[-1:]
-                del self.yln_surf[-1:]
+            if self.pick_surf == "surface" and len(self.surf_tmp_path.x) >= 1:
+                del self.surf_tmp_path.x[-1:]
+                del self.surf_tmp_path.y[-1:]
                 # reset self.pick, then blit
-                self.tmp_surf_ln.set_data(self.xln_surf, self.yln_surf)
+                self.surf_tmp_ln.set_data(self.surf_tmp_path.x, self.surf_tmp_path.y)
                 self.blit()
-                if len(self.xln_surf) >= 1:
-                    self.pick_trace = self.xln_surf[-1]
-                if len(self.xln_surf) == 0:
-                    self.surfpkFlag(False)
+                if len(self.surf_tmp_path.x) >= 1:
+                    self.pick_trace = self.surf_tmp_path.x[-1]
+                if len(self.surf_tmp_path.x) == 0:
+                    self.set_surfpkFlag(False)
 
 
-    # edit selected pick segment
+    # edit selected subsurface pick segment
     def edit_pkSeg(self):
         layer = self.segVar.get()
-        if (len(self.rdata.pick.current_subsurf) > 0) and (self.edit_flag == False) and (not ((self.pick_state == True) and (self.pick_surf == "subsurface") and (layer == self.pick_segment))) and (tk.messagebox.askokcancel("warning", "edit pick segment " + str(layer) + "?", icon = "warning") == True):
+        if (layer in self.rdata.pick.current_subsurf) and (self.edit_flag == False) and (not ((self.pick_state == True) and (self.pick_surf == "subsurface") and (layer == self.pick_segment))) and (tk.messagebox.askokcancel("warning", "edit pick segment " + str(layer) + "?", icon = "warning") == True):
             # if another subsurface pick segment is active, end segment
             if (self.pick_state == True) and (self.pick_surf == "subsurface") and (layer != self.pick_segment):
                 self.set_pickState(False, surf="subsurface")
@@ -880,21 +895,18 @@ class impick(tk.Frame):
             self.pick_state = True
             self.pick_surf = "subsurface"
             # find indices of picked traces
-            picks_idx = np.where(~np.isnan(self.rdata.pick.current_subsurf[str(layer)]))[0]
+            picks_idx = np.where(~np.isnan(self.rdata.pick.current_subsurf[layer]))[0]
             # return picked traces to xln list
-            self.xln_subsurf = picks_idx[::100].tolist()
+            self.subsurf_tmp_path.x = picks_idx[::50].tolist()
             # return picked samples to yln list
-            self.yln_subsurf = self.rdata.pick.current_subsurf[str(layer)][picks_idx][::100].tolist()
-            # clear saved picks
-            self.xln_subsurf_saved[picks_idx] = np.nan
-            self.yln_subsurf_saved[picks_idx] = np.nan
-            self.rdata.pick.current_subsurf[str(layer)][picks_idx] = np.nan
+            self.subsurf_tmp_path.y = self.rdata.pick.current_subsurf[layer][picks_idx][::50].tolist()
+            # clear saved picks for segment
+            self.subsurf_saved_path[layer].x[picks_idx] = np.nan
+            self.subsurf_saved_path[layer].y[picks_idx] = np.nan
+            self.rdata.pick.current_subsurf[layer][picks_idx] = np.nan
             # reset plotted lines
-            self.tmp_subsurf_ln.set_data(self.xln_subsurf, self.yln_subsurf)
-            self.saved_subsurf_ln.set_data(self.xln_subsurf_saved, self.yln_subsurf_saved)
-            # remove pick annotation
-            self.ann_list[layer].remove()
-            del self.ann_list[layer]
+            self.subsurf_tmp_ln.set_data(self.subsurf_tmp_path.x, self.subsurf_tmp_path.y)
+            self.subsurf_saved_ln[layer].set_data(self.subsurf_saved_path[layer].x, self.subsurf_saved_path[layer].y)
             # update pick label
             self.pickLabel.config(text="subsurface pick segment " + str(layer) + ":\t active", fg="red")
             self.blit()
@@ -904,48 +916,48 @@ class impick(tk.Frame):
     def delete_pkSeg(self):
         layer = self.segVar.get()
         # delete selected pick segment
-        if (len(self.rdata.pick.current_subsurf) > 0) and (tk.messagebox.askokcancel("warning", "delete pick segment " + str(layer) + "?", icon = "warning") == True):
+        if (layer in self.rdata.pick.current_subsurf) and (tk.messagebox.askokcancel("warning", "delete pick segment " + str(layer) + "?", icon = "warning") == True):
             # if picking active and only one segment exists, clear all picks
             if (self.pick_state == True) and (len(self.rdata.pick.current_subsurf) == 1):
                 self.clear_subsurfPicks()
                 self.plot_picks(surf = "subsurface")
 
             else:
+                # if currently editing layer, clear tmp picks
                 if self.edit_flag == True and self.edit_segmentNum == layer:
                     # clear active pick lists
-                    del self.xln_subsurf[:]
-                    del self.yln_subsurf[:]
-                    self.tmp_subsurf_ln.set_data(self.xln_subsurf, self.yln_subsurf)
-                    self.edit_flag = False
+                    del self.subsurf_tmp_path.x[:]
+                    del self.subsurf_tmp_path.y[:]
+                    self.subsurf_tmp_ln.set_data(self.subsurf_tmp_path.x, self.subsurf_tmp_path.y)
                     self.set_pickState(False, "subsurface")
+                    self.edit_flag = False
 
-                else:
-                    # get picked traces for layer
-                    picks_idx = np.where(~np.isnan(self.rdata.pick.current_subsurf[str(layer)]))[0]
-                    # remove picks from plot list
-                    self.xln_subsurf_saved[picks_idx] = np.nan
-                    self.yln_subsurf_saved[picks_idx] = np.nan
-                    self.saved_subsurf_ln.set_data(self.xln_subsurf_saved ,self.yln_subsurf_saved)
+                # remove saved picks path object
+                del self.subsurf_saved_path[layer]
+                # delete subsurface pick dict layer
+                del self.rdata.pick.current_subsurf[layer]
 
-                # delete pick dict layer
-                del self.rdata.pick.current_subsurf[str(layer)]
-
-                # remove pick annotation
-                self.ann_list[layer].remove()
-                del self.ann_list[layer]
-                
                 # roll back pick segment counter
                 if self.pick_segment >=1:
-                    self.pick_segment -= 1 
+                    self.pick_segment -= 1
+ 
+                # reorder pick segments and path objects if necessary
+                if layer != len(self.subsurf_saved_path):
+                    for _i in range(layer, len(self.subsurf_saved_path)):
+                        self.subsurf_saved_path[_i] = path(self.subsurf_saved_path[_i + 1].x, self.subsurf_saved_path[_i + 1].y)
+                        self.subsurf_saved_ln[_i].set_data(self.subsurf_saved_path[_i + 1].x, self.subsurf_saved_path[_i + 1].y)
+                        self.rdata.pick.current_subsurf[_i] = np.copy(self.rdata.pick.current_subsurf[_i + 1])
 
-                # reorder pick segments if necessary
-                if layer != len(self.rdata.pick.current_subsurf):
-                    for _i in range(layer, len(self.rdata.pick.current_subsurf)):
-                        self.rdata.pick.current_subsurf[str(_i)] = np.copy(self.rdata.pick.current_subsurf[str(_i + 1)])
-                        # reorder annotations
-                        self.ann_list[_i].set_text(str(_i))
+                    del self.subsurf_saved_path[_i + 1]
+                    self.subsurf_saved_ln[_i + 1].remove()
+                    del self.subsurf_saved_ln[_i + 1]
+                    del self.rdata.pick.current_subsurf[_i + 1]
+                
+                else:
+                    self.subsurf_saved_ln[layer].remove()
+                    del self.subsurf_saved_ln[layer]
 
-                    del self.rdata.pick.current_subsurf[str(_i + 1)]
+                self.update_pickLabels() 
 
                 if self.pick_state == True:
                     if self.edit_flag == True:
@@ -965,22 +977,19 @@ class impick(tk.Frame):
 
     # set_picks is a method to update the saved pick arrays based on the current picks
     def set_picks(self):
-        # reset yln_saved arrays to replace with new dictionary values for replotting
-        self.yln_surf_saved.fill(np.nan)
-        self.yln_subsurf_saved.fill(np.nan)
+        # replace saved surface paths and line with updated picks
         idx = np.where(~np.isnan(self.rdata.pick.current_surf))[0]
-        self.xln_surf_saved[idx] = idx
-        self.yln_surf_saved[idx] = self.rdata.pick.current_surf[idx]
-        for _i in range(len(self.rdata.pick.current_subsurf)):
-            idx = np.where(~np.isnan(self.rdata.pick.current_subsurf[str(_i)]))[0]
-            self.xln_subsurf_saved[idx] = idx
-            self.yln_subsurf_saved[idx] = self.rdata.pick.current_subsurf[str(_i)][idx]
-        self.saved_surf_ln.set_data(self.xln_surf_saved, self.yln_surf_saved)
-        self.saved_subsurf_ln.set_data(self.xln_subsurf_saved, self.yln_subsurf_saved)
+        self.surf_saved_path = path(idx, self.rdata.pick.current_surf[idx])
+        self.surf_saved_ln.set_data(self.surf_saved_path.x, self.surf_saved_path.y)
+        # replace saved subsurface paths and line with updated picks
+        for key, arr in self.rdata.pick.current_subsurf.items():
+            idx = np.where(~np.isnan(arr))[0]
+            self.subsurf_saved_path[key] = path(idx, arr[idx])
+            self.subsurf_saved_ln[key].set_data(self.subsurf_saved_path[key].x, self.subsurf_saved_path[key].y)
         # update pick segment count
         self.pick_segment = len(self.rdata.pick.current_subsurf)
         # update pick labels
-        self.add_pickLabels()
+        self.update_pickLabels()
 
 
     def show_pickLabels(self):
@@ -994,13 +1003,18 @@ class impick(tk.Frame):
         self.update_bg()
 
 
-    # add_pickLabels is a method to create annotations for picks
-    def add_pickLabels(self):
-        if len(self.ann_list) < self.pick_segment:
-            # get x and y locations for placing annotation
-            x = np.where(~np.isnan(self.rdata.pick.current_subsurf[str(self.pick_segment - 1)]))[0][0]
-            y = self.rdata.pick.current_subsurf[str(self.pick_segment - 1)][x]
-            ann = self.ax.text(x-75,y+75, str(self.pick_segment - 1), bbox=dict(facecolor='white', alpha=0.5), horizontalalignment='right', verticalalignment='top')
+    # update_pickLabels is a method to create annotations for picks
+    def update_pickLabels(self):
+        # if self.get_subsurfpkFlag():
+            # reset annotations
+        for _i in self.ann_list:
+            _i.remove()
+        del self.ann_list[:]
+        # get x and y locations for placing annotation
+        for _i in range(0, self.pick_segment):
+            x = np.where(~np.isnan(self.subsurf_saved_path[_i].x))[0][0]
+            y = self.subsurf_saved_path[_i].y[x]
+            ann = self.ax.text(x-75,y+75, str(_i), bbox=dict(facecolor='white', alpha=0.5), horizontalalignment='right', verticalalignment='top')
             self.ann_list.append(ann)
             if self.pick_ann_vis.get() == False:
                 ann.set_visible(False)
@@ -1157,3 +1171,11 @@ class impick(tk.Frame):
         self.ax_cmin.set_visible(True)
         self.reset_ax.set_visible(True)
         self.secaxy1.set_visible(True)
+        self.fig.canvas.draw()
+
+
+class path():
+    # initialize a path object to hold x,y paths for plotting - list or array like
+    def __init__(self, x=None, y=None):
+        self.x = x      # x array/list
+        self.y = y      # y array/list
