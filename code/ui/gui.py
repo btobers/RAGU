@@ -107,6 +107,7 @@ class mainGUI(tk.Frame):
         # create individual menubar items
         fileMenu = tk.Menu(menubar, tearoff=0)
         pickMenu = tk.Menu(menubar, tearoff=0)
+        interpretMenu = tk.Menu(menubar, tearoff=0)
         mapMenu = tk.Menu(menubar, tearoff=0)
         procMenu = tk.Menu(menubar, tearoff=0)
         helpMenu = tk.Menu(menubar, tearoff=0)
@@ -116,7 +117,7 @@ class mainGUI(tk.Frame):
         openMenu = tk.Menu(fileMenu,tearoff=0)
         openMenu.add_command(label="data file    [ctrl+o]", command=self.open_data)
         openMenu.add_command(label="basemap  [ctrl+m]", command=self.map_loc)
-        fileMenu.add_cascade(label="open", menu = openMenu)
+        fileMenu.add_cascade(label="open", menu=openMenu)
 
         fileMenu.add_command(label="next      [→]", command=self.next_loc)
 
@@ -125,7 +126,7 @@ class mainGUI(tk.Frame):
         saveMenu.add_command(label="picks      [ctrl+s]", command=self.savePicks)
         saveMenu.add_command(label="figure", command=self.saveFig)
         saveMenu.add_command(label="processed data", command=self.saveProc)
-        fileMenu.add_cascade(label="save", menu = saveMenu)
+        fileMenu.add_cascade(label="save", menu=saveMenu)
         fileMenu.add_separator()
 
         # settings submenu
@@ -134,37 +135,54 @@ class mainGUI(tk.Frame):
         settingsMenu.add_command(label="set working folder", command=self.set_home)
         settingsMenu.add_command(label="set output folder", command=self.set_out)
 
-        fileMenu.add_cascade(label="settings", menu = settingsMenu)
+        fileMenu.add_cascade(label="settings", menu=settingsMenu)
         fileMenu.add_separator()
     
         fileMenu.add_command(label="exit  [ctrl+q]", command=self.close_window)
 
-        # pick menu subitems
-        surfacePickMenu = tk.Menu(pickMenu,tearoff=0)
-        subsurfacePickMenu = tk.Menu(pickMenu,tearoff=0)
+        # interpret menu items
+        newMenu = tk.Menu(fileMenu,tearoff=0)
+        newMenu.add_command(label="horizon", command=self.new_horizon)
+        newMenu.add_command(label="segment", command=self.new_segment)
+        interpretMenu.add_cascade(label="new", menu=newMenu)
+        interpretMenu.add_command(label="end   [escape]", command=self.end_pick)
+        interpretMenu.add_command(label="edit", command=self.edit_pick)
+        interpretMenu.add_command(label="clear", command=self.clear_pick)        
+        interpretMenu.add_command(label="import", command=self.import_pick)
+        exportMenu = tk.Menu(fileMenu,tearoff=0)
+        exportMenu.add_command(label="horizon", command=lambda:self.export_pick(merged=False))
+        exportMenu.add_command(label="merged  [ctrl+s]", command=lambda:self.export_pick(merged=True))
+        interpretMenu.add_cascade(label="export", menu=exportMenu)
 
-        # surface pick menu items
-        surfacePickMenu.add_command(label="new  [ctrl+shift+n]", command=self.start_surf_pick)
-        surfacePickMenu.add_command(label="end       [escape]", command=self.end_surf_pick)    
-        surfacePickMenu.add_command(label="clear", command=lambda: self.clear(surf = "surface"))    
-        pickMenu.add_cascade(label="surface", menu = surfacePickMenu)
+        # surfacePickMenu = tk.Menu(pickMenu,tearoff=0)
+        # subsurfacePickMenu = tk.Menu(pickMenu,tearoff=0)
 
-        # subsurface pick menu items
-        subsurfacePickMenu.add_command(label="new     [ctrl+n]", command=self.start_subsurf_pick)
-        subsurfacePickMenu.add_command(label="end   [escape]", command=self.end_subsurf_pick)
-        subsurfacePickMenu.add_command(label="clear          [c]", command=lambda: self.clear(surf = "subsurface"))    
-        subsurfacePickMenu.add_command(label="clear file", command=self.delete_datafilePicks)            
-        pickMenu.add_cascade(label="subsurface", menu = subsurfacePickMenu)  
-        pickMenu.add_command(label="import", command=self.import_picks)
-        pickMenu.add_command(label="export  [ctrl+s]", command=self.savePicks)
+        # # pick menu subitems
+        # surfacePickMenu = tk.Menu(pickMenu,tearoff=0)
+        # subsurfacePickMenu = tk.Menu(pickMenu,tearoff=0)
+
+        # # surface pick menu items
+        # surfacePickMenu.add_command(label="new  [ctrl+shift+n]", command=self.start_surf_pick)
+        # surfacePickMenu.add_command(label="end       [escape]", command=self.end_surf_pick)    
+        # surfacePickMenu.add_command(label="clear", command=lambda:self.clear(surf="surface"))    
+        # pickMenu.add_cascade(label="surface", menu=surfacePickMenu)
+
+        # # subsurface pick menu items
+        # subsurfacePickMenu.add_command(label="new     [ctrl+n]", command=self.start_subsurf_pick)
+        # subsurfacePickMenu.add_command(label="end   [escape]", command=self.end_subsurf_pick)
+        # subsurfacePickMenu.add_command(label="clear          [c]", command=lambda:self.clear(surf="subsurface"))    
+        # subsurfacePickMenu.add_command(label="clear file", command=self.delete_datafilePicks)            
+        # pickMenu.add_cascade(label="subsurface", menu=subsurfacePickMenu)  
+        # pickMenu.add_command(label="import", command=self.import_pick)
+        # pickMenu.add_command(label="export  [ctrl+s]", command=self.savePicks)
 
         # pickMenu.add_separator()
         # pickMenu.add_command(label="Optimize", command=self.nb.select(wav))
 
         # processing menu items
-        procMenu.add_command(label="set time zero", command=lambda: self.procTools("tzero"))
-        procMenu.add_command(label="dewow", command=lambda: self.procTools("dewow"))
-        procMenu.add_command(label="remove mean trace", command=lambda: self.procTools("remMnTr"))
+        procMenu.add_command(label="set time zero", command=lambda:self.procTools("tzero"))
+        procMenu.add_command(label="dewow", command=lambda:self.procTools("dewow"))
+        procMenu.add_command(label="remove mean trace", command=lambda:self.procTools("remMnTr"))
 
         # processing submenu items
         filtMenu = tk.Menu(procMenu,tearoff=0)
@@ -172,14 +190,14 @@ class mainGUI(tk.Frame):
 
         # filtering menu items
         filtMenu.add_command(label="low pass", command=lambda:self.procTools("lowpass"))
-        procMenu.add_cascade(label="filter", menu = filtMenu)
+        procMenu.add_cascade(label="filter", menu=filtMenu)
 
         # gain menu items
         gainMenu.add_command(label="agc", command=lambda:self.procTools("agc"))
         gainMenu.add_command(label="t-pow", command=lambda:self.procTools("tpow"))
-        procMenu.add_cascade(label="gain", menu = gainMenu)
+        procMenu.add_cascade(label="gain", menu=gainMenu)
 
-        procMenu.add_command(label="shift sim", command=lambda: self.procTools("shiftSim"))
+        procMenu.add_command(label="shift sim", command=lambda:self.procTools("shiftSim"))
         procMenu.add_command(label="restore original data", command=lambda:self.procTools("restore"))
 
         # help menu items
@@ -188,8 +206,9 @@ class mainGUI(tk.Frame):
 
         # add items to menubar
         menubar.add_cascade(label="file", menu=fileMenu)
-        menubar.add_cascade(label="pick", menu=pickMenu)
-        menubar.add_cascade(label="processing", menu = procMenu)
+        # menubar.add_cascade(label="pick", menu=pickMenu)
+        menubar.add_cascade(label="interpretation", menu=interpretMenu)
+        menubar.add_cascade(label="processing", menu=procMenu)
         menubar.add_cascade(label="help", menu=helpMenu)
         
         # add the menubar to the window
@@ -327,6 +346,13 @@ class mainGUI(tk.Frame):
         else:
             return True
 
+    
+    # close_popup
+    def close_popup(self, window, flag=False):
+        window.destroy()
+        self.flag = flag
+        return
+
 
     # close_window is a gui method to exit RAGU
     def close_window(self):
@@ -379,7 +405,6 @@ class mainGUI(tk.Frame):
                 self.f_saveName = ""
                 self.impick.clear_canvas()  
                 self.impick.set_vars()
-                self.impick.update_option_menu()
                 # ingest the data
                 self.igst = ingest(self.f_loadName.split(".")[-1])
                 self.rdata = self.igst.read(self.f_loadName, self.conf["path"]["simPath"], self.conf["nav"]["crs"], self.conf["nav"]["body"])
@@ -391,6 +416,8 @@ class mainGUI(tk.Frame):
                 self.impick.set_axes()
                 self.impick.drawData()
                 self.impick.update_bg()
+                self.impick.update_hor_opt_menu()
+                self.impick.update_seg_opt_menu()
                 self.wvpick.set_vars()
                 self.wvpick.clear()
                 self.wvpick.set_data(self.rdata)
@@ -436,7 +463,7 @@ class mainGUI(tk.Frame):
                     self.f_saveName = ""
                     self.impick.clear_canvas()
                     self.impick.set_vars()
-                    self.impick.update_option_menu()
+                    self.impick.update_seg_opt_menu()
                     self.rdata = self.igst.read(self.f_loadName, self.conf["path"]["simPath"], self.conf["nav"]["crs"], self.conf["nav"]["body"])
                     # return if no data ingested
                     if not self.rdata:
@@ -575,7 +602,73 @@ class mainGUI(tk.Frame):
         # pass file to open_data
         self.open_data(path + _i)
 
+    # generate new interpretation horizon
+    def new_horizon(self):
+        if self.f_loadName:
+            # create popup window to get new horizon name
+            self.horizonName = tk.StringVar()
+            self.window = tk.Toplevel(self.parent)
+            self.window.config(bg="#d9d9d9")
+            self.window.title("new horizon")
+            self.window.protocol("WM_DELETE_WINDOW", lambda:self.close_popup(self.window,flag=False))
+            tk.Label(self.window, text="enter new horizon name:").pack()
+            entry = tk.Entry(self.window, textvar=self.horizonName).pack() 
+            button = tk.Button(self.window, text="ok", command=lambda:self.close_popup(self.window,flag=True)).pack()
+            # wait for window to be closed
+            self.parent.wait_window(self.window)
+            name = self.horizonName.get()
+            # ensure horizon name was entered and popup was closed properly
+            if self.flag and name:
+                # ensure horizon doesn't already exist, otherwise overwrite or return
+                if name not in self.rdata.pick.horizons:
+                    self.rdata.pick.horizons[name] = np.repeat(np.nan, self.rdata.tnum)
+                elif tk.messagebox.askyesno("horizon name error","horizon name (" + name + ") already exists. overwrite?") == True:
+                    self.rdata.pick.horizons[name] = np.repeat(np.nan, self.rdata.tnum)
+                else:
+                    return
+                self.impick.init_horizon(name)
+                # update horizon and segment options
+                self.impick.update_hor_opt_menu()                
+                self.impick.update_seg_opt_menu()
+            else:
+                return
 
+
+    # generate new interpretation segment for specified horizon
+    def new_segment(self):
+        if self.f_loadName:
+            self.horizonName = tk.StringVar()
+            # get current horizon names
+            horizons = list(self.rdata.pick.horizons.keys())
+            self.horizonName.set(horizons[0])
+            self.window = tk.Toplevel(self.parent)
+            self.window.config(bg="#d9d9d9")
+            self.window.title("new horizon segment")
+            self.window.protocol("WM_DELETE_WINDOW", lambda:self.close_popup(self.window,flag=False))
+            tk.Label(self.window, text="select horizon:").pack()
+            dropdown = tk.OptionMenu(self.window, self.horizonName, *horizons)
+            dropdown.pack()
+            button = tk.Button(self.window, text="ok", command=lambda:self.close_popup(self.window,flag=True)).pack()
+            # wait for window to be closed
+            self.parent.wait_window(self.window)
+            name = self.horizonName.get()
+            # ensure horizon name was selected and popup was closed properly
+            if self.flag and name:
+                self.impick.init_segment(name)
+                # update segment options
+                self.impick.update_seg_opt_menu()
+            else:
+                return
+
+
+    def end_pick(self):
+        return
+    def edit_pick(self):
+        return
+    def clear_pick(self):
+        return
+    def export_pick(self,merged=True):
+        return
     # start_subsurf_pick is a method which begins a new impick pick layer
     def start_subsurf_pick(self):
         if self.f_loadName:
@@ -587,7 +680,7 @@ class mainGUI(tk.Frame):
             # add pick annotations
             self.impick.update_pickLabels()
             self.impick.update_bg()
-            self.impick.update_option_menu()
+            self.impick.update_seg_opt_menu()
 
 
     # end_subsurf_pick is a method which terminates the current impick pick layer
@@ -599,7 +692,7 @@ class mainGUI(tk.Frame):
             # add pick annotations
             self.impick.update_pickLabels()
             self.impick.update_bg()
-            self.impick.update_option_menu()
+            self.impick.update_seg_opt_menu()
 
 
     # start picking the surface
@@ -624,13 +717,13 @@ class mainGUI(tk.Frame):
                                                       self.rdata.dt))
 
 
-    # import_picks is a method to load and plot picks saved to a csv file
-    def import_picks(self):
+    # import_pick is a method to load and plot picks saved to a csv file
+    def import_pick(self):
         if self.f_loadName:
             pk_file = ""
             pk_file = tk.filedialog.askopenfilename(initialdir = self.conf["path"]["outPath"], title = "load picks", filetypes = (("comma separated value", "*.csv"),))
             if pk_file:
-                self.igst.import_picks(pk_file)
+                self.igst.import_pick(pk_file)
                 self.impick.plot_existing(surf = "subsurface")
                 self.impick.blit()
 
@@ -682,7 +775,7 @@ class mainGUI(tk.Frame):
                 self.impick.clear_subsurfPicks()
                 # self.impick.plot_picks(surf = "subsurface")
                 self.impick.update_bg()
-                self.impick.update_option_menu()
+                self.impick.update_seg_opt_menu()
                 self.wvpick.set_vars()
                 self.wvpick.clear()
 
@@ -858,12 +951,10 @@ class mainGUI(tk.Frame):
         self.figEnt.pack(side=tk.RIGHT, expand=tk.YES, fill=tk.X)
 
         row = tk.Frame(settingsWindow)
-        row.pack(side=tk.TOP, anchor='c')
-        b1 = tk.Button(row, text='save',
-                    command=self.updateSettings)
-        b1.pack(side="left")
-        b2 = tk.Button(row, text='close', command=settingsWindow.destroy)
-        b2.pack(side="left")
+        row.pack(side=tk.TOP, anchor="c")
+        b = tk.Button(row, text="save", command=lambda:[self.updateSettings, settingsWindow.destroy()])
+        b.pack(side="left")
+
 
 
     def updateSettings(self):

@@ -51,9 +51,13 @@ def find_nearest(a, val):
     return idx
 
 
-# nonan_idx returns the index of values in an array which are not nan
-def nonan_idx(a):
-    return np.where(~np.isnan(a))[0]
+# nonan_idx_array returns an array with the index of non-nan values
+def nonan_idx_array(a):
+    out = np.repeat(np.nan, a.shape[0])
+    mask = np.where(~np.isnan(a))[0]
+    out[mask] = mask
+    return out
+
 
 # nan_array_equal is a method to determine if two arrays which may contain nan values are equivalent
 def nan_array_equal(a, b):
@@ -61,6 +65,36 @@ def nan_array_equal(a, b):
         return ((a == b) | (np.isnan(a) & np.isnan(b))).all()
     except ValueError:
         return
+
+
+def nan_array_sum(a, axis=0):
+    """
+    sum across an array with nans, treating the nan's as zero unless all elements across specified axis are nan
+    INPUT:
+    a           data array
+    axis        axis to sum across
+
+    OUTPUT:
+    out         summed output array
+    """
+    out = np.nansum(a,axis=axis)
+    out[np.all(np.isnan(a), axis=axis)] = np.nan    
+    return out
+
+
+def merge_paths(a):
+    """
+    merge picks from all segment paths in horizon dicitonary
+    INPUT:
+    a           dictionary containing impick path objects for each key 
+
+    OUTPUT:
+    (x,y)       tuple of x,y merged path data
+    """
+    l = list(a.values())
+    x = nan_array_sum(np.stack([path.x for path in l]))
+    y = nan_array_sum(np.stack([path.y for path in l]))
+    return (x,y)
 
 
 # dict_compare is a method to compare the two pick dictionaries to see if they are equal

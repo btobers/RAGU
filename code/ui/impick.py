@@ -17,6 +17,7 @@ mpl.use("TkAgg")
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Cursor
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+from cycler import cycler
 from scipy.interpolate import CubicSpline
 try:
     plt.rcParams["font.family"] = "Times New Roman"
@@ -35,8 +36,13 @@ class impick(tk.Frame):
     # setup is a method which initialized the tkinter frame 
     def setup(self):
         # set up frames
-        infoFrame = tk.Frame(self.parent)
-        infoFrame.pack(side="top",fill="both")
+        infoFrame0 = tk.Frame(self.parent)
+        infoFrame0.pack(side="top",fill="both")        
+        infoFrame = tk.Frame(infoFrame0)
+        infoFrame.pack(side="left",fill="both")
+        interpFrame = tk.Frame(infoFrame0, width=300, relief="ridge", borderwidth=1)
+        interpFrame.pack(side="right",fill="both")
+        interpFrame.pack_propagate(0)
         toolbarFrame = tk.Frame(infoFrame)
         toolbarFrame.pack(side="bottom",fill="both")
         self.dataFrame = tk.Frame(self.parent)
@@ -66,27 +72,38 @@ class impick(tk.Frame):
 
         # add radio buttons for toggling pick labels
         self.pick_ann_vis = tk.BooleanVar()
-        tk.Label(infoFrame, text="pick segment labels: ").pack(side="left")
+        tk.Label(infoFrame, text="pick labels: ").pack(side="left")
         tk.Radiobutton(infoFrame,text="on", variable=self.pick_ann_vis, value=True, command=self.show_pickLabels).pack(side="left")
         tk.Radiobutton(infoFrame,text="off", variable=self.pick_ann_vis, value=False, command=self.show_pickLabels).pack(side="left")
         tk.ttk.Separator(infoFrame,orient="vertical").pack(side="left", fill="both", padx=10, pady=4)
 
-        # subsurface pick segment options
-        tk.Button(infoFrame, text="delete", command=self.delete_pkSeg).pack(side="right")
-        tk.Button(infoFrame, text="edit", command=self.edit_pkSeg).pack(side="right")
-        # initialize pick segment vars with dropdown menu
-        self.segVar = tk.IntVar()
-        self.segments=[None]
-        self.segMenu = tk.OptionMenu(infoFrame, self.segVar, *self.segments)
-        self.segMenu.pack(side="right",pady=0)
-        tk.Label(infoFrame,text="subsurface pick segment: ").pack(side="right")
-        tk.ttk.Separator(infoFrame,orient="vertical").pack(side="right", fill="both", padx=10, pady=4)
-
         # add entry box for peak finder window size
         self.winSize = tk.IntVar(value=0)
-        tk.Entry(infoFrame, textvariable=self.winSize, width = 5).pack(side="right")
-        tk.Label(infoFrame, text = "window size [#samples]: ").pack(side="right")
-        tk.ttk.Separator(infoFrame,orient="vertical").pack(side="right", fill="both", padx=10, pady=4)
+        tk.Label(infoFrame, text = "window size [#samples]: ").pack(side="left")
+        tk.Entry(infoFrame, textvariable=self.winSize, width = 5).pack(side="left")
+        tk.ttk.Separator(infoFrame,orient="vertical").pack(side="left", fill="both", padx=10, pady=4)
+
+        # set up frame to hold pick information
+        interpFrame1 = tk.Frame(interpFrame)
+        interpFrame1.pack(side="top",fill="none")
+        interpFrame2 = tk.Frame(interpFrame)
+        interpFrame2.pack(side="top",fill="none")
+        # initialize horizon var with dropdown menu
+        tk.Label(interpFrame1,text="horizon:\t").pack(side="left")
+        self.horVar = tk.StringVar()
+        self.horizons=[None]
+        self.horMenu = tk.OptionMenu(interpFrame1, self.horVar, *self.horizons)
+        # self.horMenu.config(width = 10)
+        self.horMenu.pack(side="left",pady=0)        # subsurface pick segment options
+        # initialize pick segment vars with dropdown menu
+        tk.Label(interpFrame2,text="segment: ").pack(side="left")
+        self.segVar = tk.IntVar()
+        self.segments=[None]
+        self.segMenu = tk.OptionMenu(interpFrame2, self.segVar, *self.segments)
+        self.segMenu.pack(side="left",pady=0)        # subsurface pick segment options
+        tk.Button(interpFrame2, text="edit", command=self.edit_pkSeg).pack(side="left")
+        tk.Button(interpFrame2, text="delete", command=self.delete_pkSeg).pack(side="left")
+
 
         # pick segment info label
         self.pickLabel = tk.Label(toolbarFrame, font= "Verdana 10")
@@ -143,6 +160,9 @@ class impick(tk.Frame):
         self.draw_cid = self.fig.canvas.mpl_connect("draw_event", self.update_bg)
         self.resize_cid = self.fig.canvas.mpl_connect("resize_event", self.drawData)
 
+        # set mpl line colors - don't use black or dark blue
+        mpl.rcParams['axes.prop_cycle'] = cycler(color='cgmy')
+
 
     # set_vars is a method to set impick variables which need to reset upon each load
     def set_vars(self):
@@ -152,6 +172,8 @@ class impick(tk.Frame):
         self.pick_state = False
         self.pick_segment = 0
         self.pyramid = None
+        self.horVar = tk.StringVar()
+        self.segVar = tk.IntVar()
 
         # image colormap bounds
         self.data_cmin = None
@@ -163,7 +185,13 @@ class impick(tk.Frame):
         self.data_crange = None
         self.sim_crange = None
 
-        # initialize path objects to hold temporary pick lists
+        # TEST using horizons #
+        self.tmp_horizon_path = path([],[])                                     # temporary path object to hold horizon segment currently being picked/edited
+        self.tmp_horizon_ln = None
+        self.horizon_paths = {}                                                 # dictionary to hold horizon paths for saved picks
+        self.horizon_lns = {}
+
+        # initialize path objects to hold temporary pick horizons
         self.surf_tmp_path = path([],[])
         self.subsurf_tmp_path = path([],[])
 
@@ -233,21 +261,36 @@ class impick(tk.Frame):
         self.surf_saved_path = path(np.repeat(np.nan, self.rdata.tnum), np.repeat(np.nan, self.rdata.tnum))
 
         # plot existing subsurface pick layers
-        self.existing_subsurf_lns = []
-        count = len(self.rdata.pick.existing_twttSubsurf.items())
-        for _i in range(count):
-            self.ax.plot(np.arange(self.rdata.tnum), utils.twtt2sample(self.rdata.pick.existing_twttSubsurf[str(_i)], self.rdata.dt), "g", linewidth=1)
-            self.existing_subsurf_lns.append(self.ax.lines[_i])
+        # self.existing_subsurf_lns = []
+        # count = len(self.rdata.pick.existing_twttSubsurf.items())
+        # for _i in range(count):
+        #     self.ax.plot(np.arange(self.rdata.tnum), utils.twtt2sample(self.rdata.pick.existing_twttSubsurf[str(_i)], self.rdata.dt),  linewidth=1)
+        #     self.existing_subsurf_lns.append(self.ax.lines[_i])
 
-        # plot existing surface pick layer
-        if np.any(self.rdata.pick.existing_twttSurf):
-            self.existing_surf_ln = self.ax.plot(np.arange(self.rdata.tnum), utils.twtt2sample(self.rdata.pick.existing_twttSurf, self.rdata.dt), "c", linewidth=1)
+        # initialize line to hold current picks
+        self.tmp_horizon_ln, = self.ax.plot(self.tmp_horizon_path.x, self.tmp_horizon_path.y, "rx")
+
+        # plot existing surface pick horizon
+        if "surface" in self.rdata.pick.horizons:
+            # initialize surface path dictionary and create line object
+            self.horizon_paths["surface"] = {}
+            self.horizon_paths["surface"][0] = path(utils.nonan_idx_array(self.rdata.pick.horizons["surface"]), self.rdata.pick.horizons["surface"])
+            x,y = utils.merge_paths(self.horizon_paths["surface"])
+            self.horizon_lns["surface"], = self.ax.plot(x,y)
+
+        # else:
+        #     self.horizon_paths["surface"][0] = path(y=np.repeat(np.nan, self.rdata.tnum))
+        
+
+
+        # if np.any(self.rdata.pick.existing_twttSurf):
+        #     self.existing_surf_ln = self.ax.plot(np.arange(self.rdata.tnum), utils.twtt2sample(self.rdata.pick.existing_twttSurf, self.rdata.dt), linewidth=1)
 
         # initialize lines to hold current pick segments
-        self.surf_tmp_ln, = self.ax.plot(self.surf_tmp_path.x, self.surf_tmp_path.y, "mx")                                              # empty line for surface pick segment
-        self.surf_saved_ln, = self.ax.plot(self.surf_saved_path.x, self.surf_saved_path.y, "y")                                         # emplty line for saved surface pick segment
-        self.subsurf_tmp_ln, = self.ax.plot(self.subsurf_tmp_path.x, self.subsurf_tmp_path.y, "rx")                                     # empty line for current pick segment
-        self.subsurf_saved_ln = {}                                                                                                      # dictionary to hold individual subsurface pick lines
+        # self.surf_tmp_ln, = self.ax.plot(self.surf_tmp_path.x, self.surf_tmp_path.y, "mx")                                              # empty line for surface pick segment
+        # self.surf_saved_ln, = self.ax.plot(self.surf_saved_path.x, self.surf_saved_path.y, "y")                                         # emplty line for saved surface pick segment
+        # self.subsurf_tmp_ln, = self.ax.plot(self.subsurf_tmp_path.x, self.subsurf_tmp_path.y, "rx")                                     # empty line for current pick segment
+        # self.subsurf_saved_ln = {}                                                                                                      # dictionary to hold individual subsurface pick lines
 
         # update the canvas
         self.dataCanvas._tkcanvas.pack()
@@ -592,6 +635,24 @@ class impick(tk.Frame):
         return self.pick_surf
 
 
+    # init_horizon is a method to initialize new horizon objects
+    def init_horizon(self, key=None):
+        if key:
+            self.horizon_paths[key] = {}
+            # initialize 0th segment for new horizon
+            self.init_segment(key)
+            # initialize line object for new horizon
+            x,y = utils.merge_paths(self.horizon_paths[key])
+            self.horizon_lns[key], = self.ax.plot(x,y)
+
+
+    # init_segment is a method to initialize new pick segment for the current horizon
+    def init_segment(self, key=None):
+        if key:
+            l = len(self.horizon_paths[key])
+            self.horizon_paths[key][l] = path(np.repeat(np.nan, self.rdata.tnum), np.repeat(np.nan, self.rdata.tnum))
+
+
     # init_subsurfpk is a method to initialize the objects necessary to hold subsurface picks
     def init_subsurfpk(self):
         # initialize subsurface pick index array for current segment
@@ -889,7 +950,7 @@ class impick(tk.Frame):
                 self.set_pickState(False, surf="subsurface")
                 self.pick_interp(surf = "subsurface")
                 self.plot_picks(surf = "subsurface")
-                self.update_option_menu()
+                self.update_seg_opt_menu()
             self.edit_flag = True
             self.edit_segmentNum = layer
             self.pick_state = True
@@ -971,7 +1032,7 @@ class impick(tk.Frame):
                     else:
                         self.pickLabel.config(text="subsurface pick segment " + str(self.pick_segment) + ":\t inactive", fg="#d9d9d9")
                 self.segVar.set(0)
-            self.update_option_menu()
+            self.update_seg_opt_menu()
             self.update_bg()
 
 
@@ -1020,17 +1081,26 @@ class impick(tk.Frame):
                 ann.set_visible(False)
 
 
-    # update the pick layer menu based on how many segments exist
-    def update_option_menu(self):
+    # update the horizon menu
+    def update_hor_opt_menu(self):
+        menu = self.horMenu["menu"]
+        menu.delete(0, "end")
+        for key in self.horizon_paths.keys():
+            menu.add_command(label=key, command=tk._setit(self.horVar, key))
+
+
+    # update the horizon segment menu based on how many segments exist for given segment
+    def update_seg_opt_menu(self):
+        if self.horVar.get():
             menu = self.segMenu["menu"]
             menu.delete(0, "end")
-            for _i in range(self.pick_segment):
-                menu.add_command(label=_i,
-                    command=tk._setit(self.segVar,_i))
+            for key in self.horizon_paths[self.horVar.get()].keys():
+                menu.add_command(label=key, command=tk._setit(self.segVar, key))
 
 
     # show_picks is a method to toggle the visibility of picks on
     def show_picks(self):
+        print(self.horVar.get())
         self.show_artists(self.pick_vis.get())
         self.safe_draw()
         self.fig.canvas.blit(self.ax.bbox)
@@ -1082,7 +1152,9 @@ class impick(tk.Frame):
 
     # onpress gets the time of the button_press_event
     def onpress(self,event):
-        self.time_onclick = time.time()
+        if event.inaxes == self.ax:
+            self.dblclick = event.dblclick
+            self.time_onclick = time.time()
 
 
     # onrelease calls addseg() if the time between the button press and release events
@@ -1091,6 +1163,9 @@ class impick(tk.Frame):
         if event.inaxes == self.ax:
             if event.button == 1 and ((time.time() - self.time_onclick) < 0.25):
                 self.addseg(event)
+                if self.dblclick:
+                    print('HERE')
+            self.time_onclick = time.time()
 
 
     # update_figsettings

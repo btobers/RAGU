@@ -146,5 +146,7 @@ class pick(object):
         self.current_subsurf = {}
         #: dict, containing  current data file optimized subsurface pick segments/layers.
         self.current_subsurfOpt = {}
+        #: dict, containing  file pick horizons - each dictionary layer will be of type np.ndarray(tnum,) pick in sample number for each trace
+        self.horizons = {}
 
         return

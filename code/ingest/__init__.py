@@ -50,8 +50,8 @@ class ingest:
         return self.rdata
 
 
-    # import_picks is a method of the ingester class which loads in existing picks from a text file
-    def import_picks(self, fpath):
+    # import_pick is a method of the ingester class which loads in existing picks from a text file
+    def import_pick(self, fpath):
         if fpath.endswith("csv"):
             dat = np.genfromtxt(fpath, delimiter=",", dtype = None, names = True)
             subsrfTwtt = dat["subsrfTwtt"]

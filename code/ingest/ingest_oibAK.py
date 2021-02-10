@@ -66,18 +66,29 @@ def read_h5(fpath, navcrs, body):
     # parse nav
     rdata.navdf = navparse.getnav_oibAK_h5(fpath, navcrs, body)
     
-    # pull lidar surface elevation
+    # pull lidar surface elevation and initilize horizon
     if "srf0" in f["ext"].keys():
-        rdata.set_surfElev(f["ext"]["srf0"][:])                                  # surface elevation from lidar, averaged over radar first fresnel zone per trace (see code within /zippy/MARS/code/xped/hfProc/ext)
-        # read in existing surface pick
+        rdata.set_surfElev(f["ext"]["srf0"][:])  
         if "twtt_surf" in f["drv"]["pick"].keys():
-            rdata.pick.existing_twttSurf = f["drv"]["pick"]["twtt_surf"][:]
+            rdata.pick.horizons["surface"] = utils.twtt2sample(f["drv"]["pick"]["twtt_surf"][:], rdata.dt)
         else:
-            # calculate twtt_surf
-            rdata.pick.existing_twttSurf = utils.depth2twtt(rdata.navdf["elev"] - rdata.surfElev, eps_r=1)
-    # create empty arrays to hold surface elevation and twtt otherwise
+            rdata.pick.horizons["surface"] =  rdata.pick.existing_twttSurf = utils.twtt2sample(utils.depth2twtt(rdata.navdf["elev"] - rdata.surfElev, eps_r=1), rdata.dt)
     else:
         rdata.set_surfElev(np.repeat(np.nan, rdata.tnum))
+        rdata.pick.horizons["surface"] = np.repeat(np.nan, rdata.tnum)
+
+    # # pull lidar surface elevation
+    # if "srf0" in f["ext"].keys():
+    #     rdata.set_surfElev(f["ext"]["srf0"][:])                                  # surface elevation from lidar, averaged over radar first fresnel zone per trace (see code within /zippy/MARS/code/xped/hfProc/ext)
+    #     # read in existing surface pick
+    #     if "twtt_surf" in f["drv"]["pick"].keys():
+    #         rdata.pick.existing_twttSurf = f["drv"]["pick"]["twtt_surf"][:]
+    #     else:
+    #         # calculate twtt_surf
+    #         rdata.pick.existing_twttSurf = utils.depth2twtt(rdata.navdf["elev"] - rdata.surfElev, eps_r=1)
+    # create empty arrays to hold surface elevation and twtt otherwise
+    # else:
+    #     rdata.set_surfElev(np.repeat(np.nan, rdata.tnum))
 
     # read in existing subsurface picks
     num_file_pick_lyr = len(fnmatch.filter(f["drv"]["pick"].keys(), "twtt_subsurf*"))
