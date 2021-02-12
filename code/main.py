@@ -34,6 +34,8 @@ def main():
     root.geometry("%dx%d+0+0" % (.5*w, .5*h))
     root.title("RAGU")
     root.config(bg="#d9d9d9")
+    for _i in tk.font.names():
+        tk.font.nametofont(_i).config(family="Times New Roman", size=12, weight="normal")
     # img = tk.PhotoImage(file='../recs/NOSEpick_zoom.png')
     # root.tk.call('wm', 'iconphoto', root._w, img)
     # call the RAGU mainGUI class

@@ -40,7 +40,7 @@ class impick(tk.Frame):
         infoFrame0.pack(side="top",fill="both")        
         infoFrame = tk.Frame(infoFrame0)
         infoFrame.pack(side="left",fill="both")
-        interpFrame = tk.Frame(infoFrame0, width=300, relief="ridge", borderwidth=1)
+        interpFrame = tk.Frame(infoFrame0, width=500)
         interpFrame.pack(side="right",fill="both")
         interpFrame.pack_propagate(0)
         toolbarFrame = tk.Frame(infoFrame)
@@ -50,65 +50,92 @@ class impick(tk.Frame):
 
         self.im_status = tk.StringVar()
         # add radio buttons for toggling between radargram and clutter sim
-        radarRadio = tk.Radiobutton(infoFrame, text="radargram", variable=self.im_status, value="data",command=self.show_data)
+        radarRadio = tk.Radiobutton(infoFrame, text="Radargram", variable=self.im_status, value="data",command=self.show_data)
         radarRadio.pack(side="left")
-        simRadio = tk.Radiobutton(infoFrame,text="clutter sim", variable=self.im_status, value="sim",command=self.show_sim)
+        simRadio = tk.Radiobutton(infoFrame,text="Clutter Sim", variable=self.im_status, value="sim",command=self.show_sim)
         simRadio.pack(side="left")
         tk.ttk.Separator(infoFrame,orient="vertical").pack(side="left", fill="both", padx=10, pady=4)
 
         # add radio buttons for toggling pick visibility
         self.chan = tk.IntVar()
-        tk.Label(infoFrame, text="channel: ").pack(side="left")
+        tk.Label(infoFrame, text="Channel: ").pack(side="left")
         tk.Radiobutton(infoFrame,text="0", variable=self.chan, value=0, command=self.switchChan).pack(side="left")
         tk.Radiobutton(infoFrame,text="1", variable=self.chan, value=1, command=self.switchChan).pack(side="left")
         tk.ttk.Separator(infoFrame,orient="vertical").pack(side="left", fill="both", padx=10, pady=4)
 
         # add radio buttons for toggling pick visibility
         self.pick_vis = tk.BooleanVar()
-        tk.Label(infoFrame, text="pick visibility: ").pack(side="left")
-        tk.Radiobutton(infoFrame,text="on", variable=self.pick_vis, value=True, command=self.show_picks).pack(side="left")
-        tk.Radiobutton(infoFrame,text="off", variable=self.pick_vis, value=False, command=self.show_picks).pack(side="left")
+        tk.Label(infoFrame, text="Pick Visibility: ").pack(side="left")
+        tk.Radiobutton(infoFrame,text="On", variable=self.pick_vis, value=True, command=self.show_picks).pack(side="left")
+        tk.Radiobutton(infoFrame,text="Off", variable=self.pick_vis, value=False, command=self.show_picks).pack(side="left")
         tk.ttk.Separator(infoFrame,orient="vertical").pack(side="left", fill="both", padx=10, pady=4)
 
         # add radio buttons for toggling pick labels
         self.pick_ann_vis = tk.BooleanVar()
-        tk.Label(infoFrame, text="pick labels: ").pack(side="left")
-        tk.Radiobutton(infoFrame,text="on", variable=self.pick_ann_vis, value=True, command=self.show_pickLabels).pack(side="left")
-        tk.Radiobutton(infoFrame,text="off", variable=self.pick_ann_vis, value=False, command=self.show_pickLabels).pack(side="left")
+        tk.Label(infoFrame, text="Pick Labels: ").pack(side="left")
+        tk.Radiobutton(infoFrame,text="On", variable=self.pick_ann_vis, value=True, command=self.show_pickLabels).pack(side="left")
+        tk.Radiobutton(infoFrame,text="Off", variable=self.pick_ann_vis, value=False, command=self.show_pickLabels).pack(side="left")
         tk.ttk.Separator(infoFrame,orient="vertical").pack(side="left", fill="both", padx=10, pady=4)
 
         # add entry box for peak finder window size
         self.winSize = tk.IntVar(value=0)
-        tk.Label(infoFrame, text = "window size [#samples]: ").pack(side="left")
+        tk.Label(infoFrame, text = "Window Size [#Samples]: ").pack(side="left")
         tk.Entry(infoFrame, textvariable=self.winSize, width = 5).pack(side="left")
         tk.ttk.Separator(infoFrame,orient="vertical").pack(side="left", fill="both", padx=10, pady=4)
 
         # set up frame to hold pick information
-        interpFrame1 = tk.Frame(interpFrame)
-        interpFrame1.pack(side="top",fill="none")
-        interpFrame2 = tk.Frame(interpFrame)
-        interpFrame2.pack(side="top",fill="none")
-        # initialize horizon var with dropdown menu
-        tk.Label(interpFrame1,text="horizon:\t").pack(side="left")
+        interpFrameT = tk.Frame(interpFrame)
+        interpFrameT.pack(fill="both",expand=True)
+        interpFrameT.pack_propagate(0)
+        interpFrameB = tk.Frame(interpFrame)
+        interpFrameB.pack(fill="both",expand=True)
+        interpFrameB.pack_propagate(0)
+
+        interpFrameTl = tk.Frame(interpFrameT,width=400,relief="ridge", borderwidth=1)
+        interpFrameTl.pack(side="left",fill="both",expand=True)
+        interpFrameTl.pack_propagate(0)
+
+        interpFrameTr = tk.Frame(interpFrameT,width=100,relief="ridge", borderwidth=1)
+        interpFrameTr.pack(side="left",fill="both",expand=True)
+        interpFrameTr.pack_propagate(0)
+
+
+        interpFrameBl = tk.Frame(interpFrameB,width=400,relief="ridge", borderwidth=1)
+        interpFrameBl.pack(side="left",fill="both",expand=True)
+        interpFrameBl.pack_propagate(0)
+        interpFrameBr = tk.Frame(interpFrameB,width=100,relief="ridge", borderwidth=1)
+        interpFrameBr.pack(side="left",fill="both",expand=True)
+        interpFrameBr.pack_propagate(0)
+
+        tk.Label(interpFrameTl,text="Horizon:\t").pack(side="left")
         self.horVar = tk.StringVar()
+        self.horVar.trace("w", self.update_seg_opt_menu) 
         self.horizons=[None]
-        self.horMenu = tk.OptionMenu(interpFrame1, self.horVar, *self.horizons)
-        # self.horMenu.config(width = 10)
-        self.horMenu.pack(side="left",pady=0)        # subsurface pick segment options
-        # initialize pick segment vars with dropdown menu
-        tk.Label(interpFrame2,text="segment: ").pack(side="left")
+        self.horMenu = tk.OptionMenu(interpFrameTl, self.horVar, *self.horizons)
+        self.horMenu.pack(side="left")
+        self.horMenu.config(width=20)
+        tk.Button(interpFrameTl, text="Delete", width=4, command=self.rm_horizon).pack(side="right")
+        tk.Button(interpFrameTl, text="New", width=4, command=self.init_horizon).pack(side="right")
+
+        tk.Label(interpFrameBl,text="Segment: ").pack(side="left")
         self.segVar = tk.IntVar()
-        self.segments=[None]
-        self.segMenu = tk.OptionMenu(interpFrame2, self.segVar, *self.segments)
-        self.segMenu.pack(side="left",pady=0)        # subsurface pick segment options
-        tk.Button(interpFrame2, text="edit", command=self.edit_pkSeg).pack(side="left")
-        tk.Button(interpFrame2, text="delete", command=self.delete_pkSeg).pack(side="left")
-
-
-        # pick segment info label
-        self.pickLabel = tk.Label(toolbarFrame, font= "Verdana 10")
-        self.pickLabel.pack(side="right")
-        tk.Label(toolbarFrame, text="\t").pack(side="right")
+        segments=[None]
+        self.segMenu = tk.OptionMenu(interpFrameBl, self.segVar, *segments)
+        self.segMenu.pack(side="left")
+        self.segMenu.config(width=2)
+        tk.Button(interpFrameBl, text="Delete", width=4, command=self.rm_segment).pack(side="right")
+        tk.Button(interpFrameBl, text="Edit", width=4, command=self.edit_segment).pack(side="right")
+        tk.Button(interpFrameBl, text="New", width=4, command=self.init_segment).pack(side="right")
+        # initialize pick state buttons
+        label = tk.Label(interpFrameTr, text="Pick",justify="center")
+        label.pack(fill="both",expand=True)
+        f = tk.font.Font(label, label.cget("font"))
+        f.configure(underline=True)
+        label.configure(font=f)
+        self.startbutton = tk.Button(interpFrameBr, text="Start", bg="green", fg="white", command=lambda:self.set_pickState(state=True))
+        self.startbutton.pack(side="left",fill="both",expand=True)
+        self.stopbutton = tk.Button(interpFrameBr, text="Stop", bg="red", fg="white", command=lambda:self.set_pickState(state=False))
+        self.stopbutton.pack(side="left",fill="both",expand=True)
 
         # create matplotlib figure data canvas
         plt.rcParams.update({'font.size': str(self.figsettings["fontsize"].get())})
@@ -159,6 +186,7 @@ class impick(tk.Frame):
         self.unclick = self.fig.canvas.mpl_connect("button_release_event", self.onrelease)
         self.draw_cid = self.fig.canvas.mpl_connect("draw_event", self.update_bg)
         self.resize_cid = self.fig.canvas.mpl_connect("resize_event", self.drawData)
+        self.mousemotion = self.fig.canvas.mpl_connect('motion_notify_event', self.on_mouse_move)
 
         # set mpl line colors - don't use black or dark blue
         mpl.rcParams['axes.prop_cycle'] = cycler(color='cgmy')
@@ -168,12 +196,14 @@ class impick(tk.Frame):
     def set_vars(self):
         self.basemap = None
         self.pick_surf = None
+        self.popupFlag = True
+        self.popupWindow = None
 
         self.pick_state = False
         self.pick_segment = 0
         self.pyramid = None
-        self.horVar = tk.StringVar()
-        self.segVar = tk.IntVar()
+        # self.horVar = tk.StringVar()
+        # self.segVar = tk.IntVar()
 
         # image colormap bounds
         self.data_cmin = None
@@ -185,31 +215,18 @@ class impick(tk.Frame):
         self.data_crange = None
         self.sim_crange = None
 
-        # TEST using horizons #
+        # initialize path objects #
         self.tmp_horizon_path = path([],[])                                     # temporary path object to hold horizon segment currently being picked/edited
-        self.tmp_horizon_ln = None
         self.horizon_paths = {}                                                 # dictionary to hold horizon paths for saved picks
-        self.horizon_lns = {}
 
-        # initialize path objects to hold temporary pick horizons
-        self.surf_tmp_path = path([],[])
-        self.subsurf_tmp_path = path([],[])
+        # initialize line objects
+        self.tmp_horizon_ln = None
+        self.horizon_lns = {}
+        self.horizontal_line = None
+        self.vertical_line = None
 
         # initialize list of pick annotations
         self.ann_list= []
-
-        # initialize arrays to hold saved surface picks
-        self.surf_saved_path = path(np.array(()),np.array(()))
-
-        # initialize dictionary to hold saved subsurface pick path objects
-        self.subsurf_saved_path = {}
-        self.subsurf_saved_path[self.pick_segment] = path(np.array(()),np.array(()))
-
-        # initialize lines to hold picks
-        self.subsurf_tmp_ln = None
-        self.subsurf_saved_ln = None
-        self.surf_tmp_ln = None
-        self.surf_saved_ln = None
 
         # necessary flags
         self.sim_imSwitch_flag = False
@@ -219,9 +236,8 @@ class impick(tk.Frame):
         self.edit_segmentNum = 0
         self.im_status.set("data")
         self.pick_vis.set(True)
-        self.pick_ann_vis.set(False)
+        self.pick_ann_vis.set(True)
         self.debugState = False
-        self.pickLabel.config(fg="#d9d9d9")
 
         # set figure cmap
         self.set_cmap(self.figsettings["cmap"].get())
@@ -257,9 +273,6 @@ class impick(tk.Frame):
         # # set clutter sim visibility to false
         self.im_sim.set_visible(False)
 
-        # initialize arrays to hold saved surface picks
-        self.surf_saved_path = path(np.repeat(np.nan, self.rdata.tnum), np.repeat(np.nan, self.rdata.tnum))
-
         # plot existing subsurface pick layers
         # self.existing_subsurf_lns = []
         # count = len(self.rdata.pick.existing_twttSubsurf.items())
@@ -269,28 +282,27 @@ class impick(tk.Frame):
 
         # initialize line to hold current picks
         self.tmp_horizon_ln, = self.ax.plot(self.tmp_horizon_path.x, self.tmp_horizon_path.y, "rx")
+        # initialize cursor crosshair lines
+        self.horizontal_line = self.ax.axhline(color="r", lw=1, ls="--")
+        self.vertical_line = self.ax.axvline(color="r", lw=1, ls="--")
+        self.set_cross_hair_visible(self.get_pickState())
+
 
         # plot existing surface pick horizon
         if "surface" in self.rdata.pick.horizons:
             # initialize surface path dictionary and create line object
-            self.horizon_paths["surface"] = {}
-            self.horizon_paths["surface"][0] = path(utils.nonan_idx_array(self.rdata.pick.horizons["surface"]), self.rdata.pick.horizons["surface"])
+            self.init_horizon(horizon="surface",skip_array=True)
+            self.horizon_paths["surface"][0].x = utils.nonan_idx_array(self.rdata.pick.horizons["surface"])
+            self.horizon_paths["surface"][0].y = self.rdata.pick.horizons["surface"]
             x,y = utils.merge_paths(self.horizon_paths["surface"])
-            self.horizon_lns["surface"], = self.ax.plot(x,y)
-
-        # else:
-        #     self.horizon_paths["surface"][0] = path(y=np.repeat(np.nan, self.rdata.tnum))
+            self.horizon_lns["surface"].set_data(x,y)
+            # init 1st surface segment by default
+            self.init_segment(horizon="surface")
         
-
-
         # if np.any(self.rdata.pick.existing_twttSurf):
         #     self.existing_surf_ln = self.ax.plot(np.arange(self.rdata.tnum), utils.twtt2sample(self.rdata.pick.existing_twttSurf, self.rdata.dt), linewidth=1)
 
-        # initialize lines to hold current pick segments
-        # self.surf_tmp_ln, = self.ax.plot(self.surf_tmp_path.x, self.surf_tmp_path.y, "mx")                                              # empty line for surface pick segment
-        # self.surf_saved_ln, = self.ax.plot(self.surf_saved_path.x, self.surf_saved_path.y, "y")                                         # emplty line for saved surface pick segment
-        # self.subsurf_tmp_ln, = self.ax.plot(self.subsurf_tmp_path.x, self.subsurf_tmp_path.y, "rx")                                     # empty line for current pick segment
-        # self.subsurf_saved_ln = {}                                                                                                      # dictionary to hold individual subsurface pick lines
+                                                                                                  # dictionary to hold individual subsurface pick lines
 
         # update the canvas
         self.dataCanvas._tkcanvas.pack()
@@ -332,7 +344,6 @@ class impick(tk.Frame):
         self.s_cmax.valmin = self.maxdB_data - (self.data_crange/2)
         self.s_cmax.valmax = self.maxdB_data + (self.data_crange/2)
         self.s_cmax.valinit = self.maxdB_data
-
         self.update_slider()
 
 
@@ -609,7 +620,7 @@ class impick(tk.Frame):
 
     # get_subsurfpkFlag is a method which returns true if manual subsurface picks exist, and false otherwise   
     def get_subsurfpkFlag(self):
-        if len(self.subsurf_tmp_path.x) + np.count_nonzero(~np.isnan(self.subsurf_saved_path[0].x)) > 0:
+        if len(self.tmp_horizon_path.x) + np.count_nonzero(~np.isnan(self.subsurf_saved_path[0].x)) > 0:
             return True
         else:
             return False
@@ -635,77 +646,212 @@ class impick(tk.Frame):
         return self.pick_surf
 
 
+    # get_horizon_selection
+    def get_horizon_selection(self):
+        return self.horVar.get()
+
+
     # init_horizon is a method to initialize new horizon objects
-    def init_horizon(self, key=None):
-        if key:
-            self.horizon_paths[key] = {}
+    def init_horizon(self, horizon=None, skip_array=False):
+        if not horizon:
+            # create popup window to get new horizon name
+            self.horizonName = tk.StringVar()
+            self.popupWindow = tk.Toplevel(self.parent)
+            self.popupWindow.geometry("500x100")
+            self.popupFlag = False
+            self.popupWindow.config(bg="#d9d9d9")
+            self.popupWindow.title("new horizon")
+            self.popupWindow.protocol("WM_DELETE_WINDOW", lambda:self.close_popup(self.popupWindow,flag=False))
+            tk.Label(self.popupWindow, text="enter new horizon name:").pack(fill="both",expand=True)
+            entry = tk.Entry(self.popupWindow, textvar=self.horizonName, justify="center").pack(fill="both",expand=True) 
+            button = tk.Button(self.popupWindow, text="ok", command=lambda:self.close_popup(self.popupWindow,flag=True), width=20).pack(fill="none", expand=True)
+            # wait for window to be closed
+            self.parent.wait_window(self.popupWindow)
+            horizon = self.horizonName.get()
+
+        if self.popupFlag and horizon:
+            if not skip_array:
+                # ensure horizon doesn't already exist, otherwise overwrite or return
+                if horizon not in self.horizon_paths:
+                    self.rdata.pick.horizons[horizon] = np.repeat(np.nan, self.rdata.tnum)
+                elif tk.messagebox.askyesno("horizon name error","horizon name (" + horizon + ") already exists. overwrite?") == True:
+                    self.rdata.pick.horizons[horizon] = np.repeat(np.nan, self.rdata.tnum)
+                else:
+                    return
+            self.horizon_paths[horizon] = {}
             # initialize 0th segment for new horizon
-            self.init_segment(key)
+            self.init_segment(horizon=horizon)
             # initialize line object for new horizon
-            x,y = utils.merge_paths(self.horizon_paths[key])
-            self.horizon_lns[key], = self.ax.plot(x,y)
+            x,y = utils.merge_paths(self.horizon_paths[horizon])
+            self.horizon_lns[horizon], = self.ax.plot(x,y)       
+            # set horVar to new horizon
+            self.horVar.set(horizon)       
+            # update horizon and segment options
+            self.update_hor_opt_menu()  
+        else:
+            return
 
 
-    # init_segment is a method to initialize new pick segment for the current horizon
-    def init_segment(self, key=None):
-        if key:
-            l = len(self.horizon_paths[key])
-            self.horizon_paths[key][l] = path(np.repeat(np.nan, self.rdata.tnum), np.repeat(np.nan, self.rdata.tnum))
+    # remove horizon
+    def rm_horizon(self):
+        return
 
 
-    # init_subsurfpk is a method to initialize the objects necessary to hold subsurface picks
-    def init_subsurfpk(self):
-        # initialize subsurface pick index array for current segment
-        self.rdata.pick.current_subsurf[self.pick_segment] = np.repeat(np.nan, self.rdata.tnum)
-        # initialize saved subsurface pick path object and line object for current segment
-        self.subsurf_saved_path[self.pick_segment] = path(np.repeat(np.nan, self.rdata.tnum), np.repeat(np.nan, self.rdata.tnum))
-        self.subsurf_saved_ln[self.pick_segment], = self.ax.plot(self.subsurf_saved_path[self.pick_segment].x, self.subsurf_saved_path[self.pick_segment].y, "g")
+    # init_segment is a method to initialize new pick segment
+    def init_segment(self, horizon=None):
+        if (not horizon) and ((self.popupWindow is None) or (self.popupWindow.winfo_exists() == 0)):
+            self.horizonName = tk.StringVar()
+            # get current horizon names
+            horizons = list(self.rdata.pick.horizons.keys())
+            # have default horizon selection be current horizon selection from impick
+            self.horizonName.set(self.get_horizon_selection())
+            self.popupWindow = tk.Toplevel(self.parent)
+            self.popupWindow.geometry("500x100")
+            self.popupFlag = False
+            self.popupWindow.config(bg="#d9d9d9")
+            self.popupWindow.title("new horizon segment")
+            self.popupWindow.protocol("WM_DELETE_WINDOW", lambda:self.close_popup(self.popupWindow, flag=False))
+            tk.Label(self.popupWindow, text="select horizon:").pack(fill="both", expand=True)
+            dropdown = tk.OptionMenu(self.popupWindow, self.horizonName, *horizons)
+            dropdown.config(width=20)
+            dropdown.pack(fill="none", expand=True)
+            button = tk.Button(self.popupWindow, text="ok", command=lambda:self.close_popup(self.popupWindow,flag=True), width=20).pack(fill="none", expand=True)
+            # wait for window to be closed
+            self.parent.wait_window(self.popupWindow)
+            horizon = self.horizonName.get()
+
+        if self.popupFlag and horizon:
+            l = len(self.horizon_paths[horizon])
+            self.horizon_paths[horizon][l] = path(np.repeat(np.nan, self.rdata.tnum), np.repeat(np.nan, self.rdata.tnum))
+            self.segVar.set(l)
+            # update segment options
+            self.update_seg_opt_menu()
+        else:
+            return
+
+
+    # edit selected subsurface pick segment
+    def edit_segment(self):
+        layer = self.segVar.get()
+        if (layer in self.rdata.pick.current_subsurf) and (self.edit_flag == False) and (not ((self.pick_state == True) and (self.pick_surf == "subsurface") and (layer == self.pick_segment))) and (tk.messagebox.askokcancel("warning", "edit pick segment " + str(layer) + "?", icon = "warning") == True):
+            # if another subsurface pick segment is active, end segment
+            if (self.pick_state == True) and (self.pick_surf == "subsurface") and (layer != self.pick_segment):
+                self.set_pickState(False, surf="subsurface")
+                self.pick_interp(surf = "subsurface")
+                self.plot_picks(surf = "subsurface")
+                self.update_seg_opt_menu()
+            self.edit_flag = True
+            self.edit_segmentNum = layer
+            self.pick_state = True
+            self.pick_surf = "subsurface"
+            # find indices of picked traces
+            picks_idx = np.where(~np.isnan(self.rdata.pick.current_subsurf[layer]))[0]
+            # return picked traces to xln list
+            self.tmp_horizon_path.x = picks_idx[::50].tolist()
+            # return picked samples to yln list
+            self.tmp_horizon_path.y = self.rdata.pick.current_subsurf[layer][picks_idx][::50].tolist()
+            # clear saved picks for segment
+            self.subsurf_saved_path[layer].x[picks_idx] = np.nan
+            self.subsurf_saved_path[layer].y[picks_idx] = np.nan
+            self.rdata.pick.current_subsurf[layer][picks_idx] = np.nan
+            # reset plotted lines
+            self.tmp_horizon_ln.set_data(self.tmp_horizon_path.x, self.tmp_horizon_path.y)
+            self.horizon_lns[layer].set_data(self.subsurf_saved_path[layer].x, self.subsurf_saved_path[layer].y)
+            # update pick label
+            self.blit()
+
+
+    # remove selected pick segment
+    def rm_segment(self):
+        layer = self.segVar.get()
+        # delete selected pick segment
+        if (layer in self.rdata.pick.current_subsurf) and (tk.messagebox.askokcancel("warning", "delete pick segment " + str(layer) + "?", icon = "warning") == True):
+            # if picking active and only one segment exists, clear all picks
+            if (self.pick_state == True) and (len(self.rdata.pick.current_subsurf) == 1):
+                self.clear_subsurfPicks()
+                self.plot_picks(surf = "subsurface")
+
+            else:
+                # if currently editing layer, clear tmp picks
+                if self.edit_flag == True and self.edit_segmentNum == layer:
+                    # clear active pick lists
+                    del self.tmp_horizon_path.x[:]
+                    del self.tmp_horizon_path.y[:]
+                    self.tmp_horizon_ln.set_data(self.tmp_horizon_path.x, self.tmp_horizon_path.y)
+                    self.set_pickState(False, "subsurface")
+                    self.edit_flag = False
+
+                # remove saved picks path object
+                del self.subsurf_saved_path[layer]
+                # delete subsurface pick dict layer
+                del self.rdata.pick.current_subsurf[layer]
+
+                # roll back pick segment counter
+                if self.pick_segment >=1:
+                    self.pick_segment -= 1
+ 
+                # reorder pick segments and path objects if necessary
+                if layer != len(self.subsurf_saved_path):
+                    for _i in range(layer, len(self.subsurf_saved_path)):
+                        self.subsurf_saved_path[_i] = path(self.subsurf_saved_path[_i + 1].x, self.subsurf_saved_path[_i + 1].y)
+                        self.horizon_lns[_i].set_data(self.subsurf_saved_path[_i + 1].x, self.subsurf_saved_path[_i + 1].y)
+                        self.rdata.pick.current_subsurf[_i] = np.copy(self.rdata.pick.current_subsurf[_i + 1])
+
+                    del self.subsurf_saved_path[_i + 1]
+                    self.horizon_lns[_i + 1].remove()
+                    del self.horizon_lns[_i + 1]
+                    del self.rdata.pick.current_subsurf[_i + 1]
+                
+                else:
+                    self.horizon_lns[layer].remove()
+                    del self.horizon_lns[layer]
+
+                self.update_pickLabels() 
+
+            self.update_seg_opt_menu()
+            self.update_bg()
 
 
     # set_pickState is a method to handle the pick state for a given surface as well as pick labels
-    def set_pickState(self, state, surf = None):
+    def set_pickState(self, state=False):
         self.pick_state = state
-        self.pick_surf = surf
-        if self.pick_surf == "subsurface":
-            l = len(self.subsurf_tmp_path.x)        # temporary path object length
-            # handle pick state true for subsurface
-            if self.pick_state == True:
-                # if segment was already active and only has one pick, just clear and return. don't initialize new segment
-                if l == 1:
-                    self.clear_last()
-                    return
-                else:
-                    # if segment was already active and has 2+ picks, advance and initialize next segment
-                    if l >= 2:
-                        self.pick_segment += 1
-                    # if a subsurface pick array and line has already been initialized for this segment, just update pick label
-                    if self.pick_segment in self.rdata.pick.current_subsurf.keys():
-                        self.pickLabel.config(text="subsurface pick segment " + str(self.pick_segment) + ":\t active", fg="red")
-                        return
-                # initilize subsurface pick objects
-                self.init_subsurfpk()
-                # update pick label
-                self.pickLabel.config(text="subsurface pick segment " + str(self.pick_segment) + ":\t active", fg="red")
-
-            # handla pick state false for subsurface
-            elif self.pick_state == False and self.edit_flag == False:
-                if l >=  2:
-                    self.pick_segment += 1
-                    self.pickLabel.config(text="subsurface pick segment " + str(self.pick_segment - 1) + ":\t inactive", fg="black")
-                # if surface pick layer has only one pick, remove
-                else:
-                    self.clear_last()
-                    del self.rdata.pick.current_subsurf[self.pick_segment]
-                    self.pickLabel.config(text="subsurface pick segment " + str(self.pick_segment) + ":\t inactive", fg="black")
-
+        horizon = self.horVar.get()
+        # if no horizon selected, force user to create new horizon
+        if not horizon:
+            self.init_horizon()
+        # temporary path object length
+        l = len(self.tmp_horizon_path.x)                
+        # handle pick state true
+        if state==True:
+            self.startbutton.config(relief="sunken")
+            self.stopbutton.config(relief="raised")
+            if l == 0:
+                pass
+            elif l == 1:
+                self.clear_last()
             else:
-                self.pickLabel.config(text="subsurface pick segment " + str(self.pick_segment - 1) + ":\t inactive", fg="black")
+                self.init_segment(horizon)
 
-        elif self.pick_surf == "surface":
-            if self.pick_state == True:                    
-                self.pickLabel.config(text="surface pick segment:\t active", fg="red")
-            elif self.pick_state == False:
-                self.pickLabel.config(text="surface pick segment:\t inactive", fg="black")
+        # handle pick state false
+        elif state==False:
+            self.startbutton.config(relief="raised")
+            self.stopbutton.config(relief="sunken")
+
+        # elif self.pick_state == False and self.edit_flag == False:
+            if l >=  2:
+                self.init_segment(horizon)
+            # if surface pick layer has only one pick, remove
+            else:
+                self.clear_last()
+                del self.horizon_paths[horizon][list(self.horizon_paths[horizon].keys())[-1]]
+
+        self.set_cross_hair_visible(state)
+        self.pick_interp(horizon=horizon,seg=self.segVar.get())
+        self.plot_picks(horizon=horizon,seg=self.segVar.get())
+        # add pick annotations
+        self.update_pickLabels()
+        self.update_seg_opt_menu()
+        self.update_bg()
 
 
     # addseg is a method to for user to generate picks
@@ -722,145 +868,98 @@ class impick(tk.Frame):
             if (self.pick_trace < 0) or (self.pick_trace > self.rdata.tnum - 1) or \
                 (pick_sample < 0) or (pick_sample > self.rdata.snum - 1):
                 return
-            # check if picking state is a go
-            if self.pick_state == True:
-                # restrict subsurface picks to fall below surface
-                if (self.pick_surf == "subsurface"):# and ((pick_sample > self.rdata["surf_idx"][self.pick_trace]) or (np.isnan(self.rdata["surf_idx"][self.pick_trace]))):
-                    # determine if trace already contains pick - if so, replace with current sample
 
-                    if self.pick_trace in self.subsurf_tmp_path.x:
-                        self.subsurf_tmp_path.y[self.subsurf_tmp_path.x.index(self.pick_trace)] = pick_sample
-
-                    else:
-                        # if pick falls before previous pix, prepend to pick list
-                        if (len(self.subsurf_tmp_path.x) >= 1) and (self.pick_trace < self.subsurf_tmp_path.x[0]):
-                            self.subsurf_tmp_path.x.insert(0, self.pick_trace)
-                            self.subsurf_tmp_path.y.insert(0, pick_sample)
-
-                        # if pick falls in between previous picks, insert in proper location of pick list
-                        elif (len(self.subsurf_tmp_path.x) >= 1) and (self.pick_trace > self.subsurf_tmp_path.x[0]) and (self.pick_trace < self.subsurf_tmp_path.x[-1]):
-                            # find proper index to add new pick 
-                            idx = utils.list_insert_idx(self.subsurf_tmp_path.x, self.pick_trace)   
-                            self.subsurf_tmp_path.x = self.subsurf_tmp_path.x[:idx] + [self.pick_trace] + self.subsurf_tmp_path.x[idx:] 
-                            self.subsurf_tmp_path.y = self.subsurf_tmp_path.y[:idx] + [pick_sample] + self.subsurf_tmp_path.y[idx:] 
-
-                        # else append new pick to end of pick list
-                        else:
-                            self.subsurf_tmp_path.x.append(self.pick_trace)
-                            self.subsurf_tmp_path.y.append(pick_sample)
-
-                    # set self.pick data to plot pick on image
-                    self.subsurf_tmp_ln.set_data(self.subsurf_tmp_path.x, self.subsurf_tmp_path.y)
-
-                elif self.pick_surf == "surface":
-                    # determine if trace already contains pick - if so, replace with current sample
-                    if self.pick_trace in self.surf_tmp_path.x:
-                        self.surf_tmp_path.y[self.surf_tmp_path.x.index(self.pick_trace)] = pick_sample
-                    
-                    else:
-                        # if pick falls before previous pix, prepend to pick list
-                        if (len(self.surf_tmp_path.x) >= 1) and (self.pick_trace < self.surf_tmp_path.x[0]):
-                            self.surf_tmp_path.x.insert(0, self.pick_trace)
-                            self.surf_tmp_path.y.insert(0, pick_sample)
-
-                        # if pick falls in between previous picks, insert in proper location of pick list
-                        elif (len(self.surf_tmp_path.x) >= 1) and (self.pick_trace > self.surf_tmp_path.x[0]) and (self.pick_trace < self.surf_tmp_path.x[-1]):
-                            # find proper index to add new pick 
-                            idx = utils.list_insert_idx(self.surf_tmp_path.x, self.pick_trace)   
-                            self.surf_tmp_path.x = self.surf_tmp_path.x[:idx] + [self.pick_trace] + self.surf_tmp_path.x[idx:] 
-                            self.surf_tmp_path.y = self.surf_tmp_path.y[:idx] + [pick_sample] + self.surf_tmp_path.y[idx:] 
-
-                        # else append new pick to end of pick list
-                        else:
-                            self.surf_tmp_path.x.append(self.pick_trace)
-                            self.surf_tmp_path.y.append(pick_sample)
-
-                    # set self.surf_tmp_ln data to plot pick on image
-                    self.surf_tmp_ln.set_data(self.surf_tmp_path.x, self.surf_tmp_path.y)
-                    # set surfpkFlag to True to show that a surface pick has been made
-                    self.set_surfpkFlag(True)
-
-                self.blit()
-
-            # pass pick trace location to basemap
+            # pass pick_trace to basemap
             if self.basemap and self.basemap.get_state() == 1:
                 self.basemap.plot_idx(self.rdata.fn, self.pick_trace)
 
-            # if in debug state, print pick info
+            # print pick info if in debug mode
             if self.debugState == True:
                 utils.print_pickInfo(self.rdata, self.pick_trace, pick_sample, self.eps_r)
 
+            # check if picking state is a go
+            if self.get_pickState():
+                # if pick_trace falls within other segment for horizon, return
+                for path in self.horizon_paths[self.horVar.get()].values():
+                    if self.pick_trace in path.x:
+                        return
+
+                # determine if trace already contains pick - if so, replace with current sample
+                if self.pick_trace in self.tmp_horizon_path.x:
+                    self.tmp_horizon_path.y[self.tmp_horizon_path.x.index(self.pick_trace)] = pick_sample
+
+                else:
+                    # if pick falls before previous pix, prepend to pick list
+                    if (len(self.tmp_horizon_path.x) >= 1) and (self.pick_trace < self.tmp_horizon_path.x[0]):
+                        self.tmp_horizon_path.x.insert(0, self.pick_trace)
+                        self.tmp_horizon_path.y.insert(0, pick_sample)
+                        self.update_pickLabels()
+
+                    # if pick falls in between previous picks, insert in proper location of pick list
+                    elif (len(self.tmp_horizon_path.x) >= 1) and (self.pick_trace > self.tmp_horizon_path.x[0]) and (self.pick_trace < self.tmp_horizon_path.x[-1]):
+                        # find proper index to add new pick 
+                        idx = utils.list_insert_idx(self.tmp_horizon_path.x, self.pick_trace)   
+                        self.tmp_horizon_path.x = self.tmp_horizon_path.x[:idx] + [self.pick_trace] + self.tmp_horizon_path.x[idx:] 
+                        self.tmp_horizon_path.y = self.tmp_horizon_path.y[:idx] + [pick_sample] + self.tmp_horizon_path.y[idx:] 
+
+                    # else append new pick to end of pick list
+                    else:
+                        self.tmp_horizon_path.x.append(self.pick_trace)
+                        self.tmp_horizon_path.y.append(pick_sample)
+                        if len(self.tmp_horizon_path.x) == 1:
+                            self.update_pickLabels()
+
+                # set self.pick data to plot pick on image
+                self.tmp_horizon_ln.set_data(self.tmp_horizon_path.x, self.tmp_horizon_path.y)
+                self.blit()
+
 
     # pick_interp is a method for cubic spline interpolation of twtt between pick locations
-    def pick_interp(self, surf=None):
+    def pick_interp(self, horizon=None, seg=None):
         # get current window size - handle non int entry
         try:
             winSize = self.winSize.get()  
         except:
             winSize = 0
             self.winSize.set(0) 
-        if surf == "subsurface":
-            # if there are at least two picked points, interpolate
-            if len(self.subsurf_tmp_path.x) >= 2:
-                # cubic spline between picks
-                cs = CubicSpline(self.subsurf_tmp_path.x, self.subsurf_tmp_path.y)
-                # generate array between first and last pick indices on current layer
-                picked_traces = np.arange(self.subsurf_tmp_path.x[0], self.subsurf_tmp_path.x[-1] + 1)
-                sample = cs(picked_traces).astype(int)
-                # if windize >=2, loop over segment and take maximum sample within window of cubic spline interp
-                if winSize >= 2:
-                    for _i in range(len(picked_traces)):
-                        sample[_i] = int(sample[_i] - (winSize/2)) + np.argmax(self.rdata.proc[int(sample[_i] - (winSize/2)):int(sample[_i] + (winSize/2)), picked_traces[_i]])
-                # add cubic spline output interpolation to pick dictionary - force output to integer for index of pick
-                if self.edit_flag == True:
-                    seg = self.segVar.get()
-                else:
-                    seg = self.pick_segment - 1
-                self.rdata.pick.current_subsurf[seg][picked_traces] = sample
-                # add pick interpolation to saved pick array
-                self.subsurf_saved_path[seg].x[picked_traces] = picked_traces
-                self.subsurf_saved_path[seg].y[picked_traces] = sample
-
-        elif surf == "surface":
-            if len(self.surf_tmp_path.x) >= 2:
-                # cubic spline between surface picks
-                cs = CubicSpline(self.surf_tmp_path.x,self.surf_tmp_path.y)
-                # generate array between first and last pick indices on current layer
-                picked_traces = np.arange(self.surf_tmp_path.x[0], self.surf_tmp_path.x[-1] + 1)
-                sample = cs(picked_traces).astype(int)
-                # if windize >=2, loop over segment and take maximum sample within window of cubic spline interp
-                if winSize >= 2:
-                    for _i in range(len(picked_traces)):
-                        sample[_i] = int(sample[_i] - (winSize/2)) + np.argmax(self.rdata.proc[int(sample[_i] - (winSize/2)):int(sample[_i] + (winSize/2)), picked_traces[_i]])
-                # input cubic spline output surface twtt array - force output to integer for index of pick
-                self.rdata.pick.current_surf[picked_traces] = sample
-                # add pick interpolation to saved pick array
-                self.surf_saved_path.x[picked_traces] = picked_traces
-                self.surf_saved_path.y[picked_traces] = sample
+        # if there are at least two picked points, interpolate
+        if len(self.tmp_horizon_path.x) >= 2:
+            # cubic spline between picks
+            cs = CubicSpline(self.tmp_horizon_path.x, self.tmp_horizon_path.y)
+            # generate array between first and last pick indices on current layer
+            picked_traces = np.arange(self.tmp_horizon_path.x[0], self.tmp_horizon_path.x[-1] + 1)
+            sample = cs(picked_traces).astype(int)
+            # if windize >=2, loop over segment and take maximum sample within window of cubic spline interp
+            if winSize >= 2:
+                for _i in range(len(picked_traces)):
+                    sample[_i] = int(sample[_i] - (winSize/2)) + np.argmax(self.rdata.proc[int(sample[_i] - (winSize/2)):int(sample[_i] + (winSize/2)), picked_traces[_i]])
+            # add cubic spline output interpolation to pick dictionary - force output to integer for index of pick
+            # if self.edit_flag == True:
+            #     seg = self.segVar.get()
+            # else:
+            #     seg = self.pick_segment - 1
+            # self.rdata.pick.current_subsurf[seg][picked_traces] = sample
+            # add pick interpolation to saved pick array
+            self.horizon_paths[horizon][seg].x[picked_traces] = picked_traces
+            self.horizon_paths[horizon][seg].y[picked_traces] = sample
 
 
     # plot_picks is a method to remove current pick list and add saved picks to plot
-    def plot_picks(self, surf = None):
-        if surf == "subsurface":
-            # remove temporary picks
-            del self.subsurf_tmp_path.x[:]
-            del self.subsurf_tmp_path.y[:]
-            self.subsurf_tmp_ln.set_data(self.subsurf_tmp_path.x, self.subsurf_tmp_path.y)
-            seg = self.pick_segment
-            if self.pick_segment > 0:
-                seg = self.pick_segment - 1
-            if self.edit_flag:
-                seg = self.segVar.get()
-            self.subsurf_saved_ln[seg].set_data(self.subsurf_saved_path[seg].x, self.subsurf_saved_path[seg].y)
-            if self.edit_flag:
-                self.edit_flag = False
-
-        elif surf == "surface":
-            # remove temporary picks
-            del self.surf_tmp_path.x[:]
-            del self.surf_tmp_path.y[:]
-            self.surf_tmp_ln.set_data(self.surf_tmp_path.x, self.surf_tmp_path.y)
-            self.surf_saved_ln.set_data(self.surf_saved_path.x, self.surf_saved_path.y)
+    def plot_picks(self, horizon=None, seg=None):
+        # remove temporary picks
+        del self.tmp_horizon_path.x[:]
+        del self.tmp_horizon_path.y[:]
+        self.tmp_horizon_ln.set_data(self.tmp_horizon_path.x, self.tmp_horizon_path.y)
+        seg = self.pick_segment
+        # if self.pick_segment > 0:
+        #     seg = self.pick_segment - 1
+        # if self.edit_flag:
+        #     seg = self.segVar.get()
+        x,y = utils.merge_paths(self.horizon_paths[horizon])
+        self.horizon_lns[horizon].set_data(x,y)
+        # self.subsurf_saved_ln[seg].set_data(self.subsurf_saved_path[seg].x, self.subsurf_saved_path[seg].y)
+        if self.edit_flag:
+            self.edit_flag = False
 
 
     # plot_existing is a method to plot existing picks
@@ -890,12 +989,12 @@ class impick(tk.Frame):
             # delete saved surface picks
             self.surf_saved_path.x[:] = np.nan
             self.surf_saved_path.y[:] = np.nan
-            self.pickLabel.config(fg="#d9d9d9")
+            # self.pickLabel.config(fg="#d9d9d9")
 
     
     # clear all subsurface picks
     def clear_subsurfPicks(self):
-        if len(self.subsurf_tmp_path.x) + np.count_nonzero(~np.isnan(self.subsurf_saved_path[0].x)) > 0:
+        if len(self.tmp_horizon_path.x) + np.count_nonzero(~np.isnan(self.subsurf_saved_path[0].x)) > 0:
             # set picking state to false
             if self.pick_state == True and self.pick_surf == "subsurface":
                 self.set_pickState(False, surf="subsurface")
@@ -905,12 +1004,12 @@ class impick(tk.Frame):
             self.subsurf_saved_path = {}
             self.subsurf_saved_path[self.pick_segment] = path(np.repeat(np.nan, self.rdata.tnum),np.repeat(np.nan, self.rdata.tnum))
             # update pick label
-            self.pickLabel.config(fg="#d9d9d9")
+            # self.pickLabel.config(fg="#d9d9d9")
             self.segVar.set(self.pick_segment)
             # remove subsurface pick lines
-            for _i in self.subsurf_saved_ln.values():
+            for _i in self.horizon_lns.values():
                 _i.remove()
-            self.subsurf_saved_ln.clear()
+            self.horizon_lns.clear()
             # remove subsurface pick annotations
             for _i in self.ann_list:
                 _i.remove()
@@ -920,14 +1019,14 @@ class impick(tk.Frame):
     # clear last pick
     def clear_last(self):
         if self.pick_state == True:
-            if self.pick_surf == "subsurface" and len(self.subsurf_tmp_path.x) >= 1:
-                del self.subsurf_tmp_path.x[-1:]
-                del self.subsurf_tmp_path.y[-1:]
+            if self.pick_surf == "subsurface" and len(self.tmp_horizon_path.x) >= 1:
+                del self.tmp_horizon_path.x[-1:]
+                del self.tmp_horizon_path.y[-1:]
                 # reset self.pick, then blit
-                self.subsurf_tmp_ln.set_data(self.subsurf_tmp_path.x, self.subsurf_tmp_path.y)
+                self.tmp_horizon_ln.set_data(self.tmp_horizon_path.x, self.tmp_horizon_path.y)
                 self.blit()
-                if len(self.subsurf_tmp_path.x) >= 1:
-                    self.pick_trace = self.subsurf_tmp_path.x[-1]
+                if len(self.tmp_horizon_path.x) >= 1:
+                    self.pick_trace = self.tmp_horizon_path.x[-1]
 
             if self.pick_surf == "surface" and len(self.surf_tmp_path.x) >= 1:
                 del self.surf_tmp_path.x[-1:]
@@ -941,101 +1040,6 @@ class impick(tk.Frame):
                     self.set_surfpkFlag(False)
 
 
-    # edit selected subsurface pick segment
-    def edit_pkSeg(self):
-        layer = self.segVar.get()
-        if (layer in self.rdata.pick.current_subsurf) and (self.edit_flag == False) and (not ((self.pick_state == True) and (self.pick_surf == "subsurface") and (layer == self.pick_segment))) and (tk.messagebox.askokcancel("warning", "edit pick segment " + str(layer) + "?", icon = "warning") == True):
-            # if another subsurface pick segment is active, end segment
-            if (self.pick_state == True) and (self.pick_surf == "subsurface") and (layer != self.pick_segment):
-                self.set_pickState(False, surf="subsurface")
-                self.pick_interp(surf = "subsurface")
-                self.plot_picks(surf = "subsurface")
-                self.update_seg_opt_menu()
-            self.edit_flag = True
-            self.edit_segmentNum = layer
-            self.pick_state = True
-            self.pick_surf = "subsurface"
-            # find indices of picked traces
-            picks_idx = np.where(~np.isnan(self.rdata.pick.current_subsurf[layer]))[0]
-            # return picked traces to xln list
-            self.subsurf_tmp_path.x = picks_idx[::50].tolist()
-            # return picked samples to yln list
-            self.subsurf_tmp_path.y = self.rdata.pick.current_subsurf[layer][picks_idx][::50].tolist()
-            # clear saved picks for segment
-            self.subsurf_saved_path[layer].x[picks_idx] = np.nan
-            self.subsurf_saved_path[layer].y[picks_idx] = np.nan
-            self.rdata.pick.current_subsurf[layer][picks_idx] = np.nan
-            # reset plotted lines
-            self.subsurf_tmp_ln.set_data(self.subsurf_tmp_path.x, self.subsurf_tmp_path.y)
-            self.subsurf_saved_ln[layer].set_data(self.subsurf_saved_path[layer].x, self.subsurf_saved_path[layer].y)
-            # update pick label
-            self.pickLabel.config(text="subsurface pick segment " + str(layer) + ":\t active", fg="red")
-            self.blit()
-
-
-    # delete selected pick segment
-    def delete_pkSeg(self):
-        layer = self.segVar.get()
-        # delete selected pick segment
-        if (layer in self.rdata.pick.current_subsurf) and (tk.messagebox.askokcancel("warning", "delete pick segment " + str(layer) + "?", icon = "warning") == True):
-            # if picking active and only one segment exists, clear all picks
-            if (self.pick_state == True) and (len(self.rdata.pick.current_subsurf) == 1):
-                self.clear_subsurfPicks()
-                self.plot_picks(surf = "subsurface")
-
-            else:
-                # if currently editing layer, clear tmp picks
-                if self.edit_flag == True and self.edit_segmentNum == layer:
-                    # clear active pick lists
-                    del self.subsurf_tmp_path.x[:]
-                    del self.subsurf_tmp_path.y[:]
-                    self.subsurf_tmp_ln.set_data(self.subsurf_tmp_path.x, self.subsurf_tmp_path.y)
-                    self.set_pickState(False, "subsurface")
-                    self.edit_flag = False
-
-                # remove saved picks path object
-                del self.subsurf_saved_path[layer]
-                # delete subsurface pick dict layer
-                del self.rdata.pick.current_subsurf[layer]
-
-                # roll back pick segment counter
-                if self.pick_segment >=1:
-                    self.pick_segment -= 1
- 
-                # reorder pick segments and path objects if necessary
-                if layer != len(self.subsurf_saved_path):
-                    for _i in range(layer, len(self.subsurf_saved_path)):
-                        self.subsurf_saved_path[_i] = path(self.subsurf_saved_path[_i + 1].x, self.subsurf_saved_path[_i + 1].y)
-                        self.subsurf_saved_ln[_i].set_data(self.subsurf_saved_path[_i + 1].x, self.subsurf_saved_path[_i + 1].y)
-                        self.rdata.pick.current_subsurf[_i] = np.copy(self.rdata.pick.current_subsurf[_i + 1])
-
-                    del self.subsurf_saved_path[_i + 1]
-                    self.subsurf_saved_ln[_i + 1].remove()
-                    del self.subsurf_saved_ln[_i + 1]
-                    del self.rdata.pick.current_subsurf[_i + 1]
-                
-                else:
-                    self.subsurf_saved_ln[layer].remove()
-                    del self.subsurf_saved_ln[layer]
-
-                self.update_pickLabels() 
-
-                if self.pick_state == True:
-                    if self.edit_flag == True:
-                        self.pickLabel.config(text="subsurface pick segment " + str(self.edit_segmentNum) + ":\t active", fg="red")
-                    else:
-                        self.pickLabel.config(text="subsurface pick segment " + str(self.pick_segment) + ":\t active", fg="red")
-
-                elif self.pick_state == False:
-                    if self.pick_segment >= 1:
-                        self.pickLabel.config(text="subsurface pick segment " + str(self.pick_segment - 1) + ":\t inactive", fg="black")   
-                    else:
-                        self.pickLabel.config(text="subsurface pick segment " + str(self.pick_segment) + ":\t inactive", fg="#d9d9d9")
-                self.segVar.set(0)
-            self.update_seg_opt_menu()
-            self.update_bg()
-
-
     # set_picks is a method to update the saved pick arrays based on the current picks
     def set_picks(self):
         # replace saved surface paths and line with updated picks
@@ -1046,7 +1050,7 @@ class impick(tk.Frame):
         for key, arr in self.rdata.pick.current_subsurf.items():
             idx = np.where(~np.isnan(arr))[0]
             self.subsurf_saved_path[key] = path(idx, arr[idx])
-            self.subsurf_saved_ln[key].set_data(self.subsurf_saved_path[key].x, self.subsurf_saved_path[key].y)
+            self.horizon_lns[key].set_data(self.subsurf_saved_path[key].x, self.subsurf_saved_path[key].y)
         # update pick segment count
         self.pick_segment = len(self.rdata.pick.current_subsurf)
         # update pick labels
@@ -1060,56 +1064,74 @@ class impick(tk.Frame):
         else:
             for _i in self.ann_list:
                 _i.set_visible(False)
-
         self.update_bg()
 
 
     # update_pickLabels is a method to create annotations for picks
     def update_pickLabels(self):
-        # if self.get_subsurfpkFlag():
-            # reset annotations
         for _i in self.ann_list:
             _i.remove()
         del self.ann_list[:]
         # get x and y locations for placing annotation
-        for _i in range(0, self.pick_segment):
-            x = np.where(~np.isnan(self.subsurf_saved_path[_i].x))[0][0]
-            y = self.subsurf_saved_path[_i].y[x]
-            ann = self.ax.text(x-75,y+75, str(_i), bbox=dict(facecolor='white', alpha=0.5), horizontalalignment='right', verticalalignment='top')
+        # first check tmp_horizon paths
+        if len(self.tmp_horizon_path.x) > 0:
+            x = self.tmp_horizon_path.x[0]
+            y = self.tmp_horizon_path.y[0]
+            ann = self.ax.text(x-75,y+75, self.horVar.get() + "_" + str(self.segVar.get()), bbox=dict(facecolor='white', alpha=0.5), horizontalalignment='right', verticalalignment='top')
             self.ann_list.append(ann)
-            if self.pick_ann_vis.get() == False:
+            if not self.pick_ann_vis.get():
                 ann.set_visible(False)
+        for horizon, item in self.horizon_paths.items():
+            for seg, path in item.items():
+                x = np.where(~np.isnan(path.x))[0]
+                if x.size == 0:
+                    continue
+                x = x[0]
+                y = path.y[x]
+                ann = self.ax.text(x-75,y+75, horizon + "_" + str(seg), bbox=dict(facecolor='white', alpha=0.5), horizontalalignment='right', verticalalignment='top')
+                self.ann_list.append(ann)
+                if not self.pick_ann_vis.get():
+                    ann.set_visible(False)
 
 
     # update the horizon menu
     def update_hor_opt_menu(self):
+        self.horizons = list(self.horizon_paths.keys())
         menu = self.horMenu["menu"]
         menu.delete(0, "end")
-        for key in self.horizon_paths.keys():
-            menu.add_command(label=key, command=tk._setit(self.horVar, key))
+        for horizon in self.horizons:
+            menu.add_command(label=horizon, command=tk._setit(self.horVar, horizon))
 
 
     # update the horizon segment menu based on how many segments exist for given segment
-    def update_seg_opt_menu(self):
-        if self.horVar.get():
+    def update_seg_opt_menu(self, *args):
+        horizon = self.horVar.get()
+        if horizon:
             menu = self.segMenu["menu"]
             menu.delete(0, "end")
-            for key in self.horizon_paths[self.horVar.get()].keys():
-                menu.add_command(label=key, command=tk._setit(self.segVar, key))
+            for seg in self.horizon_paths[horizon].keys():
+                menu.add_command(label=seg, command=tk._setit(self.segVar, seg))
 
 
     # show_picks is a method to toggle the visibility of picks on
     def show_picks(self):
-        print(self.horVar.get())
         self.show_artists(self.pick_vis.get())
         self.safe_draw()
         self.fig.canvas.blit(self.ax.bbox)
 
 
-    # show plotted lines
-    def show_artists(self,val=True):
+    # show plotted lines - don't override cursor crosshair visibility
+    def show_artists(self,val=True,force=False):
         for _i in self.ax.lines:
-            _i.set_visible(val)
+            if force:
+                _i.set_visible(val)
+            else:
+                if _i == self.horizontal_line:
+                    pass
+                elif _i ==self.vertical_line:
+                    pass
+                else:
+                    _i.set_visible(val)
 
 
     # temporarily disconnect the draw_event callback to avoid recursion
@@ -1123,11 +1145,11 @@ class impick(tk.Frame):
     # when the figure is resized, hide picks, draw everything, and update the background image
     def update_bg(self, event=None):
         # temporarily hide artists
-        self.show_artists(False)
+        self.show_artists(False, force=True)
         self.safe_draw()
         self.axbg = self.dataCanvas.copy_from_bbox(self.ax.bbox)
         # return artists visiblity to former state
-        self.show_artists(self.pick_vis.get())
+        self.show_artists(self.pick_vis.get(),self.get_pickState())
         self.blit()
 
 
@@ -1135,6 +1157,8 @@ class impick(tk.Frame):
     def blit(self):
         self.fig.canvas.restore_region(self.axbg)
         for _i in self.ax.lines:
+            self.ax.draw_artist(_i)
+        for _i in self.ann_list:
             self.ax.draw_artist(_i)
         self.fig.canvas.blit(self.ax.bbox)
 
@@ -1166,6 +1190,24 @@ class impick(tk.Frame):
                 if self.dblclick:
                     print('HERE')
             self.time_onclick = time.time()
+
+
+    # set_cross_hair_visible
+    def set_cross_hair_visible(self, visible):
+        self.horizontal_line.set_visible(visible)
+        self.vertical_line.set_visible(visible)
+
+
+    # on_mouse_move blit crosshairs
+    def on_mouse_move(self, event):
+        # if event.inaxes == self.ax:
+        x, y = event.xdata, event.ydata
+        self.horizontal_line.set_ydata(y)
+        self.vertical_line.set_xdata(x)
+        self.ax.figure.canvas.restore_region(self.axbg)
+        self.ax.draw_artist(self.horizontal_line)
+        self.ax.draw_artist(self.vertical_line)
+        self.blit()
 
 
     # update_figsettings
@@ -1247,6 +1289,12 @@ class impick(tk.Frame):
         self.reset_ax.set_visible(True)
         self.secaxy1.set_visible(True)
         self.fig.canvas.draw()
+
+    # close_popup
+    def close_popup(self, window, flag=False):
+        window.destroy()
+        self.popupFlag = flag
+        return
 
 
 class path():

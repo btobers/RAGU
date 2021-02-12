@@ -56,12 +56,12 @@ def read_h5(fpath, navcrs, body):
 
     # assign signal info
     rdata.sig = {}
-    rdata.sig["signal type"] = f["raw"]["tx0"].attrs["signal"].decode() 
-    rdata.sig["cf [MHz]"] = f["raw"]["tx0"].attrs["centerFrequency"] * 1e-6
-    if rdata.sig["signal type"] == "chirp":
-        rdata.sig["badwidth [%]"] = f["raw"]["tx0"].attrs["bandwidth"] * 100
-        rdata.sig["pulse length [\u03BCs]"] = f["raw"]["tx0"].attrs["length"] * 1e6
-    rdata.sig["prf [kHz]"] = f["raw"]["tx0"].attrs["pulseRepetitionFrequency"] * 1e-3
+    rdata.sig["Signal Type"] = f["raw"]["tx0"].attrs["signal"].decode().capitalize() 
+    rdata.sig["CF [MHz]"] = f["raw"]["tx0"].attrs["centerFrequency"] * 1e-6
+    if rdata.sig["Signal Type"] == "chirp":
+        rdata.sig["Badwidth [%]"] = f["raw"]["tx0"].attrs["bandwidth"] * 100
+        rdata.sig["Pulse Length [\u03BCs]"] = f["raw"]["tx0"].attrs["length"] * 1e6
+    rdata.sig["PRF [kHz]"] = f["raw"]["tx0"].attrs["pulseRepetitionFrequency"] * 1e-3
 
     # parse nav
     rdata.navdf = navparse.getnav_oibAK_h5(fpath, navcrs, body)
