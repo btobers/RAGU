@@ -268,8 +268,8 @@ class mainGUI(tk.Frame):
 
             # c key to clear all picks in impick
             elif event.keysym =="c":
-                # clear the drawing of line segments
-                self.clear(surf = "subsurface")
+                # clear picks
+                self.clear_pick()
 
             # right key next file
             elif event.keysym =="Right":
@@ -578,6 +578,8 @@ class mainGUI(tk.Frame):
 
 
     def clear_pick(self):
+        if self.f_loadName:
+            self.impick.rm_horizon(rm_all=True)
         return
 
 

@@ -30,7 +30,65 @@ class impick(tk.Frame):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
         self.figsettings = figsettings
+        # variables only setup once
+        self.im_status = tk.StringVar()
+        self.chan = tk.IntVar()
+        self.pick_vis = tk.BooleanVar()
+        self.pick_ann_vis = tk.BooleanVar()
+        self.winSize = tk.IntVar(value=0)
+        self.horVar = tk.StringVar()
+        self.segVar = tk.IntVar()
+        self.set_vars()
         self.setup()
+
+
+    # set_vars is a method to set impick variables which need to reset upon each load
+    def set_vars(self):
+        self.basemap = None
+        self.pick_surf = None
+        self.popupFlag = True
+        self.popupWindow = None
+
+        self.pick_state = False
+        self.pick_segment = 0
+        self.pyramid = None
+
+        # image colormap bounds
+        self.data_cmin = None
+        self.data_cmax = None
+        self.sim_cmin = None
+        self.sim_cmax = None
+
+        # image colormap range
+        self.data_crange = None
+        self.sim_crange = None
+
+        # initialize path objects #
+        self.tmp_horizon_path = path([],[])                                     # temporary path object to hold horizon segment currently being picked/edited
+        self.horizon_paths = {}                                                 # dictionary to hold horizon paths for saved picks
+
+        # initialize line objects
+        self.tmp_horizon_ln = None
+        self.horizon_lns = {}
+        self.horizontal_line = None
+        self.vertical_line = None
+
+        # initialize list of pick annotations
+        self.ann_list= []
+
+        # necessary flags
+        self.sim_imSwitch_flag = False
+        self.surfpkFlag = False
+        self.edit_flag = False
+
+        self.edit_segmentNum = 0
+        self.im_status.set("data")
+        self.pick_vis.set(True)
+        self.pick_ann_vis.set(True)
+        self.debugState = False
+
+        # set figure cmap
+        self.set_cmap(self.figsettings["cmap"].get())
 
 
     # setup is a method which initialized the tkinter frame 
@@ -48,7 +106,6 @@ class impick(tk.Frame):
         self.dataFrame = tk.Frame(self.parent)
         self.dataFrame.pack(side="bottom", fill="both", expand=1)
 
-        self.im_status = tk.StringVar()
         # add radio buttons for toggling between radargram and clutter sim
         radarRadio = tk.Radiobutton(infoFrame, text="Radargram", variable=self.im_status, value="data",command=self.show_data)
         radarRadio.pack(side="left")
@@ -57,28 +114,25 @@ class impick(tk.Frame):
         tk.ttk.Separator(infoFrame,orient="vertical").pack(side="left", fill="both", padx=10, pady=4)
 
         # add radio buttons for toggling pick visibility
-        self.chan = tk.IntVar()
+        
         tk.Label(infoFrame, text="Channel: ").pack(side="left")
         tk.Radiobutton(infoFrame,text="0", variable=self.chan, value=0, command=self.switchChan).pack(side="left")
         tk.Radiobutton(infoFrame,text="1", variable=self.chan, value=1, command=self.switchChan).pack(side="left")
         tk.ttk.Separator(infoFrame,orient="vertical").pack(side="left", fill="both", padx=10, pady=4)
 
         # add radio buttons for toggling pick visibility
-        self.pick_vis = tk.BooleanVar()
         tk.Label(infoFrame, text="Pick Visibility: ").pack(side="left")
         tk.Radiobutton(infoFrame,text="On", variable=self.pick_vis, value=True, command=self.show_picks).pack(side="left")
         tk.Radiobutton(infoFrame,text="Off", variable=self.pick_vis, value=False, command=self.show_picks).pack(side="left")
         tk.ttk.Separator(infoFrame,orient="vertical").pack(side="left", fill="both", padx=10, pady=4)
 
         # add radio buttons for toggling pick labels
-        self.pick_ann_vis = tk.BooleanVar()
         tk.Label(infoFrame, text="Pick Labels: ").pack(side="left")
         tk.Radiobutton(infoFrame,text="On", variable=self.pick_ann_vis, value=True, command=self.show_pickLabels).pack(side="left")
         tk.Radiobutton(infoFrame,text="Off", variable=self.pick_ann_vis, value=False, command=self.show_pickLabels).pack(side="left")
         tk.ttk.Separator(infoFrame,orient="vertical").pack(side="left", fill="both", padx=10, pady=4)
 
         # add entry box for peak finder window size
-        self.winSize = tk.IntVar(value=0)
         tk.Label(infoFrame, text = "Window Size [#Samples]: ").pack(side="left")
         tk.Entry(infoFrame, textvariable=self.winSize, width = 5).pack(side="left")
         tk.ttk.Separator(infoFrame,orient="vertical").pack(side="left", fill="both", padx=10, pady=4)
@@ -108,24 +162,22 @@ class impick(tk.Frame):
         interpFrameBr.pack_propagate(0)
 
         tk.Label(interpFrameTl,text="Horizon:\t").pack(side="left")
-        self.horVar = tk.StringVar()
         self.horVar.trace("w", self.update_seg_opt_menu) 
         self.horizons=[None]
         self.horMenu = tk.OptionMenu(interpFrameTl, self.horVar, *self.horizons)
         self.horMenu.pack(side="left")
         self.horMenu.config(width=20)
-        tk.Button(interpFrameTl, text="Delete", width=4, command=self.rm_horizon).pack(side="right")
+        tk.Button(interpFrameTl, text="Delete", width=4, command=lambda:self.rm_horizon(horizon=self.horVar.get(), verify=True)).pack(side="right")
         tk.Button(interpFrameTl, text="New", width=4, command=self.init_horizon).pack(side="right")
 
         tk.Label(interpFrameBl,text="Segment: ").pack(side="left")
-        self.segVar = tk.IntVar()
         segments=[None]
         self.segMenu = tk.OptionMenu(interpFrameBl, self.segVar, *segments)
         self.segMenu.pack(side="left")
         self.segMenu.config(width=2)
-        tk.Button(interpFrameBl, text="Delete", width=4, command=self.rm_segment).pack(side="right")
-        tk.Button(interpFrameBl, text="Edit", width=4, command=self.edit_segment).pack(side="right")
-        tk.Button(interpFrameBl, text="New", width=4, command=self.init_segment).pack(side="right")
+        tk.Button(interpFrameBl, text="Delete", width=4, command=lambda:self.rm_segment(horizon=self.horVar.get())).pack(side="right")
+        tk.Button(interpFrameBl, text="Edit", width=4, command=lambda:self.edit_segment(horizon=self.horVar.get())).pack(side="right")
+        tk.Button(interpFrameBl, text="New", width=4, command=lambda:self.init_segment(horizon=self.horVar.get())).pack(side="right")
         # initialize pick state buttons
         label = tk.Label(interpFrameTr, text="Pick",justify="center")
         label.pack(fill="both",expand=True)
@@ -190,57 +242,6 @@ class impick(tk.Frame):
 
         # set mpl line colors - don't use black or dark blue
         mpl.rcParams['axes.prop_cycle'] = cycler(color='cgmy')
-
-
-    # set_vars is a method to set impick variables which need to reset upon each load
-    def set_vars(self):
-        self.basemap = None
-        self.pick_surf = None
-        self.popupFlag = True
-        self.popupWindow = None
-
-        self.pick_state = False
-        self.pick_segment = 0
-        self.pyramid = None
-        # self.horVar = tk.StringVar()
-        # self.segVar = tk.IntVar()
-
-        # image colormap bounds
-        self.data_cmin = None
-        self.data_cmax = None
-        self.sim_cmin = None
-        self.sim_cmax = None
-
-        # image colormap range
-        self.data_crange = None
-        self.sim_crange = None
-
-        # initialize path objects #
-        self.tmp_horizon_path = path([],[])                                     # temporary path object to hold horizon segment currently being picked/edited
-        self.horizon_paths = {}                                                 # dictionary to hold horizon paths for saved picks
-
-        # initialize line objects
-        self.tmp_horizon_ln = None
-        self.horizon_lns = {}
-        self.horizontal_line = None
-        self.vertical_line = None
-
-        # initialize list of pick annotations
-        self.ann_list= []
-
-        # necessary flags
-        self.sim_imSwitch_flag = False
-        self.surfpkFlag = False
-        self.edit_flag = False
-
-        self.edit_segmentNum = 0
-        self.im_status.set("data")
-        self.pick_vis.set(True)
-        self.pick_ann_vis.set(True)
-        self.debugState = False
-
-        # set figure cmap
-        self.set_cmap(self.figsettings["cmap"].get())
 
 
     # set image cmap
@@ -664,7 +665,8 @@ class impick(tk.Frame):
             self.popupWindow.protocol("WM_DELETE_WINDOW", lambda:self.close_popup(self.popupWindow,flag=False))
             tk.Label(self.popupWindow, text="enter new horizon name:").pack(fill="both",expand=True)
             entry = tk.Entry(self.popupWindow, textvar=self.horizonName, justify="center").pack(fill="both",expand=True) 
-            button = tk.Button(self.popupWindow, text="ok", command=lambda:self.close_popup(self.popupWindow,flag=True), width=20).pack(fill="none", expand=True)
+            button = tk.Button(self.popupWindow, text="OK", command=lambda:self.close_popup(self.popupWindow,flag=True), width=20).pack(side="left", fill="none", expand=True)
+            button = tk.Button(self.popupWindow, text="Cancel", command=lambda:[self.horizonName.set(""), self.close_popup(self.popupWindow,flag=True)], width=20).pack(side="left", fill="none", expand=True)
             # wait for window to be closed
             self.parent.wait_window(self.popupWindow)
             horizon = self.horizonName.get()
@@ -693,8 +695,65 @@ class impick(tk.Frame):
 
 
     # remove horizon
-    def rm_horizon(self):
-        return
+    def rm_horizon(self, rm_all=False, horizon=None, verify=False):
+        if len(self.horizon_paths) == 0:
+            return
+
+        if rm_all:
+            if tk.messagebox.askyesno("Warning","Remove all interpretation horizons?"):
+                horizon = list(self.horizon_paths.keys())
+            else:
+                return
+        
+        elif not horizon:
+            self.horizonName = tk.StringVar()
+            # get current horizon names
+            horizons = list(self.horizon_paths.keys())
+            # have default horizon selection be current horizon selection from impick
+            self.horizonName.set(self.get_horizon_selection())
+            self.popupWindow = tk.Toplevel(self.parent)
+            self.popupWindow.geometry("500x100")
+            self.popupFlag = False
+            self.popupWindow.config(bg="#d9d9d9")
+            self.popupWindow.title("Remove Horizon")
+            self.popupWindow.protocol("WM_DELETE_WINDOW", lambda:self.close_popup(self.popupWindow, flag=False))
+            tk.Label(self.popupWindow, text="Select Horizon:").pack(fill="both", expand=True)
+            dropdown = tk.OptionMenu(self.popupWindow, self.horizonName, *horizons)
+            dropdown.config(width=20)
+            dropdown.pack(fill="none", expand=True)
+            button = tk.Button(self.popupWindow, text="Remove", command=lambda:self.close_popup(self.popupWindow,flag=True), width=20).pack(side="left", fill="none", expand=True)
+            button = tk.Button(self.popupWindow, text="Remove All", command=lambda:[self.horizonName.set(""), self.close_popup(self.popupWindow,flag=True), self.rm_horizon(rm_all=True)], width=20).pack(side="left", fill="none", expand=True)
+            button = tk.Button(self.popupWindow, text="Cancel", command=lambda:[self.horizonName.set(""), self.close_popup(self.popupWindow,flag=True)], width=20).pack(side="left", fill="none", expand=True)
+            # wait for window to be closed
+            self.parent.wait_window(self.popupWindow)
+            horizon = self.horizonName.get()
+
+        if self.popupFlag and horizon:
+            if verify and not tk.messagebox.askyesno("Warning","Remove " + horizon + " horizon?"):
+                return
+            if isinstance(horizon,str):
+                horizon = [horizon]
+            for h in horizon:
+                # get index of key to remove annotation
+                i = list(self.horizon_paths.keys()).index(h)
+                self.ann_list[i].remove()
+                del self.ann_list[i]
+                # remove path objects, lines, and pick horizons
+                self.horizon_lns[h].remove()
+                del self.horizon_lns[h]
+                del self.horizon_paths[h]
+                del self.rdata.pick.horizons[h]
+            # reset horizon and segment variables
+            if len(self.horizon_paths) > 0:
+                h = list(self.horizon_paths.keys())[-1]
+                self.horVar.set(h)
+                self.segVar.set(len(self.horizon_paths[h]))
+            else:
+                self.horVar.set("")
+                self.segVar.set(0)
+            self.update_bg()
+            self.update_hor_opt_menu()
+            self.update_seg_opt_menu()
 
 
     # init_segment is a method to initialize new pick segment
@@ -702,7 +761,7 @@ class impick(tk.Frame):
         if (not horizon) and ((self.popupWindow is None) or (self.popupWindow.winfo_exists() == 0)):
             self.horizonName = tk.StringVar()
             # get current horizon names
-            horizons = list(self.rdata.pick.horizons.keys())
+            horizons = list(self.horizon_paths.keys())
             # have default horizon selection be current horizon selection from impick
             self.horizonName.set(self.get_horizon_selection())
             self.popupWindow = tk.Toplevel(self.parent)
@@ -715,7 +774,8 @@ class impick(tk.Frame):
             dropdown = tk.OptionMenu(self.popupWindow, self.horizonName, *horizons)
             dropdown.config(width=20)
             dropdown.pack(fill="none", expand=True)
-            button = tk.Button(self.popupWindow, text="ok", command=lambda:self.close_popup(self.popupWindow,flag=True), width=20).pack(fill="none", expand=True)
+            button = tk.Button(self.popupWindow, text="OK", command=lambda:self.close_popup(self.popupWindow,flag=True), width=20).pack(fill="none", expand=True)
+            button = tk.Button(self.popupWindow, text="Cancel", command=lambda:[self.horizonName.set(""), self.close_popup(self.popupWindow,flag=True)], width=20).pack(side="left", fill="none", expand=True)
             # wait for window to be closed
             self.parent.wait_window(self.popupWindow)
             horizon = self.horizonName.get()
@@ -726,12 +786,10 @@ class impick(tk.Frame):
             self.segVar.set(l)
             # update segment options
             self.update_seg_opt_menu()
-        else:
-            return
 
 
     # edit selected subsurface pick segment
-    def edit_segment(self):
+    def edit_segment(self, horizon=None):
         layer = self.segVar.get()
         if (layer in self.rdata.pick.current_subsurf) and (self.edit_flag == False) and (not ((self.pick_state == True) and (self.pick_surf == "subsurface") and (layer == self.pick_segment))) and (tk.messagebox.askokcancel("warning", "edit pick segment " + str(layer) + "?", icon = "warning") == True):
             # if another subsurface pick segment is active, end segment
@@ -762,7 +820,7 @@ class impick(tk.Frame):
 
 
     # remove selected pick segment
-    def rm_segment(self):
+    def rm_segment(self, horizon=None):
         layer = self.segVar.get()
         # delete selected pick segment
         if (layer in self.rdata.pick.current_subsurf) and (tk.messagebox.askokcancel("warning", "delete pick segment " + str(layer) + "?", icon = "warning") == True):
@@ -825,20 +883,29 @@ class impick(tk.Frame):
         if state==True:
             self.startbutton.config(relief="sunken")
             self.stopbutton.config(relief="raised")
+            # temporarily disable horizon and segment menus
+            self.horMenu.config(state="disabled")
+            self.segMenu.config(state="disabled")
             if l == 0:
                 pass
             elif l == 1:
                 self.clear_last()
             else:
+                self.pick_interp(horizon=horizon,seg=self.segVar.get())
+                self.plot_picks(horizon=horizon,seg=self.segVar.get())
                 self.init_segment(horizon)
 
         # handle pick state false
         elif state==False:
             self.startbutton.config(relief="raised")
             self.stopbutton.config(relief="sunken")
-
+            # reactivate horizon and segment menus
+            self.horMenu.config(state="active")
+            self.segMenu.config(state="active")
         # elif self.pick_state == False and self.edit_flag == False:
             if l >=  2:
+                self.pick_interp(horizon=horizon,seg=self.segVar.get())
+                self.plot_picks(horizon=horizon,seg=self.segVar.get())
                 self.init_segment(horizon)
             # if surface pick layer has only one pick, remove
             else:
@@ -846,8 +913,6 @@ class impick(tk.Frame):
                 del self.horizon_paths[horizon][list(self.horizon_paths[horizon].keys())[-1]]
 
         self.set_cross_hair_visible(state)
-        self.pick_interp(horizon=horizon,seg=self.segVar.get())
-        self.plot_picks(horizon=horizon,seg=self.segVar.get())
         # add pick annotations
         self.update_pickLabels()
         self.update_seg_opt_menu()
@@ -1106,9 +1171,9 @@ class impick(tk.Frame):
     # update the horizon segment menu based on how many segments exist for given segment
     def update_seg_opt_menu(self, *args):
         horizon = self.horVar.get()
+        menu = self.segMenu["menu"]
+        menu.delete(0, "end")
         if horizon:
-            menu = self.segMenu["menu"]
-            menu.delete(0, "end")
             for seg in self.horizon_paths[horizon].keys():
                 menu.add_command(label=seg, command=tk._setit(self.segVar, seg))
 
