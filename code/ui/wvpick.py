@@ -63,6 +63,7 @@ class wvpick(tk.Frame):
         tk.Label(infoFrame, text = "subsurface pick segment: ").pack(side="right")
 
         # create figure object and datacanvas from it
+        plt.rcParams.update({'font.size': 12})
         self.fig = mpl.figure.Figure()
         self.fig.patch.set_facecolor("#d9d9d9")
         self.dataCanvas = FigureCanvasTkAgg(self.fig, self.parent)
@@ -117,7 +118,12 @@ class wvpick(tk.Frame):
         self.rdata = rdata
 
 
-    # set_pickDict is a method which holds the picked segment data for optimization
+    # receive horizon line colors
+    def set_horizon_colors(self, ln_colors):
+        self.ln_colors = ln_colors
+
+
+    # set_picks is a method which receives horizon interpretations for optimization
     def set_picks(self):
         # create a copy of passed from imPick as to not modify original values
         self.rdata.pick.current_surfOpt = copy.deepcopy(self.rdata.pick.current_surf)
@@ -348,6 +354,21 @@ class wvpick(tk.Frame):
         if event.inaxes == self.ax:
             if event.button == 1 and ((time.time() - self.time_onclick) < 0.25):
                 self.manualPick(event)
+
+
+    # update_figsettings
+    def update_figsettings(self, figsettings):
+        self.figsettings = figsettings
+
+        plt.rcParams.update({'font.size': self.figsettings["fontsize"].get()})
+
+        for item in ([self.ax.title, self.ax.xaxis.label, self.ax.yaxis.label] +
+                    self.ax.get_xticklabels() + self.ax.get_yticklabels()):
+            item.set_fontsize(self.figsettings["fontsize"].get())
+
+        self.ax.title.set_visible(self.figsettings["figtitle"].get())
+
+        self.fig.canvas.draw()
 
 
     # clear is a method to clear the wavePick tab and stored data when a new track is loaded

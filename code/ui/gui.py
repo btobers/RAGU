@@ -40,10 +40,10 @@ class mainGUI(tk.Frame):
         # initialize variables
         self.rdata = None
         self.f_loadName = ""
-        self.f_saveName = ""
         self.map_loadName = ""
         self.tab = "Profile"
         self.eps_r = tk.DoubleVar(value=self.conf["output"]["eps_r"])
+        self.popupFlag = False
         # dictionary to hold figure settings
         self.figsettings = {"cmap": tk.StringVar(value="Greys_r"),
                             "figsize": tk.StringVar(value="6.5,1.5"), 
@@ -56,7 +56,7 @@ class mainGUI(tk.Frame):
         self.figsettings["figyaxis"].set(True)        
         self.figsettings["figtitle"].set(True)        
         self.debugState = tk.BooleanVar()
-        self.debugState.set(True)
+        self.debugState.set(False)
         self.os = sys.platform
         # setup tkinter frame
         self.setup()
@@ -122,11 +122,14 @@ class mainGUI(tk.Frame):
         fileMenu.add_command(label="Next      [→]", command=self.next_loc)
 
         # save submenu
-        saveMenu = tk.Menu(fileMenu,tearoff=0)
-        saveMenu.add_command(label="Picks      [Ctrl+S]", command=self.savePicks)
-        saveMenu.add_command(label="Figure", command=self.saveFig)
-        saveMenu.add_command(label="Processed Data", command=self.saveProc)
-        fileMenu.add_cascade(label="Save", menu=saveMenu)
+        exportMenu = tk.Menu(fileMenu,tearoff=0)
+        pickExportMenu = tk.Menu(exportMenu,tearoff=0)
+        pickExportMenu.add_command(label="Horizon", command=lambda:self.export_pick(merged=False))
+        pickExportMenu.add_command(label="Merged  [Ctrl+S]", command=lambda:self.export_pick(merged=True))
+        exportMenu.add_cascade(label="Picks", menu=pickExportMenu)
+        exportMenu.add_command(label="Figure", command=self.export_fig)
+        exportMenu.add_command(label="Processed Data", command=self.export_proc)
+        fileMenu.add_cascade(label="Export", menu=exportMenu)
         fileMenu.add_separator()
 
         # settings submenu
@@ -204,12 +207,14 @@ class mainGUI(tk.Frame):
         self.nb.bind("<<NotebookTabChanged>>", self.tab_change)
 
         # initialize impick
-        self.impick = impick.impick(self.imTab, self.figsettings)
+        self.impick = impick.impick(self.imTab)
+        self.impick.update_figsettings(self.figsettings)
         self.impick.set_eps_r(self.eps_r.get())
         self.impick.set_vars()
 
         # initialize wvpick
         self.wvpick = wvpick.wvpick(self.wvTab)
+        self.wvpick.update_figsettings(self.figsettings)
         self.wvpick.set_vars()
 
         # set up  info frame
@@ -239,7 +244,7 @@ class mainGUI(tk.Frame):
 
         # Ctrl+S save picks
         elif event.state & 4 and event.keysym == "s":
-            self.savePicks()
+            self.export_pick()
 
         # Ctrl+M open map
         elif event.state & 4 and event.keysym == "m":
@@ -372,7 +377,6 @@ class mainGUI(tk.Frame):
                     if self.tab == "Waveform":
                         self.nb.select(self.nb.tabs()[0])
                     self.f_loadName = f_loadName
-                    self.f_saveName = ""
                     self.impick.clear_canvas()  
                     self.impick.set_vars()
                     # ingest the data
@@ -382,7 +386,8 @@ class mainGUI(tk.Frame):
                     if not self.rdata:
                         return
                     self.impick.load(self.rdata)
-                    self.impick.update_figsettings(self.figsettings)
+                    self.impick.update_hor_opt_menu()
+                    self.impick.update_seg_opt_menu
                     self.impick.set_axes()
                     self.impick.drawData()
                     self.impick.update_pickLabels()
@@ -434,49 +439,159 @@ class mainGUI(tk.Frame):
                     print("Note: " + self.f_loadName.split("/")[-1] + " is the last file in " + file_path + "*." + self.f_loadName.split(".")[-1])
 
 
-    # savePicks is method to receieve the desired pick save location from user input
-    def savePicks(self):
+    # generate new interpretation horizon
+    def new_horizon(self):
         if self.f_loadName:
-            # see if picks have been made
-            if (self.impick.get_subsurfpkFlag() == True) or (self.impick.get_surfpkFlag() == True):
-                fn = self.rdata.fn + "_pk_" + self.conf["param"]["uid"]
-            else:
-                fn = self.rdata.fn
+            self.impick.init_horizon()
 
-            tmp_fn_out = ""
+
+    # generate new interpretation segment for specified horizon
+    def new_segment(self):
+        if self.f_loadName:
+            self.impick.init_segment()
+
+
+    # start impick picking functionality
+    def start_pick(self):
+        if self.f_loadName:
+            self.impick.set_pickState(True)
+
+
+    # end impick picking functionality
+    def end_pick(self):
+        if self.f_loadName:
+            self.impick.set_pickState(False)
+
+
+    def edit_pick(self):
+        if self.f_loadName:
+            self.impick.edit_segment()
+
+
+    def clear_pick(self):
+        if self.f_loadName:
+            self.impick.rm_horizon(rm_all=True)
+
+
+    # export_pick is method to receieve the desired pick save location from user input
+    def export_pick(self,merged=True):
+        if self.f_loadName:
+            # see if any picks have been made
+            if  self.rdata.pick.get_pick_flag():
+                # initialize horizon variable
+                horizon = None
+                # if merged export, append outfile name with _pk_uid
+                if merged:
+                    # self.rdata.pick.horizons["tmp"] = self.rdata.pick.horizons["surface"]
+                    # del self.rdata.pick.horizons["surface"]
+                    horizons = list(self.rdata.pick.horizons)
+                    print(horizons)
+                    surface = None
+                    tmp_fn_out = self.rdata.fn + "_pk_" + self.conf["param"]["uid"]
+                    if "surface" in horizons:
+                        surface = "surface"
+                    else:
+                        if len(horizons) > 0 and tk.messagebox.askyesno("Specify Surface Horizon","Reference subsurface interpretations to a surface horizon)?"):
+                            horizon_colors = self.impick.get_horizon_colors()
+                            # create popup window to get new horizon name and interpreatation color
+                            h = tk.StringVar()
+                            h.set(horizons[-1])
+                            popup = tk.Toplevel(self.parent)
+                            popup.geometry("500x150")
+                            self.popupFlag = False
+                            popup.config(bg="#d9d9d9")
+                            popup.title("Surface Horizon")
+                            popup.protocol("WM_DELETE_WINDOW", lambda:self.close_popup(popup,flag=False))
+                            tk.Label(popup, text="Select surface horizon from which to reference subsurface interpretations:").pack(fill="both", expand=True)
+                            dropdown = tk.OptionMenu(popup, h, *horizons)
+                            dropdown["menu"].delete(0, "end")
+                            dropdown.config(width=20)
+                            dropdown.pack(fill="none", expand=True)
+                            self.set_menu_color(menu=dropdown, horizon=h, colors=horizon_colors)
+                            # trace change in self.color to self.set_menu_color
+                            trace = h.trace("w", lambda *args, menu=dropdown, horizon=h, colors=horizon_colors : self.set_menu_color(menu, horizon, colors))
+                            for key, val in horizon_colors.items():
+                                dropdown["menu"].add_command(label=key, foreground=val, activeforeground=val, command=tk._setit(h, key))
+                            button = tk.Button(popup, text="OK", command=lambda:self.close_popup(popup,flag=True), width=20).pack(side="left", fill="none", expand=True)
+                            button = tk.Button(popup, text="Cancel", command=lambda:[h.set(""), self.close_popup(popup,flag=True)], width=20).pack(side="left", fill="none", expand=True)
+                            # wait for window to be closed
+                            self.parent.wait_window(popup)
+                            # remove the trace
+                            h.trace_vdelete("w", trace)
+                            horizon = h.get()
+                            if horizon:
+                                surface = horizon
+
+                # otherwise have user select horizon to export
+                else:
+                    horizon_colors = self.impick.get_horizon_colors()
+                    # create popup window to get new horizon name and interpreatation color
+                    h = tk.StringVar()
+                    horizons = list(self.rdata.pick.horizons)
+                    h.set(horizons[-1])
+                    popup = tk.Toplevel(self.parent)
+                    popup.geometry("500x150")
+                    self.popupFlag = False
+                    popup.config(bg="#d9d9d9")
+                    popup.title("Export Horizon")
+                    popup.protocol("WM_DELETE_WINDOW", lambda:self.close_popup(popup,flag=False))
+                    tk.Label(popup, text="Select horizon to export:").pack(fill="both", expand=True)
+                    dropdown = tk.OptionMenu(popup, h, *horizons)
+                    dropdown["menu"].delete(0, "end")
+                    dropdown.config(width=20)
+                    dropdown.pack(fill="none", expand=True)
+                    self.set_menu_color(menu=dropdown, horizon=h, colors=horizon_colors)
+                    # trace change in self.color to self.set_menu_color
+                    trace = h.trace("w", lambda *args, menu=dropdown, horizon=h, colors=horizon_colors : self.set_menu_color(menu, horizon, colors))
+                    for key, val in horizon_colors.items():
+                        dropdown["menu"].add_command(label=key, foreground=val, activeforeground=val, command=tk._setit(h, key))
+                    button = tk.Button(popup, text="OK", command=lambda:self.close_popup(popup,flag=True), width=20).pack(side="left", fill="none", expand=True)
+                    button = tk.Button(popup, text="Cancel", command=lambda:[h.set(""), self.close_popup(popup,flag=True)], width=20).pack(side="left", fill="none", expand=True)
+                    # wait for window to be closed
+                    self.parent.wait_window(popup)
+                    # remove the trace
+                    h.trace_vdelete("w", trace)
+                    horizon = h.get()
+                    if horizon:
+                        tmp_fn_out = self.rdata.fn + "_" + horizon + "_" + self.conf["param"]["uid"]
+                    else:
+                        return
+            else:
+                tmp_fn_out = self.rdata.fn
+
+            fn_out = ""
             if self.os == "darwin":
-                tmp_fn_out = tk.filedialog.asksaveasfilename(initialfile = fn,
+                fn_out = tk.filedialog.asksaveasfilename(initialfile = tmp_fn_out,
                                 initialdir = self.conf["path"]["outPath"], title = "save picks")
                                 
             else:
-                tmp_fn_out = tk.filedialog.asksaveasfilename(initialfile = fn,
+                fn_out = tk.filedialog.asksaveasfilename(initialfile = tmp_fn_out,
                                 initialdir = self.conf["path"]["outPath"], title = "save picks", filetypes = [("all files", ".*"),
                                                                                                             ("comma-separated values",".csv"),
                                                                                                             ("geopackage", ".gpkg"),
                                                                                                             ("png image", ".png")])
 
-            if tmp_fn_out:
-                self.f_saveName, ext = os.path.splitext(tmp_fn_out)
+            if fn_out:
+                fn, ext = os.path.splitext(fn_out)
 
-                # end any current pick segments
-                self.end_surf_pick()
-                self.end_subsurf_pick()
+                # end any active picking
+                self.end_pick()
                 # set output dataframe
-                self.rdata.set_out(export.pick_math(self.rdata, self.eps_r.get(), self.conf["output"]["amp"]))
+                self.rdata.set_out(export.pick_math(self.rdata, self.eps_r.get(), self.conf["output"]["amp"], horizon))
 
                 # export
                 if (self.conf["output"].getboolean("csv")) or (ext == ".csv"):
-                    export.csv(self.f_saveName + ".csv", self.rdata.out)
+                    export.csv(fn + ".csv", self.rdata.out)
                 if (self.conf["output"].getboolean("gpkg")) or (ext == ".gpkg"):
-                    export.gpkg(self.f_saveName + ".gpkg", self.rdata.out, self.conf["nav"]["crs"])
+                    export.gpkg(fn + ".gpkg", self.rdata.out, self.conf["nav"]["crs"])
                 if (self.conf["output"].getboolean("fig")) or (ext == ".png"):
-                    self.impick.save_fig(self.f_saveName + ".png")
+                    self.impick.export_fig(fn + ".png")
                 if (self.rdata.fpath.endswith(".h5")) and (tk.messagebox.askyesno("export picks", "export picks to HDF5 data file?") == True):
                     export.h5(self.rdata.fpath, self.rdata.out)
 
 
-    # saveProc is a method to save processed radar data
-    def saveProc(self):
+    # export_proc is a method to save processed radar data
+    def export_proc(self):
         if self.f_loadName:
             tmp_fn_out = ""
             if self.os == "darwin":
@@ -491,8 +606,8 @@ class mainGUI(tk.Frame):
                 export.proc(fn + ".csv", self.rdata.proc)
 
 
-    # saveFig is a method to export the radargram image
-    def saveFig(self):
+    # export_fig is a method to export the radargram image
+    def export_fig(self):
         if self.f_loadName:
             tmp_fn_out = ""
             if self.os == "darwin":
@@ -504,7 +619,7 @@ class mainGUI(tk.Frame):
             if tmp_fn_out:
                 fn, ext = os.path.splitext(tmp_fn_out)
 
-            self.impick.save_fig(fn + ".png")
+            self.impick.export_fig(fn + ".png")
 
 
     # map_loc is a method to get the desired basemap location and initialize
@@ -548,42 +663,16 @@ class mainGUI(tk.Frame):
         self.open_data(path + _i)
 
 
-    # generate new interpretation horizon
-    def new_horizon(self):
-        if self.f_loadName:
-            self.impick.init_horizon()
+    # set tkinter menu font colors to match color name
+    def set_menu_color(self, menu=None, horizon=None, colors=None, *args):
+        c = colors[horizon.get()]
+        menu.config(foreground=c, activeforeground=c, highlightcolor=c)
 
 
-    # generate new interpretation segment for specified horizon
-    def new_segment(self):
-        if self.f_loadName:
-            self.impick.init_segment()
-
-
-    # start impick picking functionality
-    def start_pick(self):
-        if self.f_loadName:
-            self.impick.set_pickState(True)
-
-
-    # end impick picking functionality
-    def end_pick(self):
-        if self.f_loadName:
-            self.impick.set_pickState(False)
-
-
-    def edit_pick(self):
-        if self.f_loadName:
-            self.impick.edit_segment()
-
-
-    def clear_pick(self):
-        if self.f_loadName:
-            self.impick.rm_horizon(rm_all=True)
-        return
-
-
-    def export_pick(self,merged=True):
+    # close_popup
+    def close_popup(self, window, flag=False):
+        window.destroy()
+        self.popupFlag = flag
         return
 
 
@@ -619,13 +708,11 @@ class mainGUI(tk.Frame):
         if self.rdata:
             # determine which tab is active
             if (self.tab == "Waveform"):
-                if self.f_loadName:
-                    # end any picking
-                    self.end_subsurf_pick()
-                    self.end_surf_pick()
-                    # get pick dict from impick and pass to wvpick
-                    self.wvpick.set_picks()
-                    self.wvpick.plot_wv()
+                self.end_pick()
+                # get pick dict from impick and pass to wvpick
+                self.wvpick.set_horizon_colors(self.impick.get_horizon_colors())
+                self.wvpick.set_picks()
+                self.wvpick.plot_wv()
             elif (self.tab == "Profile"):
                 # get updated picks from wvpick and pass back to impick if they differ
                 if (((utils.nan_array_equal(self.rdata.pick.current_surf, self.rdata.pick.current_surfOpt)) == False) or \
@@ -640,28 +727,6 @@ class mainGUI(tk.Frame):
                     self.rdata.pick.current_subsurf = self.rdata.pick.current_subsurfOpt
                     self.impick.set_picks()
                     self.impick.blit()
-
-
-    # clear is a method to clear all picks
-    def clear(self, surf = None):
-        if self.f_loadName:
-            if (surf == "surface") and (self.impick.get_surfpkFlag == True) and (tk.messagebox.askokcancel("warning", "clear all surface picks?", icon = "warning") == True):
-                # reset current surf pick array
-                self.rdata.pick.current_surf.fill(np.nan)
-                # reset surf pick flag
-                self.impick.clear_surfPicks()
-                self.impick.plot_picks(surf = "surface")
-                self.impick.update_bg()
-            elif (self.impick.get_subsurfpkFlag() == True) and (surf == "subsurface") and (tk.messagebox.askokcancel("warning", "clear all subsurface picks?", icon = "warning") == True):
-                # clear current subsurf pick dictionaries
-                self.rdata.pick.current_subsurf.clear()
-                self.rdata.pick.current_subsurfOpt.clear()
-                self.impick.clear_subsurfPicks()
-                # self.impick.plot_picks(surf = "subsurface")
-                self.impick.update_bg()
-                self.impick.update_seg_opt_menu()
-                self.wvpick.set_vars()
-                self.wvpick.clear()
 
 
     # delete_datafilePicks is a method to clear subsurface picks saved to the data file
@@ -836,7 +901,7 @@ class mainGUI(tk.Frame):
 
         row = tk.Frame(settingsWindow)
         row.pack(side=tk.TOP, anchor="c")
-        b = tk.Button(row, text="save", command=lambda:[self.updateSettings, settingsWindow.destroy()])
+        b = tk.Button(row, text="save", command=lambda:[self.updateSettings(), settingsWindow.destroy()])
         b.pack(side="left")
 
 
@@ -871,8 +936,9 @@ class mainGUI(tk.Frame):
         except:
             self.figsettings["figclip"].set(1.0)
 
-        # update impick figure settings
+        # update figure settings
         self.impick.update_figsettings(self.figsettings)
+        self.wvpick.update_figsettings(self.figsettings)
 
         # pass updated dielectric to impick
         self.impick.set_eps_r(self.eps_r.get())
@@ -888,7 +954,7 @@ class mainGUI(tk.Frame):
     def help(self):
         # help message box
         helpWindow = tk.Toplevel(self.parent)
-        helpWindow.title("instructions")
+        helpWindow.title("Instructions")
         helpWindow.config(bg="#d9d9d9")
         S = tk.Scrollbar(helpWindow)
         T = tk.Text(helpWindow, height=32, width=64, bg="#d9d9d9")
@@ -897,25 +963,24 @@ class mainGUI(tk.Frame):
         S.config(command=T.yview)
         T.config(yscrollcommand=S.set)
         note = """---Radar Analysis Graphical Utility---
-                \n\n1.\tfile->open->data file: load data file
-                \n2.\tfile->open->basemap file: load basemap
-                \n3.\tpick->surface/subsurface->new: begin new pick segment 
-                \n4.\t[spacebar]: toggle between radar and clutter images
-                \n5.\tclick along reflector surface to pick horizon
-                \n\t\u2022[backspace]: remove last pick
-                \n\t\u2022[c]: remove all subsurface picks
-                \n6.\tpick->surface/subsurface->stop: end current pick segment
-                \n7.\t[spacebar]: toggle between radar and clutter images
-                \n8.\tfile->save->picks: export picks
-                \n9.\tfile->next: load next data file
-                \n10.\tfile->quit: texit application"""
+                \n\n1. File->Open->Data File:    Load data file
+                \n2. File->Open->Basemap File:    Load basemap
+                \n3. Interpretation->New->Horizon:    Initialize new horizon
+                \n4. Interpretation->Start:    Start picking
+                \n5. [Spacebar]:    Toggle between radar and clutter images
+                \n6. Click along reflector surface to pick horizon
+                \n    [Backspace]:    Remove last pick
+                \n7. Interpretation->Stop:    Stop picking
+                \n8. File->Save->Picks:    Export picks
+                \n9. File->Next:    Load next data file
+                \n10. File->Exit:    Exit RAGU"""
         T.insert(tk.END, note)
 
 
     def shortcuts(self):
         # shortcut info
         shortcutWindow = tk.Toplevel(self.parent)
-        shortcutWindow.title("keyboard shortcuts")
+        shortcutWindow.title("Keyboard Shortcuts")
         shortcutWindow.config(bg="#d9d9d9")
         S = tk.Scrollbar(shortcutWindow)
         T = tk.Text(shortcutWindow, height=32, width=64, bg="#d9d9d9")
@@ -923,27 +988,26 @@ class mainGUI(tk.Frame):
         T.pack(side=tk.LEFT, fill=tk.Y)
         S.config(command=T.yview)
         T.config(yscrollcommand=S.set)
-        note = """---general---
-                \n[ctrl+o]\t\t\topen data file
-                \n[ctrl+m]\t\t\topen basemap
-                \n[ctrl+s]\t\t\tsave picks
-                \n[ctrl+q]\t\t\texit RAGU
-                \n\n---profile view---
-                \n[spacebar]\t\t\ttoggle between radar/clutter
-                \n[h]\t\t\treturn to home extent
-                \n[a]\t\t\tpan left
-                \n[d]\t\t\tpan right
-                \n[w]\t\t\tpan up
-                \n[s]\t\t\tpan down
-                \n[right]\t\t\topen next file in working directory
-                \n---picking---
-                \n[ctrl+n]\t\t\tbegin new subsurface pick segment
-                \n[ctrl+shift+n]\t\t\tbegin new surface pick segment
-                \n[escape]\t\t\tend current surface/subsurface\n\t\t\tpick segment
-                \n[backspace]\t\t\tremove last pick event
-                \n[c]\t\t\tremove all subsurface picks
-                \n\n---waveform view---
-                \n[h]\t\t\treturn to home extent
-                \n[right]\t\t\tstep forward left
-                \n[left]\t\t\tstep backward"""
+        note = """---General---
+                \n\n[Ctrl+O]\t\t\tOpen data file
+                \n[Ctrl+M]\t\t\tOpen basemap
+                \n[Ctrl+S]\t\t\tSave picks
+                \n[Ctrl+Q]\t\t\tExit RAGU
+                \n\n---Profile View---
+                \n\n[Spacebar]\t\t\tToggle between radar/clutter
+                \n[H]\t\t\tReturn to home extent
+                \n[A]\t\t\tPan left
+                \n[D]\t\t\tPan right
+                \n[W]\t\t\tPan up
+                \n[S]\t\t\tPan down
+                \n[Right]\t\t\tOpen next file in working directory
+                \n\n---Picking---
+                \n\n[Ctrl+N]\t\t\tStart picking / initialize new segment
+                \n[Escape/Doubleclick]\t\t\tStop picking
+                \n[Backspace]\t\t\tRemove last pick
+                \n[C]\t\t\tRemove all interpretations
+                \n\n---Waveform View---
+                \n\n[H]\t\t\tReturn to home extent
+                \n[Right]\t\t\tStep forward left
+                \n[Left]\t\t\tStep backward"""
         T.insert(tk.END, note)

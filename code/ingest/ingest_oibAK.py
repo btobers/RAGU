@@ -72,7 +72,7 @@ def read_h5(fpath, navcrs, body):
         if "twtt_surf" in f["drv"]["pick"].keys():
             rdata.pick.horizons["surface"] = utils.twtt2sample(f["drv"]["pick"]["twtt_surf"][:], rdata.dt)
         else:
-            rdata.pick.horizons["surface"] =  rdata.pick.existing_twttSurf = utils.twtt2sample(utils.depth2twtt(rdata.navdf["elev"] - rdata.surfElev, eps_r=1), rdata.dt)
+            rdata.pick.horizons["surface"] = utils.twtt2sample(utils.depth2twtt(rdata.navdf["elev"] - rdata.surfElev, eps_r=1), rdata.dt)
     else:
         rdata.set_surfElev(np.repeat(np.nan, rdata.tnum))
         rdata.pick.horizons["surface"] = np.repeat(np.nan, rdata.tnum)

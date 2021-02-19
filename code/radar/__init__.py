@@ -126,7 +126,6 @@ class pick(object):
     """
     def __init__(self):
         # necessary pick objects - existing and current
-
         #: np.ndarray(tnum,) containing existing data file twtt to surface for a given trace
         self.existing_twttSurf = np.array(())
         #: dict, containing  existing data file twtt to subsurface pick segments/layers.
@@ -150,3 +149,15 @@ class pick(object):
         self.horizons = {}
 
         return
+
+    # get_pick_flag returns true if interpretations exist, false otherwise
+    def get_pick_flag(self):
+        flag = False
+        for key, item in self.horizons.items():
+            if np.isnan(item).all():
+                continue
+            else:
+                flag = True
+                break
+
+        return flag

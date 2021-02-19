@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 
 # pick_math is a function to perform all the necessary mathematics on a set of picks and save data as a pandas dataframe
 # if overlapping pick segments exist, save as separate layers
-def pick_math(rdata, eps_r, amp_out = True):
+def pick_math(rdata, eps_r=3.15, amp_out=True, horizon=None):
     v = C/(np.sqrt(eps_r))                              # wave veloity
     trace = np.arange(rdata.tnum)                       # array to hold trace number
     picked_traces = {}
@@ -30,15 +30,47 @@ def pick_math(rdata, eps_r, amp_out = True):
     subsurfAmp = {}
     lyr = 0
     
-    # if existing surface pick, and no current -> use existing
-    if np.isnan(rdata.pick.current_surf).all() and not np.isnan(rdata.pick.existing_twttSurf).all():
-        surfTwtt = rdata.pick.existing_twttSurf
-        surf_idx = utils.twtt2sample(surfTwtt, rdata.dt)
+    # if horizon specified export unmerged interpretation
+    if horizon and horizon in rdata.pick.horizons:
+        sample = rdata.pick.horizons[horizon]
+        twtt = utils.sample2twtt(sample, rdata.dt)
+        # initilize output dataframe
+        out = pd.DataFrame({"trace": trace, 
+                        "lon": rdata.navdf["lon"], 
+                        "lat": rdata.navdf["lat"], 
+                        "radelev": rdata.navdf["elev"], 
+                        "sample": sample, 
+                        "twtt": twtt})
 
-    # else if the user created surface pick use that surface
-    else:
-        surf_idx = rdata.pick.current_surf
-        surfTwtt = utils.sample2twtt(surf, rdata.dt)
+        # get amplitude values for horizon
+        if (amp_out) and (rdata.dtype != "marsis"):
+            # if raw data is complex, take absolute value to get amplitude
+            if np.iscomplex(rdata.dat).all():
+                damp = np.abs(rdata.dat)
+            elif np.iscomplexobj(rdata.dat):
+                damp = np.real(rdata.dat)
+            else:
+                damp = rdata.dat
+
+            amp = np.repeat(np.nan, rdata.tnum)
+            idx = ~np.isnan(sample)
+            # add any applied shift to index to pull proper sample amplitude from data array
+            amp[idx] = damp[(sample[idx].astype(np.int) + rdata.flags.sampzero) ,idx]
+            out["amp"] = amp
+        return out
+
+
+    # get surface horizon
+    if "surface" in rdata.pick.horizons:
+        surfIdx = rdata.pick.horizons["surface"]
+        surfTwtt = utils.sample2twtt(surfIdx, rdata.dt)
+
+    # see if user would like to specify surface
+    # else:
+    #     if tk.messagebox.askyesno("Specify Surface Horizon","Would you like to reference subsurface interpretations to a surface horizon)?") == True):
+
+    #     surf_idx = rdata.pick.current_surf
+    #     surfTwtt = utils.sample2twtt(surf, rdata.dt)
 
     # iterate through pick segments adding data to export array
     for key, arr in rdata.pick.current_subsurf.items():
@@ -175,8 +207,8 @@ def h5(fpath, df):
     f.close()
 
 
-# im is a function for exporting the pick image
-def im(fpath, fig, imtype = None):
+# fig is a function for exporting the pick image
+def fig(fpath, fig, imtype = None):
     fig.savefig(fpath, dpi = 500, bbox_inches='tight', pad_inches = 0.05, transparent=True)# facecolor = "#d9d9d9")
     print(imtype + " figure exported successfully:\t" + fpath)
 
