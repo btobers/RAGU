@@ -28,6 +28,8 @@ class wvpick(tk.Frame):
         self.horVar = tk.StringVar()
         self.segVar = tk.IntVar()
         self.color = tk.StringVar()
+        self.interpType = tk.StringVar()
+        self.interpType.set("cubic")
         self.setup()
 
     def setup(self):
@@ -55,12 +57,8 @@ class wvpick(tk.Frame):
         # self.dataFrame = tk.Frame(self.parent)
         # self.dataFrame.pack(side="bottom", fill="both", expand=1)
 
-        self.winSize = tk.IntVar(value=100)
-        self.stepSize = tk.IntVar(value=10)
-        self.segmentVar = tk.IntVar()
-        self.segmentVar.trace('w', self.plot_wv)
-
-        self.subsurf_interpType = tk.StringVar()
+        # self.segmentVar = tk.IntVar()
+        # self.segmentVar.trace('w', self.plot_wv)
 
         # infoFrame exists for options to be added based on optimization needs
         tk.Label(infoFrame, text = "Amplitude Window [#Samples]: ").pack(side="left")
@@ -72,7 +70,6 @@ class wvpick(tk.Frame):
         tk.Button(infoFrame, text="→", command = self.stepForward, pady=0).pack(side="left")
         tk.Label(infoFrame, text="\t").pack(side="left")
         
-
         # set up frame to hold pick information
         interpFrameT = tk.Frame(interpFrame)
         interpFrameT.pack(fill="both",expand=True)
@@ -109,8 +106,6 @@ class wvpick(tk.Frame):
         # tk.Button(interpFrameBl, text="New", width=4, command=lambda:self.init_segment(horizon=self.horVar.get())).pack(side="right")
 
 
-
-
         # self.segments=[0]
         # self.segmentMenu = tk.OptionMenu(infoFrame, self.segmentVar, *self.segments)
         # self.segmentMenu.pack(side="right",pady=0)
@@ -144,11 +139,12 @@ class wvpick(tk.Frame):
         # label.configure(font=f)
         # tk.Button(subsurf_interpFrame, text="auto-pick", command=self.subsurf_autoPick, pady=0).pack(side="right")
         # tk.Button(subsurf_interpFrame, text="interpolate", command=self.subsurf_interpPicks, pady=0).pack(side="right")
-        # tk.Radiobutton(subsurf_interpFrame, text="linear", variable=self.subsurf_interpType, value="linear").pack(side="right")
-        # tk.Radiobutton(subsurf_interpFrame,text="cubic spline", variable=self.subsurf_interpType, value="cubic").pack(side="right")
+        # tk.Radiobutton(subsurf_interpFrame, text="linear", variable=self.interpType, value="linear").pack(side="right")
+        # tk.Radiobutton(subsurf_interpFrame,text="cubic spline", variable=self.interpType, value="cubic").pack(side="right")
 
         # create the figure axes
         self.ax = self.fig.add_subplot(111)
+        self.fig.tight_layout(rect=[.02,.05,.97,1])
         self.ax.set_visible(False)
 
         # update the canvas
@@ -158,18 +154,29 @@ class wvpick(tk.Frame):
 
     def set_vars(self):
         # set up variables
-        self.trace = 0.
         self.pick_dict0 = {}
         self.pick_dict1 = {}
         self.rePick = None
         self.rePick_idx = {}        # dictionary of indeces of repicked traces for each segment
-        self.subsurf_interpType.set("cubic")
+
+
+        self.rdata = None
+        self.horizon_paths_opt = {}
+        self.ln_colors = {}
+        self.horizons = []
+
 
 
     # set_data is a method to receive the radar data
     def set_data(self, rdata):
         # get data in dB
         self.rdata = rdata
+
+
+    # receive horizon paths from impick
+    def set_horizon_paths(self, horizon_paths):
+        self.horizon_paths_opt = copy.deepcopy(horizon_paths)
+        self.horizons = list(self.horizon_paths_opt)
 
 
     # receive horizon line colors
@@ -179,18 +186,15 @@ class wvpick(tk.Frame):
 
     # set_picks is a method which receives horizon interpretations for optimization
     def set_picks(self):
-        # create a copy of passed from imPick as to not modify original values
-        # self.rdata.pick.current_surfOpt = copy.deepcopy(self.rdata.pick.current_surf)
-        # self.rdata.pick.current_subsurfOpt = copy.deepcopy(self.rdata.pick.current_subsurf)
-
         # copy horizon interpretations for optimization
-        self.horizons_opt = copy.deepcopy(self.rdata.pick.horizons)
-        self.horizons = list(self.horizons_opt)
+        self.horizon_paths_opt = copy.deepcopy(self.rdata.pick.horizons)
+        self.horizons = list(self.horizon_paths_opt)
 
         # determine number of pick segments
         self.num_pksegs = len(self.rdata.pick.current_subsurfOpt)
         self.ax.set_visible(True)
-        self.update_option_menu()
+        self.update_hor_opt_menu()
+        self.update_seg_opt_menu()
         # create lists of first and last picked trace number for each segment
         self.segment_trace_first = []
         self.segment_trace_last = []
@@ -208,7 +212,7 @@ class wvpick(tk.Frame):
 
     # plot_wv is a method to draw the waveform on the datacanvas
     def plot_wv(self, *args):
-        segment = self.segmentVar.get()
+        segment = self.segVar.get()
         winSize = self.winSize.get()
         # if self.pick_dict1:
         self.ax.clear()
@@ -306,15 +310,6 @@ class wvpick(tk.Frame):
         self.plot_wv()
 
 
-    # update_option_menu is a method to update the pick segment menu based on how many segments exist
-    def update_option_menu(self):
-            menu = self.segmentMenu["menu"]
-            menu.delete(0, "end")
-            for _i in range(self.num_pksegs):
-                menu.add_command(label=_i, command=tk._setit(self.segmentVar,_i))
-                self.rePick_idx[_i] = []
-
-
     # surf_autoPick is a method to automatically optimize surface picks by selecting the maximul amplitude sample within the specified window around existing self.rdata.surf
     def surf_autoPick(self):
         if np.all(np.isnan(self.rdata.pick.current_surf)):
@@ -374,7 +369,7 @@ class wvpick(tk.Frame):
     def subsurf_interpPicks(self):
         if (not self.num_pksegs > 0):
             return
-        interp = self.subsurf_interpType.get()
+        interp = self.interpType.get()
         if interp == "linear":
             for _i in range(self.num_pksegs):
                 if len(self.rePick_idx[_i]) >= 2:
@@ -400,6 +395,27 @@ class wvpick(tk.Frame):
                     interp_idx = np.arange(rePick_idx[0],rePick_idx[-1] + 1)
                     # add cubic spline output interpolation to pick dictionary
                     self.rdata.pick.current_subsurfOpt[_i][interp_idx] = cs([interp_idx]).astype(int)
+
+
+    # update the horizon menu
+    def update_hor_opt_menu(self):
+        self.horizons = list(self.horizon_paths_opt.keys())
+        self.horMenu["menu"].delete(0, "end")
+        for i, horizon in enumerate(self.horizons):
+            c = self.ln_colors[horizon]
+            self.horMenu["menu"].add_command(label=horizon, foreground=c, activeforeground=c, command=tk._setit(self.horVar, horizon))
+
+
+    # update the horizon segment menu based on how many segments exist for given segment
+    def update_seg_opt_menu(self, last=False, *args):
+        horizon = self.horVar.get()
+        self.segMenu["menu"].delete(0, "end")
+        if horizon:
+            for seg in sorted(self.horizon_paths_opt[horizon].keys()):
+                self.segMenu["menu"].add_command(label=seg, command=tk._setit(self.segVar, seg))
+            # set segment selection to last
+            if last:
+                self.segVar.set(seg)
 
 
     # onpress gets the time of the button_press_event

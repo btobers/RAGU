@@ -23,6 +23,8 @@ def pick_math(rdata, eps_r=3.15, amp_out=True, horizon=None, srf=None):
     v = C/(np.sqrt(eps_r))                              # wave veloity
     trace = np.arange(rdata.tnum)                       # array to hold trace number
     sample = rdata.pick.horizons.copy()
+    # get list of horizon names
+    horizons = list(rdata.pick.horizons.keys())
     damp = None
 
     # prep data amplitude array
@@ -41,12 +43,9 @@ def pick_math(rdata, eps_r=3.15, amp_out=True, horizon=None, srf=None):
                     "lat": rdata.navdf["lat"], 
                     "elev": rdata.navdf["elev"]})
 
-    # get list of horizon names
-    horizons = list(rdata.pick.horizons.keys())
-
     # if horizon specified export unmerged interpretation
     if horizon and horizon in horizons:
-        sample = rdata.pick.horizons[horizon]
+        sample = sample[horizon]
         out["sample"] = sample
         twtt = utils.sample2twtt(sample, rdata.dt)
         out["twtt"] = twtt
@@ -57,88 +56,78 @@ def pick_math(rdata, eps_r=3.15, amp_out=True, horizon=None, srf=None):
             amp = np.repeat(np.nan, rdata.tnum)
             idx = ~np.isnan(sample)
             # add any applied shift to index to pull proper sample amplitude from data array
-            amp[idx] = damp[(sample[idx].astype(np.int) + rdata.flags.sampzero) ,idx]
+            amp[idx] = damp[(sample[idx].astype(np.int) + rdata.flags.sampzero), idx]
             out["amp"] = amp
         return out
     
+    if srf:
+        # iterate through interpretation horizons
+        for i, (horizon, array) in enumerate(sample.items()):
+            out[horizon + "_sample"] = array
+            out[horizon + "_twtt"] = utils.sample2twtt(array, rdata.dt)
+
+            if horizon == srf: 
+                # elev[horizon] = rdata.srfElev
+                out[horizon + "_elev"] = rdata.srfElev
+
+                if type(damp) is np.ndarray:
+                    # export horizon amplitude values
+                    amp = np.repeat(np.nan, rdata.tnum)
+                    idx = ~np.isnan(array)
+                    # add any applied shift to index to pull proper sample amplitude from data array
+                    amp[idx] = damp[(array[idx].astype(np.int) + rdata.flags.sampzero), idx]
+                    out[srf + "_amp"] = amp
+                continue
+
+            # calculate cumulative layer thickness from srf
+            h = (((out[horizon + "_twtt"] - out[srf + "_twtt"]) * v) / 2)
+
+            # calculate layer bed elevation
+            out[horizon + "_elev"] = out[srf + "_elev"] - h
+
+            if type(damp) is np.ndarray:
+                    # export horizon amplitude values
+                    amp = np.repeat(np.nan, rdata.tnum)
+                    idx = ~np.isnan(array)
+                    # add any applied shift to index to pull proper sample amplitude from data array
+                    amp[idx] = damp[(array[idx].astype(np.int) + rdata.flags.sampzero), idx]
+                    out[horizon + "_amp"] = amp
+
+            # if not 0th layer, reference bed elevation of upper layer for thickness
+            if i == 1:
+                thick = h
+            elif i > 1:
+                # calculate layer thickness
+                thick = out[horizons[i - 1] + "_elev"] - out[horizon + "_elev"]
+            else:
+                continue
+            out[horizons[i - 1] + "_" + horizon + "_thick"] = thick
+
+        return out
+
+    # if no surface horizon specified, output merged df with each horizon sample, twtt, amp
     else:
-        twtt = {}
-        elev = {}
-        amp = {}
-        thick = {}   
+        # iterate through interpretation horizons
+        for i, (horizon, array) in enumerate(sample.items()):
+            out[horizon + "_sample"] = array
+            out[horizon + "_twtt"] = utils.sample2twtt(array, rdata.dt)
 
-        if srf:
-            # iterate through interpretation horizons
-            for i, (horizon, array) in enumerate(sample.items()):
-                out[horizon + "_sample"] = sample[horizon]
-                twtt[horizon] = utils.sample2twtt(array, rdata.dt)
-                out[horizon + "_twtt"] = twtt[horizon]
+            if type(damp) is np.ndarray:
+                    # export horizon amplitude values
+                    amp = np.repeat(np.nan, rdata.tnum)
+                    idx = ~np.isnan(array)
+                    # add any applied shift to index to pull proper sample amplitude from data array
+                    amp[idx] = damp[(array[idx].astype(np.int) + rdata.flags.sampzero), idx]
+                    out[horizon + "_amp"] = amp
 
-                if horizon == srf: 
-                    elev[horizon] = rdata.srfElev
-                    out[horizon + "_elev"] = elev[horizon]
+            # calculate thickness between subsequent horizons
+            if i >= 1:
+                # calculate layer thickness
+                out[horizons[i - 1] + "_" + horizon + "_thick"] = (((out[horizon + "_twtt"] - out[horizons[i - 1] + "_twtt"]) * v) / 2)
+            else:
+                continue
 
-                    if type(damp) is np.ndarray:
-                        # export horizon amplitude values
-                        amp[horizon] = np.repeat(np.nan, rdata.tnum)
-                        idx = ~np.isnan(sample[horizon])
-                        # add any applied shift to index to pull proper sample amplitude from data array
-                        amp[horizon][idx] = damp[(sample[horizon][idx].astype(np.int) + rdata.flags.sampzero) ,idx]
-                        out[srf + "_amp"] = amp[horizon]
-                    continue
-
-                # calculate cumulative layer thickness from srf
-                h = (((twtt[horizon] - twtt[srf]) * v) / 2)
-
-                # calculate layer bed elevation
-                elev[horizon] = elev[srf] - h
-                out[horizon + "_elev"] = elev[horizon]
-
-                if type(damp) is np.ndarray:
-                        # export horizon amplitude values
-                        amp[horizon] = np.repeat(np.nan, rdata.tnum)
-                        idx = ~np.isnan(sample[horizon])
-                        # add any applied shift to index to pull proper sample amplitude from data array
-                        amp[horizon][idx] = damp[(sample[horizon][idx].astype(np.int) + rdata.flags.sampzero) ,idx]
-                        out[srf + "_amp"] = amp[horizon]
-
-                # if not 0th layer, reference bed elevation of upper layer for thickness
-                if i == 1:
-                    thick[horizon] = h
-                elif i > 1:
-                    # calculate layer thickness
-                    thick[horizon] = elev[horizons[i - 1]] - elev[horizon]
-                else:
-                    continue
-                out[horizons[i - 1] + "_" + horizon + "_thick"] = thick[horizon]
-
-            return out
-
-        # if no surface horizon specified, just output merged df with each horizon sample, twtt, amp
-        else:
-            # iterate through interpretation horizons
-            for i, (horizon, array) in enumerate(sample.items()):
-                out[horizon + "_sample"] = sample[horizon]
-                twtt[horizon] = utils.sample2twtt(array, rdata.dt)
-                out[horizon + "_twtt"] = twtt[horizon]
-
-                if type(damp) is np.ndarray:
-                        # export horizon amplitude values
-                        amp[horizon] = np.repeat(np.nan, rdata.tnum)
-                        idx = ~np.isnan(sample[horizon])
-                        # add any applied shift to index to pull proper sample amplitude from data array
-                        amp[horizon][idx] = damp[(sample[horizon][idx].astype(np.int) + rdata.flags.sampzero) ,idx]
-                        out[srf + "_amp"] = amp[horizon]
-
-                # calculate thickness between subsequent horizons
-                if i >= 1:
-                    # calculate layer thickness
-                                    # calculate cumulative layer thickness from srf
-                    out[horizons[i - 1] + "_" + horizon + "_thick"] = (((twtt[horizon] - twtt[horizons[i - 1]]) * v) / 2)
-                else:
-                    continue
-
-            return out
+        return out
 
 
 # csv is a function to export the output pick dataframe as a csv
@@ -167,29 +156,33 @@ def gpkg(fpath, df, crs):
     print("geopackage exported successfully:\t" + fpath)
 
 
-# h5 is a function for saving twtt_ssurf pick to h5 data file
-def h5(fpath, df):
+# h5 is a function for saving twtt_bed pick to h5 data file
+def h5(fpath, df=None, dtype=None):
     # fpath is the data file path [str]
     # df pick output dataframe
-    dat = df["subsurfTwtt"].to_numpy()
+    if dtype=="oibak":
+        if not (tk.messagebox.askyesno("Update Picks","Update twtt_bed pick layer saved to data file?")):
+            return
+        dat = df["bed_twtt"]
+        f = h5py.File(fpath, "a")
+        # replace np.nan values in pick layer with -9
+        dat[np.isnan(dat)] = -9
 
-    f = h5py.File(fpath, "a") 
-    num_file_pick_lyr = len(fnmatch.filter(f["drv"]["pick"].keys(), "twtt_subsurf*"))
-    # save the new subsurface pick to the hdf5 file - determine whther to overwrite or append
-    if (num_file_pick_lyr > 0) and (tk.messagebox.askyesno("overwrite picks","overwrite most recent subsurface picks previously exported to data file (no to append as new subsurface pick layer)?") == True):
-        del f["drv"]["pick"]["twtt_subsurf" + str(num_file_pick_lyr - 1)]
-        twtt_subsurf_pick = f["drv"]["pick"].require_dataset("twtt_subsurf" + str(num_file_pick_lyr - 1), data=dat, shape=dat.shape, dtype=np.float32)
+        if "twtt_bed" in f["drv"]["pick"].keys():
+            del f["drv"]["pick"]["twtt_bed"]
+
+        twtt_bed = f["drv"]["pick"].require_dataset("twtt_bed", data=dat, shape=dat.shape, dtype=np.float32)
+        twtt_subsurf_pick.attrs.create("Unit", np.string_("Seconds"))
+        twtt_subsurf_pick.attrs.create("Source", np.string_("Manual pick layer"))
+        f.close()
+        print("hdf5 pick layer exported successfully:\t" + fpath)
     else:
-        twtt_subsurf_pick = f["drv"]["pick"].require_dataset("twtt_subsurf" + str(num_file_pick_lyr), data=dat, shape=dat.shape, dtype=np.float32)
-
-    twtt_subsurf_pick.attrs.create("Unit", np.string_("Seconds"))
-    twtt_subsurf_pick.attrs.create("Source", np.string_("Manual pick layer"))
-    f.close()
+        return
 
 
 # fig is a function for exporting the pick image
-def fig(fpath, fig, imtype = None):
-    fig.savefig(fpath, dpi = 500, bbox_inches='tight', pad_inches = 0.05, transparent=True)# facecolor = "#d9d9d9")
+def fig(fpath, fig, imtype=None):
+    fig.savefig(fpath, dpi=500, bbox_inches='tight', pad_inches=0.05, transparent=True)# facecolor = "#d9d9d9")
     print(imtype + " figure exported successfully:\t" + fpath)
 
 
@@ -198,5 +191,4 @@ def proc(fpath, dat):
     # convert from dB to amp
     amp = utils.powdB2amp(dat)
     np.savetxt(fpath, amp, fmt="%s", delimiter=",")
-
     print("processed amplitude data exported successfully:\t" + fpath)

@@ -131,16 +131,14 @@ class impick(tk.Frame):
         interpFrameTl = tk.Frame(interpFrameT,width=400,relief="ridge", borderwidth=1)
         interpFrameTl.pack(side="left",fill="both",expand=True)
         interpFrameTl.pack_propagate(0)
-
-        interpFrameTr = tk.Frame(interpFrameT,width=100,relief="ridge", borderwidth=1)
+        interpFrameTr = tk.Frame(interpFrameT,width=100)
         interpFrameTr.pack(side="left",fill="both",expand=True)
         interpFrameTr.pack_propagate(0)
-
 
         interpFrameBl = tk.Frame(interpFrameB,width=400,relief="ridge", borderwidth=1)
         interpFrameBl.pack(side="left",fill="both",expand=True)
         interpFrameBl.pack_propagate(0)
-        interpFrameBr = tk.Frame(interpFrameB,width=100,relief="ridge", borderwidth=1)
+        interpFrameBr = tk.Frame(interpFrameB,width=100)
         interpFrameBr.pack(side="left",fill="both",expand=True)
         interpFrameBr.pack_propagate(0)
 
@@ -179,6 +177,7 @@ class impick(tk.Frame):
         self.fig.patch.set_facecolor("#d9d9d9")
         self.dataCanvas = FigureCanvasTkAgg(self.fig, self.parent)
         self.ax = self.fig.add_subplot(1,1,1)
+        self.fig.tight_layout(rect=[.02,.05,.97,1])
 
         # initiate a twin axis that shows twtt
         self.secaxy0 = self.ax.twinx()
@@ -611,6 +610,11 @@ class impick(tk.Frame):
     # return surface being picked (surface or subsurface)
     def get_pickSurf(self):
         return self.pick_surf
+
+
+    # return horizon_paths
+    def get_horizon_paths(self):
+        return self.horizon_paths
 
 
     # return horizon colors

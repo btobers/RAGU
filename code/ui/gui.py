@@ -323,11 +323,23 @@ class mainGUI(tk.Frame):
                 self.wvpick.stepBackward()
 
 
-    # saveCheck is a method to check if picks have been saved
+    # save_check is a method to check if picks have been saved - a bit messy (need to account for potential "srf" ingested upon data load)
     def save_check(self):
         if self.f_loadName:
-            if self.rdata.pick.get_pick_flag() and self.rdata.out is None:
-                return False
+            # if horizons exist, but no output pick df
+            if (self.rdata.pick.get_pick_flag()) and (self.rdata.out is None):
+                horizons = list(self.rdata.pick.horizons.keys())
+                # if srf is only horizon
+                if "srf" in horizons and len(horizons) == 1:
+                    # if srf was not ingested upon data load rdata.srfElev will be all nan
+                    if np.isnan(self.rdata.srfElev).all():
+                        return False
+                    else:
+                        return True
+                # if non-srf horizons exist
+                else:
+                    return False
+            # if no horizons exist or horizons already exported
             else:
                 return True
 
@@ -363,6 +375,9 @@ class mainGUI(tk.Frame):
             # prompt save check
         if (self.save_check() == False) and (tk.messagebox.askyesno("Warning", "Discard unsaved picks?", icon = "warning") == False):
             return
+        # if h5 file already open, save pick layer to data file
+        if (self.f_loadName) and (self.rdata.out is None) and (self.rdata.fpath.endswith(".h5")) and (self.rdata.dtype=="oibak"):
+            export.h5(self.rdata.fpath, dict({"bed_twtt":np.repeat(np.nan, self.rdata.tnum)}), self.rdata.dtype)
         else:
             # select input file
             if self.os == "darwin":
@@ -599,8 +614,8 @@ class mainGUI(tk.Frame):
                     export.gpkg(fn + ".gpkg", self.rdata.out, self.conf["nav"]["crs"])
                 if (self.conf["output"].getboolean("fig")) or (ext == ".png"):
                     self.impick.export_fig(fn + ".png")
-                if (self.rdata.fpath.endswith(".h5")) and (tk.messagebox.askyesno("export picks", "export picks to HDF5 data file?") == True):
-                    export.h5(self.rdata.fpath, self.rdata.out)
+                if (self.rdata.fpath.endswith(".h5")):
+                    export.h5(self.rdata.fpath, self.rdata.out, self.rdata.dtype)
 
 
     # export_proc is a method to save processed radar data
@@ -710,6 +725,7 @@ class mainGUI(tk.Frame):
                 self.end_pick()
                 # get pick dict from impick and pass to wvpick
                 self.wvpick.set_horizon_colors(self.impick.get_horizon_colors())
+                self.wvpick.set_horizon_paths(self.impick.get_horizon_paths())
                 self.wvpick.set_picks()
                 self.wvpick.plot_wv()
             elif (self.tab == "Profile"):

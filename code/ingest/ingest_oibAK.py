@@ -77,7 +77,6 @@ def read_h5(fpath, navcrs, body):
             rdata.pick.horizons["srf"] = utils.twtt2sample(utils.depth2twtt(rdata.navdf["elev"] - rdata.srfElev, eps_r=1), rdata.dt)
     else:
         rdata.set_srfElev(np.repeat(np.nan, rdata.tnum))
-        rdata.pick.horizons["srf"] = np.repeat(np.nan, rdata.tnum)
 
     # read in existing subsurface picks
     num_file_pick_lyr = len(fnmatch.filter(f["drv"]["pick"].keys(), "twtt_subsurf*"))
