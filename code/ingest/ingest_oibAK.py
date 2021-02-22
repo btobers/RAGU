@@ -68,27 +68,16 @@ def read_h5(fpath, navcrs, body):
     
     # pull lidar surface elevation and initilize horizon
     if "srf0" in f["ext"].keys():
-        rdata.set_surfElev(f["ext"]["srf0"][:])  
+        rdata.set_srfElev(f["ext"]["srf0"][:])  
         if "twtt_surf" in f["drv"]["pick"].keys():
-            rdata.pick.horizons["surface"] = utils.twtt2sample(f["drv"]["pick"]["twtt_surf"][:], rdata.dt)
+            twtt_srf = f["drv"]["pick"]["twtt_surf"][:]
+            twtt_srf[twtt_srf == -1] = np.nan
+            rdata.pick.horizons["srf"] = utils.twtt2sample(twtt_srf, rdata.dt)
         else:
-            rdata.pick.horizons["surface"] = utils.twtt2sample(utils.depth2twtt(rdata.navdf["elev"] - rdata.surfElev, eps_r=1), rdata.dt)
+            rdata.pick.horizons["srf"] = utils.twtt2sample(utils.depth2twtt(rdata.navdf["elev"] - rdata.srfElev, eps_r=1), rdata.dt)
     else:
-        rdata.set_surfElev(np.repeat(np.nan, rdata.tnum))
-        rdata.pick.horizons["surface"] = np.repeat(np.nan, rdata.tnum)
-
-    # # pull lidar surface elevation
-    # if "srf0" in f["ext"].keys():
-    #     rdata.set_surfElev(f["ext"]["srf0"][:])                                  # surface elevation from lidar, averaged over radar first fresnel zone per trace (see code within /zippy/MARS/code/xped/hfProc/ext)
-    #     # read in existing surface pick
-    #     if "twtt_surf" in f["drv"]["pick"].keys():
-    #         rdata.pick.existing_twttSurf = f["drv"]["pick"]["twtt_surf"][:]
-    #     else:
-    #         # calculate twtt_surf
-    #         rdata.pick.existing_twttSurf = utils.depth2twtt(rdata.navdf["elev"] - rdata.surfElev, eps_r=1)
-    # create empty arrays to hold surface elevation and twtt otherwise
-    # else:
-    #     rdata.set_surfElev(np.repeat(np.nan, rdata.tnum))
+        rdata.set_srfElev(np.repeat(np.nan, rdata.tnum))
+        rdata.pick.horizons["srf"] = np.repeat(np.nan, rdata.tnum)
 
     # read in existing subsurface picks
     num_file_pick_lyr = len(fnmatch.filter(f["drv"]["pick"].keys(), "twtt_subsurf*"))
@@ -96,9 +85,6 @@ def read_h5(fpath, navcrs, body):
         # iterate through any existing subsurface pick layers to import
         for _i in range(num_file_pick_lyr):
             rdata.pick.existing_twttSubsurf[str(_i)] = np.array(f["drv"]["pick"]["twtt_subsurf" + str(_i)])
-
-    # initialize surface pick
-    rdata.pick.current_surf = np.repeat(np.nan, rdata.tnum)
 
     f.close()                                                   # close the file
 
@@ -147,7 +133,7 @@ def read_mat(fpath, navcrs, body):
             rdata.navdf = navparse.getnav_oibAK_mat(fpath, navcrs, body)
             rdata.set_sim(f["block"]["clutter"][0][0])
 
-            rdata.pick.existing_twttSurf = f["block"]["twtt_surf"][0][0].flatten()
+            rdata.pick.horizons["srf"] = f["block"]["twtt_surf"][0][0].flatten()
 
         except Exception as err:
             print("ingest Error: " + str(err))
@@ -155,9 +141,6 @@ def read_mat(fpath, navcrs, body):
 
     # calculate surface elevation 
     dist = utils.twtt2depth(rdata.pick.existing_twttSurf, eps_r=1)
-    rdata.set_surfElev(rdata.navdf["hgt"].to_numpy() - dist)
-
-    # initialize surface pick
-    rdata.pick.current_surf = np.repeat(np.nan, rdata.tnum)
+    rdata.set_srfElev(rdata.navdf["elev"].to_numpy() - dist)
     
     return rdata

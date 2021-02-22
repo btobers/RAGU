@@ -47,7 +47,7 @@ class radar(object):
 
         # optional attributes
         #: np.ndarray(tnum,) surface elevation per trace
-        self.surfElev = None
+        self.srfElev = None
         #: np.ndarray(snum x tnum) processed radat data - this is what will actually be displayed, as to not modify original data
         self.proc = None
         #: np.ndarray(snum x tnum) clutter simulation stored in dB for viewing
@@ -81,9 +81,9 @@ class radar(object):
 
 
     # set ground height
-    def set_surfElev(self, dat):
+    def set_srfElev(self, dat):
         #: np.ndarray(tnum,) data, surface elevation per trace
-        self.surfElev = dat
+        self.srfElev = dat
 
         return
 

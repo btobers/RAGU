@@ -32,8 +32,6 @@ class impick(tk.Frame):
         # variables only setup once
         self.im_status = tk.StringVar()
         self.chan = tk.IntVar()
-        self.pick_vis = tk.BooleanVar()
-        self.pick_ann_vis = tk.BooleanVar()
         self.winSize = tk.IntVar(value=0)
         self.horVar = tk.StringVar()
         self.segVar = tk.IntVar()
@@ -44,7 +42,8 @@ class impick(tk.Frame):
 
     # set_vars is a method to set impick variables which need to reset upon each load
     def set_vars(self):
-
+        self.pick_vis = True
+        self.ann_vis = True
         self.basemap = None
         self.pick_surf = None
         self.popupFlag = True
@@ -82,8 +81,6 @@ class impick(tk.Frame):
 
         self.edit_segmentNum = 0
         self.im_status.set("data")
-        self.pick_vis.set(True)
-        self.pick_ann_vis.set(True)
         self.debugState = False
         self.horVar.set("")
         self.segVar.set(0)
@@ -112,27 +109,14 @@ class impick(tk.Frame):
         simRadio.pack(side="left")
         tk.ttk.Separator(infoFrame,orient="vertical").pack(side="left", fill="both", padx=10, pady=4)
 
-        # add radio buttons for toggling pick visibility
-        
+        # add radio buttons for toggling data channel
         tk.Label(infoFrame, text="Channel: ").pack(side="left")
         tk.Radiobutton(infoFrame,text="0", variable=self.chan, value=0, command=self.switchChan).pack(side="left")
         tk.Radiobutton(infoFrame,text="1", variable=self.chan, value=1, command=self.switchChan).pack(side="left")
         tk.ttk.Separator(infoFrame,orient="vertical").pack(side="left", fill="both", padx=10, pady=4)
 
-        # add radio buttons for toggling pick visibility
-        tk.Label(infoFrame, text="Pick Visibility: ").pack(side="left")
-        tk.Radiobutton(infoFrame,text="On", variable=self.pick_vis, value=True, command=self.show_picks).pack(side="left")
-        tk.Radiobutton(infoFrame,text="Off", variable=self.pick_vis, value=False, command=self.show_picks).pack(side="left")
-        tk.ttk.Separator(infoFrame,orient="vertical").pack(side="left", fill="both", padx=10, pady=4)
-
-        # add radio buttons for toggling pick labels
-        tk.Label(infoFrame, text="Pick Labels: ").pack(side="left")
-        tk.Radiobutton(infoFrame,text="On", variable=self.pick_ann_vis, value=True, command=self.show_pickLabels).pack(side="left")
-        tk.Radiobutton(infoFrame,text="Off", variable=self.pick_ann_vis, value=False, command=self.show_pickLabels).pack(side="left")
-        tk.ttk.Separator(infoFrame,orient="vertical").pack(side="left", fill="both", padx=10, pady=4)
-
         # add entry box for peak finder window size
-        tk.Label(infoFrame, text = "Window Size [#Samples]: ").pack(side="left")
+        tk.Label(infoFrame, text = "Amplitude Window [#Samples]: ").pack(side="left")
         tk.Entry(infoFrame, textvariable=self.winSize, width = 5).pack(side="left")
         tk.ttk.Separator(infoFrame,orient="vertical").pack(side="left", fill="both", padx=10, pady=4)
 
@@ -196,17 +180,6 @@ class impick(tk.Frame):
         self.dataCanvas = FigureCanvasTkAgg(self.fig, self.parent)
         self.ax = self.fig.add_subplot(1,1,1)
 
-        # add axes for colormap sliders and reset button - leave invisible until rdata loaded
-        self.ax_cmax = self.fig.add_axes([0.96, 0.55, 0.0075, 0.30])
-        self.ax_cmin  = self.fig.add_axes([0.96, 0.18, 0.0075, 0.30])
-        self.reset_ax = self.fig.add_axes([0.95125, 0.11, 0.025, 0.03])
-     
-        # create colormap sliders and reset button - initialize for data image
-        self.s_cmin = mpl.widgets.Slider(self.ax_cmin, "min", 0, 1, orientation="vertical")
-        self.s_cmax = mpl.widgets.Slider(self.ax_cmax, "max", 0, 1, orientation="vertical")
-        self.cmap_reset_button = mpl.widgets.Button(self.reset_ax, "reset", color="white")
-        self.cmap_reset_button.on_clicked(self.cmap_reset)
-
         # initiate a twin axis that shows twtt
         self.secaxy0 = self.ax.twinx()
         self.secaxy0.yaxis.set_ticks_position("right")
@@ -228,6 +201,17 @@ class impick(tk.Frame):
         self.secaxx.set_zorder(-100)
         self.secaxy0.set_zorder(-100)
         self.secaxy1.set_zorder(-100)
+
+        # add axes for colormap sliders and reset button - leave invisible until rdata loaded
+        self.ax_cmax = self.fig.add_axes([0.97, 0.55, 0.0075, 0.30])
+        self.ax_cmin  = self.fig.add_axes([0.97, 0.18, 0.0075, 0.30])
+        self.reset_ax = self.fig.add_axes([0.95625, 0.10, 0.03, 0.035])
+     
+        # create colormap sliders and reset button - initialize for data image
+        self.s_cmin = mpl.widgets.Slider(self.ax_cmin, "Min", 0, 1, orientation="vertical")
+        self.s_cmax = mpl.widgets.Slider(self.ax_cmax, "Max", 0, 1, orientation="vertical")
+        self.cmap_reset_button = mpl.widgets.Button(self.reset_ax, "Reset", color="white")
+        self.cmap_reset_button.on_clicked(self.cmap_reset)
 
         # add toolbar to plot
         self.toolbar = NavigationToolbar2Tk(self.dataCanvas, toolbarFrame)
@@ -294,21 +278,16 @@ class impick(tk.Frame):
 
 
         # plot existing surface pick horizon as cyan
-        if "surface" in self.rdata.pick.horizons:
+        if "srf" in self.rdata.pick.horizons:
             # initialize surface path dictionary and create line object
             self.color.set("cyan")
-            self.init_horizon(horizon="surface",skip_array=True)
-            self.horizon_paths["surface"][0].x = utils.nonan_idx_array(self.rdata.pick.horizons["surface"])
-            self.horizon_paths["surface"][0].y = self.rdata.pick.horizons["surface"]
-            x,y = utils.merge_paths(self.horizon_paths["surface"])
-            self.horizon_lns["surface"].set_data(x,y)
+            self.init_horizon(horizon="srf",skip_array=True)
+            self.horizon_paths["srf"][0].x = utils.nonan_idx_array(self.rdata.pick.horizons["srf"])
+            self.horizon_paths["srf"][0].y = self.rdata.pick.horizons["srf"]
+            x,y = utils.merge_paths(self.horizon_paths["srf"])
+            self.horizon_lns["srf"].set_data(x,y)
             # init 1st surface segment by default
-            self.init_segment(horizon="surface")
-        
-        # if np.any(self.rdata.pick.existing_twttSurf):
-        #     self.existing_surf_ln = self.ax.plot(np.arange(self.rdata.tnum), utils.twtt2sample(self.rdata.pick.existing_twttSurf, self.rdata.dt), linewidth=1)
-
-                                                                                                  # dictionary to hold individual subsurface pick lines
+            self.init_segment(horizon="srf")
 
         # update the canvas
         self.dataCanvas._tkcanvas.pack()
@@ -357,8 +336,8 @@ class impick(tk.Frame):
     def update_slider(self):
         self.ax_cmax.clear()
         self.ax_cmin.clear()
-        self.s_cmin.__init__(self.ax_cmin, "min", valmin=self.s_cmin.valmin, valmax=self.s_cmin.valmax, valinit=self.s_cmin.valinit, orientation="vertical")
-        self.s_cmax.__init__(self.ax_cmax, "max", valmin=self.s_cmax.valmin, valmax=self.s_cmax.valmax, valinit=self.s_cmax.valinit, orientation="vertical")
+        self.s_cmin.__init__(self.ax_cmin, "Min", valmin=self.s_cmin.valmin, valmax=self.s_cmin.valmax, valinit=self.s_cmin.valinit, orientation="vertical")
+        self.s_cmax.__init__(self.ax_cmax, "Max", valmin=self.s_cmax.valmin, valmax=self.s_cmax.valmax, valinit=self.s_cmax.valinit, orientation="vertical")
         self.s_cmin.on_changed(self.cmap_update)
         self.s_cmax.on_changed(self.cmap_update)
 
@@ -1026,46 +1005,9 @@ class impick(tk.Frame):
         self.update_pickLabels()
 
 
-    def show_pickLabels(self):
-        if self.pick_ann_vis.get() == True:
-            for _i in self.ann_list:
-                _i.set_visible(True)
-        else:
-            for _i in self.ann_list:
-                _i.set_visible(False)
-        self.update_bg()
-
-
-    # update_pickLabels is a method to create annotations for picks
-    def update_pickLabels(self):
-        for _i in self.ann_list:
-            _i.remove()
-        del self.ann_list[:]
-        # get x and y locations for placing annotation
-        # first check tmp_horizon paths
-        if len(self.tmp_horizon_path.x) > 0:
-            x = self.tmp_horizon_path.x[0]
-            y = self.tmp_horizon_path.y[0]
-            ann = self.ax.text(x-75,y+75, self.horVar.get() + "_" + str(self.segVar.get()), bbox=dict(facecolor='white', alpha=0.5), horizontalalignment='right', verticalalignment='top')
-            self.ann_list.append(ann)
-            if not self.pick_ann_vis.get():
-                ann.set_visible(False)
-        for horizon, item in self.horizon_paths.items():
-            for seg, path in item.items():
-                x = np.where(~np.isnan(path.x))[0]
-                if x.size == 0:
-                    continue
-                x = x[0]
-                y = path.y[x]
-                ann = self.ax.text(x-75,y+75, horizon + "_" + str(seg), bbox=dict(facecolor='white', alpha=0.5), horizontalalignment='right', verticalalignment='top')
-                self.ann_list.append(ann)
-                if not self.pick_ann_vis.get():
-                    ann.set_visible(False)
-
-
     # update the horizon menu
     def update_hor_opt_menu(self):
-        self.horizons = list(sorted(self.horizon_paths.keys()))
+        self.horizons = list(self.horizon_paths.keys())
         self.horMenu["menu"].delete(0, "end")
         for i, horizon in enumerate(self.horizons):
             c = self.horizon_lns[horizon].get_color()
@@ -1086,9 +1028,50 @@ class impick(tk.Frame):
                 self.segVar.set(seg)
 
 
+    # update_pickLabels is a method to create annotations for picks
+    def update_pickLabels(self):
+        for _i in self.ann_list:
+            _i.remove()
+        del self.ann_list[:]
+        # get x and y locations for placing annotation
+        # first check tmp_horizon paths
+        if len(self.tmp_horizon_path.x) > 0:
+            x = self.tmp_horizon_path.x[0]
+            y = self.tmp_horizon_path.y[0]
+            ann = self.ax.text(x-25,y+75, self.horVar.get() + "_" + str(self.segVar.get()), bbox=dict(facecolor='white', alpha=0.5), horizontalalignment='right', verticalalignment='top')
+            self.ann_list.append(ann)
+            if not self.ann_vis:
+                ann.set_visible(False)
+        for horizon, item in self.horizon_paths.items():
+            for seg, path in item.items():
+                x = np.where(~np.isnan(path.x))[0]
+                if x.size == 0:
+                    continue
+                x = x[0]
+                y = path.y[x]
+                ann = self.ax.text(x-25,y+75, horizon + "_" + str(seg), bbox=dict(facecolor='white', alpha=0.5), horizontalalignment='right', verticalalignment='top')
+                self.ann_list.append(ann)
+                if not self.ann_vis:
+                    ann.set_visible(False)
+
+
+    def show_labels(self, vis=None):
+        if vis is not None:
+            self.ann_vis = vis
+        if self.ann_vis:
+            for _i in self.ann_list:
+                _i.set_visible(True)
+        else:
+            for _i in self.ann_list:
+                _i.set_visible(False)
+        self.update_bg()
+
+
     # show_picks is a method to toggle the visibility of picks on
-    def show_picks(self):
-        self.show_artists(self.pick_vis.get())
+    def show_picks(self, vis=None):
+        if vis is not None:
+            self.pick_vis = vis
+        self.show_artists(self.pick_vis)
         self.safe_draw()
         self.fig.canvas.blit(self.ax.bbox)
 
@@ -1122,7 +1105,7 @@ class impick(tk.Frame):
         self.safe_draw()
         self.axbg = self.dataCanvas.copy_from_bbox(self.ax.bbox)
         # return artists visiblity to former state
-        self.show_artists(self.pick_vis.get(),self.get_pickState())
+        self.show_artists(self.pick_vis,self.get_pickState())
         self.blit()
 
 
@@ -1229,11 +1212,12 @@ class impick(tk.Frame):
         self.reset_ax.set_visible(False)
         self.secaxy1.set_visible(False)
         # hide pick annotations
-        self.pick_ann_vis.set(False)
-        self.show_pickLabels()     
+        vis = self.ann_vis
+        if vis:
+            self.show_labels(vis=False)     
         # ensure picks are visible
-        self.pick_vis.set(True)
-        self.show_picks()
+        # self.pick_vis.set(True)
+        self.show_picks(vis=True)
         w0 ,h0 = self.fig.get_size_inches()    # get pre-save figure size
         w, h = self.figsettings["figsize"].get().split(",")
         self.fig.set_size_inches((float(w),float(h)))    # set figsize to wide aspect ratio
@@ -1249,11 +1233,11 @@ class impick(tk.Frame):
         if not (self.rdata.sim == 0).all():
             self.show_sim()
             # ensure picks are hidden
-            self.pick_vis.set(False)
-            self.show_picks()
-            export.im(f_saveName.rstrip(f_saveName.split("/")[-1]) + self.rdata.fn + "_sim.png", self.fig, imtype="sim")
-            self.pick_vis.set(True)
-            self.show_picks()
+            # self.pick_vis.set(False)
+            self.show_picks(vis=False)
+            export.fig(f_saveName.rstrip(f_saveName.split("/")[-1]) + self.rdata.fn + "_sim.png", self.fig, imtype="sim")
+            # self.pick_vis.set(True)
+            self.show_picks(vis=True)
             self.show_data()
 
         # return figsize to intial values and make sliders visible again
@@ -1263,6 +1247,8 @@ class impick(tk.Frame):
         self.ax_cmin.set_visible(True)
         self.reset_ax.set_visible(True)
         self.secaxy1.set_visible(True)
+        if vis:
+            self.show_labels(True)   
         self.fig.canvas.draw()
 
     # close_popup

@@ -66,9 +66,6 @@ def read(fpath, simpath, navcrs, body):
     # parse nav
     rdata.navdf = navparse.getnav_sharad(geom_path, navcrs, body)
 
-    rdata.set_surfElev(np.repeat(np.nan, rdata.tnum))
-
-    # initialize surface pick
-    rdata.pick.current_surf = np.repeat(np.nan, rdata.tnum)
+    rdata.set_srfElev(np.repeat(np.nan, rdata.tnum))
 
     return rdata

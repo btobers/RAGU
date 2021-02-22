@@ -51,6 +51,18 @@ def find_nearest(a, val):
     return idx
 
 
+# sort dictionary full of numpy arrays using array mean value
+def sort_array_dict(a):
+    out = {}
+    mean_dict = {}
+    for key, arr in a.items():
+        mean_dict[key] = np.nanmean(arr)
+    keys = [k for k, v in sorted(mean_dict.items(), key=lambda item: item[1])]
+    for key in keys:
+        out[key] = a[key]
+    return out
+
+
 # nonan_idx_array returns an array with the index of non-nan values
 def nonan_idx_array(a):
     out = np.repeat(np.nan, a.shape[0])

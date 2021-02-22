@@ -44,6 +44,10 @@ class mainGUI(tk.Frame):
         self.tab = "Profile"
         self.eps_r = tk.DoubleVar(value=self.conf["output"]["eps_r"])
         self.popupFlag = False
+        self.pick_vis = tk.BooleanVar()
+        self.pick_vis.set(True)
+        self.ann_vis = tk.BooleanVar()
+        self.ann_vis.set(True)
         # dictionary to hold figure settings
         self.figsettings = {"cmap": tk.StringVar(value="Greys_r"),
                             "figsize": tk.StringVar(value="6.5,1.5"), 
@@ -110,6 +114,7 @@ class mainGUI(tk.Frame):
         interpretMenu = tk.Menu(menubar, tearoff=0)
         mapMenu = tk.Menu(menubar, tearoff=0)
         procMenu = tk.Menu(menubar, tearoff=0)
+        viewMenu = tk.Menu(menubar, tearoff=0)
         helpMenu = tk.Menu(menubar, tearoff=0)
 
         # file menu items
@@ -179,15 +184,19 @@ class mainGUI(tk.Frame):
         procMenu.add_command(label="Shift Sim", command=lambda:self.procTools("shiftSim"))
         procMenu.add_command(label="Restore Original Data", command=lambda:self.procTools("restore"))
 
+        # view menu items
+        viewMenu.add_checkbutton(label="Interpretations", onvalue=True, offvalue=False, variable=self.pick_vis, command=self.set_pick_vis)
+        viewMenu.add_checkbutton(label="Labels", onvalue=True, offvalue=False, variable=self.ann_vis, command=self.set_ann_vis)
+
         # help menu items
         helpMenu.add_command(label="Instructions", command=self.help)
         helpMenu.add_command(label="Keyboard Shortcuts", command=self.shortcuts)
 
         # add items to menubar
         menubar.add_cascade(label="File", menu=fileMenu)
-        # menubar.add_cascade(label="pick", menu=pickMenu)
         menubar.add_cascade(label="Interpretation", menu=interpretMenu)
         menubar.add_cascade(label="Processing", menu=procMenu)
+        menubar.add_cascade(label="View", menu=viewMenu)
         menubar.add_cascade(label="Help", menu=helpMenu)
         
         # add the menubar to the window
@@ -219,8 +228,7 @@ class mainGUI(tk.Frame):
 
         # set up  info frame
         infoFrame = tk.Frame(self.parent)
-        infoFrame.pack(side="bottom",fill="both")
-
+        infoFrame.pack(side="bottom",fill="x")
         self.siglbl = tk.Label(infoFrame)
         self.siglbl.pack(side="left")
 
@@ -317,10 +325,11 @@ class mainGUI(tk.Frame):
 
     # saveCheck is a method to check if picks have been saved
     def save_check(self):
-        # if ((self.impick.get_subsurfpkFlag() == True) or (self.impick.get_surfpkFlag() == True)) and (self.rdata.out is None):
-        #     return False
-        # else:
-        return True
+        if self.f_loadName:
+            if self.rdata.pick.get_pick_flag() and self.rdata.out is None:
+                return False
+            else:
+                return True
 
 
     # close_window is a gui method to exit RAGU
@@ -478,18 +487,15 @@ class mainGUI(tk.Frame):
         if self.f_loadName:
             # see if any picks have been made
             if  self.rdata.pick.get_pick_flag():
-                # initialize horizon variable
+                # initialize horizon and srf
                 horizon = None
+                srf = None
                 # if merged export, append outfile name with _pk_uid
                 if merged:
-                    # self.rdata.pick.horizons["tmp"] = self.rdata.pick.horizons["surface"]
-                    # del self.rdata.pick.horizons["surface"]
                     horizons = list(self.rdata.pick.horizons)
-                    print(horizons)
-                    surface = None
                     tmp_fn_out = self.rdata.fn + "_pk_" + self.conf["param"]["uid"]
-                    if "surface" in horizons:
-                        surface = "surface"
+                    if "srf" in horizons:
+                        srf = "srf"
                     else:
                         if len(horizons) > 0 and tk.messagebox.askyesno("Specify Surface Horizon","Reference subsurface interpretations to a surface horizon)?"):
                             horizon_colors = self.impick.get_horizon_colors()
@@ -520,7 +526,12 @@ class mainGUI(tk.Frame):
                             h.trace_vdelete("w", trace)
                             horizon = h.get()
                             if horizon:
-                                surface = horizon
+                                srf = horizon
+                    if srf:
+                        self.rdata.set_srfElev(utils.surfpick2elev(self.rdata.pick.horizons[srf], 
+                                    self.rdata.navdf["elev"].to_numpy(), 
+                                    self.rdata.tnum,
+                                    self.rdata.dt))
 
                 # otherwise have user select horizon to export
                 else:
@@ -576,8 +587,10 @@ class mainGUI(tk.Frame):
 
                 # end any active picking
                 self.end_pick()
+                # sort horizons by mean twtt in array
+                self.rdata.pick.horizons = utils.sort_array_dict(self.rdata.pick.horizons)
                 # set output dataframe
-                self.rdata.set_out(export.pick_math(self.rdata, self.eps_r.get(), self.conf["output"]["amp"], horizon))
+                self.rdata.set_out(export.pick_math(self.rdata, self.eps_r.get(), self.conf["output"]["amp"], horizon=horizon, srf=srf))
 
                 # export
                 if (self.conf["output"].getboolean("csv")) or (ext == ".csv"):
@@ -660,7 +673,7 @@ class mainGUI(tk.Frame):
                 continue
 
         # pass file to open_data
-        self.open_data(path + _i)
+        self.open_dfile(path + _i)
 
 
     # set tkinter menu font colors to match color name
@@ -674,20 +687,6 @@ class mainGUI(tk.Frame):
         window.destroy()
         self.popupFlag = flag
         return
-
-
-    # # end surface picking
-    # def end_surf_pick(self):
-    #     if (self.impick.get_pickState() is True) and (self.impick.get_pickSurf() == "surface"):
-    #         self.impick.set_pickState(False,surf="surface")
-    #         self.impick.pick_interp(surf = "surface")
-    #         self.impick.plot_picks(surf = "surface")
-    #         self.impick.update_bg()
-    #         # update surf_elevation
-    #         self.rdata.set_surfElev(utils.surfpick2elev(self.rdata.pick.current_surf, 
-    #                                                   self.rdata.navdf["elev"].to_numpy(), 
-    #                                                   self.rdata.tnum,
-    #                                                   self.rdata.dt))
 
 
     # import_pick is a method to load and plot picks saved to a csv file
@@ -720,7 +719,7 @@ class mainGUI(tk.Frame):
                         (tk.messagebox.askyesno("tab change","import optimized picks to profile from waveform?") == True):
                     self.rdata.pick.current_surf = self.rdata.pick.current_surfOpt
                     # update surf_elevation
-                    self.rdata.set_surfElev(utils.surfpick2elev(self.rdata.pick.current_surf, 
+                    self.rdata.set_srfElev(utils.surfpick2elev(self.rdata.pick.current_surf, 
                                                             self.rdata.navdf["elev"].to_numpy(), 
                                                             self.rdata.tnum,
                                                             self.rdata.dt))
@@ -949,6 +948,14 @@ class mainGUI(tk.Frame):
 
         # draw images
         self.impick.drawData()
+
+
+    def set_pick_vis(self):
+        self.impick.show_picks(vis=self.pick_vis.get())
+
+
+    def set_ann_vis(self):
+        self.impick.show_labels(vis=self.ann_vis.get())
 
 
     def help(self):

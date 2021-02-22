@@ -23,22 +23,37 @@ class wvpick(tk.Frame):
     def __init__(self, parent, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
+        self.winSize = tk.IntVar(value=100)
+        self.stepSize = tk.IntVar(value=10)
+        self.horVar = tk.StringVar()
+        self.segVar = tk.IntVar()
+        self.color = tk.StringVar()
+        self.setup()
 
+    def setup(self):
         # set up frames
-        infoFrame = tk.Frame(self.parent)
-        infoFrame.pack(side="top",fill="both",anchor="center")
+        infoFrame0 = tk.Frame(self.parent)
+        infoFrame0.pack(side="top",fill="both")        
+        infoFrame = tk.Frame(infoFrame0)
+        infoFrame.pack(side="left",fill="both")
+        interpFrame = tk.Frame(infoFrame0)
+        interpFrame.pack(side="right",fill="both")
+        # interpFrame.pack_propagate(0)
         toolbarFrame = tk.Frame(infoFrame)
         toolbarFrame.pack(side="bottom",fill="both")
-        interpFrame = tk.Frame(toolbarFrame)
-        interpFrame.pack(side="right",fill="both")
-        subsurf_interpFrame = tk.Frame(interpFrame)
-        subsurf_interpFrame.pack(side="right",fill="both")    
-        tk.ttk.Separator(interpFrame,orient="vertical").pack(side="right", fill="both", padx=10, pady=4)
-        surf_interpFrame = tk.Frame(interpFrame)
-        surf_interpFrame.pack(side="right",fill="both")
-        tk.ttk.Separator(interpFrame,orient="vertical").pack(side="right", fill="both", padx=10, pady=4)
         self.dataFrame = tk.Frame(self.parent)
-        self.dataFrame.pack(side="bottom", fill="both", expand=1)
+        self.dataFrame.pack(side="top", fill="both", expand=1)
+
+        # interpFrame = tk.Frame(toolbarFrame)
+        # interpFrame.pack(side="right",fill="both")
+        # subsurf_interpFrame = tk.Frame(interpFrame)
+        # subsurf_interpFrame.pack(side="right",fill="both")    
+        # tk.ttk.Separator(interpFrame,orient="vertical").pack(side="right", fill="both", padx=10, pady=4)
+        # surf_interpFrame = tk.Frame(interpFrame)
+        # surf_interpFrame.pack(side="right",fill="both")
+        # tk.ttk.Separator(interpFrame,orient="vertical").pack(side="right", fill="both", padx=10, pady=4)
+        # self.dataFrame = tk.Frame(self.parent)
+        # self.dataFrame.pack(side="bottom", fill="both", expand=1)
 
         self.winSize = tk.IntVar(value=100)
         self.stepSize = tk.IntVar(value=10)
@@ -48,19 +63,58 @@ class wvpick(tk.Frame):
         self.subsurf_interpType = tk.StringVar()
 
         # infoFrame exists for options to be added based on optimization needs
-        tk.Label(infoFrame, text = "window size [#samples]: ").pack(side="left")
+        tk.Label(infoFrame, text = "Amplitude Window [#Samples]: ").pack(side="left")
         tk.Entry(infoFrame, textvariable=self.winSize, width = 5).pack(side="left")
-        tk.Label(infoFrame, text = "\tstep size [#traces]: ").pack(side="left")
+        tk.Label(infoFrame, text = "\tStep Size [#Traces]: ").pack(side="left")
         tk.Entry(infoFrame, textvariable=self.stepSize, width = 5).pack(side="left")
         tk.Label(infoFrame, text="\t").pack(side="left")
         tk.Button(infoFrame, text="←", command = self.stepBackward, pady=0).pack(side="left")
         tk.Button(infoFrame, text="→", command = self.stepForward, pady=0).pack(side="left")
         tk.Label(infoFrame, text="\t").pack(side="left")
         
-        self.segments=[0]
-        self.segmentMenu = tk.OptionMenu(infoFrame, self.segmentVar, *self.segments)
-        self.segmentMenu.pack(side="right",pady=0)
-        tk.Label(infoFrame, text = "subsurface pick segment: ").pack(side="right")
+
+        # set up frame to hold pick information
+        interpFrameT = tk.Frame(interpFrame)
+        interpFrameT.pack(fill="both",expand=True)
+        # interpFrameT.pack_propagate(0)
+        interpFrameB = tk.Frame(interpFrame)
+        interpFrameB.pack(fill="both",expand=True)
+        # interpFrameB.pack_propagate(0)
+
+        interpFrameTl = tk.Frame(interpFrameT,width=400,relief="ridge", borderwidth=1)
+        interpFrameTl.pack(side="left",fill="both",expand=True)
+        # interpFrameTl.pack_propagate(0)
+
+        interpFrameBl = tk.Frame(interpFrameB,width=400,relief="ridge", borderwidth=1)
+        interpFrameBl.pack(side="left",fill="both",expand=True)
+        # interpFrameBl.pack_propagate(0)
+
+        tk.Label(interpFrameTl,text="Horizon:\t").pack(side="left")
+        self.horizons=[None]
+        self.horMenu = tk.OptionMenu(interpFrameTl, self.horVar, *self.horizons)
+        self.horMenu.pack(side="left")
+        self.horMenu.config(width=20)
+        # self.horVar.trace("w", lambda *args, last=True : self.update_seg_opt_menu(last)) 
+        # self.horVar.trace("w", lambda *args, menu=self.horMenu, var="horVar" : self.set_menu_color(menu, var))
+        # tk.Button(interpFrameTl, text="Delete", width=4, command=lambda:self.rm_horizon(horizon=self.horVar.get(), verify=True)).pack(side="right")
+        # tk.Button(interpFrameTl, text="New", width=4, command=self.init_horizon).pack(side="right")
+
+        tk.Label(interpFrameBl,text="Segment: ").pack(side="left")
+        segments=[None]
+        self.segMenu = tk.OptionMenu(interpFrameBl, self.segVar, *segments)
+        self.segMenu.pack(side="left")
+        self.segMenu.config(width=2)
+        # tk.Button(interpFrameBl, text="Delete", width=4, command=lambda:self.rm_segment(horizon=self.horVar.get(),seg=self.segVar.get())).pack(side="right")
+        # tk.Button(interpFrameBl, text="Edit", width=4, command=lambda:self.edit_segment(horizon=self.horVar.get(),seg=self.segVar.get())).pack(side="right")
+        # tk.Button(interpFrameBl, text="New", width=4, command=lambda:self.init_segment(horizon=self.horVar.get())).pack(side="right")
+
+
+
+
+        # self.segments=[0]
+        # self.segmentMenu = tk.OptionMenu(infoFrame, self.segmentVar, *self.segments)
+        # self.segmentMenu.pack(side="right",pady=0)
+        # tk.Label(infoFrame, text = "subsurface pick segment: ").pack(side="right")
 
         # create figure object and datacanvas from it
         plt.rcParams.update({'font.size': 12})
@@ -76,22 +130,22 @@ class wvpick(tk.Frame):
         self.toolbar.pack(side="left")
         # self.toolbar.update()
 
-        label = tk.Label(surf_interpFrame, text = "surface pick optimization")
-        label.pack(side="top")
-        f = tk.font.Font(label, label.cget("font"))
-        f.configure(underline=True)
-        label.configure(font=f)
-        tk.Button(surf_interpFrame, text="auto-pick", command=self.surf_autoPick, pady=0).pack()
+        # label = tk.Label(surf_interpFrame, text = "surface pick optimization")
+        # label.pack(side="top")
+        # f = tk.font.Font(label, label.cget("font"))
+        # f.configure(underline=True)
+        # label.configure(font=f)
+        # tk.Button(surf_interpFrame, text="auto-pick", command=self.surf_autoPick, pady=0).pack()
 
-        label = tk.Label(subsurf_interpFrame, text = "subsurface pick optimization")
-        label.pack(side="top")
-        f = tk.font.Font(label, label.cget("font"))
-        f.configure(underline=True)
-        label.configure(font=f)
-        tk.Button(subsurf_interpFrame, text="auto-pick", command=self.subsurf_autoPick, pady=0).pack(side="right")
-        tk.Button(subsurf_interpFrame, text="interpolate", command=self.subsurf_interpPicks, pady=0).pack(side="right")
-        tk.Radiobutton(subsurf_interpFrame, text="linear", variable=self.subsurf_interpType, value="linear").pack(side="right")
-        tk.Radiobutton(subsurf_interpFrame,text="cubic spline", variable=self.subsurf_interpType, value="cubic").pack(side="right")
+        # label = tk.Label(subsurf_interpFrame, text = "subsurface pick optimization")
+        # label.pack(side="top")
+        # f = tk.font.Font(label, label.cget("font"))
+        # f.configure(underline=True)
+        # label.configure(font=f)
+        # tk.Button(subsurf_interpFrame, text="auto-pick", command=self.subsurf_autoPick, pady=0).pack(side="right")
+        # tk.Button(subsurf_interpFrame, text="interpolate", command=self.subsurf_interpPicks, pady=0).pack(side="right")
+        # tk.Radiobutton(subsurf_interpFrame, text="linear", variable=self.subsurf_interpType, value="linear").pack(side="right")
+        # tk.Radiobutton(subsurf_interpFrame,text="cubic spline", variable=self.subsurf_interpType, value="cubic").pack(side="right")
 
         # create the figure axes
         self.ax = self.fig.add_subplot(111)
@@ -126,8 +180,12 @@ class wvpick(tk.Frame):
     # set_picks is a method which receives horizon interpretations for optimization
     def set_picks(self):
         # create a copy of passed from imPick as to not modify original values
-        self.rdata.pick.current_surfOpt = copy.deepcopy(self.rdata.pick.current_surf)
-        self.rdata.pick.current_subsurfOpt = copy.deepcopy(self.rdata.pick.current_subsurf)
+        # self.rdata.pick.current_surfOpt = copy.deepcopy(self.rdata.pick.current_surf)
+        # self.rdata.pick.current_subsurfOpt = copy.deepcopy(self.rdata.pick.current_subsurf)
+
+        # copy horizon interpretations for optimization
+        self.horizons_opt = copy.deepcopy(self.rdata.pick.horizons)
+        self.horizons = list(self.horizons_opt)
 
         # determine number of pick segments
         self.num_pksegs = len(self.rdata.pick.current_subsurfOpt)
@@ -163,7 +221,8 @@ class wvpick(tk.Frame):
         else:
             surf = np.nan
 
-        self.ax.plot(self.rdata.proc[:,self.traceNum[segment]])
+        # plot trace power
+        self.ax.plot(self.rdata.proc[:,self.traceNum[segment]], c="0.5")
 
         if not np.isnan(surf):
             self.ax.axvline(x = surf, c='c', label="Surface")
