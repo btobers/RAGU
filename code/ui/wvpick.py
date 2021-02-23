@@ -91,8 +91,8 @@ class wvpick(tk.Frame):
         self.horMenu = tk.OptionMenu(interpFrameTl, self.horVar, *self.horizons)
         self.horMenu.pack(side="left")
         self.horMenu.config(width=20)
-        # self.horVar.trace("w", lambda *args, last=True : self.update_seg_opt_menu(last)) 
-        # self.horVar.trace("w", lambda *args, menu=self.horMenu, var="horVar" : self.set_menu_color(menu, var))
+        self.horVar.trace("w", lambda *args, last=True : self.update_seg_opt_menu(last)) 
+        self.horVar.trace("w", lambda *args, menu=self.horMenu : self.set_menu_color(menu))
         # tk.Button(interpFrameTl, text="Delete", width=4, command=lambda:self.rm_horizon(horizon=self.horVar.get(), verify=True)).pack(side="right")
         # tk.Button(interpFrameTl, text="New", width=4, command=self.init_horizon).pack(side="right")
 
@@ -109,7 +109,7 @@ class wvpick(tk.Frame):
         # self.segments=[0]
         # self.segmentMenu = tk.OptionMenu(infoFrame, self.segmentVar, *self.segments)
         # self.segmentMenu.pack(side="right",pady=0)
-        # tk.Label(infoFrame, text = "subsurface pick segment: ").pack(side="right")
+        # tk.Label(infoFrame, text = "subsurface pick seg: ").pack(side="right")
 
         # create figure object and datacanvas from it
         plt.rcParams.update({'font.size': 12})
@@ -157,7 +157,7 @@ class wvpick(tk.Frame):
         self.pick_dict0 = {}
         self.pick_dict1 = {}
         self.rePick = None
-        self.rePick_idx = {}        # dictionary of indeces of repicked traces for each segment
+        self.rePick_idx = {}        # dictionary of indeces of repicked traces for each seg
 
 
         self.rdata = None
@@ -175,6 +175,7 @@ class wvpick(tk.Frame):
 
     # receive horizon paths from impick
     def set_horizon_paths(self, horizon_paths):
+        self.horizon_paths = copy.deepcopy(horizon_paths)
         self.horizon_paths_opt = copy.deepcopy(horizon_paths)
         self.horizons = list(self.horizon_paths_opt)
 
@@ -186,126 +187,129 @@ class wvpick(tk.Frame):
 
     # set_picks is a method which receives horizon interpretations for optimization
     def set_picks(self):
-        # copy horizon interpretations for optimization
-        self.horizon_paths_opt = copy.deepcopy(self.rdata.pick.horizons)
-        self.horizons = list(self.horizon_paths_opt)
-
-        # determine number of pick segments
-        self.num_pksegs = len(self.rdata.pick.current_subsurfOpt)
+        # determine number of horizons
+        self.nhorizons = len(self.horizons)
         self.ax.set_visible(True)
         self.update_hor_opt_menu()
         self.update_seg_opt_menu()
-        # create lists of first and last picked trace number for each segment
-        self.segment_trace_first = []
-        self.segment_trace_last = []
-        # create list to hold current trace number for each layer
-        self.traceNum = []
-        if self.num_pksegs > 0:
-            for _i in range(self.num_pksegs):
-                picked_traces = np.where(~np.isnan(self.rdata.pick.current_subsurfOpt[_i]))[0]
-                self.segment_trace_first.append(picked_traces[0])
-                self.segment_trace_last.append(picked_traces[-1])
-                self.traceNum.append(picked_traces[0])
+        # create lists of first and last picked trace number for each seg in each horizon
+        self.segment_traces = {}
+        # create dict to hold current trace number for each horizon
+        self.trace = {}
+        if self.nhorizons > 0:
+            # set horVar
+            self.horVar.set(self.horizons[-1])
+            # iterate through horizon_paths
+            for horizon, hdict in self.horizon_paths_opt.items():
+                self.segment_traces[horizon] = bounds([],[])
+                self.trace[horizon] = None
+                # iterate through segments for each horizon
+                for seg, path in hdict.items():
+                    picked_traces = np.where(~np.isnan(path.x))[0]
+                    if picked_traces.shape[0] > 0:
+                        self.segment_traces[horizon].first.append(picked_traces[0])
+                        self.segment_traces[horizon].last.append(picked_traces[-1])
+                        self.trace[horizon]= picked_traces[0]
         else:
-            self.traceNum.append(int(0))
+            self.trace[""] = 0
 
 
     # plot_wv is a method to draw the waveform on the datacanvas
     def plot_wv(self, *args):
-        segment = self.segVar.get()
+        horizon = self.horVar.get()
+        seg = self.segVar.get()
         winSize = self.winSize.get()
         # if self.pick_dict1:
         self.ax.clear()
-        self.ax.set(xlabel = "Sample", ylabel = "Power [dB]", title="Trace: " + str(int(self.traceNum[segment] + 1)) + "/" + str(int(self.rdata.tnum)))
-        # get surface index for trace - use current if exists
-        if not np.isnan(self.rdata.pick.current_surfOpt).all():
-            surf = self.rdata.pick.current_surfOpt[self.traceNum[segment]]
-        elif not np.isnan(self.rdata.pick.existing_twttSurf).all():
-            surf = utils.twtt2sample(self.rdata.pick.existing_twttSurf[self.traceNum[segment]], self.rdata.dt)
-        else:
-            surf = np.nan
+        self.ax.set(xlabel = "Sample", ylabel = "Power [dB]", title="Trace: " + str(int(self.trace[horizon] + 1)) + "/" + str(int(self.rdata.tnum)))
 
         # plot trace power
-        self.ax.plot(self.rdata.proc[:,self.traceNum[segment]], c="0.5")
+        self.ax.plot(self.rdata.proc[:,self.trace[horizon]], c="0.5")
 
-        if not np.isnan(surf):
-            self.ax.axvline(x = surf, c='c', label="Surface")
+        # get pick value range
+        val = np.array(())
 
-        if self.num_pksegs > 0:
+        # if self.nhorizons > 0:
+        for horizon in self.horizons:
             # get sample index of pick for given trace
-            pick_idx0 = self.rdata.pick.current_subsurf[segment][self.traceNum[segment]]
-            pick_idx1 = self.rdata.pick.current_subsurfOpt[segment][self.traceNum[segment]]
+            pick_idx0 = self.horizon_paths[horizon][seg].y[self.trace[horizon]]
+            pick_idx1 = self.horizon_paths_opt[horizon][seg].y[self.trace[horizon]]
+            val = np.append(val, (pick_idx0+pick_idx1)//2)
 
-            self.ax.axvline(x = pick_idx0, c="k", label="initial subsurface pick")
+            self.ax.axvline(x = pick_idx0, c=self.ln_colors[horizon], label=horizon)
 
             if pick_idx0 != pick_idx1:
-                self.ax.axvline(x = pick_idx1, c="g", ls = "--", label="updated pick")
+                self.ax.axvline(x = pick_idx1, c=self.ln_colors[horizon], ls = "--", label=horizon + "_v2")
         
-            # save un-zoomed view to toolbar
-            self.toolbar.push_current()
+        # save un-zoomed view to toolbar
+        self.toolbar.push_current()
 
-            # # zoom in to window around current pick sample
-            self.ax.set(xlim=(int(pick_idx0-(2*winSize)),int(pick_idx0+(2*winSize))))
+        # zoom in to window around horizons
+        if not np.isnan(val).all():
+            self.ax.set(xlim=(int(min(val)-(2*winSize)),int(max(val)+(2*winSize))))
 
-        self.ax.legend()
+        if self.nhorizons > 0:
+            self.ax.legend()
 
         self.dataCanvas.draw()
 
 
     # full extent for trace
     def fullExtent(self):
-        segment = self.segmentVar.get()
+        horizon = self.horVar.get()
         self.ax.set_xlim(0, self.rdata.snum)
-        self.ax.set_ylim(self.rdata.proc[:,self.traceNum[segment]].min(), self.rdata.proc[:,self.traceNum[segment]].max())
+        self.ax.set_ylim(self.rdata.proc[:,self.trace[horizon]].min(), self.rdata.proc[:,self.trace[horizon]].max())
         self.dataCanvas.draw()
 
 
     # stepBackward is a method to move backwards by the number of traces entered to stepSize
     def stepBackward(self):
-        segment = self.segmentVar.get()
+        horizon = self.horVar.get()
+        seg = self.segVar.get()
         step = self.stepSize.get()
-        newTrace = self.traceNum[segment] - step
-        if self.pick_dict0:
-            firstTrace_seg = self.segment_trace_first[segment]
+        newTrace = self.trace[horizon] - step
+        if self.horizon_paths_opt:
+            firstTrace_seg = self.segment_traces[horizon].first[seg]
             if newTrace >= firstTrace_seg:
-                self.traceNum[segment] -= step
+                self.trace[horizon] -= step
             elif newTrace < firstTrace_seg:
-                self.traceNum[segment] = firstTrace_seg
+                self.trace[horizon] = firstTrace_seg
 
         else:
             if newTrace >= 0:
-                self.traceNum[0] -= step
+                self.trace[0] -= step
             elif newTrace < 0:
-                self.traceNum[0] = 0
+                self.trace[0] = 0
             
         self.plot_wv()
 
 
     # stepForward is a method to move forward by the number of traces entered to stepSize
     def stepForward(self):
-        segment = self.segmentVar.get()
+        horizon = self.horVar.get()
+        seg = self.segVar.get()
         step = self.stepSize.get()
-        newTrace = self.traceNum[segment] + step
-        if self.num_pksegs > 0:
-            lastTrace_seg = self.segment_trace_last[segment]
+        newTrace = self.trace[horizon] + step
+        if self.nhorizons > 0:
+            lastTrace_seg = self.segment_traces[horizon].last[seg]
             if newTrace <= lastTrace_seg:
-                self.traceNum[segment] += step
-            # if there are less traces left in the pick segment than the step size, move to the last trace in the segment
+                self.trace[horizon] += step
+            # if there are less traces left in the pick seg than the step size, move to the last trace in the seg
             elif newTrace > lastTrace_seg:
-                if self.traceNum[segment] == lastTrace_seg:
-                    if segment + 2 <= self.num_pksegs and tk.messagebox.askokcancel("Next Sement","Finished optimization of current pick segment\n\tProceed to next segment?") == True:
-                        self.segmentVar.set(segment + 1) 
+                if self.trace[seg] == lastTrace_seg:
+                    if seg + 2 <= self.nhorizons and tk.messagebox.askokcancel("Next Sement","Finished optimization of current pick seg\n\tProceed to next seg?") == True:
+                        self.segmentVar.set(seg + 1) 
                 else:
-                    self.traceNum[segment] = self.segment_trace_last[segment]
+                    self.trace[horizon] = self.segment_traces[horizon].last[seg]
         
         else:
             if newTrace <= self.rdata.tnum:
-                self.traceNum[0] += step
+                self.trace[0] += step
             elif newTrace > self.rdata.tnum:
-                if self.traceNum[0] == self.rdata.tnum - 1:
+                if self.trace[0] == self.rdata.tnum - 1:
                     return
                 else:
-                    self.traceNum[0] = self.rdata.tnum - 1
+                    self.trace[0] = self.rdata.tnum - 1
 
         self.plot_wv()
 
@@ -339,9 +343,9 @@ class wvpick(tk.Frame):
 
     # subsurf_autoPick is a method to automatically optimize subsurface picks by selecting the maximul amplitude sample within the specified window around existing picks
     def subsurf_autoPick(self):
-        if self.num_pksegs > 0:
+        if self.nhorizons > 0:
             winSize = self.winSize.get()
-            for _i in range(self.num_pksegs):
+            for _i in range(self.nhorizons):
                 x = np.where(~np.isnan(self.rdata.pick.current_subsurf[_i]))[0]
                 y = self.rdata.pick.current_subsurf[_i][x]
                 for _j in range(len(x)):
@@ -354,26 +358,26 @@ class wvpick(tk.Frame):
 
     # manualPick is a method to manually adjust existing picks by clicking along the displayed waveform
     def manualPick(self, event):
-        if (not self.num_pksegs > 0) or (event.inaxes != self.ax):
+        if (not self.nhorizons > 0) or (event.inaxes != self.ax):
             return
-        segment = self.segmentVar.get()
+        seg = self.segmentVar.get()
         # append trace number to rePick_idx list to keep track of indeces for interpolation
-        if (len(self.rePick_idx[segment]) == 0) or (self.rePick_idx[segment][-1] != self.traceNum[segment]):
-            self.rePick_idx[segment].append(self.traceNum[segment])
+        if (len(self.rePick_idx[seg]) == 0) or (self.rePick_idx[seg][-1] != self.trace[seg]):
+            self.rePick_idx[seg].append(self.trace[seg])
         
-        self.rdata.pick.current_subsurfOpt[segment][self.traceNum[segment]] = int(event.xdata)        
+        self.rdata.pick.current_subsurfOpt[seg][self.trace[seg]] = int(event.xdata)        
         self.plot_wv()
 
 
     # interpPicks is a method to interpolate between manually refined subsurface picks
     def subsurf_interpPicks(self):
-        if (not self.num_pksegs > 0):
+        if (not self.nhorizons > 0):
             return
         interp = self.interpType.get()
         if interp == "linear":
-            for _i in range(self.num_pksegs):
+            for _i in range(self.nhorizons):
                 if len(self.rePick_idx[_i]) >= 2:
-                    # get indices where picks exist for pick segment
+                    # get indices where picks exist for pick seg
                     rePick_idx = self.rePick_idx[_i]
                     # add cubic spline output interpolation to pick dictionary
                     interp_idx = np.arange(rePick_idx[0],rePick_idx[-1] + 1)
@@ -381,12 +385,12 @@ class wvpick(tk.Frame):
                     xp = self.rePick_idx[_i]
                     # get twtt values at repicked indicesself.pick_dict1
                     fp = self.rdata.pick.current_subsurfOpt[_i][xp]
-                    # interpolate repicked values for segment
+                    # interpolate repicked values for seg
                     self.rdata.pick.current_subsurfOpt[_i][interp_idx] = np.interp(interp_idx, xp, fp)            
 
 
         elif interp == "cubic":
-            for _i in range(self.num_pksegs):
+            for _i in range(self.nhorizons):
                 if len(self.rePick_idx[_i]) >= 2:
                     # cubic spline between picks
                     rePick_idx = self.rePick_idx[_i]
@@ -395,6 +399,15 @@ class wvpick(tk.Frame):
                     interp_idx = np.arange(rePick_idx[0],rePick_idx[-1] + 1)
                     # add cubic spline output interpolation to pick dictionary
                     self.rdata.pick.current_subsurfOpt[_i][interp_idx] = cs([interp_idx]).astype(int)
+
+
+    # set tkinter menu font colors to match color name
+    def set_menu_color(self, menu=None, *args):
+        horizon = self.horVar.get()
+        if not horizon:
+            return
+        c = self.ln_colors[horizon]
+        menu.config(foreground=c, activeforeground=c, highlightcolor=c)
 
 
     # update the horizon menu
@@ -406,14 +419,14 @@ class wvpick(tk.Frame):
             self.horMenu["menu"].add_command(label=horizon, foreground=c, activeforeground=c, command=tk._setit(self.horVar, horizon))
 
 
-    # update the horizon segment menu based on how many segments exist for given segment
+    # update the horizon seg menu based on how many segments exist for given seg
     def update_seg_opt_menu(self, last=False, *args):
         horizon = self.horVar.get()
         self.segMenu["menu"].delete(0, "end")
         if horizon:
             for seg in sorted(self.horizon_paths_opt[horizon].keys()):
                 self.segMenu["menu"].add_command(label=seg, command=tk._setit(self.segVar, seg))
-            # set segment selection to last
+            # set seg selection to last
             if last:
                 self.segVar.set(seg)
 
@@ -451,3 +464,10 @@ class wvpick(tk.Frame):
         self.ax.clear()
         self.dataCanvas.draw()
         self.set_vars()
+
+
+class bounds():
+    # initialize a bounds object to hold first,last trace for interpretation segments - list or array like
+    def __init__(self, first=None, last=None):
+        self.first = first      # x array/list
+        self.last = last      # y array/list

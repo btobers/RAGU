@@ -161,21 +161,20 @@ def h5(fpath, df=None, dtype=None):
     # fpath is the data file path [str]
     # df pick output dataframe
     if dtype=="oibak":
-        if not (tk.messagebox.askyesno("Update Picks","Update twtt_bed pick layer saved to data file?")):
-            return
-        dat = df["bed_twtt"]
-        f = h5py.File(fpath, "a")
-        # replace np.nan values in pick layer with -9
-        dat[np.isnan(dat)] = -9
+        if (tk.messagebox.askyesno("Update Picks","Update twtt_bed pick layer saved to data file?")):
+            dat = df["bed_twtt"]
+            f = h5py.File(fpath, "a")
+            # replace np.nan values in pick layer with -9
+            dat[np.isnan(dat)] = -9
 
-        if "twtt_bed" in f["drv"]["pick"].keys():
-            del f["drv"]["pick"]["twtt_bed"]
+            if "twtt_bed" in f["drv"]["pick"].keys():
+                del f["drv"]["pick"]["twtt_bed"]
 
-        twtt_bed = f["drv"]["pick"].require_dataset("twtt_bed", data=dat, shape=dat.shape, dtype=np.float32)
-        twtt_subsurf_pick.attrs.create("Unit", np.string_("Seconds"))
-        twtt_subsurf_pick.attrs.create("Source", np.string_("Manual pick layer"))
-        f.close()
-        print("hdf5 pick layer exported successfully:\t" + fpath)
+            twtt_bed = f["drv"]["pick"].require_dataset("twtt_bed", data=dat, shape=dat.shape, dtype=np.float32)
+            twtt_subsurf_pick.attrs.create("Unit", np.string_("Seconds"))
+            twtt_subsurf_pick.attrs.create("Source", np.string_("Manual pick layer"))
+            f.close()
+            print("hdf5 pick layer exported successfully:\t" + fpath)
     else:
         return
 
