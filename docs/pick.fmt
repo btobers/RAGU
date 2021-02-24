@@ -56,7 +56,7 @@ OBJECT                           = TABLE
   NAME                             = "<horizon0>_twtt"
   UNIT                             = SECONDS
   DATA_TYPE                        = PC_REAL
-  DESCRIPTION                      = "Two-way travel time to horizon interpretation."
+  DESCRIPTION                      = "Two-way travel time delay to horizon interpretation."
  END_OBJECT                        = COLUMN
 
   OBJECT                            = COLUMN
@@ -64,9 +64,12 @@ OBJECT                           = TABLE
   NAME                             = "<horizon0>_elev"
   UNIT                             = METERS
   DATA_TYPE                        = PC_REAL
-  DESCRIPTION                      = "Elevation of horizon interpretation. For Earth, 
-                                    referenced to WGS-84 Ellipsoid. For Mars, this is
-                                    elevation relative to planetary center of mass. "
+  DESCRIPTION                      = "Elevation of horizon interpretation. Two-way travel
+                                    time delay converted to depth by user-defined dielectric 
+                                    permittivity (defaults to 1 if horizon is declared as 
+                                    the surface). For Earth, referenced to WGS-84 
+                                    Ellipsoid. For Mars, this is elevation relative to 
+                                    planetary center of mass. "
  END_OBJECT                        = COLUMN
 
  OBJECT                            = COLUMN
@@ -88,7 +91,7 @@ OBJECT                           = TABLE
   NAME                             = "<horizon1>_twtt"
   UNIT                             = SECONDS
   DATA_TYPE                        = PC_REAL
-  DESCRIPTION                      = "Two-way travel time to horizon interpretation."
+  DESCRIPTION                      = "Two-way travel time delay to horizon interpretation."
  END_OBJECT                        = COLUMN
 
   OBJECT                            = COLUMN
