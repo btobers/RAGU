@@ -261,13 +261,6 @@ class impick(tk.Frame):
         # # set clutter sim visibility to false
         self.im_sim.set_visible(False)
 
-        # plot existing subsurface pick layers
-        # self.existing_subsurf_lns = []
-        # count = len(self.rdata.pick.existing_twttSubsurf.items())
-        # for _i in range(count):
-        #     self.ax.plot(np.arange(self.rdata.tnum), utils.twtt2sample(self.rdata.pick.existing_twttSubsurf[str(_i)], self.rdata.dt),  linewidth=1)
-        #     self.existing_subsurf_lns.append(self.ax.lines[_i])
-
         # initialize line to hold current picks
         self.tmp_horizon_ln, = self.ax.plot(self.tmp_horizon_path.x, self.tmp_horizon_path.y, "rx")
         # initialize cursor crosshair lines
@@ -275,18 +268,10 @@ class impick(tk.Frame):
         self.vertical_line = self.ax.axvline(color="r", lw=1, ls="--")
         self.set_cross_hair_visible(self.get_pickState())
 
-
         # plot existing surface pick horizon as cyan
         if "srf" in self.rdata.pick.horizons:
             # initialize surface path dictionary and create line object
-            self.color.set("cyan")
-            self.init_horizon(horizon="srf",skip_array=True)
-            self.horizon_paths["srf"][0].x = utils.nonan_idx_array(self.rdata.pick.horizons["srf"])
-            self.horizon_paths["srf"][0].y = self.rdata.pick.horizons["srf"]
-            x,y = utils.merge_paths(self.horizon_paths["srf"])
-            self.horizon_lns["srf"].set_data(x,y)
-            # init 1st surface segment by default
-            self.init_segment(horizon="srf")
+            self.set_picks(horizon="srf")
 
         # update the canvas
         self.dataCanvas._tkcanvas.pack()
@@ -978,16 +963,6 @@ class impick(tk.Frame):
         self.horizon_lns[horizon].set_data(x,y)
 
 
-    # plot_existing is a method to plot existing picks
-    def plot_existing(self, surf = None):
-        if surf == "subsurface":
-            count = len(self.rdata.pick.existing_twttSubsurf)
-            n = len(self.existing_subsurf_lns)
-            for _i in range(count - n):
-                self.ax.plot(np.arange(self.rdata.tnum), utils.twtt2sample(self.rdata.pick.existing_twttSubsurf[str(n - _i)], self.rdata.dt), "g", linewidth=1)
-                self.existing_subsurf_lns.append(self.ax.lines[-1])
-
-
     # remove_imported_picks is a method to remove any imported data file picks from the image
     def remove_existing_subsurf(self):
         for _i in self.existing_subsurf_lns:
@@ -1007,20 +982,19 @@ class impick(tk.Frame):
                 self.blit()
 
 
-    # set_picks is a method to update the saved pick arrays based on the current picks
-    def set_picks(self):
-        return
-        # # replace saved surface paths and line with updated picks
-        # idx = np.where(~np.isnan(self.rdata.pick.current_surf))[0]
-        # self.surf_saved_path = path(idx, self.rdata.pick.current_surf[idx])
-        # self.surf_saved_ln.set_data(self.surf_saved_path.x, self.surf_saved_path.y)
-        # # replace saved subsurface paths and line with updated picks
-        # for key, arr in self.rdata.pick.current_subsurf.items():
-        #     idx = np.where(~np.isnan(arr))[0]
-        #     self.subsurf_saved_path[key] = path(idx, arr[idx])
-        #     self.horizon_lns[key].set_data(self.subsurf_saved_path[key].x, self.subsurf_saved_path[key].y)
-        # # update pick labels
-        # self.update_pickLabels()
+    # set_picks is a method to set imported pick arrays to horison_paths
+    def set_picks(self, horizon=None):
+        if horizon:
+            # set horizon color to first unused color
+            color = [c for c in self.ln_colors["hex"] if c not in list(self.ln_colors["used"].values())][0]
+            self.color.set(self.ln_colors["str"][self.ln_colors["hex"].index(color)])
+            self.init_horizon(horizon=horizon,skip_array=True)
+            self.horizon_paths[horizon][0].x = utils.nonan_idx_array(self.rdata.pick.horizons[horizon])
+            self.horizon_paths[horizon][0].y = self.rdata.pick.horizons[horizon]
+            x,y = utils.merge_paths(self.horizon_paths[horizon])
+            self.horizon_lns[horizon].set_data(x,y)
+            # init 1st surface segment by default
+            self.init_segment(horizon=horizon)
 
 
     # update the horizon menu

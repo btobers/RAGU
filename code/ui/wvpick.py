@@ -194,6 +194,8 @@ class wvpick(tk.Frame):
         horizon = self.horVar.get()
         seg = self.segVar.get()
         winSize = self.winSize.get()
+        # get previous x_lim
+        xlim = self.ax.get_xlim()
         self.ax.clear()
         self.ax.set(xlabel = "Sample", ylabel = "Power [dB]", title="Trace: " + str(int(self.trace[horizon] + 1)) + "/" + str(int(self.rdata.tnum)))
 
@@ -221,7 +223,10 @@ class wvpick(tk.Frame):
 
         # zoom in to window around horizons
         if not np.isnan(val).all():
-            self.ax.set(xlim=(int(min(val)-(2*winSize)),int(max(val)+(2*winSize))))
+            if xlim == (0,1):
+                self.ax.set(xlim=(int(min(val)-(2*winSize)),int(max(val)+(2*winSize))))
+            else:
+                self.ax.set(xlim=xlim)
 
         if self.nhorizons > 0:
             self.ax.legend()

@@ -348,7 +348,7 @@ class mainGUI(tk.Frame):
     def close_window(self):
         # check if picks have been made and saved
         if self.save_check() == False:
-            if tk.messagebox.askokcancel("Warning", "exit RAGU without saving picks?", icon = "warning") == True:
+            if tk.messagebox.askokcancel("Warning", "Exit RAGU without saving picks?", icon = "warning") == True:
                 self.parent.destroy()
         else:
             self.parent.destroy()
@@ -371,25 +371,26 @@ class mainGUI(tk.Frame):
 
     # choose_dfile is a gui method which has the user select and input data file - then passed to impick.load()
     def choose_dfile(self):
-        # try:
-            # prompt save check
+        # save_check
         if (self.save_check() == False) and (tk.messagebox.askyesno("Warning", "Discard unsaved picks?", icon = "warning") == False):
             return
+
         # if h5 file already open, save pick layer to data file
         if (self.f_loadName) and (self.rdata.out is None) and (self.rdata.fpath.endswith(".h5")) and (self.rdata.dtype=="oibak"):
             export.h5(self.rdata.fpath, dict({"bed_twtt":np.repeat(np.nan, self.rdata.tnum)}), self.rdata.dtype)
+
+        # select input file
+        if self.os == "darwin":
+            temp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select data file")
         else:
-            # select input file
-            if self.os == "darwin":
-                temp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select data file")
-            else:
-                temp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select data file",filetypes = [("all files",".*"),
-                                                                                                                                ("hd5f", ".mat .h5"),
-                                                                                                                                ("sharad", ".img"),
-                                                                                                                                ("marsis", ".dat"),
-                                                                                                                                ("pulseekko", ".DT1"),
-                                                                                                                                ("gssi",".DZT")])
-            self.open_dfile(temp_loadName)
+            temp_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select data file",filetypes = [("all files",".*"),
+                                                                                                                            ("hd5f", ".mat .h5"),
+                                                                                                                            ("sharad", ".img"),
+                                                                                                                            ("marsis", ".dat"),
+                                                                                                                            ("pulseekko", ".DT1"),
+                                                                                                                            ("gssi",".DZT")])
+
+        self.open_dfile(temp_loadName)
 
 
     # open_dat loads the data file and passes to other modules
@@ -711,7 +712,7 @@ class mainGUI(tk.Frame):
             pk_file = tk.filedialog.askopenfilename(initialdir = self.conf["path"]["outPath"], title = "load picks", filetypes = (("comma separated value", "*.csv"),))
             if pk_file:
                 self.igst.import_pick(pk_file)
-                self.impick.plot_existing(surf = "subsurface")
+                self.impick.set_picks(horizon="bed")
                 self.impick.blit()
 
 

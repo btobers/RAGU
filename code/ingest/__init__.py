@@ -10,6 +10,7 @@ radar data ingest wrapper
 from ingest import ingest_oibAK, ingest_pulseekko, ingest_gssi, ingest_sharad, ingest_marsis
 from tools import utils
 import numpy as np
+import pandas as pd
 
 class ingest:
     # ingest is a class which builds a dictionary holding data and metadata from the file
@@ -53,10 +54,12 @@ class ingest:
     # import_pick is a method of the ingester class which loads in existing picks from a text file
     def import_pick(self, fpath):
         if fpath.endswith("csv"):
-            dat = np.genfromtxt(fpath, delimiter=",", dtype = None, names = True)
-            subsrfTwtt = dat["subsrfTwtt"]
-            if len(subsrfTwtt) == self.rdata.tnum:
-                count = len(self.rdata.pick.existing_twttSubsurf)
-                self.rdata.pick.existing_twttSubsurf[str(count)] = subsrfTwtt
-
+            dat = pd.read_csv(fpath)
+            horizon = "bed"
+            sample = dat[horizon + "_sample"]
+            if len(sample) == self.rdata.tnum:
+                if horizon not in self.rdata.pick.horizons.keys():
+                    self.rdata.pick.horizons[horizon] = sample
+                else:
+                    self.rdata.pick.horizons["bed_imported"] = sample
         return 

@@ -1,4 +1,4 @@
-/* Pick table format information. Example of merged pick file with two horizons exported. 
+/* Pick table format information. Format of merged pick file with two horizons exported. 
 Columns 8-12 will repeat for additional horizons. 
 <horizon0> and <horizon1> will be replaced by user selected horizon identifiers.*/
 
