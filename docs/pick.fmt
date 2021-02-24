@@ -3,7 +3,7 @@ Columns 8-12 will repeat for additional horizons.
 <horizon0> and <horizon1> will be replaced by user selected horizon identifiers.*/
 
 OBJECT                           = TABLE
- COLUMNS                         = VARIABLE (5 MINIMUM)
+ COLUMNS                         = VARIABLE (6 MINIMUM)
  INTERCHANGE_FORMAT              = ASCII
  DESCRIPTION                     = "Geographic, and geometric
                                   properties for horizon
