@@ -616,6 +616,14 @@ class impick(tk.Frame):
     def get_horizon_paths(self):
         return self.horizon_paths
 
+    
+    # receive horizon_paths
+    def set_horizon_paths(self, horizon_paths):
+        self.horizon_paths = copy.deepcopy(horizon_paths)
+        for horizon, hdict in self.horizon_paths.items():
+            x,y = utils.merge_paths(hdict)
+            self.horizon_lns[horizon].set_data(x,y)
+
 
     # return horizon colors
     def get_horizon_colors(self):
@@ -811,7 +819,6 @@ class impick(tk.Frame):
 
     # set_pickState is a method to handle the pick state for a given surface as well as pick labels
     def set_pickState(self, state=False):
-        self.pick_state = state
         horizon = self.horVar.get()
         seg=self.segVar.get()
         # if no horizon selected, force user to create new horizon
@@ -819,48 +826,54 @@ class impick(tk.Frame):
             self.init_horizon()
         # temporary path object length
         l = len(self.tmp_horizon_path.x)                
-        # handle pick state true
-        if state==True:
-            self.startbutton.config(relief="sunken")
-            self.stopbutton.config(relief="raised")
-            # temporarily disable horizon and segment menus
-            self.horMenu.config(state="disabled")
-            self.segMenu.config(state="disabled")
-            if l == 0:
-                pass
-            elif l == 1:
-                self.clear_last()
-            else:
-                self.pick_interp(horizon=horizon,seg=seg)
-                self.plot_picks(horizon=horizon)
-                # if subsequent segment doesn't already exist, initialize
-                if (seg + 1) not in self.horizon_paths[horizon]:
-                    self.init_segment(horizon)
+        # handle pick state set to true
+        if state:
+            # if pick state was previously true
+            if self.get_pickState():
+                if l >= 2:
+                    self.pick_interp(horizon=horizon,seg=seg)
+                    self.plot_picks(horizon=horizon)
+                    # if subsequent segment doesn't already exist, initialize
+                    if (seg + 1) not in self.horizon_paths[horizon]:
+                        self.init_segment(horizon)
+                    else:
+                        self.segVar.set(seg + 1)
                 else:
-                    self.segVar.set(seg + 1)
+                    self.clear_last()
+            # if pick state was previously false
+            else:
+                self.startbutton.config(relief="sunken")
+                self.stopbutton.config(relief="raised")
+                # temporarily disable horizon and segment menus
+                self.horMenu.config(state="disabled")
+                self.segMenu.config(state="disabled")
 
-        # handle pick state false
-        elif state==False:
-            self.startbutton.config(relief="raised")
-            self.stopbutton.config(relief="sunken")
-            # reactivate horizon and segment menus
-            self.horMenu.config(state="active")
-            self.segMenu.config(state="active")
-            if l >=  2:
-                self.pick_interp(horizon=horizon,seg=seg)
-                self.plot_picks(horizon=horizon)
-                if self.edit_flag==False and (seg + 1) not in self.horizon_paths[horizon]:
-                    self.init_segment(horizon)
+        # handle pick state set to false
+        else:
+            # if pick state was previously true
+            if self.get_pickState():
+                self.startbutton.config(relief="raised")
+                self.stopbutton.config(relief="sunken")
+                # reactivate horizon and segment menus
+                self.horMenu.config(state="active")
+                self.segMenu.config(state="active")
+                if l >=  2:
+                    self.pick_interp(horizon=horizon,seg=seg)
+                    self.plot_picks(horizon=horizon)
+                    if self.edit_flag==False and (seg + 1) not in self.horizon_paths[horizon]:
+                        self.init_segment(horizon)
+                    else:
+                        self.segVar.set(seg + 1)
+                # if less than 2 picks, clear
                 else:
+                    self.clear_last()
+                    del self.horizon_paths[horizon][list(self.horizon_paths[horizon].keys())[-1]]
+                # reset self.edit_flag
+                if self.edit_flag==True:
+                    self.edit_flag = False
                     self.segVar.set(seg + 1)
-            # if one pick, remove
-            else:
-                self.clear_last()
-                del self.horizon_paths[horizon][list(self.horizon_paths[horizon].keys())[-1]]
-            # reset self.edit_flag
-            if self.edit_flag==True:
-                self.edit_flag = False
-                self.segVar.set(seg + 1)
+        # update pick_state to current state
+        self.pick_state = state
         # set crosshair visibility
         self.set_cross_hair_visible(state)
         # add pick annotations
@@ -996,17 +1009,18 @@ class impick(tk.Frame):
 
     # set_picks is a method to update the saved pick arrays based on the current picks
     def set_picks(self):
-        # replace saved surface paths and line with updated picks
-        idx = np.where(~np.isnan(self.rdata.pick.current_surf))[0]
-        self.surf_saved_path = path(idx, self.rdata.pick.current_surf[idx])
-        self.surf_saved_ln.set_data(self.surf_saved_path.x, self.surf_saved_path.y)
-        # replace saved subsurface paths and line with updated picks
-        for key, arr in self.rdata.pick.current_subsurf.items():
-            idx = np.where(~np.isnan(arr))[0]
-            self.subsurf_saved_path[key] = path(idx, arr[idx])
-            self.horizon_lns[key].set_data(self.subsurf_saved_path[key].x, self.subsurf_saved_path[key].y)
-        # update pick labels
-        self.update_pickLabels()
+        return
+        # # replace saved surface paths and line with updated picks
+        # idx = np.where(~np.isnan(self.rdata.pick.current_surf))[0]
+        # self.surf_saved_path = path(idx, self.rdata.pick.current_surf[idx])
+        # self.surf_saved_ln.set_data(self.surf_saved_path.x, self.surf_saved_path.y)
+        # # replace saved subsurface paths and line with updated picks
+        # for key, arr in self.rdata.pick.current_subsurf.items():
+        #     idx = np.where(~np.isnan(arr))[0]
+        #     self.subsurf_saved_path[key] = path(idx, arr[idx])
+        #     self.horizon_lns[key].set_data(self.subsurf_saved_path[key].x, self.subsurf_saved_path[key].y)
+        # # update pick labels
+        # self.update_pickLabels()
 
 
     # update the horizon menu

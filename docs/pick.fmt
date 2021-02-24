@@ -1,0 +1,125 @@
+/* Pick table format information. Example of merged pick file with two horizons exported. 
+Columns 8-12 will repeat for additional horizons. 
+<horizon0> and <horizon1> will be replaced by user selected horizon identifiers.*/
+
+OBJECT                           = TABLE
+ COLUMNS                         = VARIABLE (5 MINIMUM)
+ INTERCHANGE_FORMAT              = ASCII
+ DESCRIPTION                     = "Geographic, and geometric
+                                  properties for horizon
+                                  interpretations at each
+                                  radargram trace."
+
+ OBJECT                            = COLUMN
+  COLUMN_NUMBER                    = 0
+  NAME                             = "trace"
+  DATA_TYPE                        = ASCII_INTEGER
+  DESCRIPTION                      = "Radargram trace."
+ END_OBJECT                        = COLUMN
+
+ OBJECT                            = COLUMN
+  COLUMN_NUMBER                    = 1
+  NAME                             = "lon"
+  UNIT                             = DEGREE
+  DATA_TYPE                        = PC_REAL
+  DESCRIPTION                      = "Longitude of footprint location."
+ END_OBJECT                        = COLUMN
+
+ OBJECT                            = COLUMN
+  COLUMN_NUMBER                    = 2
+  NAME                             = "lat"
+  UNIT                             = DEGREE
+  DATA_TYPE                        = PC_REAL
+  DESCRIPTION                      = "Latitude of footprint location."
+ END_OBJECT                        = COLUMN
+
+ OBJECT                            = COLUMN
+  COLUMN_NUMBER                    = 3
+  NAME                             = "elev"
+  UNIT                             = METERS
+  DATA_TYPE                        = PC_REAL
+  DESCRIPTION                      = "Elevation of radar system. For Earth, 
+                                    referenced to WGS-84 Ellipsoid. For 
+                                    Mars, this is spacecraft radius from 
+                                    planetary center of mass."
+ END_OBJECT                        = COLUMN
+
+ OBJECT                            = COLUMN
+  COLUMN_NUMBER                    = 4
+  NAME                             = "<horizon0>_sample"
+  DATA_TYPE                        = ASCII_INTEGER
+  DESCRIPTION                      = "Sample number of horizon interpretation."
+ END_OBJECT                        = COLUMN
+
+ OBJECT                            = COLUMN
+  COLUMN_NUMBER                    = 5
+  NAME                             = "<horizon0>_twtt"
+  UNIT                             = SECONDS
+  DATA_TYPE                        = PC_REAL
+  DESCRIPTION                      = "Two-way travel time to horizon interpretation."
+ END_OBJECT                        = COLUMN
+
+  OBJECT                            = COLUMN
+  COLUMN_NUMBER                    = 6
+  NAME                             = "<horizon0>_elev"
+  UNIT                             = METERS
+  DATA_TYPE                        = PC_REAL
+  DESCRIPTION                      = "Elevation of horizon interpretation. For Earth, 
+                                    referenced to WGS-84 Ellipsoid. For Mars, this is
+                                    elevation relative to planetary center of mass. "
+ END_OBJECT                        = COLUMN
+
+ OBJECT                            = COLUMN
+  COLUMN_NUMBER                    = 7
+  NAME                             = "<horizon0>_amp"
+  DATA_TYPE                        = PC_REAL
+  DESCRIPTION                      = "Amplitude of horizon interpretation."
+ END_OBJECT                        = COLUMN
+
+ OBJECT                            = COLUMN
+  COLUMN_NUMBER                    = 8
+  NAME                             = "<horizon1>_sample"
+  DATA_TYPE                        = ASCII_INTEGER
+  DESCRIPTION                      = "Sample number of horizon interpretation."
+ END_OBJECT                        = COLUMN
+
+ OBJECT                            = COLUMN
+  COLUMN_NUMBER                    = 9
+  NAME                             = "<horizon1>_twtt"
+  UNIT                             = SECONDS
+  DATA_TYPE                        = PC_REAL
+  DESCRIPTION                      = "Two-way travel time to horizon interpretation."
+ END_OBJECT                        = COLUMN
+
+  OBJECT                            = COLUMN
+  COLUMN_NUMBER                    = 10
+  NAME                             = "<horizon1>_elev"
+  UNIT                             = METERS
+  DATA_TYPE                        = PC_REAL
+  DESCRIPTION                      = "Elevation of horizon interpretation. Two-way travel
+                                    time delay converted to depth by user-defined 
+                                    dielectric permittivity. For Earth, referenced to WGS-84 
+                                    Ellipsoid. For Mars, this is elevation relative to 
+                                    planetary center of mass. "
+ END_OBJECT                        = COLUMN
+
+ OBJECT                            = COLUMN
+  COLUMN_NUMBER                    = 11
+  NAME                             = "<horizon1>_amp"
+  DATA_TYPE                        = PC_REAL
+  DESCRIPTION                      = "Amplitude of horizon interpretation."
+ END_OBJECT                        = COLUMN
+
+  OBJECT                            = COLUMN
+  COLUMN_NUMBER                    = 12
+  NAME                             = "<horizon0>_<horizon1>_thick"
+  UNIT                             = METERS
+  DATA_TYPE                        = PC_REAL
+  DESCRIPTION                      = "Thickness between <horizon0> and <horizon1>.
+                                    Two-way travel time delay converted to depth by 
+                                    user-defined dielectric permittivity."
+ END_OBJECT                        = COLUMN
+
+END_OBJECT                         = TABLE
+
+END

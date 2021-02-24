@@ -730,17 +730,9 @@ class mainGUI(tk.Frame):
                 self.wvpick.plot_wv()
             elif (self.tab == "Profile"):
                 # get updated picks from wvpick and pass back to impick if they differ
-                if (((utils.nan_array_equal(self.rdata.pick.current_surf, self.rdata.pick.current_surfOpt)) == False) or \
-                        ((utils.dict_compare(self.rdata.pick.current_subsurf, self.rdata.pick.current_subsurfOpt)) == False)) and \
-                        (tk.messagebox.askyesno("tab change","import optimized picks to profile from waveform?") == True):
-                    self.rdata.pick.current_surf = self.rdata.pick.current_surfOpt
-                    # update surf_elevation
-                    self.rdata.set_srfElev(utils.surfpick2elev(self.rdata.pick.current_surf, 
-                                                            self.rdata.navdf["elev"].to_numpy(), 
-                                                            self.rdata.tnum,
-                                                            self.rdata.dt))
-                    self.rdata.pick.current_subsurf = self.rdata.pick.current_subsurfOpt
-                    self.impick.set_picks()
+                if not (utils.compare_horizon_paths(self.wvpick.get_horizon_paths(), self.impick.get_horizon_paths())) and \
+                        (tk.messagebox.askyesno("Import Optimized Interpretations","Import optimized horizon interpretations?")):
+                    self.impick.set_horizon_paths(self.wvpick.get_horizon_paths())
                     self.impick.blit()
 
 

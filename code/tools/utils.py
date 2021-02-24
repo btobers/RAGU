@@ -109,15 +109,19 @@ def merge_paths(a):
     return (x,y)
 
 
-# dict_compare is a method to compare the two pick dictionaries to see if they are equal
-def dict_compare(a, b):
-    if len(a) == 0 & len(b) == 0:
+# compare_horizon_paths between two dictionaries
+def compare_horizon_paths(dicta=None, dictb=None):
+    out = True
+    if len(dicta) == 0 & len(dictb) == 0:
         return True
-    else:
-        for _i in range(len(a)):
-            if nan_array_equal(a[_i],b[_i]):
-                return True
-        return False
+    for horizon in dicta.keys():
+        for seg in dicta[horizon].keys():
+            if nan_array_equal(dicta[horizon][seg].y, dictb[horizon][seg].y):
+                continue
+            else:
+                out = False
+                break
+    return out
 
 
 # surfpick2elev function
