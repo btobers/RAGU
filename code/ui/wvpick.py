@@ -20,9 +20,10 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 
 class wvpick(tk.Frame):
     # wvpick is a class to optimize the picking of horizons from radar data
-    def __init__(self, parent, *args, **kwargs):
+    def __init__(self, parent, reset_picks, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
+        self.reset_picks = reset_picks
         self.winSize = tk.IntVar(value=100)
         self.stepSize = tk.IntVar(value=10)
         self.horVar = tk.StringVar()
@@ -38,61 +39,68 @@ class wvpick(tk.Frame):
         infoFrame0.pack(side="top",fill="both")        
         infoFrame = tk.Frame(infoFrame0)
         infoFrame.pack(side="left",fill="both")
-        interpFrame = tk.Frame(infoFrame0)
+        interpFrame = tk.Frame(infoFrame0, width=500)
         interpFrame.pack(side="right",fill="both")
-        # interpFrame.pack_propagate(0)
+        interpFrame.pack_propagate(0)
         toolbarFrame = tk.Frame(infoFrame)
         toolbarFrame.pack(side="bottom",fill="both")
         self.dataFrame = tk.Frame(self.parent)
-        self.dataFrame.pack(side="top", fill="both", expand=1)
+        self.dataFrame.pack(side="bottom", fill="both", expand=1)
 
         # infoFrame exists for options to be added based on optimization needs
         tk.Label(infoFrame, text = "Amplitude Window [#Samples]: ").pack(side="left")
         tk.Entry(infoFrame, textvariable=self.winSize, width = 5).pack(side="left")
-        tk.Label(infoFrame, text = "\tStep Size [#Traces]: ").pack(side="left")
+        tk.ttk.Separator(infoFrame,orient="vertical").pack(side="left", fill="both", padx=10, pady=4)
+
+        tk.Label(infoFrame, text = "Step Size [#Traces]: ").pack(side="left")
         tk.Entry(infoFrame, textvariable=self.stepSize, width = 5).pack(side="left")
-        tk.Label(infoFrame, text="\t").pack(side="left")
+        tk.ttk.Separator(infoFrame,orient="vertical").pack(side="left", fill="both", padx=10, pady=4)
+
         tk.Button(infoFrame, text="←", command = self.stepBackward, pady=0).pack(side="left")
         tk.Button(infoFrame, text="→", command = self.stepForward, pady=0).pack(side="left")
-        tk.Label(infoFrame, text="\t").pack(side="left")
-        
+        tk.ttk.Separator(infoFrame,orient="vertical").pack(side="left", fill="both", padx=10, pady=4)
+
         # set up frame to hold pick information
         interpFrameT = tk.Frame(interpFrame)
         interpFrameT.pack(fill="both",expand=True)
-        # interpFrameT.pack_propagate(0)
+        interpFrameT.pack_propagate(0)
         interpFrameB = tk.Frame(interpFrame)
         interpFrameB.pack(fill="both",expand=True)
-        # interpFrameB.pack_propagate(0)
-
-        interpFrameTl = tk.Frame(interpFrameT)
+        interpFrameB.pack_propagate(0)
+        
+        interpFrameTl = tk.Frame(interpFrameT,width=300,relief="ridge", borderwidth=1)
         interpFrameTl.pack(side="left",fill="both",expand=True)
-        # interpFrameTl.pack_propagate(0)
-        interpFrameTr = tk.Frame(interpFrameT,width=100)
+        interpFrameTl.pack_propagate(0)
+        interpFrameTr = tk.Frame(interpFrameT,width=200)
         interpFrameTr.pack(side="left",fill="both",expand=True)
-        # interpFrameTr.pack_propagate(0)
+        interpFrameTr.pack_propagate(0)
 
-        interpFrameBl = tk.Frame(interpFrameB,width=400)
+        interpFrameBl = tk.Frame(interpFrameB,width=300,relief="ridge", borderwidth=1)
         interpFrameBl.pack(side="left",fill="both",expand=True)
-        # interpFrameBl.pack_propagate(0)
-        interpFrameBr = tk.Frame(interpFrameB,width=100)
+        interpFrameBl.pack_propagate(0)
+        interpFrameBr = tk.Frame(interpFrameB,width=200)
         interpFrameBr.pack(side="left",fill="both",expand=True)
-        # interpFrameBr.pack_propagate(0)
+        interpFrameBr.pack_propagate(0)
 
         tk.Label(interpFrameTl,text="Horizon:\t").pack(side="left")
-        self.horizons=[None]
-        self.horMenu = tk.OptionMenu(interpFrameTl, self.horVar, *self.horizons)
+        self.horMenu = tk.OptionMenu(interpFrameTl, self.horVar, *[None])
         self.horMenu.pack(side="left")
-        self.horMenu.config(width=20)
-        self.horVar.trace("w", lambda *args, first=True : self.update_seg_opt_menu(first)) 
+        self.horMenu.config(width=18)
+        self.horVar.trace("w", self.update_seg_opt_menu) 
+        self.horVar.trace("w", self.seg_select)
         self.horVar.trace("w", lambda *args, menu=self.horMenu : self.set_menu_color(menu))
-        self.horVar.trace("w", self.plot_wv)
+        tk.Button(interpFrameTl, text="Reset", command = self.reset, pady=0).pack(side="right",fill="both",expand=True)
 
         tk.Label(interpFrameBl,text="Segment: ").pack(side="left")
-        segments=[None]
-        self.segMenu = tk.OptionMenu(interpFrameBl, self.segVar, *segments)
+        self.segMenu = tk.OptionMenu(interpFrameBl, self.segVar, *[None])
         self.segMenu.pack(side="left")
         self.segMenu.config(width=2)
-        self.segVar.trace("w", self.plot_wv)
+        self.segVar.trace("w", self.first_trace)
+    
+        tk.Radiobutton(interpFrameTr, text="Linear", variable=self.interp_type, value="linear").pack(side="left",fill="both",expand=True)
+        tk.Radiobutton(interpFrameTr,text="Cubic Spline", variable=self.interp_type, value="cubic").pack(side="left",fill="both",expand=True)
+        tk.Button(interpFrameBr, text="Auto-Optimize", command=self.auto_repick).pack(side="left",fill="both",expand=True)
+        tk.Button(interpFrameBr, text="Interpolate", command=self.interp_repick).pack(side="left",fill="both",expand=True)
 
         # create figure object and datacanvas from it
         plt.rcParams.update({'font.size': 12})
@@ -110,16 +118,6 @@ class wvpick(tk.Frame):
         self.toolbar.pack(side="left")
         # self.toolbar.update()
 
-        label = tk.Label(interpFrameTr, text = "Pick Optimization")
-        label.pack(side="top")
-        f = tk.font.Font(label, label.cget("font"))
-        f.configure(underline=True)
-        label.configure(font=f)
-        tk.Radiobutton(interpFrameTr,text="Cubic Spline", variable=self.interp_type, value="cubic").pack(side="right")
-        tk.Radiobutton(interpFrameTr, text="Linear", variable=self.interp_type, value="linear").pack(side="right")
-        tk.Button(interpFrameBr, text="Interpolate", command=self.interp_repick, pady=0).pack(side="right")
-        tk.Button(interpFrameBr, text="Auto", command=self.auto_repick, pady=0).pack(side="right")
-
         # create the figure axes
         self.ax = self.fig.add_subplot(111)
         self.fig.tight_layout(rect=[.02,.05,.97,1])
@@ -133,10 +131,11 @@ class wvpick(tk.Frame):
     # set up variables
     def set_vars(self):
         self.rdata = None
-        self.horizon_paths_opt = {}
+        self.horizon_paths_opt = None
         self.ln_colors = {}
         self.horizons = []
         self.repick_idx = {}        # dictionary of indeces of repicked traces for each seg
+        self.t  = None              # hold current trace number
 
 
     # set_data is a method to receive the radar data
@@ -163,6 +162,12 @@ class wvpick(tk.Frame):
     # receive horizon line colors
     def set_horizon_colors(self, ln_colors):
         self.ln_colors = ln_colors
+
+
+    # reset returns updated picks from gui
+    def reset(self):
+        if tk.messagebox.askyesno("Reset","Reset optimized horizon interpretations?"):
+            self.reset_picks(force=True)
 
 
     # set_picks is a method which receives horizon interpretations for optimization
@@ -202,8 +207,8 @@ class wvpick(tk.Frame):
         self.ax.clear()
 
         # plot trace power
-        t = self.trace[horizon]
-        self.ax.plot(self.rdata.proc[:,t], c="0.5")
+        self.t = self.trace[horizon]
+        self.ax.plot(self.rdata.proc[:,self.t], c="0.5")
         self.ax.set(xlabel = "Sample", ylabel = "Power [dB]", title="Trace: " + str(int(self.trace[horizon] + 1)) + "/" + str(int(self.rdata.tnum)))
 
         # get pick value range
@@ -212,13 +217,14 @@ class wvpick(tk.Frame):
         # if self.nhorizons > 0:
         for horizon in self.horizons:
             # get sample index of pick for given trace
-            pick_idx0 = self.horizon_paths[horizon][seg].y[t]
-            pick_idx1 = self.horizon_paths_opt[horizon][seg].y[t]
-            val = np.append(val, (pick_idx0+pick_idx1)//2)
-            if not np.isnan(pick_idx0):
-                self.ax.axvline(x = pick_idx0, c=self.ln_colors[horizon], label=horizon)
-                if not np.isnan(pick_idx1) and (pick_idx0 != pick_idx1):
-                    self.ax.axvline(x = pick_idx1, c=self.ln_colors[horizon], ls = "--", label=horizon + "_v2")
+            for seg in self.horizon_paths_opt[horizon].keys():
+                pick_idx0 = self.horizon_paths[horizon][seg].y[self.t]
+                pick_idx1 = self.horizon_paths_opt[horizon][seg].y[self.t]
+                val = np.append(val, (pick_idx0+pick_idx1)//2)
+                if not np.isnan(pick_idx0):
+                    self.ax.axvline(x = pick_idx0, c=self.ln_colors[horizon], label=horizon + "_" + str(seg))
+                    if not np.isnan(pick_idx1) and (pick_idx0 != pick_idx1):
+                        self.ax.axvline(x = pick_idx1, c=self.ln_colors[horizon], ls = "--", label=horizon + "_" + str(seg) + "_v2")
         
         self.ax.set(xlim=(0,self.rdata.snum))
         # save un-zoomed view to toolbar
@@ -226,15 +232,15 @@ class wvpick(tk.Frame):
 
         # zoom in to window around horizons
         if not np.isnan(val).all():
-            if xlim == (0,1):
+            if xlim == (0,1) or xlim == (0,self.rdata.snum):
                 min_ = np.nanmin(val) - (2*winSize)
                 max_ = np.nanmax(val) + (2*winSize)
                 self.ax.set(xlim=(min_,max_))
             else:
                 self.ax.set(xlim=xlim)
 
-        if self.nhorizons > 0:
-            self.ax.legend()
+        if len(self.ax.lines) > 1:
+            self.ax.legend(loc="lower right")
 
         # initialize cursor crosshair lines
         self.horizontal_line = self.ax.axhline(color="r", lw=1, ls=":")
@@ -308,6 +314,39 @@ class wvpick(tk.Frame):
                     self.trace[0] = self.rdata.tnum - 1
 
         self.plot_wv()
+
+
+    # seg_select 
+    def seg_select(self, *args):
+        if self.t is None:
+            return
+        horizon = self.horVar.get()
+        seg = self.segVar.get()
+        self.trace[horizon] = self.t
+        t0_list = self.segment_traces[horizon].first
+        t1_list = self.segment_traces[horizon].last
+        # if switched horizon, select segment which has current trace, if any
+        for _i in range(len(t0_list)):  
+            if (t0_list[_i] < self.t) and (t1_list[_i] > self.t):
+                self.segVar.set(_i)
+                self.t = None
+                break
+            else: 
+                continue
+
+
+    # first_trace updates the segment selection sets self.trace[horizon] to the first trace for the selected segment and replots
+    def first_trace(self, *args):
+        if self.t is not None:
+            horizon = self.horVar.get()
+            seg = self.segVar.get()
+            t0_list = self.segment_traces[horizon].first
+            if seg > len(t0_list):
+                return
+            self.trace[horizon] = t0_list[seg]
+        # reset xlim
+        self.ax.set(xlim=(0,self.rdata.snum))
+        self.plot_wv()    
 
 
     # # surf_autoPick is a method to automatically optimize surface picks by selecting the maximul amplitude sample within the specified window around existing self.rdata.surf
@@ -412,15 +451,12 @@ class wvpick(tk.Frame):
 
 
     # update the horizon seg menu based on how many segments exist for given seg
-    def update_seg_opt_menu(self, first=False, *args):
+    def update_seg_opt_menu(self, *args):
         horizon = self.horVar.get()
         self.segMenu["menu"].delete(0, "end")
         if horizon:
             for seg in sorted(self.horizon_paths_opt[horizon].keys()):
                 self.segMenu["menu"].add_command(label=seg, command=tk._setit(self.segVar, seg))
-            # set seg selection to last
-            if first:
-                self.segVar.set(0)
 
 
     # show_artists
@@ -471,6 +507,8 @@ class wvpick(tk.Frame):
 
     # on_mouse_move blit crosshairs
     def on_mouse_move(self, event):
+        if self.rdata is None:
+            return
         x = event.xdata
         y = event.ydata
         if event.inaxes == self.ax:

@@ -20,12 +20,12 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 
 
 class basemap(tk.Frame):
-    def __init__(self, parent, datPath, navcrs, body, from_basemap):
+    def __init__(self, parent, datPath, navcrs, body, to_gui):
         self.parent = parent
         self.datPath = datPath
         self.navcrs = navcrs
         self.body = body
-        self.to_gui = from_basemap
+        self.to_gui = to_gui
         # create tkinter toplevel window to display basemap
         self.basemap_window = tk.Toplevel(self.parent)
         img = tk.PhotoImage(file="../recs/basemap_icon.png")

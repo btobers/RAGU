@@ -37,53 +37,7 @@ class impick(tk.Frame):
         self.segVar = tk.IntVar()
         self.color = tk.StringVar()
         self.popup = popup(self.parent)
-        self.set_vars()
         self.setup()
-
-
-    # set_vars is a method to set impick variables which need to reset upon each load
-    def set_vars(self):
-        self.pick_vis = True
-        self.ann_vis = True
-        self.basemap = None
-        self.pick_surf = None
-
-        self.pick_state = False
-        self.pyramid = None
-
-        # image colormap bounds
-        self.data_cmin = None
-        self.data_cmax = None
-        self.sim_cmin = None
-        self.sim_cmax = None
-
-        # image colormap range
-        self.data_crange = None
-        self.sim_crange = None
-
-        # initialize path objects #
-        self.tmp_horizon_path = path([],[])                                     # temporary path object to hold horizon segment currently being picked/edited
-        self.horizon_paths = {}                                                 # dictionary to hold horizon paths for saved picks
-
-        # initialize line objects
-        self.tmp_horizon_ln = None
-        self.horizon_lns = {}
-        self.horizontal_line = None
-        self.vertical_line = None
-
-        # initialize list of pick annotations
-        self.ann_list = []
-        self.horizons = []
-
-        # necessary flags
-        self.sim_imSwitch_flag = False
-        self.edit_flag = False
-
-        self.im_status.set("data")
-        self.debugState = False
-        self.horVar.set("")
-        self.segVar.set(0)
-        self.color.set("")
 
 
     # setup impick
@@ -225,8 +179,54 @@ class impick(tk.Frame):
         self.ln_colors = {}
         self.ln_colors["str"] = ["cyan", "green", "orange", "magenta", "yellow", "blue", "purple", "brown"]
         self.ln_colors["hex"] = ["#17becf","#2ca02c","#ff7f0e","#e377c2","#bcbd22","#1f77bf","#9467bd","#8c564b"]
-        self.ln_colors["used"] = {}
         mpl.rcParams['axes.prop_cycle'] = cycler(color=self.ln_colors["hex"])
+
+
+    # set_vars is a method to set impick variables which need to reset upon each load
+    def set_vars(self):
+        self.pick_vis = True
+        self.ann_vis = True
+        self.basemap = None
+        self.pick_surf = None
+
+        self.pick_state = False
+        self.pyramid = None
+
+        # image colormap bounds
+        self.data_cmin = None
+        self.data_cmax = None
+        self.sim_cmin = None
+        self.sim_cmax = None
+
+        # image colormap range
+        self.data_crange = None
+        self.sim_crange = None
+
+        # initialize path objects #
+        self.tmp_horizon_path = path([],[])                                     # temporary path object to hold horizon segment currently being picked
+        self.edit_path = None                                                   # temporary path object to hold horizon segment currently being edited
+        self.horizon_paths = {}                                                 # dictionary to hold horizon paths for saved picks
+
+        # initialize line objects
+        self.tmp_horizon_ln = None
+        self.horizon_lns = {}
+        self.horizontal_line = None
+        self.vertical_line = None
+
+        # initialize list of pick annotations
+        self.ann_list = []
+        self.horizons = []
+
+        # necessary flags
+        self.sim_imSwitch_flag = False
+        self.edit_flag = False
+
+        self.im_status.set("data")
+        self.debugState = False
+        self.horVar.set("")
+        self.segVar.set(0)
+        self.color.set("")
+        self.ln_colors["used"] = {}
 
 
     # set image cmap
@@ -521,61 +521,6 @@ class impick(tk.Frame):
             self.drawData(force=True)
 
 
-    # toggle to radar data
-    def show_data(self):
-        # get sim colormap slider values for reviewing
-        self.sim_cmin = self.s_cmin.val
-        self.sim_cmax = self.s_cmax.val
-        # set colorbar initial values to previous values
-        self.s_cmin.valinit = self.data_cmin
-        self.s_cmax.valinit = self.data_cmax
-        # set colorbar bounds
-        self.s_cmin.valmin = self.mindB_data - (self.data_crange/2)
-        self.s_cmin.valmax = self.mindB_data + (self.data_crange/2)
-        self.s_cmax.valmin = self.maxdB_data - (self.data_crange/2)
-        self.s_cmax.valmax = self.maxdB_data + (self.data_crange/2)
-        self.update_slider()
-        # reverse visilibilty
-        self.im_sim.set_visible(False)
-        self.im_dat.set_visible(True)
-        self.im_status.set("data")
-        # redraw canvas
-        # self.update_bg()
-        self.fig.canvas.draw()
-
-
-    # toggle to sim viewing
-    def show_sim(self):
-        # get radar data colormap slider values for reviewing
-        self.data_cmin = self.s_cmin.val
-        self.data_cmax = self.s_cmax.val
-
-        if not self.sim_imSwitch_flag:
-            # if this is the first time viewing the sim, set colorbar limits to initial values
-            self.s_cmin.valinit = self.mindB_sim
-            self.s_cmax.valinit = self.maxdB_sim
-        else: 
-            # if sim has been shown before revert to previous colorbar values
-            self.im_sim.set_clim([self.sim_cmin, self.sim_cmax])
-            self.s_cmin.valinit = self.sim_cmin
-            self.s_cmax.valinit = self.sim_cmax
-
-        self.s_cmin.valmin = self.mindB_sim - (self.sim_crange/2)
-        self.s_cmin.valmax = self.mindB_sim + (self.sim_crange/2)           
-        self.s_cmax.valmin = self.maxdB_sim - (self.sim_crange/2)
-        self.s_cmax.valmax = self.maxdB_sim + (self.sim_crange/2)
-        self.update_slider()
-        # reverse visilibilty
-        self.im_dat.set_visible(False)
-        self.im_sim.set_visible(True)
-        # set flag to indicate that sim has been viewed for resetting colorbar limits
-        self.sim_imSwitch_flag = True    
-        self.im_status.set("sim")
-        # redraw canvas
-        # self.update_bg()
-        self.fig.canvas.draw()
-
-
    # set_im is a method to set which rdata is being displayed
     def set_im(self):
         if self.im_status.get() == "data":
@@ -583,6 +528,61 @@ class impick(tk.Frame):
 
         elif self.im_status.get() =="sim":
             self.show_data()
+
+
+    # toggle to radar data
+    def show_data(self):
+        if not self.im_dat.get_visible():
+            # get sim colormap slider values for reviewing
+            self.sim_cmin = self.s_cmin.val
+            self.sim_cmax = self.s_cmax.val
+            # set colorbar initial values to previous values
+            self.s_cmin.valinit = self.data_cmin
+            self.s_cmax.valinit = self.data_cmax
+            # set colorbar bounds
+            self.s_cmin.valmin = self.mindB_data - (self.data_crange/2)
+            self.s_cmin.valmax = self.mindB_data + (self.data_crange/2)
+            self.s_cmax.valmin = self.maxdB_data - (self.data_crange/2)
+            self.s_cmax.valmax = self.maxdB_data + (self.data_crange/2)
+            self.update_slider()
+            # reverse visilibilty
+            self.im_sim.set_visible(False)
+            self.im_dat.set_visible(True)
+            # redraw canvas
+            # self.update_bg()
+            self.fig.canvas.draw()
+
+
+    # toggle to sim viewing
+    def show_sim(self):
+        if not self.im_sim.get_visible():
+            # get radar data colormap slider values for reviewing
+            self.data_cmin = self.s_cmin.val
+            self.data_cmax = self.s_cmax.val
+
+            if not self.sim_imSwitch_flag:
+                # if this is the first time viewing the sim, set colorbar limits to initial values
+                self.s_cmin.valinit = self.mindB_sim
+                self.s_cmax.valinit = self.maxdB_sim
+            else: 
+                # if sim has been shown before revert to previous colorbar values
+                self.im_sim.set_clim([self.sim_cmin, self.sim_cmax])
+                self.s_cmin.valinit = self.sim_cmin
+                self.s_cmax.valinit = self.sim_cmax
+
+            self.s_cmin.valmin = self.mindB_sim - (self.sim_crange/2)
+            self.s_cmin.valmax = self.mindB_sim + (self.sim_crange/2)           
+            self.s_cmax.valmin = self.maxdB_sim - (self.sim_crange/2)
+            self.s_cmax.valmax = self.maxdB_sim + (self.sim_crange/2)
+            self.update_slider()
+            # reverse visilibilty
+            self.im_dat.set_visible(False)
+            self.im_sim.set_visible(True)
+            # set flag to indicate that sim has been viewed for resetting colorbar limits
+            self.sim_imSwitch_flag = True    
+            # redraw canvas
+            # self.update_bg()
+            self.fig.canvas.draw()
 
 
     # get_pickState is a method to return the current picking state
@@ -634,6 +634,8 @@ class impick(tk.Frame):
 
     # init_horizon is a method to initialize new horizon objects
     def init_horizon(self, horizon=None, skip_array=False):
+        if self.get_pickState():
+            return
         if not horizon:
             if self.popup.flag == 1:
                 return            
@@ -689,6 +691,8 @@ class impick(tk.Frame):
 
     # rename horizon
     def rename_horizon(self, horizon=None):
+        if self.get_pickState():
+            return
         if horizon:
             if self.popup.flag == 1:
                 return
@@ -730,6 +734,7 @@ class impick(tk.Frame):
             # rename horizon path, line objects, and used line colors maintaining order
             if hname:
                 self.horizon_paths = {hname if k==horizon else k:v for k,v in self.horizon_paths.items()}
+                self.rdata.pick.horizons = {hname if k==horizon else k:v for k,v in self.rdata.pick.horizons.items()}
                 self.horizon_lns = {hname if k==horizon else k:v for k,v in self.horizon_lns.items()}
                 self.ln_colors["used"] = {hname if k==horizon else k:v for k,v in self.ln_colors["used"].items()}
                 # set horVar to new horizon
@@ -742,19 +747,20 @@ class impick(tk.Frame):
 
     # remove horizon
     def rm_horizon(self, rm_all=False, horizon=None, verify=True):
-        if len(self.horizons) < 0:
+        if len(self.horizons) < 1:
             return
 
         if rm_all:
             if verify and tk.messagebox.askyesno("Warning","Remove all interpretation horizons?"):
                 horizon = list(self.horizon_paths.keys())
+                verify = False
             else:
                 return
 
         if horizon is None:
             if self.popup.flag == 1:
                 return
-        # popup window to get horizon and segment option
+            # popup window to get horizon and segment option
             hname = tk.StringVar()
             hname.set(self.horVar.get())
             # create popup window to rename horizon
@@ -788,6 +794,8 @@ class impick(tk.Frame):
                 return
             if isinstance(horizon,str):
                 horizon = [horizon]
+            if self.get_pickState() and self.horVar.get() in horizon:
+                self.set_pickState(False)
             for h in horizon:
                 # get index of key to remove annotation
                 i = list(self.horizon_paths.keys()).index(h)
@@ -824,8 +832,8 @@ class impick(tk.Frame):
 
 
     # edit selected interpretation segment
-    def edit_segment(self, horizon=None, seg=None):
-        if len(self.horizons) < 1:
+    def edit_segment(self, horizon=None, seg=None, verify=True):
+        if len(self.horizons) < 1 or self.get_pickState():
             return
         # popup window to get horizon and segment option
         if horizon is None and seg is None:
@@ -867,19 +875,22 @@ class impick(tk.Frame):
             hname.trace_vdelete("w", trace1)
             horizon = hname.get()
             seg = s.get()
+            verify = False
             if (not horizon) or (seg is None) or (self.popup.flag==-1):
                 return
 
         # ensure segment belongs to horizon and that interpretations have been made
         if (seg in self.horizon_paths[horizon]):
-            if (np.isnan(self.horizon_paths[horizon][seg].x).all()) or (self.edit_flag==True):
+            if np.isnan(self.horizon_paths[horizon][seg].x).all():
                 return
-            if not (tk.messagebox.askokcancel("Warning", "Edit interpretation segment " + horizon + "_" + str(seg) + "?", icon="warning")):
+            if verify and not (tk.messagebox.askokcancel("Warning", "Edit interpretation segment " + horizon + "_" + str(seg) + "?", icon="warning")):
                 return
             self.edit_flag = True
             self.set_pickState(True)
             # find indices of picked traces
             picks_idx = np.where(~np.isnan(self.horizon_paths[horizon][seg].x))[0]
+            # update self.edit_path
+            self.edit_path = path(picks_idx, self.horizon_paths[horizon][seg].y[picks_idx])
             # return picked traces to xln list
             self.tmp_horizon_path.x = picks_idx[::20].tolist()
             # return picked samples to yln list
@@ -945,12 +956,13 @@ class impick(tk.Frame):
 
         # ensure segment belongs to horizon and that interpretations have been made
         if (seg in self.horizon_paths[horizon]):
-            if (np.isnan(self.horizon_paths[horizon][seg].x).all()) and (self.edit_flag==False):
+            if (np.isnan(self.horizon_paths[horizon][seg].x).all()) and not (self.edit_flag):
                 return
+
             if not (tk.messagebox.askokcancel("Warning", "Remove interpretation segment " + horizon + "_" + str(seg) + "?", icon="warning")):
                 return
             # if currently editing layer, clear tmp horizon objects
-            if self.edit_flag==True:
+            if self.edit_flag:
                 # clear active pick lists
                 del self.tmp_horizon_path.x[:]
                 del self.tmp_horizon_path.y[:]
@@ -1016,9 +1028,18 @@ class impick(tk.Frame):
             # if pick state was previously true
             if self.get_pickState():
                 if l >=  2:
+                    # handle previously editing
+                    if self.edit_flag:
+                        # if no edits made, return to previous segment picks
+                        x = self.edit_path.x[::20].tolist()
+                        y = self.edit_path.y[::20].tolist()
+                        if (x == self.tmp_horizon_path.x) and (y == self.tmp_horizon_path.y):
+                            self.tmp_horizon_path.x = self.edit_path.x.tolist()
+                            self.tmp_horizon_path.y = self.edit_path.y.tolist()
+                    # interpolate and plot picks
                     self.pick_interp(horizon=horizon,seg=seg)
                     self.plot_picks(horizon=horizon)
-                    if self.edit_flag==False and (seg + 1) not in self.horizon_paths[horizon]:
+                    if (seg + 1) not in self.horizon_paths[horizon]:
                         self.init_segment(horizon)
                     else:
                         self.segVar.set(seg + 1)
@@ -1026,10 +1047,8 @@ class impick(tk.Frame):
                 else:
                     self.clear_last()
                     del self.horizon_paths[horizon][list(self.horizon_paths[horizon].keys())[-1]]
-                # reset self.edit_flag
-                if self.edit_flag==True:
-                    self.edit_flag = False
-                    self.segVar.set(seg + 1)
+            # reset edit_flag
+            self.edit_flag = state
         # update pick_state to current state
         self.pick_state = state
         # set crosshair visibility

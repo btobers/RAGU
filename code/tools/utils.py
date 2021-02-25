@@ -67,6 +67,7 @@ def sort_array_dict(a):
 def clump_array(a):
     return [a[s] for s in np.ma.clump_unmasked(np.ma.masked_invalid(a))]
 
+
 # nonan_idx_array returns an array with the index of non-nan values
 def nonan_idx_array(a):
     out = np.repeat(np.nan, a.shape[0])

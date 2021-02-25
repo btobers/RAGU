@@ -225,12 +225,12 @@ class mainGUI(tk.Frame):
 
         # initialize impick
         self.impick = impick.impick(self.imTab)
+        self.impick.set_vars()
         self.impick.update_figsettings(self.figsettings)
         self.impick.set_eps_r(self.eps_r.get())
-        self.impick.set_vars()
 
         # initialize wvpick
-        self.wvpick = wvpick.wvpick(self.wvTab)
+        self.wvpick = wvpick.wvpick(self.wvTab, self.reset_wvpick)
         self.wvpick.update_figsettings(self.figsettings)
         self.wvpick.set_vars()
 
@@ -572,7 +572,7 @@ class mainGUI(tk.Frame):
                     hname =tk.StringVar()
                     horizons = list(self.rdata.pick.horizons)
                     hname.set(horizons[-1])
-                    popup = self.init_popup(title="Export Horizon")
+                    popup = self.popup.new(title="Export Horizon")
                     tk.Label(popup, text="Select horizon to export:").pack(fill="both", expand=True)
                     dropdown = tk.OptionMenu(popup, hname, *horizons)
                     dropdown["menu"].delete(0, "end")
@@ -582,7 +582,7 @@ class mainGUI(tk.Frame):
                     # trace change in self.color to self.set_menu_color
                     trace = hname.trace("w", lambda *args, menu=dropdown, horizon=hname, colors=horizon_colors : self.set_menu_color(menu, horizon, colors))
                     for key, val in horizon_colors.items():
-                        dropdown["menu"].add_command(label=key, foreground=val, activeforeground=val, command=tk._setit(h, key))
+                        dropdown["menu"].add_command(label=key, foreground=val, activeforeground=val, command=tk._setit(hname, key))
                     button = tk.Button(popup, text="OK", command=lambda:self.popup.close(flag=0), width=20).pack(side="left", fill="none", expand=True)
                     button = tk.Button(popup, text="Cancel", command=lambda:[hname.set(""), self.popup.close(flag=-1)], width=20).pack(side="left", fill="none", expand=True)
                     # wait for window to be closed
@@ -704,6 +704,31 @@ class mainGUI(tk.Frame):
         self.open_dfile(path + _i)
 
 
+    # reset_wvpick passes picks from impick to wvpick
+    def reset_wvpick(self, force=False, check=False):
+        if self.wvpick.get_horizon_paths() is None:
+            force = True
+        else:
+            impaths = self.impick.get_horizon_paths()
+            wvpaths = self.wvpick.get_horizon_paths()
+            for h in impaths.keys():
+                if h not in wvpaths.keys():
+                    check = True
+                    break
+                for s in impaths[h].keys():
+                    if s not in wvpaths[h].keys():
+                        check = True
+                        break
+            if check and tk.messagebox.askyesno("Import","Import updated horizon interpretations?"):
+                force = True
+        if force:
+            self.wvpick.set_data(self.rdata)
+            self.wvpick.set_horizon_colors(self.impick.get_horizon_colors())
+            self.wvpick.set_horizon_paths(self.impick.get_horizon_paths())
+            self.wvpick.set_picks()
+            self.wvpick.plot_wv()
+
+
     # set tkinter menu font colors to match color name
     def set_menu_color(self, menu=None, horizon=None, colors=None, *args):
         c = colors[horizon.get()]
@@ -729,18 +754,12 @@ class mainGUI(tk.Frame):
             # determine which tab is active
             if (self.tab == "Waveform"):
                 self.end_pick()
-                # get pick dict from impick and pass to wvpick
-                self.wvpick.set_data(self.rdata)
-                self.wvpick.set_horizon_colors(self.impick.get_horizon_colors())
-                self.wvpick.set_horizon_paths(self.impick.get_horizon_paths())
-                self.wvpick.set_picks()
-                self.wvpick.plot_wv()
+                # reset_wavepick
+                self.reset_wvpick()
             elif (self.tab == "Profile"):
-                self.wvpick.clear()
-                self.wvpick.set_vars()
                 # get updated picks from wvpick and pass back to impick if they differ
                 if not (utils.compare_horizon_paths(self.wvpick.get_horizon_paths(), self.impick.get_horizon_paths())) and \
-                        (tk.messagebox.askyesno("Import Optimized Interpretations","Import optimized horizon interpretations?")):
+                        (tk.messagebox.askyesno("Import","Import optimized horizon interpretations?")):
                     self.impick.set_horizon_paths(self.wvpick.get_horizon_paths())
                     self.impick.blit()
 
