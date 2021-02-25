@@ -85,12 +85,14 @@ class wvpick(tk.Frame):
         self.horMenu.config(width=20)
         self.horVar.trace("w", lambda *args, first=True : self.update_seg_opt_menu(first)) 
         self.horVar.trace("w", lambda *args, menu=self.horMenu : self.set_menu_color(menu))
+        self.horVar.trace("w", self.plot_wv)
 
         tk.Label(interpFrameBl,text="Segment: ").pack(side="left")
         segments=[None]
         self.segMenu = tk.OptionMenu(interpFrameBl, self.segVar, *segments)
         self.segMenu.pack(side="left")
         self.segMenu.config(width=2)
+        self.segVar.trace("w", self.plot_wv)
 
         # create figure object and datacanvas from it
         plt.rcParams.update({'font.size': 12})
@@ -182,7 +184,8 @@ class wvpick(tk.Frame):
                     if picked_traces.shape[0] > 0:
                         self.segment_traces[horizon].first.append(picked_traces[0])
                         self.segment_traces[horizon].last.append(picked_traces[-1])
-                        self.trace[horizon]= picked_traces[0]
+                        if seg == 0:
+                            self.trace[horizon] = picked_traces[0]
             # set horVar
             self.horVar.set(self.horizons[-1])
         else:
@@ -224,7 +227,9 @@ class wvpick(tk.Frame):
         # zoom in to window around horizons
         if not np.isnan(val).all():
             if xlim == (0,1):
-                self.ax.set(xlim=(int(min(val)-(2*winSize)),int(max(val)+(2*winSize))))
+                min_ = np.nanmin(val) - (2*winSize)
+                max_ = np.nanmax(val) + (2*winSize)
+                self.ax.set(xlim=(min_,max_))
             else:
                 self.ax.set(xlim=xlim)
 

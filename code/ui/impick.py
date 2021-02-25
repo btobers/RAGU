@@ -36,6 +36,7 @@ class impick(tk.Frame):
         self.horVar = tk.StringVar()
         self.segVar = tk.IntVar()
         self.color = tk.StringVar()
+        self.popup = popup(self.parent)
         self.set_vars()
         self.setup()
 
@@ -46,7 +47,6 @@ class impick(tk.Frame):
         self.ann_vis = True
         self.basemap = None
         self.pick_surf = None
-        self.popupFlag = True
 
         self.pick_state = False
         self.pyramid = None
@@ -79,7 +79,6 @@ class impick(tk.Frame):
         self.sim_imSwitch_flag = False
         self.edit_flag = False
 
-        self.edit_segmentNum = 0
         self.im_status.set("data")
         self.debugState = False
         self.horVar.set("")
@@ -143,18 +142,17 @@ class impick(tk.Frame):
         interpFrameBr.pack_propagate(0)
 
         tk.Label(interpFrameTl,text="Horizon:\t").pack(side="left")
-        self.horizons=[None]
-        self.horMenu = tk.OptionMenu(interpFrameTl, self.horVar, *self.horizons)
+        self.horMenu = tk.OptionMenu(interpFrameTl, self.horVar, *[None])
         self.horMenu.pack(side="left")
-        self.horMenu.config(width=20)
+        self.horMenu.config(width=18)
         self.horVar.trace("w", lambda *args, last=True : self.update_seg_opt_menu(last)) 
         self.horVar.trace("w", lambda *args, menu=self.horMenu, var="horVar" : self.set_menu_color(menu, var))
-        tk.Button(interpFrameTl, text="Delete", width=4, command=lambda:self.rm_horizon(horizon=self.horVar.get(), verify=True)).pack(side="right")
+        tk.Button(interpFrameTl, text="Delete", width=4, command=lambda:self.rm_horizon(horizon=self.horVar.get())).pack(side="right")
+        tk.Button(interpFrameTl, text="Rename", width=4, command=lambda:self.rename_horizon(horizon=self.horVar.get())).pack(side="right")
         tk.Button(interpFrameTl, text="New", width=4, command=self.init_horizon).pack(side="right")
 
         tk.Label(interpFrameBl,text="Segment: ").pack(side="left")
-        segments=[None]
-        self.segMenu = tk.OptionMenu(interpFrameBl, self.segVar, *segments)
+        self.segMenu = tk.OptionMenu(interpFrameBl, self.segVar, *[None])
         self.segMenu.pack(side="left")
         self.segMenu.config(width=2)
         tk.Button(interpFrameBl, text="Delete", width=4, command=lambda:self.rm_segment(horizon=self.horVar.get(),seg=self.segVar.get())).pack(side="right")
@@ -617,6 +615,8 @@ class impick(tk.Frame):
     
     # set tkinter menu font colors to match color name
     def set_menu_color(self, menu=None, var=None, *args):
+        if menu is None:
+            return
         if var=="color":
             c = self.ln_colors["hex"][self.ln_colors["str"].index(self.color.get())]
         elif var=="horVar":
@@ -625,23 +625,23 @@ class impick(tk.Frame):
                 return
             c = self.ln_colors["used"][horizon]
         else:
-            return
+            try:
+                c = self.ln_colors["used"][var.get()]
+            except:
+                return
         menu.config(foreground=c, activeforeground=c, highlightcolor=c)
 
 
     # init_horizon is a method to initialize new horizon objects
     def init_horizon(self, horizon=None, skip_array=False):
         if not horizon:
+            if self.popup.flag == 1:
+                return            
             # create popup window to get new horizon name and interpreatation color
-            h = tk.StringVar()
-            popup = tk.Toplevel(self.parent)
-            popup.geometry("500x150")
-            self.popupFlag = False
-            popup.config(bg="#d9d9d9")
-            popup.title("New Horizon")
-            popup.protocol("WM_DELETE_WINDOW", lambda:self.close_popup(popup,flag=False))
+            hname = tk.StringVar()
+            popup = self.popup.new(title="New Horizon")
             tk.Label(popup, text="Enter new horizon name:").pack(fill="both",expand=True)
-            entry = tk.Entry(popup, textvar=h, justify="center")
+            entry = tk.Entry(popup, textvar=hname, justify="center")
             entry.pack(fill="both",expand=True) 
             entry.focus_set()
             # interpretation color selection dropdown - default to first unused color in self.ln_colors
@@ -651,53 +651,136 @@ class impick(tk.Frame):
             dropdown = tk.OptionMenu(popup, self.color, *[None])
             dropdown["menu"].delete(0, "end")
             dropdown.config(width=20)
-            dropdown.pack(fill="none", expand=True)
+            dropdown.pack(fill="none", expand=True)                      
             self.set_menu_color(menu=dropdown, var="color")
             # trace change in self.color to self.set_menu_color
             trace = self.color.trace("w", lambda *args, menu=dropdown, var="color" : self.set_menu_color(menu, var))
-            for i,(c,hex) in enumerate(zip(self.ln_colors["str"], self.ln_colors["hex"])):
-                dropdown["menu"].add_command(label=c, foreground=hex, activeforeground=hex, command=tk._setit(self.color, c))
-            button = tk.Button(popup, text="OK", command=lambda:self.close_popup(popup,flag=True), width=20).pack(side="left", fill="none", expand=True)
-            button = tk.Button(popup, text="Cancel", command=lambda:[h.set(""), self.close_popup(popup,flag=True)], width=20).pack(side="left", fill="none", expand=True)
+            for c, h in zip(self.ln_colors["str"], self.ln_colors["hex"]):
+                dropdown["menu"].add_command(label=c, foreground=h, activeforeground=h, command=tk._setit(self.color, c))
+            button = tk.Button(popup, text="OK", command=lambda:self.popup.close(flag=0), width=20).pack(side="left", fill="none", expand=True)
+            button = tk.Button(popup, text="Cancel", command=lambda:[hname.set(""), self.popup.close(flag=-1)], width=20).pack(side="left", fill="none", expand=True)
             # wait for window to be closed
             self.parent.wait_window(popup)
             # remove the trace
             self.color.trace_vdelete("w", trace)
-            horizon = h.get()
+            horizon = hname.get()
+            if (not horizon) or (self.popup.flag==-1):
+                return
 
-        if self.popupFlag and horizon:
-            if not skip_array:
-                # ensure horizon doesn't already exist, otherwise overwrite or return
-                if horizon not in self.horizon_paths:
-                    self.rdata.pick.horizons[horizon] = np.repeat(np.nan, self.rdata.tnum)
-                elif tk.messagebox.askyesno("Warning","Horizon name (" + horizon + ") already exists. Overwrite?") == True:
-                    self.rdata.pick.horizons[horizon] = np.repeat(np.nan, self.rdata.tnum)
-                else:
-                    return
-            self.horizon_paths[horizon] = {}
-            # initialize 0th segment for new horizon
-            self.init_segment(horizon=horizon)
-            # initialize line object for new horizon
-            x,y = utils.merge_paths(self.horizon_paths[horizon])
-            self.horizon_lns[horizon], = self.ax.plot(x,y,c=self.ln_colors["hex"][self.ln_colors["str"].index(self.color.get())])            
+        if not skip_array:
+            # ensure horizon doesn't already exist, otherwise overwrite or return
+            if horizon not in self.horizon_paths:
+                self.rdata.pick.horizons[horizon] = np.repeat(np.nan, self.rdata.tnum)
+            elif tk.messagebox.askyesno("Warning","Horizon name (" + horizon + ") already exists. Overwrite?") == True:
+                self.rdata.pick.horizons[horizon] = np.repeat(np.nan, self.rdata.tnum)
+            else:
+                return
+        self.horizon_paths[horizon] = {}
+        # initialize 0th segment for new horizon
+        self.init_segment(horizon=horizon)
+        # initialize line object for new horizon
+        x,y = utils.merge_paths(self.horizon_paths[horizon])
+        self.horizon_lns[horizon], = self.ax.plot(x,y,c=self.ln_colors["hex"][self.ln_colors["str"].index(self.color.get())])            
+        # update horizon and segment options
+        self.update_hor_opt_menu()  
+        # set horVar to new horizon
+        self.horVar.set(horizon)  
+
+
+    # rename horizon
+    def rename_horizon(self, horizon=None):
+        if horizon:
+            if self.popup.flag == 1:
+                return
+            # create popup window to rename horizon
+            hname = tk.StringVar()
+            popup = self.popup.new(title="Rename Horizon")
+            tk.Label(popup, text="Rename " + horizon + " horizon:").pack(fill="both",expand=True)
+            entry = tk.Entry(popup, textvar=hname, justify="center")
+            entry.pack(fill="both",expand=True) 
+            entry.focus_set()
+            # interpretation color selection dropdown - default to current horizon line color
+            self.color.set(self.ln_colors["str"][self.ln_colors["hex"].index(self.ln_colors["used"][horizon])])
+            tk.Label(popup, text="Interpretation color:").pack(fill="both", expand=True)
+            dropdown = tk.OptionMenu(popup, self.color, *[None])
+            dropdown["menu"].delete(0, "end")
+            dropdown.config(width=20)
+            dropdown.pack(fill="none", expand=True)
+            self.set_menu_color(menu=dropdown, var="color")
+            # trace change in self.color to self.set_menu_color
+            trace = self.color.trace("w", lambda *args, menu=dropdown, var="color" : self.set_menu_color(menu, var))
+            for c,h in zip(self.ln_colors["str"], self.ln_colors["hex"]):
+                dropdown["menu"].add_command(label=c, foreground=h, activeforeground=h, command=tk._setit(self.color, c))
+            button = tk.Button(popup, text="OK", command=lambda:self.popup.close(flag=0), width=20).pack(side="left", fill="none", expand=True)
+            button = tk.Button(popup, text="Cancel", command=lambda:[hname.set(""), self.popup.close(flag=-1)], width=20).pack(side="left", fill="none", expand=True)
+            # wait for window to be closed
+            self.parent.wait_window(popup)
+            # remove color trace
+            self.color.trace_vdelete("w", trace)
+            hname = hname.get()
+            if self.popup.flag == -1:
+                return
+        
+            # update line color
+            c = self.ln_colors["hex"][self.ln_colors["str"].index(self.color.get())]
+            self.ln_colors["used"][horizon] = c
+            self.horizon_lns[horizon].set_color(c)
+            self.horVar.set(horizon)
+
+            # rename horizon path, line objects, and used line colors maintaining order
+            if hname:
+                self.horizon_paths = {hname if k==horizon else k:v for k,v in self.horizon_paths.items()}
+                self.horizon_lns = {hname if k==horizon else k:v for k,v in self.horizon_lns.items()}
+                self.ln_colors["used"] = {hname if k==horizon else k:v for k,v in self.ln_colors["used"].items()}
+                # set horVar to new horizon
+                self.horVar.set(hname) 
+                self.update_pickLabels()
             # update horizon and segment options
             self.update_hor_opt_menu()  
-            # set horVar to new horizon
-            self.horVar.set(horizon)  
-
-        else:
-            return
+            self.update_bg()
 
 
     # remove horizon
-    def rm_horizon(self, rm_all=False, horizon=None, verify=False):
-        if len(self.horizon_paths) == 0:
+    def rm_horizon(self, rm_all=False, horizon=None, verify=True):
+        if len(self.horizons) < 0:
             return
 
         if rm_all:
-            if tk.messagebox.askyesno("Warning","Remove all interpretation horizons?"):
+            if verify and tk.messagebox.askyesno("Warning","Remove all interpretation horizons?"):
                 horizon = list(self.horizon_paths.keys())
             else:
+                return
+
+        if horizon is None:
+            if self.popup.flag == 1:
+                return
+        # popup window to get horizon and segment option
+            hname = tk.StringVar()
+            hname.set(self.horVar.get())
+            # create popup window to rename horizon
+            popup = self.popup.new(title="Remove Horizon")
+            # create horizon dropdown menu
+            tk.Label(popup, text="Horizon:").pack(fill="both", expand=True)
+            hdropdown = tk.OptionMenu(popup, hname, *[None])
+            hdropdown.config(width=20)
+            hdropdown.pack(fill="none", expand=True)
+            # horizon dropdown with ln colors
+            self.color.set(self.ln_colors["str"][self.ln_colors["hex"].index(self.ln_colors["used"][hname.get()])])
+            self.set_menu_color(menu=hdropdown, var=hname)
+            # trace change in self.color to self.set_menu_color
+            trace0 = hname.trace("w", lambda *args, menu=hdropdown, var=hname : self.set_menu_color(menu, var))
+            for key, val in self.ln_colors["used"].items():
+                hdropdown["menu"].add_command(label=key, foreground=val, activeforeground=val, command=tk._setit(hname, key))
+            hname.set(self.horVar.get())
+            button = tk.Button(popup, text="OK", command=lambda:self.popup.close(flag=0), width=20).pack(side="left", fill="none", expand=True)
+            button = tk.Button(popup, text="Cancel", command=lambda:[hname.set(""), self.popup.close(flag=-1)], width=20).pack(side="left", fill="none", expand=True)
+            # wait for window to be closed
+            self.parent.wait_window(popup)
+            # remove color trace
+            hname.trace_vdelete("w", trace0)
+            horizon = hname.get()
+            verify = False
+            if (not horizon) or (self.popup.flag==-1):
                 return
 
         if horizon:
@@ -742,6 +825,51 @@ class impick(tk.Frame):
 
     # edit selected interpretation segment
     def edit_segment(self, horizon=None, seg=None):
+        if len(self.horizons) < 1:
+            return
+        # popup window to get horizon and segment option
+        if horizon is None and seg is None:
+            if self.popup.flag == 1:
+                return
+            hname = tk.StringVar()
+            hname.set(self.horVar.get())
+            s = tk.IntVar()
+            s.set(self.segVar.get())
+            # create popup window to rename horizon
+            popup = self.popup.new(title="Edit Horizon Segment")
+            # create horizon dropdown menu
+            tk.Label(popup, text="Horizon:").pack(fill="both", expand=True)
+            hdropdown = tk.OptionMenu(popup, hname, *[None])
+            hdropdown.config(width=20)
+            hdropdown.pack(fill="none", expand=True)
+            # horizon dropdown with ln colors
+            self.color.set(self.ln_colors["str"][self.ln_colors["hex"].index(self.ln_colors["used"][hname.get()])])
+            self.set_menu_color(menu=hdropdown, var=hname)
+            # trace change in self.color to self.set_menu_color
+            trace0 = hname.trace("w", lambda *args, menu=hdropdown, var=hname : self.set_menu_color(menu, var))
+            for key, val in self.ln_colors["used"].items():
+                hdropdown["menu"].add_command(label=key, foreground=val, activeforeground=val, command=tk._setit(hname, key))
+
+            # create seg dropdown menu
+            tk.Label(popup, text="Segment:").pack(fill="both", expand=True)
+            sdropdown = tk.OptionMenu(popup, s, *[None])
+            sdropdown.config(width=20)
+            sdropdown.pack(fill="none", expand=True)
+            # trace change in self.color to self.set_menu_color
+            trace1 = hname.trace("w", lambda *args, last=True, menu=sdropdown, hvar=hname, svar=s: self.update_seg_opt_menu(last, menu, hvar, svar))
+            hname.set(self.horVar.get())
+            button = tk.Button(popup, text="OK", command=lambda:self.popup.close(flag=0), width=20).pack(side="left", fill="none", expand=True)
+            button = tk.Button(popup, text="Cancel", command=lambda:[hname.set(""), self.popup.close(flag=-1)], width=20).pack(side="left", fill="none", expand=True)
+            # wait for window to be closed
+            self.parent.wait_window(popup)
+            # remove color trace
+            hname.trace_vdelete("w", trace0)
+            hname.trace_vdelete("w", trace1)
+            horizon = hname.get()
+            seg = s.get()
+            if (not horizon) or (seg is None) or (self.popup.flag==-1):
+                return
+
         # ensure segment belongs to horizon and that interpretations have been made
         if (seg in self.horizon_paths[horizon]):
             if (np.isnan(self.horizon_paths[horizon][seg].x).all()) or (self.edit_flag==True):
@@ -749,12 +877,11 @@ class impick(tk.Frame):
             if not (tk.messagebox.askokcancel("Warning", "Edit interpretation segment " + horizon + "_" + str(seg) + "?", icon="warning")):
                 return
             self.edit_flag = True
-            # self.edit_segmentNum = layer
             self.set_pickState(True)
             # find indices of picked traces
             picks_idx = np.where(~np.isnan(self.horizon_paths[horizon][seg].x))[0]
             # return picked traces to xln list
-            self.tmp_horizon_path.x = picks_idx[::50].tolist()
+            self.tmp_horizon_path.x = picks_idx[::20].tolist()
             # return picked samples to yln list
             self.tmp_horizon_path.y = self.horizon_paths[horizon][seg].y[self.tmp_horizon_path.x].tolist()
             # clear saved picks for horizon segment
@@ -770,6 +897,52 @@ class impick(tk.Frame):
 
     # remove selected interpretation segment
     def rm_segment(self, horizon=None, seg=None):
+        if len(self.horizons) < 1:
+            return
+        # popup window to get horizon and segment option
+        if horizon is None and seg is None:
+            if self.popup.flag == 1:
+                return
+            hname = tk.StringVar()
+            hname.set(self.horVar.get())
+            s = tk.IntVar()
+            s.set(self.segVar.get())
+            # create popup window to rename horizon
+            popup = self.popup.new(title="Remove Horizon Segment")
+            # create horizon dropdown menu
+            tk.Label(popup, text="Horizon:").pack(fill="both", expand=True)
+            hdropdown = tk.OptionMenu(popup, hname, *[None])
+            hdropdown.config(width=20)
+            hdropdown.pack(fill="none", expand=True)
+
+            # horizon dropdown with ln colors
+            self.color.set(self.ln_colors["str"][self.ln_colors["hex"].index(self.ln_colors["used"][hname.get()])])
+            self.set_menu_color(menu=hdropdown, var=hname)
+            # trace change in self.color to self.set_menu_color
+            trace0 = hname.trace("w", lambda *args, menu=hdropdown, var=hname : self.set_menu_color(menu, var))
+            for key, val in self.ln_colors["used"].items():
+                hdropdown["menu"].add_command(label=key, foreground=val, activeforeground=val, command=tk._setit(hname, key))
+            # create seg dropdown menu
+            tk.Label(popup, text="Segment:").pack(fill="both", expand=True)
+            sdropdown = tk.OptionMenu(popup, s, *[None])
+            sdropdown.config(width=20)
+            sdropdown.pack(fill="none", expand=True)
+            # trace change in self.color to self.set_menu_color
+            trace1 = hname.trace("w", lambda *args, last=True, menu=sdropdown, hvar=hname, svar=s: self.update_seg_opt_menu(last, menu, hvar, svar))
+            hname.set(self.horVar.get())
+            button = tk.Button(popup, text="OK", command=lambda:self.popup.close(flag=0), width=20).pack(side="left", fill="none", expand=True)
+            button = tk.Button(popup, text="Cancel", command=lambda:[hname.set(""), self.popup.close(flag=-1)], width=20).pack(side="left", fill="none", expand=True)
+            # wait for window to be closed
+            self.parent.wait_window(popup)
+            # remove hname traces
+            hname.trace_vdelete("w", trace0)
+            hname.trace_vdelete("w", trace1)
+            horizon = hname.get()
+            seg = s.get()
+            if (not horizon) or (seg is None) or (self.popup.flag==-1):
+                return
+        
+
         # ensure segment belongs to horizon and that interpretations have been made
         if (seg in self.horizon_paths[horizon]):
             if (np.isnan(self.horizon_paths[horizon][seg].x).all()) and (self.edit_flag==False):
@@ -795,7 +968,7 @@ class impick(tk.Frame):
                 del self.horizon_paths[horizon][_i + 1]
 
             self.update_pickLabels() 
-            self.update_seg_opt_menu()
+            self.update_seg_opt_menu(last=True)
             # reset line object for horizon
             x,y = utils.merge_paths(self.horizon_paths[horizon])
             self.horizon_lns[horizon].set_data(x,y)
@@ -806,13 +979,13 @@ class impick(tk.Frame):
     def set_pickState(self, state=False):
         horizon = self.horVar.get()
         seg=self.segVar.get()
-        # if no horizon selected, force user to create new horizon
-        if not horizon:
-            self.init_horizon()
         # temporary path object length
         l = len(self.tmp_horizon_path.x)                
         # handle pick state set to true
         if state:
+            if not horizon:
+                self.init_horizon()
+                return
             # if pick state was previously true
             if self.get_pickState():
                 if l >= 2:
@@ -835,13 +1008,13 @@ class impick(tk.Frame):
 
         # handle pick state set to false
         else:
+            self.startbutton.config(relief="raised")
+            self.stopbutton.config(relief="sunken")
+            # reactivate horizon and segment menus
+            self.horMenu.config(state="active")
+            self.segMenu.config(state="active")
             # if pick state was previously true
             if self.get_pickState():
-                self.startbutton.config(relief="raised")
-                self.stopbutton.config(relief="sunken")
-                # reactivate horizon and segment menus
-                self.horMenu.config(state="active")
-                self.segMenu.config(state="active")
                 if l >=  2:
                     self.pick_interp(horizon=horizon,seg=seg)
                     self.plot_picks(horizon=horizon)
@@ -963,14 +1136,6 @@ class impick(tk.Frame):
         self.horizon_lns[horizon].set_data(x,y)
 
 
-    # remove_imported_picks is a method to remove any imported data file picks from the image
-    def remove_existing_subsurf(self):
-        for _i in self.existing_subsurf_lns:
-            if _i in self.ax.lines:
-                _i.remove()
-        self.existing_subsurf_lns = []
-
-
     # clear last pick
     def clear_last(self):
         if self.pick_state == True:
@@ -982,19 +1147,23 @@ class impick(tk.Frame):
                 self.blit()
 
 
-    # set_picks is a method to set imported pick arrays to horison_paths
+    # set_picks is a method to set imported pick arrays to horizon_paths
     def set_picks(self, horizon=None):
         if horizon:
             # set horizon color to first unused color
             color = [c for c in self.ln_colors["hex"] if c not in list(self.ln_colors["used"].values())][0]
             self.color.set(self.ln_colors["str"][self.ln_colors["hex"].index(color)])
             self.init_horizon(horizon=horizon,skip_array=True)
-            self.horizon_paths[horizon][0].x = utils.nonan_idx_array(self.rdata.pick.horizons[horizon])
-            self.horizon_paths[horizon][0].y = self.rdata.pick.horizons[horizon]
+            # split horizon array into segments
+            idx = utils.nonan_idx_array(self.rdata.pick.horizons[horizon])
+            clumps = utils.clump_array(idx)
+            for _i, clump in enumerate(clumps):
+                clump_arr = np.asarray(clump).astype(np.int)
+                self.horizon_paths[horizon][_i].x[clump_arr] = clump_arr
+                self.horizon_paths[horizon][_i].y[clump_arr] = self.rdata.pick.horizons[horizon][clump_arr]
+                self.init_segment(horizon=horizon)
             x,y = utils.merge_paths(self.horizon_paths[horizon])
             self.horizon_lns[horizon].set_data(x,y)
-            # init 1st surface segment by default
-            self.init_segment(horizon=horizon)
 
 
     # update the horizon menu
@@ -1009,15 +1178,21 @@ class impick(tk.Frame):
 
 
     # update the horizon segment menu based on how many segments exist for given segment
-    def update_seg_opt_menu(self, last=False, *args):
-        horizon = self.horVar.get()
-        self.segMenu["menu"].delete(0, "end")
+    def update_seg_opt_menu(self, last=False, menu=None, hvar=None, svar=None, *args):
+        if menu is None:
+            menu = self.segMenu
+        if hvar is None:
+            hvar = self.horVar
+        if svar is None:
+            svar = self.segVar
+        horizon = hvar.get()
+        menu["menu"].delete(0, "end")
         if horizon:
             for seg in sorted(self.horizon_paths[horizon].keys()):
-                self.segMenu["menu"].add_command(label=seg, command=tk._setit(self.segVar, seg))
+                menu["menu"].add_command(label=seg, command=tk._setit(svar, seg))
             # set segment selection to last
             if last:
-                self.segVar.set(seg)
+                svar.set(seg)
 
 
     # update_pickLabels is a method to create annotations for picks
@@ -1243,15 +1418,31 @@ class impick(tk.Frame):
             self.show_labels(True)   
         self.fig.canvas.draw()
 
-    # close_popup
-    def close_popup(self, window, flag=False):
-        window.destroy()
-        self.popupFlag = flag
-        return
-
 
 class path():
     # initialize a path object to hold x,y paths for plotting - list or array like
     def __init__(self, x=None, y=None):
         self.x = x      # x array/list
         self.y = y      # y array/list
+
+
+class popup():
+    # initialize popup window
+    def __init__(self, parent=None):
+        self.parent = parent
+        self.flag = 0     # 0 == closed safely, 1 == open, -1 == closed unsafely
+
+    # new
+    def new(self, title="title", bg="#d9d9d9", geom="500x150"):
+        self.popup = tk.Toplevel(self.parent)
+        self.popup.geometry(geom)
+        self.popup.config(bg=bg)
+        self.popup.title(title)
+        self.popup.protocol("WM_DELETE_WINDOW", lambda flag=-1 : self.close(flag))
+        self.flag = 1
+        return self.popup
+
+    # close
+    def close(self, flag=0):
+        self.popup.destroy()
+        self.flag = flag

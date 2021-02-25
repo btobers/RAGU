@@ -43,7 +43,7 @@ class mainGUI(tk.Frame):
         self.map_loadName = ""
         self.tab = "Profile"
         self.eps_r = tk.DoubleVar(value=self.conf["output"]["eps_r"])
-        self.popupFlag = False
+        self.popup = popup(self.parent)
         self.pick_vis = tk.BooleanVar()
         self.pick_vis.set(True)
         self.ann_vis = tk.BooleanVar()
@@ -149,14 +149,22 @@ class mainGUI(tk.Frame):
         fileMenu.add_command(label="Exit  [Ctrl+Q]", command=self.close_window)
 
         # interpret menu items
+        pickMenu = tk.Menu(fileMenu,tearoff=0)
+        pickMenu.add_command(label="Start       [Ctrl+N]", command=self.start_pick)
+        pickMenu.add_command(label="Stop        [Escape]", command=self.end_pick)
+        interpretMenu.add_cascade(label="Pick", menu=pickMenu)
         newMenu = tk.Menu(fileMenu,tearoff=0)
         newMenu.add_command(label="Horizon", command=self.new_horizon)
         newMenu.add_command(label="Segment", command=self.new_segment)
         interpretMenu.add_cascade(label="New", menu=newMenu)
-        interpretMenu.add_command(label="Start       [Ctrl+N]", command=self.start_pick)
-        interpretMenu.add_command(label="Stop        [Escape]", command=self.end_pick)
-        interpretMenu.add_command(label="Edit", command=self.edit_pick)
-        interpretMenu.add_command(label="Clear", command=self.clear_pick)        
+        editMenu = tk.Menu(fileMenu,tearoff=0)
+        editMenu.add_command(label="Segment", command=self.edit_pick)
+        interpretMenu.add_cascade(label="Edit", menu=editMenu)
+        rmMenu = tk.Menu(fileMenu,tearoff=0)
+        rmMenu.add_command(label="Horizon", command=lambda:self.clear_pick(hFlag=True))
+        rmMenu.add_command(label="Segment", command=lambda:self.clear_pick(segFlag=True))
+        rmMenu.add_command(label="All", command=lambda:self.clear_pick(allFlag=True))
+        interpretMenu.add_cascade(label="Remove", menu=rmMenu)
         interpretMenu.add_command(label="Import", command=self.import_pick)
         exportMenu = tk.Menu(fileMenu,tearoff=0)
         exportMenu.add_command(label="Horizon", command=lambda:self.export_pick(merged=False))
@@ -282,7 +290,7 @@ class mainGUI(tk.Frame):
             # c key to clear all picks in impick
             elif event.keysym =="c":
                 # clear picks
-                self.clear_pick()
+                self.clear_pick(allFlag=True)
 
             # right key next file
             elif event.keysym =="Right":
@@ -411,6 +419,7 @@ class mainGUI(tk.Frame):
                     if not self.rdata:
                         return
                     self.impick.load(self.rdata)
+                    self.impick.set_pickState(state=False)
                     self.impick.update_hor_opt_menu()
                     self.impick.update_seg_opt_menu
                     self.impick.set_axes()
@@ -493,13 +502,18 @@ class mainGUI(tk.Frame):
             self.impick.edit_segment()
 
 
-    def clear_pick(self):
+    def clear_pick(self, hFlag=None, segFlag=None, allFlag=None):
         if self.f_loadName:
-            self.impick.rm_horizon(rm_all=True)
+            if hFlag:
+                self.impick.rm_horizon()
+            if segFlag:
+                self.impick.rm_segment()
+            if allFlag:
+                self.impick.rm_horizon(rm_all=True)
 
 
     # export_pick is method to receieve the desired pick save location from user input
-    def export_pick(self,merged=True):
+    def export_pick(self, merged=True):
         if self.f_loadName:
             # see if any picks have been made
             if  self.rdata.pick.get_pick_flag():
@@ -513,36 +527,36 @@ class mainGUI(tk.Frame):
                     if "srf" in horizons:
                         srf = "srf"
                     else:
-                        if len(horizons) > 0 and tk.messagebox.askyesno("Specify Surface Horizon","Reference subsurface interpretations to a surface horizon)?"):
+                        if len(horizons) > 0:
+                            if self.popup.flag == 1:
+                                return
+                            if not tk.messagebox.askyesno("Specify Surface Horizon","Reference subsurface interpretations to a surface horizon)?"):
+                                return
                             horizon_colors = self.impick.get_horizon_colors()
                             # create popup window to get new horizon name and interpreatation color
-                            h = tk.StringVar()
-                            h.set(horizons[-1])
-                            popup = tk.Toplevel(self.parent)
-                            popup.geometry("500x150")
-                            self.popupFlag = False
-                            popup.config(bg="#d9d9d9")
-                            popup.title("Surface Horizon")
-                            popup.protocol("WM_DELETE_WINDOW", lambda:self.close_popup(popup,flag=False))
+                            hname =tk.StringVar()
+                            hname.set(horizons[-1])
+                            popup = self.popup.new(title="Surface Horizon")
                             tk.Label(popup, text="Select surface horizon from which to reference subsurface interpretations:").pack(fill="both", expand=True)
-                            dropdown = tk.OptionMenu(popup, h, *horizons)
+                            dropdown = tk.OptionMenu(popup, hname, *horizons)
                             dropdown["menu"].delete(0, "end")
                             dropdown.config(width=20)
                             dropdown.pack(fill="none", expand=True)
-                            self.set_menu_color(menu=dropdown, horizon=h, colors=horizon_colors)
+                            self.set_menu_color(menu=dropdown, horizon=hname, colors=horizon_colors)
                             # trace change in self.color to self.set_menu_color
-                            trace = h.trace("w", lambda *args, menu=dropdown, horizon=h, colors=horizon_colors : self.set_menu_color(menu, horizon, colors))
+                            trace = hname.trace("w", lambda *args, menu=dropdown, horizon=hname, colors=horizon_colors : self.set_menu_color(menu, horizon, colors))
                             for key, val in horizon_colors.items():
-                                dropdown["menu"].add_command(label=key, foreground=val, activeforeground=val, command=tk._setit(h, key))
-                            button = tk.Button(popup, text="OK", command=lambda:self.close_popup(popup,flag=True), width=20).pack(side="left", fill="none", expand=True)
-                            button = tk.Button(popup, text="Cancel", command=lambda:[h.set(""), self.close_popup(popup,flag=True)], width=20).pack(side="left", fill="none", expand=True)
+                                dropdown["menu"].add_command(label=key, foreground=val, activeforeground=val, command=tk._setit(hname, key))
+                            button = tk.Button(popup, text="OK", command=lambda:self.popup.close(flag=0), width=20).pack(side="left", fill="none", expand=True)
+                            button = tk.Button(popup, text="Cancel", command=lambda:[hname.set(""), self.popup.close(flag=-1)], width=20).pack(side="left", fill="none", expand=True)
                             # wait for window to be closed
                             self.parent.wait_window(popup)
                             # remove the trace
-                            h.trace_vdelete("w", trace)
-                            horizon = h.get()
-                            if horizon:
-                                srf = horizon
+                            hname.trace_vdelete("w", trace)
+                            srf = hname.get()
+                            if (not srf) or (self.popup.flag == -1):
+                                return
+
                     if srf:
                         self.rdata.set_srfElev(utils.surfpick2elev(self.rdata.pick.horizons[srf], 
                                     self.rdata.navdf["elev"].to_numpy(), 
@@ -551,38 +565,36 @@ class mainGUI(tk.Frame):
 
                 # otherwise have user select horizon to export
                 else:
+                    if self.popup.flag == 1:
+                        return
                     horizon_colors = self.impick.get_horizon_colors()
                     # create popup window to get new horizon name and interpreatation color
-                    h = tk.StringVar()
+                    hname =tk.StringVar()
                     horizons = list(self.rdata.pick.horizons)
-                    h.set(horizons[-1])
-                    popup = tk.Toplevel(self.parent)
-                    popup.geometry("500x150")
-                    self.popupFlag = False
-                    popup.config(bg="#d9d9d9")
-                    popup.title("Export Horizon")
-                    popup.protocol("WM_DELETE_WINDOW", lambda:self.close_popup(popup,flag=False))
+                    hname.set(horizons[-1])
+                    popup = self.init_popup(title="Export Horizon")
                     tk.Label(popup, text="Select horizon to export:").pack(fill="both", expand=True)
-                    dropdown = tk.OptionMenu(popup, h, *horizons)
+                    dropdown = tk.OptionMenu(popup, hname, *horizons)
                     dropdown["menu"].delete(0, "end")
                     dropdown.config(width=20)
                     dropdown.pack(fill="none", expand=True)
-                    self.set_menu_color(menu=dropdown, horizon=h, colors=horizon_colors)
+                    self.set_menu_color(menu=dropdown, horizon=hname, colors=horizon_colors)
                     # trace change in self.color to self.set_menu_color
-                    trace = h.trace("w", lambda *args, menu=dropdown, horizon=h, colors=horizon_colors : self.set_menu_color(menu, horizon, colors))
+                    trace = hname.trace("w", lambda *args, menu=dropdown, horizon=hname, colors=horizon_colors : self.set_menu_color(menu, horizon, colors))
                     for key, val in horizon_colors.items():
                         dropdown["menu"].add_command(label=key, foreground=val, activeforeground=val, command=tk._setit(h, key))
-                    button = tk.Button(popup, text="OK", command=lambda:self.close_popup(popup,flag=True), width=20).pack(side="left", fill="none", expand=True)
-                    button = tk.Button(popup, text="Cancel", command=lambda:[h.set(""), self.close_popup(popup,flag=True)], width=20).pack(side="left", fill="none", expand=True)
+                    button = tk.Button(popup, text="OK", command=lambda:self.popup.close(flag=0), width=20).pack(side="left", fill="none", expand=True)
+                    button = tk.Button(popup, text="Cancel", command=lambda:[hname.set(""), self.popup.close(flag=-1)], width=20).pack(side="left", fill="none", expand=True)
                     # wait for window to be closed
                     self.parent.wait_window(popup)
                     # remove the trace
-                    h.trace_vdelete("w", trace)
-                    horizon = h.get()
-                    if horizon:
-                        tmp_fn_out = self.rdata.fn + "_" + horizon + "_" + self.conf["param"]["uid"]
-                    else:
+                    hname.trace_vdelete("w", trace)
+                    horizon = hname.get()
+                    if (not horizon) or (self.popup.flag == -1):
                         return
+                    else:
+                        tmp_fn_out = self.rdata.fn + "_" + horizon + "_" + self.conf["param"]["uid"]
+
             else:
                 tmp_fn_out = self.rdata.fn
 
@@ -698,13 +710,6 @@ class mainGUI(tk.Frame):
         menu.config(foreground=c, activeforeground=c, highlightcolor=c)
 
 
-    # close_popup
-    def close_popup(self, window, flag=False):
-        window.destroy()
-        self.popupFlag = flag
-        return
-
-
     # import_pick is a method to load and plot picks saved to a csv file
     def import_pick(self):
         if self.f_loadName:
@@ -725,11 +730,14 @@ class mainGUI(tk.Frame):
             if (self.tab == "Waveform"):
                 self.end_pick()
                 # get pick dict from impick and pass to wvpick
+                self.wvpick.set_data(self.rdata)
                 self.wvpick.set_horizon_colors(self.impick.get_horizon_colors())
                 self.wvpick.set_horizon_paths(self.impick.get_horizon_paths())
                 self.wvpick.set_picks()
                 self.wvpick.plot_wv()
             elif (self.tab == "Profile"):
+                self.wvpick.clear()
+                self.wvpick.set_vars()
                 # get updated picks from wvpick and pass back to impick if they differ
                 if not (utils.compare_horizon_paths(self.wvpick.get_horizon_paths(), self.impick.get_horizon_paths())) and \
                         (tk.messagebox.askyesno("Import Optimized Interpretations","Import optimized horizon interpretations?")):
@@ -737,12 +745,12 @@ class mainGUI(tk.Frame):
                     self.impick.blit()
 
 
-    # delete_datafilePicks is a method to clear subsurface picks saved to the data file
-    def delete_datafilePicks(self):
-            if self.f_loadName and tk.messagebox.askokcancel("warning", "delte any existing data file subsurface picks?", icon = "warning") == True:
-                utils.delete_savedPicks(self.f_loadName)
-                self.impick.remove_existing_subsurf()
-                self.impick.update_bg()
+    # # delete_datafilePicks is a method to clear subsurface picks saved to the data file
+    # def delete_datafilePicks(self):
+    #         if self.f_loadName and tk.messagebox.askokcancel("warning", "delte any existing data file subsurface picks?", icon = "warning") == True:
+    #             utils.delete_savedPicks(self.f_loadName)
+    #             self.impick.remove_existing_subsurf()
+    #             self.impick.update_bg()
 
 
     # processing tools
@@ -824,7 +832,7 @@ class mainGUI(tk.Frame):
 
         row = tk.Frame(settingsWindow)
         row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-        label = tk.Label(row, text = "general")
+        label = tk.Label(row, text = "General")
         label.pack(side=tk.TOP)
         f = tk.font.Font(label, label.cget("font"))
         f.configure(underline=True)
@@ -832,21 +840,21 @@ class mainGUI(tk.Frame):
 
         row = tk.Frame(settingsWindow)
         row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-        lab = tk.Label(row, width=25, text="dielectric const.", anchor='w')
+        lab = tk.Label(row, width=25, text="Dielectric constant", anchor='w')
         lab.pack(side=tk.LEFT)
         self.epsEnt = tk.Entry(row,textvariable=self.eps_r)
         self.epsEnt.pack(side=tk.RIGHT, expand=tk.YES, fill=tk.X)
 
         row = tk.Frame(settingsWindow)
         row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-        lab = tk.Label(row, width=25, text="debug mode", anchor='w')
+        lab = tk.Label(row, width=25, text="Debug mode", anchor='w')
         lab.pack(side=tk.LEFT)
-        tk.Radiobutton(row,text="on", variable=self.debugState, value=True).pack(side="left")
-        tk.Radiobutton(row,text="off", variable=self.debugState, value=False).pack(side="left")
+        tk.Radiobutton(row,text="On", variable=self.debugState, value=True).pack(side="left")
+        tk.Radiobutton(row,text="Off", variable=self.debugState, value=False).pack(side="left")
 
         row = tk.Frame(settingsWindow)
         row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-        label = tk.Label(row, text = "image")
+        label = tk.Label(row, text = "Figure")
         label.pack(side=tk.TOP)
         f = tk.font.Font(label, label.cget("font"))
         f.configure(underline=True)
@@ -854,7 +862,7 @@ class mainGUI(tk.Frame):
 
         row = tk.Frame(settingsWindow)
         row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-        lab = tk.Label(row, width=25, text="color map", anchor='w')
+        lab = tk.Label(row, width=25, text="Color map", anchor='w')
         lab.pack(side=tk.LEFT)
         tk.Radiobutton(row,text="greys_r", variable=self.figsettings["cmap"], value="Greys_r").pack(side="top",anchor="w")
         tk.Radiobutton(row,text="gray", variable=self.figsettings["cmap"], value="gray").pack(side="top",anchor="w")
@@ -862,54 +870,54 @@ class mainGUI(tk.Frame):
 
         row = tk.Frame(settingsWindow)
         row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-        lab = tk.Label(row, width=25, text="fig. size [w,h]", anchor='w')
+        lab = tk.Label(row, width=25, text="Figure size [w,h]", anchor='w')
         lab.pack(side=tk.LEFT)
         self.figEnt = tk.Entry(row,textvariable=self.figsettings["figsize"])
         self.figEnt.pack(side=tk.RIGHT, expand=tk.YES, fill=tk.X)
 
         row = tk.Frame(settingsWindow)
         row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-        lab = tk.Label(row, width=25, text="font size", anchor='w')
+        lab = tk.Label(row, width=25, text="Font size", anchor='w')
         lab.pack(side=tk.LEFT)
         self.figEnt = tk.Entry(row,textvariable=self.figsettings["fontsize"])
         self.figEnt.pack(side=tk.RIGHT, expand=tk.YES, fill=tk.X)
         
         row = tk.Frame(settingsWindow)
         row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-        lab = tk.Label(row, width=25, text="fig. labels:", anchor='w')
+        lab = tk.Label(row, width=25, text="Labels:", anchor='w')
         lab.pack(side=tk.LEFT)
 
         row = tk.Frame(settingsWindow)
         row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-        lab = tk.Label(row, width=25, text="\ttitle:", anchor='w')
+        lab = tk.Label(row, width=25, text="\tTitle:", anchor='w')
         lab.pack(side=tk.LEFT)
-        tk.Radiobutton(row,text="on", variable=self.figsettings["figtitle"], value=True).pack(side="left")
-        tk.Radiobutton(row,text="off", variable=self.figsettings["figtitle"], value=False).pack(side="left")
+        tk.Radiobutton(row,text="On", variable=self.figsettings["figtitle"], value=True).pack(side="left")
+        tk.Radiobutton(row,text="Off", variable=self.figsettings["figtitle"], value=False).pack(side="left")
 
         row = tk.Frame(settingsWindow)
         row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-        lab = tk.Label(row, width=25, text="\tx-axis:", anchor='w')
+        lab = tk.Label(row, width=25, text="\tX-axis:", anchor='w')
         lab.pack(side=tk.LEFT)
-        tk.Radiobutton(row,text="on", variable=self.figsettings["figxaxis"], value=True).pack(side="left")
-        tk.Radiobutton(row,text="off", variable=self.figsettings["figxaxis"], value=False).pack(side="left")
+        tk.Radiobutton(row,text="On", variable=self.figsettings["figxaxis"], value=True).pack(side="left")
+        tk.Radiobutton(row,text="Off", variable=self.figsettings["figxaxis"], value=False).pack(side="left")
 
         row = tk.Frame(settingsWindow)
         row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-        lab = tk.Label(row, width=25, text="\ty-axis:", anchor='w')
+        lab = tk.Label(row, width=25, text="\tY-axis:", anchor='w')
         lab.pack(side=tk.LEFT)
-        tk.Radiobutton(row,text="on", variable=self.figsettings["figyaxis"], value=True).pack(side="left")
-        tk.Radiobutton(row,text="off", variable=self.figsettings["figyaxis"], value=False).pack(side="left")
+        tk.Radiobutton(row,text="On", variable=self.figsettings["figyaxis"], value=True).pack(side="left")
+        tk.Radiobutton(row,text="Off", variable=self.figsettings["figyaxis"], value=False).pack(side="left")
 
         row = tk.Frame(settingsWindow)
         row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-        lab = tk.Label(row, width=25, text="export fig. vertical clip factor:", anchor='w')
+        lab = tk.Label(row, width=25, text="Export fig. vertical clip factor:", anchor='w')
         lab.pack(side=tk.LEFT)
         self.figEnt = tk.Entry(row,textvariable=self.figsettings["figclip"])
         self.figEnt.pack(side=tk.RIGHT, expand=tk.YES, fill=tk.X)
 
         row = tk.Frame(settingsWindow)
         row.pack(side=tk.TOP, anchor="c")
-        b = tk.Button(row, text="save", command=lambda:[self.updateSettings(), settingsWindow.destroy()])
+        b = tk.Button(row, text="Save", command=lambda:[self.updateSettings(), settingsWindow.destroy()])
         b.pack(side="left")
 
 
@@ -1027,3 +1035,25 @@ class mainGUI(tk.Frame):
                 \n[Right]\t\t\tStep forward left
                 \n[Left]\t\t\tStep backward"""
         T.insert(tk.END, note)
+
+
+class popup():
+    # initialize popup window
+    def __init__(self, parent=None):
+        self.parent = parent
+        self.flag = 0     # 0 == closed safely, 1 == open, -1 == closed unsafely
+
+    # new
+    def new(self, title="title", bg="#d9d9d9", geom="500x150"):
+        self.popup = tk.Toplevel(self.parent)
+        self.popup.geometry(geom)
+        self.popup.config(bg=bg)
+        self.popup.title(title)
+        self.popup.protocol("WM_DELETE_WINDOW", lambda flag=-1 : self.close(flag))
+        self.flag = 1
+        return self.popup
+
+    # close
+    def close(self, flag=0):
+        self.popup.destroy()
+        self.flag = flag
