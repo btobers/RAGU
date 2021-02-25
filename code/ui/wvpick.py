@@ -200,10 +200,11 @@ class wvpick(tk.Frame):
         # get previous x_lim
         xlim = self.ax.get_xlim()
         self.ax.clear()
-        self.ax.set(xlabel = "Sample", ylabel = "Power [dB]", title="Trace: " + str(int(self.trace[horizon] + 1)) + "/" + str(int(self.rdata.tnum)))
 
         # plot trace power
-        self.ax.plot(self.rdata.proc[:,self.trace[horizon]], c="0.5")
+        t = self.trace[horizon]
+        self.ax.plot(self.rdata.proc[:,t], c="0.5")
+        self.ax.set(xlabel = "Sample", ylabel = "Power [dB]", title="Trace: " + str(int(self.trace[horizon] + 1)) + "/" + str(int(self.rdata.tnum)))
 
         # get pick value range
         val = np.array(())
@@ -211,14 +212,13 @@ class wvpick(tk.Frame):
         # if self.nhorizons > 0:
         for horizon in self.horizons:
             # get sample index of pick for given trace
-            pick_idx0 = self.horizon_paths[horizon][seg].y[self.trace[horizon]]
-            pick_idx1 = self.horizon_paths_opt[horizon][seg].y[self.trace[horizon]]
+            pick_idx0 = self.horizon_paths[horizon][seg].y[t]
+            pick_idx1 = self.horizon_paths_opt[horizon][seg].y[t]
             val = np.append(val, (pick_idx0+pick_idx1)//2)
-
-            self.ax.axvline(x = pick_idx0, c=self.ln_colors[horizon], label=horizon)
-
-            if pick_idx0 != pick_idx1:
-                self.ax.axvline(x = pick_idx1, c=self.ln_colors[horizon], ls = "--", label=horizon + "_v2")
+            if not np.isnan(pick_idx0):
+                self.ax.axvline(x = pick_idx0, c=self.ln_colors[horizon], label=horizon)
+                if not np.isnan(pick_idx1) and (pick_idx0 != pick_idx1):
+                    self.ax.axvline(x = pick_idx1, c=self.ln_colors[horizon], ls = "--", label=horizon + "_v2")
         
         self.ax.set(xlim=(0,self.rdata.snum))
         # save un-zoomed view to toolbar
