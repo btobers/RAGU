@@ -333,7 +333,7 @@ class mainGUI(tk.Frame):
 
     # save_check is a method to check if picks have been saved - a bit messy (need to account for potential "srf" ingested upon data load)
     def save_check(self):
-        if self.f_loadName:
+        if self.rdata:
             # if horizons exist, but no output pick df
             if (self.rdata.pick.get_pick_flag()) and (self.rdata.out is None):
                 horizons = list(self.rdata.pick.horizons.keys())
@@ -384,7 +384,7 @@ class mainGUI(tk.Frame):
             return
 
         # if h5 file already open, save pick layer to data file
-        if (self.f_loadName) and (self.rdata.out is None) and (self.rdata.fpath.endswith(".h5")) and (self.rdata.dtype=="oibak"):
+        if (self.rdata) and (self.rdata.out is None) and (self.rdata.fpath.endswith(".h5")) and (self.rdata.dtype=="oibak"):
             export.h5(self.rdata.fpath, dict({"bed_twtt":np.repeat(np.nan, self.rdata.tnum)}), self.rdata.dtype)
 
         # select input file
@@ -402,7 +402,7 @@ class mainGUI(tk.Frame):
 
 
     # open_dat loads the data file and passes to other modules
-    def open_dfile(self,f_loadName=None):
+    def open_dfile(self, f_loadName=None):
             # if input selected, clear impick canvas, ingest data and pass to impick
             try:
                 if f_loadName:
@@ -410,14 +410,11 @@ class mainGUI(tk.Frame):
                     if self.tab == "Waveform":
                         self.nb.select(self.nb.tabs()[0])
                     self.f_loadName = f_loadName
-                    self.impick.clear_canvas()  
-                    self.impick.set_vars()
                     # ingest the data
                     self.igst = ingest(self.f_loadName.split(".")[-1])
                     self.rdata = self.igst.read(self.f_loadName, self.conf["path"]["simPath"], self.conf["nav"]["crs"], self.conf["nav"]["body"])
-                    # return if no data ingested
-                    if not self.rdata:
-                        return
+                    self.impick.clear_canvas()  
+                    self.impick.set_vars()
                     self.impick.load(self.rdata)
                     self.impick.set_pickState(state=False)
                     self.impick.update_hor_opt_menu()

@@ -17,14 +17,14 @@ class nmea_info:
         wgs84 latitude of points
     lon: np.ndarray_
         wgs84 longitude of points
-    hgt: np.ndarray
-        height
+    elev: np.ndarray
+        elevation
     """
 
     all_data = None
     lat = None
     lon = None
-    hgt = None
+    elev = None
     times = None
     scans = None
 
@@ -52,9 +52,9 @@ class nmea_info:
         return self.lon
 
     def ghgt(self):
-        """Populate z (height)."""
-        self.hgt = self.all_data[:, 8]
-        return self.hgt
+        """Populate z (elevation)."""
+        self.elev = self.all_data[:, 8]
+        return self.elev
 
     def gtimes(self):
         """Populate times."""
@@ -140,7 +140,7 @@ class GPSdat(nmea_info):
                                    kgps_mask)
         kgps_where = np.where(kgps_mask)[0]
         kgps_indx = np.hstack((np.array([0]), 1 + kgps_where))
-        # linearly interpolate lat,lon,hgt,time - linearly extrapolate to fill tails 
+        # linearly interpolate lat,lon,elev,time - linearly extrapolate to fill tails 
         self.lat = interp1d(self.nmea_info.scans[kgps_indx],
                             self.nmea_info.lat[kgps_indx],
                             kind='linear',
@@ -149,8 +149,8 @@ class GPSdat(nmea_info):
                             self.nmea_info.lon[kgps_indx],
                             kind='linear',
                             fill_value='extrapolate')(np.arange(trace_num))
-        self.hgt = interp1d(self.nmea_info.scans[kgps_indx],
-                          self.nmea_info.hgt[kgps_indx], kind='linear',
+        self.elev = interp1d(self.nmea_info.scans[kgps_indx],
+                          self.nmea_info.elev[kgps_indx], kind='linear',
                           fill_value='extrapolate')(np.arange(trace_num))
         self.times = interp1d(self.nmea_info.scans[kgps_indx],
                               self.nmea_info.times[kgps_indx],

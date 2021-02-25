@@ -62,8 +62,7 @@ def read(fpath, navcrs, body):
 
     # ensure data file is not empty
     if not np.any(rdata.dat):
-        print("gssi_read error: file contains no radar data")
-        return
+        raise ValueError("gssi_read error: file contains no radar data")
 
     rdata.tnum = rdata.dat.shape[1]
 

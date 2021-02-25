@@ -1343,14 +1343,14 @@ class impick(tk.Frame):
 
     # on_mouse_move blit crosshairs
     def on_mouse_move(self, event):
-        # if event.inaxes == self.ax:
-        x, y = event.xdata, event.ydata
-        self.horizontal_line.set_ydata(y)
-        self.vertical_line.set_xdata(x)
-        self.ax.figure.canvas.restore_region(self.axbg)
-        self.ax.draw_artist(self.horizontal_line)
-        self.ax.draw_artist(self.vertical_line)
-        self.blit()
+        if self.rdata:
+            x, y = event.xdata, event.ydata
+            self.horizontal_line.set_ydata(y)
+            self.vertical_line.set_xdata(x)
+            self.ax.figure.canvas.restore_region(self.axbg)
+            self.ax.draw_artist(self.horizontal_line)
+            self.ax.draw_artist(self.vertical_line)
+            self.blit()
 
 
     # update_figsettings
