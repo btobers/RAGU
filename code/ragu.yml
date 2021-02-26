@@ -1,4 +1,4 @@
-# $conda env create -f ragu_env.yml
+# $conda env create -f ragu.yml
 
 name: ragu
 dependencies:
