@@ -42,7 +42,7 @@ RAGU was originally developed to work with NASA's Operation IceBridge Alaska rad
 1. **Comma-Separated Value (.csv)**
 2. **Geopackage (.gpkg)**
 
-    For **CSV** and **Geopackage** files, see the [format file](https://github.com/btobers/RAGU/doc/RAGU_pk_format.pdf) in for per trace export attribute information.
+    For **CSV** and **Geopackage** files, see the [format file](https://github.com/btobers/RAGU/blob/master/docs/RAGU_pk_format.pdf) in for per trace export attribute information.
  
 3. **HDF5 (.h5)**
 
