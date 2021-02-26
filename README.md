@@ -75,7 +75,7 @@ Supported Operating Systems:
 
 To create a conda environment with the required dependencies, run the following command:
 ```
-$ conda env create -f ragu_env.yml
+$ conda env create -f /code/ragu.yml
 ```
 ### Setup
 1. Prior to running RAGU, set appropriate data paths, data coordinate reference system, and output preferences in *config.ini*. **Path variables may be left blank, but must remain uncommented**.
@@ -109,7 +109,7 @@ amp = True
 # bool csv: export csv file of picks
 csv = True
 # bool shp: export shapefile of picks
-shp = True
+gpkg = True
 # bool fig: export profile image with picks
 fig = True
 ```
