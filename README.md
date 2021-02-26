@@ -22,7 +22,7 @@ RAGU was originally developed to work with NASA's Operation IceBridge Alaska rad
 - pulseEKKO
 
 ### File Info
-- *ragu_env.yml* contains a list of RAGU dependencies
+- *ragu.yml* contains a list of RAGU dependencies
 - *config.ini* contains user-specified configuration file paths and information necessary to run the RAGU app
 - *main.py* is run to start the RAGU app
 - *ui/gui.py* handles the graphical user-interface and sets up the app
