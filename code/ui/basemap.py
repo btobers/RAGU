@@ -335,6 +335,9 @@ class basemap(tk.Frame):
             else:
                 continue
             self.set_nav(fn, navdf)
+
+        # update datPath
+        self.datPath = os.path.dirname(os.path.abspath(f)) + "/"
         # update extent
         self.plot_tracks()
 
@@ -375,5 +378,5 @@ class basemap(tk.Frame):
         idx = utils.find_nearest(self.x, xdata)
         track = self.track_name[idx]
         # pass track to impick
-        if (track != self.profile_track) and (tk.messagebox.askyesno("load track","load track: " + str(track) + "?") == True):
+        if (track != self.profile_track) and (tk.messagebox.askyesno("Load","Load track: " + str(track) + "?") == True):
             self.to_gui(self.datPath, track)
