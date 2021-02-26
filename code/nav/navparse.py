@@ -230,7 +230,7 @@ def getnav_sharad(navfile, navcrs, body):
     ]
     df = pd.read_csv(navfile, names=geomCols, index_col=False)
 
-    # Planetocentric lat, lon, radius to x,y,z - no need for navcrs in this one
+    # Planetocentric lat, lon, radius to x,y,z - no need for navcrs
     df["x"] = (
         (df["elev"] * 1000)
         * np.cos(np.radians(df["lat"]))
@@ -270,25 +270,6 @@ def getnav_marsis(navfile, navcrs, body):
     ]
     df = pd.read_csv(navfile, names=geomCols, index_col=False)
 
-    # Planetocentric lat, lon, radius to x,y,z - no need for navcrs in this one
-    # df["x"] = (
-    #     (df["elev"] * 1000)
-    #     * np.cos(np.radians(df["lat"]))
-    #     * np.cos(np.radians(df["lon"]))
-    # )
-    # df["y"] = (
-    #     (df["elev"] * 1000)
-    #     * np.cos(np.radians(df["lat"]))
-    #     * np.sin(np.radians(df["lon"]))
-    # )
-    # df["z"] = (df["elev"] * 1000) * np.sin(np.radians(df["lat"]))
-    # df["x"], df["y"], df["z"] = pyproj.transform(
-    #     navcrs,
-    #     xyzsys[body],
-    #     df["lon"].to_numpy(),
-    #     df["lat"].to_numpy(),
-    #     df["elev"].to_numpy(),
-    # )
     df["x"] = df["x"]*1000
     df["y"] = df["y"]*1000
     df["z"] = df["z"]*1000
