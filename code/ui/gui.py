@@ -224,13 +224,13 @@ class mainGUI(tk.Frame):
         self.nb.bind("<<NotebookTabChanged>>", self.tab_change)
 
         # initialize impick
-        self.impick = impick.impick(self.imTab)
+        self.impick = impick.impick(self.imTab, button_tip, self.popup)
         self.impick.set_vars()
         self.impick.update_figsettings(self.figsettings)
         self.impick.set_eps_r(self.eps_r.get())
 
         # initialize wvpick
-        self.wvpick = wvpick.wvpick(self.wvTab, self.reset_wvpick)
+        self.wvpick = wvpick.wvpick(self.wvTab, button_tip, self.reset_wvpick)
         self.wvpick.update_figsettings(self.figsettings)
         self.wvpick.set_vars()
 
@@ -1073,3 +1073,67 @@ class popup():
     def close(self, flag=0):
         self.popup.destroy()
         self.flag = flag
+
+
+class button_tip(object):
+    """
+    popup info on gui button
+    """
+    def __init__(self, parent, widget, text="widget info"):
+        self.waittime = 500     #miliseconds
+        self.wraplength = 180   #pixels
+        self.parent = parent    #parent frame
+        self.widget = widget
+        self.text = text
+        self.widget.bind("<Enter>", self.enter)
+        self.widget.bind("<Leave>", self.leave)
+        self.widget.bind("<ButtonPress>", self.leave)
+        self.id = None
+        self.tw = None
+
+    def enter(self, event=None):
+        self.schedule()
+
+    def leave(self, event=None):
+        self.unschedule()
+        self.hidetip()
+
+    def schedule(self):
+        self.unschedule()
+        self.id = self.widget.after(self.waittime, self.showtip)
+
+    def unschedule(self):
+        id = self.id
+        self.id = None
+        if id:
+            self.widget.after_cancel(id)
+
+    def showtip(self, event=None):
+        self.parent.update()    # update parent to get size
+        bounds = (self.parent.winfo_rootx(),(self.parent.winfo_rootx()+self.parent.winfo_width()))
+        x = y = 0
+        x, y, cx, cy = self.widget.bbox("insert")
+        x += self.widget.winfo_rootx() + 25
+        y += self.widget.winfo_rooty() + 25
+
+        # creates a toplevel window
+        self.tw = tk.Toplevel(self.widget)
+        # Leaves only the label and removes the app window
+        self.tw.wm_overrideredirect(True)
+        self.tw.wm_geometry("+%d+%d" % (x, y))
+        label = tk.Label(self.tw, text=self.text, justify='left',
+                       background="#ffffff", relief='solid', borderwidth=1,
+                       wraplength = self.wraplength)
+        label.pack(ipadx=1)
+        self.tw.update()
+
+        # move tip window left if outside parent window bounds
+        if (x + self.tw.winfo_width()) > bounds[1]:
+            self.tw.wm_geometry("+%d+%d" % (x-self.tw.winfo_width(), y))
+            self.tw.update()
+
+    def hidetip(self):
+        tw = self.tw
+        self.tw= None
+        if tw:
+            tw.destroy()

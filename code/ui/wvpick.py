@@ -20,9 +20,10 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 
 class wvpick(tk.Frame):
     # wvpick is a class to optimize the picking of horizons from radar data
-    def __init__(self, parent, reset_picks, *args, **kwargs):
+    def __init__(self, parent, button_tip, reset_picks, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
+        self.button_tip = button_tip
         self.reset_picks = reset_picks
         self.winSize = tk.IntVar(value=100)
         self.stepSize = tk.IntVar(value=10)
@@ -49,15 +50,26 @@ class wvpick(tk.Frame):
 
         # infoFrame exists for options to be added based on optimization needs
         tk.Label(infoFrame, text = "Amplitude Window [#Samples]: ").pack(side="left")
-        tk.Entry(infoFrame, textvariable=self.winSize, width = 5).pack(side="left")
+        entry = tk.Entry(infoFrame, textvariable=self.winSize, width = 5)
+        entry.pack(side="left")
+        self.button_tip(self.parent, entry, \
+            "Pick amplitude window size. Window size (number of samples) centered on \
+            manual picks from which to select maximum amplitude using auto-pick optimization.")
         tk.ttk.Separator(infoFrame,orient="vertical").pack(side="left", fill="both", padx=10, pady=4)
 
         tk.Label(infoFrame, text = "Step Size [#Traces]: ").pack(side="left")
-        tk.Entry(infoFrame, textvariable=self.stepSize, width = 5).pack(side="left")
+        entry = tk.Entry(infoFrame, textvariable=self.stepSize, width = 5)
+        entry.pack(side="left")
+        self.button_tip(self.parent, entry, \
+            "Number of traces to move forward and backwards in radargram upon ←/→ button or key press.")
         tk.ttk.Separator(infoFrame,orient="vertical").pack(side="left", fill="both", padx=10, pady=4)
 
-        tk.Button(infoFrame, text="←", command = self.stepBackward, pady=0).pack(side="left")
-        tk.Button(infoFrame, text="→", command = self.stepForward, pady=0).pack(side="left")
+        button = tk.Button(infoFrame, text="←", command = self.stepBackward, pady=0)
+        button.pack(side="left")
+        self.button_tip(self.parent, button, "Step backwards")
+        button = tk.Button(infoFrame, text="→", command = self.stepForward, pady=0)
+        button.pack(side="left")
+        self.button_tip(self.parent, button, "Step forwards")
         tk.ttk.Separator(infoFrame,orient="vertical").pack(side="left", fill="both", padx=10, pady=4)
 
         # set up frame to hold pick information
@@ -89,7 +101,9 @@ class wvpick(tk.Frame):
         self.horVar.trace("w", self.update_seg_opt_menu) 
         self.horVar.trace("w", self.seg_select)
         self.horVar.trace("w", lambda *args, menu=self.horMenu : self.set_menu_color(menu))
-        tk.Button(interpFrameTl, text="Reset", command = self.reset, pady=0).pack(side="right",fill="both",expand=True)
+        button = tk.Button(interpFrameTl, text="Reset", command = self.reset, pady=0)
+        button.pack(side="right",fill="both",expand=True)
+        self.button_tip(self.parent, button, "Reset pick data from profile interpretations")
 
         tk.Label(interpFrameBl,text="Segment: ").pack(side="left")
         self.segMenu = tk.OptionMenu(interpFrameBl, self.segVar, *[None])
@@ -97,10 +111,24 @@ class wvpick(tk.Frame):
         self.segMenu.config(width=2)
         self.segVar.trace("w", self.first_trace)
     
-        tk.Radiobutton(interpFrameTr, text="Linear", variable=self.interp_type, value="linear").pack(side="left",fill="both",expand=True)
-        tk.Radiobutton(interpFrameTr,text="Cubic Spline", variable=self.interp_type, value="cubic").pack(side="left",fill="both",expand=True)
-        tk.Button(interpFrameBr, text="Auto-Optimize", command=self.auto_repick).pack(side="left",fill="both",expand=True)
-        tk.Button(interpFrameBr, text="Interpolate", command=self.interp_repick).pack(side="left",fill="both",expand=True)
+        button = tk.Radiobutton(interpFrameTr, text="Linear", variable=self.interp_type, value="linear")
+        button.pack(side="left",fill="both",expand=True)
+        self.button_tip(self.parent, button, "Linear interpolation between manual pick modifications")
+
+        button = tk.Radiobutton(interpFrameTr,text="Cubic Spline", variable=self.interp_type, value="cubic")
+        button.pack(side="left",fill="both",expand=True)
+        self.button_tip(self.parent, button, "Cubic spline interpolation between manual pick modifications")
+
+        button = tk.Button(interpFrameBr, text="Auto-Optimize", command=self.auto_repick)
+        button.pack(side="left",fill="both",expand=True)
+        self.button_tip(self.parent, button, "Automatically optimize profile view interpretation picks for current horizon segment\
+                                            by selecting maximum aplitude sample for each radargram trace within a window of the\
+                                            specified size centered on existing profile picks.")
+
+        button = tk.Button(interpFrameBr, text="Interpolate", command=self.interp_repick)
+        button.pack(side="left",fill="both",expand=True)
+        self.button_tip(self.parent, button, "Interpolate between manually updated waveform picks using the spefied interpolation method\
+                                            for  current horizon segment.")
 
         # create figure object and datacanvas from it
         plt.rcParams.update({'font.size': 12})

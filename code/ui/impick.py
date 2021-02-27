@@ -26,9 +26,11 @@ except:
 
 class impick(tk.Frame):
     # initialize impick frame with variables passed from mainGUI
-    def __init__(self, parent, *args, **kwargs):
+    def __init__(self, parent, button_tip, popup, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
+        self.button_tip = button_tip
+        self.popup = popup
         # variables only setup once
         self.im_status = tk.StringVar()
         self.chan = tk.IntVar()
@@ -36,7 +38,6 @@ class impick(tk.Frame):
         self.horVar = tk.StringVar()
         self.segVar = tk.IntVar()
         self.color = tk.StringVar()
-        self.popup = popup(self.parent)
         self.setup()
 
 
@@ -58,19 +59,30 @@ class impick(tk.Frame):
         # add radio buttons for toggling between radargram and clutter sim
         radarRadio = tk.Radiobutton(infoFrame, text="Radargram", variable=self.im_status, value="data",command=self.show_data)
         radarRadio.pack(side="left")
+        self.button_tip(self.parent, radarRadio, "View radar profile")
+
         simRadio = tk.Radiobutton(infoFrame,text="Clutter Sim", variable=self.im_status, value="sim",command=self.show_sim)
         simRadio.pack(side="left")
+        self.button_tip(self.parent, simRadio, "View clutter simulation")
         tk.ttk.Separator(infoFrame,orient="vertical").pack(side="left", fill="both", padx=10, pady=4)
 
         # add radio buttons for toggling data channel
         tk.Label(infoFrame, text="Channel: ").pack(side="left")
-        tk.Radiobutton(infoFrame,text="0", variable=self.chan, value=0, command=self.switchChan).pack(side="left")
-        tk.Radiobutton(infoFrame,text="1", variable=self.chan, value=1, command=self.switchChan).pack(side="left")
+        button = tk.Radiobutton(infoFrame,text="0", variable=self.chan, value=0, command=self.switchChan)
+        button.pack(side="left")
+        self.button_tip(self.parent, button, text="Radar channel 0")
+        button = tk.Radiobutton(infoFrame,text="1", variable=self.chan, value=1, command=self.switchChan)
+        button.pack(side="left")
+        self.button_tip(self.parent, button, text="Radar channel 1")
         tk.ttk.Separator(infoFrame,orient="vertical").pack(side="left", fill="both", padx=10, pady=4)
 
         # add entry box for peak finder window size
         tk.Label(infoFrame, text = "Amplitude Window [#Samples]: ").pack(side="left")
-        tk.Entry(infoFrame, textvariable=self.winSize, width = 5).pack(side="left")
+        entry = tk.Entry(infoFrame, textvariable=self.winSize, width = 5)
+        entry.pack(side="left")
+        self.button_tip(self.parent, entry, \
+            "Pick amplitude window size. Window size (number of samples) centered on \
+            manual picks from which to select maximum amplitude sample for selected trace.")
         tk.ttk.Separator(infoFrame,orient="vertical").pack(side="left", fill="both", padx=10, pady=4)
 
         # set up frame to hold pick information
@@ -101,17 +113,29 @@ class impick(tk.Frame):
         self.horMenu.config(width=18)
         self.horVar.trace("w", lambda *args, last=True : self.update_seg_opt_menu(last)) 
         self.horVar.trace("w", lambda *args, menu=self.horMenu, var="horVar" : self.set_menu_color(menu, var))
-        tk.Button(interpFrameTl, text="Delete", width=4, command=lambda:self.rm_horizon(horizon=self.horVar.get())).pack(side="right")
-        tk.Button(interpFrameTl, text="Rename", width=4, command=lambda:self.rename_horizon(horizon=self.horVar.get())).pack(side="right")
-        tk.Button(interpFrameTl, text="New", width=4, command=self.init_horizon).pack(side="right")
+        button = tk.Button(interpFrameTl, text="Delete", width=4, command=lambda:self.rm_horizon(horizon=self.horVar.get()))
+        button.pack(side="right")
+        self.button_tip(self.parent, button, "Remove interpretation horion")
+        button = tk.Button(interpFrameTl, text="Rename", width=4, command=lambda:self.rename_horizon(horizon=self.horVar.get()))
+        button.pack(side="right")
+        self.button_tip(self.parent, button, "Rename interpretation horion")
+        button = tk.Button(interpFrameTl, text="New", width=4, command=self.init_horizon)
+        button.pack(side="right")
+        self.button_tip(self.parent, button, "New interpretation horion")
 
         tk.Label(interpFrameBl,text="Segment: ").pack(side="left")
         self.segMenu = tk.OptionMenu(interpFrameBl, self.segVar, *[None])
         self.segMenu.pack(side="left")
         self.segMenu.config(width=2)
-        tk.Button(interpFrameBl, text="Delete", width=4, command=lambda:self.rm_segment(horizon=self.horVar.get(),seg=self.segVar.get())).pack(side="right")
-        tk.Button(interpFrameBl, text="Edit", width=4, command=lambda:self.edit_segment(horizon=self.horVar.get(),seg=self.segVar.get())).pack(side="right")
-        tk.Button(interpFrameBl, text="New", width=4, command=lambda:self.init_segment(horizon=self.horVar.get())).pack(side="right")
+        button = tk.Button(interpFrameBl, text="Delete", width=4, command=lambda:self.rm_segment(horizon=self.horVar.get(),seg=self.segVar.get()))
+        button.pack(side="right")
+        self.button_tip(self.parent, button, "Remove interpretation segment")
+        button = tk.Button(interpFrameBl, text="Edit", width=4, command=lambda:self.edit_segment(horizon=self.horVar.get(),seg=self.segVar.get()))
+        button.pack(side="right")
+        self.button_tip(self.parent, button, "Edit interpretation segment")
+        button = tk.Button(interpFrameBl, text="New", width=4, command=lambda:self.init_segment(horizon=self.horVar.get()))
+        button.pack(side="right")
+        self.button_tip(self.parent, button, "New interpretation segment")
         # initialize pick state buttons
         label = tk.Label(interpFrameTr, text="Pick",justify="center")
         label.pack(fill="both",expand=True)
@@ -120,8 +144,10 @@ class impick(tk.Frame):
         label.configure(font=f)
         self.startbutton = tk.Button(interpFrameBr, text="Start", bg="green", fg="white", command=lambda:self.set_pickState(state=True))
         self.startbutton.pack(side="left",fill="both",expand=True)
+        self.button_tip(self.parent, self.startbutton, "Start picking")
         self.stopbutton = tk.Button(interpFrameBr, text="Stop", bg="red", fg="white", command=lambda:self.set_pickState(state=False))
         self.stopbutton.pack(side="left",fill="both",expand=True)
+        self.button_tip(self.parent, self.stopbutton, "Stop picking")
 
         # create matplotlib figure data canvas
         plt.rcParams.update({'font.size': 12})
@@ -1443,25 +1469,3 @@ class path():
     def __init__(self, x=None, y=None):
         self.x = x      # x array/list
         self.y = y      # y array/list
-
-
-class popup():
-    # initialize popup window
-    def __init__(self, parent=None):
-        self.parent = parent
-        self.flag = 0     # 0 == closed safely, 1 == open, -1 == closed unsafely
-
-    # new
-    def new(self, title="title", bg="#d9d9d9", geom="500x150"):
-        self.popup = tk.Toplevel(self.parent)
-        self.popup.geometry(geom)
-        self.popup.config(bg=bg)
-        self.popup.title(title)
-        self.popup.protocol("WM_DELETE_WINDOW", lambda flag=-1 : self.close(flag))
-        self.flag = 1
-        return self.popup
-
-    # close
-    def close(self, flag=0):
-        self.popup.destroy()
-        self.flag = flag

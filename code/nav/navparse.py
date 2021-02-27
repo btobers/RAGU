@@ -31,8 +31,15 @@ def getnav_oibAK_h5(navfile, navcrs, body):
     if "nav0" in h5["ext"].keys():
         nav = h5["ext"]["nav0"][:]
         df = pd.DataFrame(nav)
-        df.rename(columns={"hgt": "elev"}, inplace=True)
-
+        try:
+            df.rename(columns={"hgt": "elev"}, inplace=True)
+        except:
+            pass
+        try:
+            df.rename(columns={"altM": "elev"}, inplace=True)
+        except Exception as err:
+            print("getnav_oibAK_h5 error: " + str(err))
+    
     elif "loc0" in h5["raw"].keys():
         nav = h5["raw"]["loc0"][:]
         df = pd.DataFrame(nav)
