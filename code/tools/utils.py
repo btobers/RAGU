@@ -14,6 +14,16 @@ import tkinter as tk
 import sys, h5py, fnmatch
 from tools.constants import *
 
+# get_srf is a function for auto-detecting a radargram surface horizon
+def get_srf(dat_array):
+    # if surf idx array is all nans, take max power to define surface 
+    max_idx = np.nanargmax(dat_array[10:,:], axis = 0) + 10
+    # remove outliers
+    not_outlier = remove_outliers(max_idx)
+    # interpolate, ignoring outliers
+    x = np.arange(dat_array.shape[1])
+    return np.interp(x, x[not_outlier], max_idx[not_outlier])
+
 # remove_outliers is a function to remove outliers from an array
 # returns bool array
 def remove_outliers(array):

@@ -17,6 +17,10 @@ import matplotlib as mpl
 mpl.use("TkAgg")
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+try:
+    plt.rcParams["font.family"] = "Times New Roman"
+except:
+    pass
 
 class wvpick(tk.Frame):
     # wvpick is a class to optimize the picking of horizons from radar data
@@ -375,33 +379,6 @@ class wvpick(tk.Frame):
         # reset xlim
         self.ax.set(xlim=(0,self.rdata.snum))
         self.plot_wv()    
-
-
-    # # surf_autoPick is a method to automatically optimize surface picks by selecting the maximul amplitude sample within the specified window around existing self.rdata.surf
-    # def surf_autoPick(self):
-    #     if np.all(np.isnan(self.rdata.pick.current_surf)):
-    #         if self.rdata.flags.sampzero:
-    #             self.rdata.pick.current_surfOpt = np.zeros(self.rdata.tnum)
-    #         else:
-    #             # if surf idx array is all nans, take max power to define surface 
-    #             max_idx = np.nanargmax(self.rdata.proc[10:,:], axis = 0) + 10
-    #             # remove outliers
-    #             not_outlier = utils.remove_outliers(max_idx)
-    #             # interpolate, ignoring outliers
-    #             x = np.arange(self.rdata.tnum)
-    #             self.rdata.pick.current_surfOpt = np.interp(x, x[not_outlier], max_idx[not_outlier])
-
-    #     else:
-    #         # if existing surface pick, find max within specified window form existing pick
-    #         winSize = self.winSize.get()
-    #         x = np.argwhere(~np.isnan(self.rdata.pick.current_surf))
-    #         y = self.rdata.pick.current_surf[x]
-    #         for _i in range(len(x)):
-    #             # find argmax for window for given data trace in pick
-    #             max_idx = np.argmax(self.rdata.proc[int(y[_i] - (winSize/2)):int(y[_i] + (winSize/2)), x[_i]])
-    #             # add argmax index to pick_dict1 - account for window index shift
-    #             self.rdata.pick.current_surfOpt[x[_i]] = max_idx + int(y[_i] - (winSize/2))
-    #     self.plot_wv()
 
 
     # auto_repick is a method to automatically optimize subsurface picks by selecting the maximul amplitude sample within the specified window around existing picks

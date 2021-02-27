@@ -125,28 +125,13 @@ class pick(object):
     pick class holds the relevant radar pick information.
     """
     def __init__(self):
-        # necessary pick objects - existing and current
-        #: np.ndarray(tnum,) containing existing data file twtt to surface for a given trace
-        self.existing_twttSurf = np.array(())
-        #: dict, containing  existing data file twtt to subsurface pick segments/layers.
-        # individual segments/layers are stored as arrays [np.ndarray(tnum,)] containing twtt in 
-        # second to a picked reflection horizon, and NaN where no pick exists for a given trace.
-        # twtt_subsurf[n] is 0-indexed, representing individual pick segments/layers
-        self.existing_twttSubsurf = {}
-
-        #: np.ndarray(tnum,) containing current session surface pick in sample number 
-        self.current_surf = np.array(())
-        #: np.ndarray(tnum,) containing current session optimized surface pick in sample number 
-        self.current_surfOpt = np.array(())
-        #: dict, containing  current data file subsurface pick segments/layers.
-        # individual segments/layers are stored as arrays [np.ndarray(tnum,)] containing
-        # the sample number of a picked reflection horizon, and NaN where no pick exists 
-        # for a given trace. subsurf[n] is 0-indexed, representing individual pick segments/layers
-        self.current_subsurf = {}
-        #: dict, containing  current data file optimized subsurface pick segments/layers.
-        self.current_subsurfOpt = {}
-        #: dict, containing  file pick horizons - each dictionary layer will be of type np.ndarray(tnum,) pick in sample number for each trace
+        #: dict horizons, nested containing  file pick horizons
+        # each horizon is itself a dictionary with each key 
+        # of type np.ndarray(tnum,), representing the
+        # pick in sample number for each trace
         self.horizons = {}
+        #: str srf, surface horizon name
+        self.srf = None
 
         return
 

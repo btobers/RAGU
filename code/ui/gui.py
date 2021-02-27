@@ -25,6 +25,10 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 import tkinter as tk
 import tkinter.ttk as ttk
+try:
+    plt.rcParams["font.family"] = "Times New Roman"
+except:
+    pass
 
 class mainGUI(tk.Frame):
     def __init__(self, parent, datPath, *args, **kwargs):
@@ -166,6 +170,9 @@ class mainGUI(tk.Frame):
         rmMenu.add_command(label="All", command=lambda:self.clear_pick(allFlag=True))
         interpretMenu.add_cascade(label="Remove", menu=rmMenu)
         interpretMenu.add_command(label="Import", command=self.import_pick)
+        srfMenu = tk.Menu(fileMenu,tearoff=0)
+        srfMenu.add_command(label="Auto-pick", command=self.srf_autopick)
+        interpretMenu.add_cascade(label="Surface", menu=srfMenu)        
         exportMenu = tk.Menu(fileMenu,tearoff=0)
         exportMenu.add_command(label="Horizon", command=lambda:self.export_pick(merged=False))
         exportMenu.add_command(label="Merged  [Ctrl+S]", command=lambda:self.export_pick(merged=True))
@@ -508,6 +515,25 @@ class mainGUI(tk.Frame):
             if allFlag:
                 self.impick.rm_horizon(rm_all=True)
 
+    
+    # import_pick is a method to load and plot picks saved to a csv file
+    def import_pick(self):
+        if self.f_loadName:
+            pk_file = ""
+            pk_file = tk.filedialog.askopenfilename(initialdir = self.conf["path"]["outPath"], title = "load picks", filetypes = (("comma separated value", "*.csv"),))
+            if pk_file:
+                self.igst.import_pick(pk_file)
+                self.impick.set_picks(horizon="bed")
+                self.impick.blit()
+
+
+    # srf_autopick
+    def srf_autopick(self):
+        if "srf" not in self.impick.get_horizon_paths().keys() or tk.messagebox.askyesno("Warning","Surface horizon 'srf' already exists. Overwrite with auto-pick surface?"):
+            self.rdata.pick.horizons["srf"] = utils.get_srf(self.rdata.proc)
+            self.impick.set_picks(horizon="srf")
+            self.impick.blit()
+
 
     # export_pick is method to receieve the desired pick save location from user input
     def export_pick(self, merged=True):
@@ -730,17 +756,6 @@ class mainGUI(tk.Frame):
     def set_menu_color(self, menu=None, horizon=None, colors=None, *args):
         c = colors[horizon.get()]
         menu.config(foreground=c, activeforeground=c, highlightcolor=c)
-
-
-    # import_pick is a method to load and plot picks saved to a csv file
-    def import_pick(self):
-        if self.f_loadName:
-            pk_file = ""
-            pk_file = tk.filedialog.askopenfilename(initialdir = self.conf["path"]["outPath"], title = "load picks", filetypes = (("comma separated value", "*.csv"),))
-            if pk_file:
-                self.igst.import_pick(pk_file)
-                self.impick.set_picks(horizon="bed")
-                self.impick.blit()
 
 
     # change tabs between profile and waveform views

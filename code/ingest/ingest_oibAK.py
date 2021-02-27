@@ -75,6 +75,7 @@ def read_h5(fpath, navcrs, body):
             rdata.pick.horizons["srf"] = utils.twtt2sample(twtt_srf, rdata.dt)
         else:
             rdata.pick.horizons["srf"] = utils.twtt2sample(utils.depth2twtt(rdata.navdf["elev"] - rdata.srfElev, eps_r=1), rdata.dt)
+        rdata.pick.srf = "srf"
     else:
         rdata.set_srfElev(np.repeat(np.nan, rdata.tnum))
 

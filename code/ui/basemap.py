@@ -17,7 +17,10 @@ import matplotlib as mpl
 mpl.use("TkAgg")
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-
+try:
+    plt.rcParams["font.family"] = "Times New Roman"
+except:
+    pass
 
 class basemap(tk.Frame):
     def __init__(self, parent, datPath, navcrs, body, to_gui):
