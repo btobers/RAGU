@@ -255,6 +255,46 @@ def getnav_sharad(navfile, navcrs, body):
         df["y"].to_numpy(),
         df["z"].to_numpy())
 
+    # SHARAD FPB sample 1800 corresponds to the aeroid height - use aeroid to reference SP elevation and get absolute twtt
+    # aerPath = os.path.split(os.getcwd())[0] + "/dat/mars/mega90n000eb.img"
+
+    # # convert binary .img PDS aeroid to numpy array
+    # # LINES                        = 2880
+    # # LINE_SAMPLES                 = 5760   
+    # lines = 2880
+    # samps = 5760
+ 
+    # dtype = np.dtype("int16")     
+    # with open(aerPath, "rb") as f:
+    #     dat = np.fromfile(f, dtype)     
+
+    # dat = dat.reshape((lines, samps))
+
+    # aer = rio.open(aerPath, "r")
+
+    # # except:
+    # #     print("Unable to open areoid file. Is it located at : " + aerPath + " ?")
+    # #     sys.exit(1)
+
+    # aerX, aerY, aerZ = pyproj.transform(
+    #     xyzsys, aer.crs, df["x"].to_numpy(), df["y"].to_numpy(), df["z"].to_numpy()
+    # )
+
+    # iy, ix = aer.index(aerX, aerY)
+    # ix = np.array(ix)
+    # iy = np.array(iy)
+
+    # # Temp fix mola meters/pix issue
+    # ix[ix > aer.width - 1] = aer.width - 1
+    # ix[ix < 0] = 0
+
+    # zval = aer.read(1)[iy, ix]
+
+    # df["datum"] = ((1000.0 * df["elev"] - 3396000.0 - zval) * 2.0 / c) - (
+    #     1800.0 * 37.5e-9
+    # )
+
+
     return df[["lon", "lat", "elev", "x", "y", "z", "dist"]]
 
 

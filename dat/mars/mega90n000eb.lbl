@@ -1,0 +1,77 @@
+PDS_VERSION_ID                = PDS3
+RECORD_TYPE                   = FIXED_LENGTH
+FILE_RECORDS                  = 2880
+RECORD_BYTES                  = 11520
+^IMAGE                        = "MEGA90N000EB.IMG"
+DATA_SET_ID                   = "MGS-M-MOLA-5-MEGDR-L3-V1.0"
+PRODUCT_ID                    = "MEGA90N000EB.IMG"
+SPACECRAFT_NAME               = "MARS GLOBAL SURVEYOR"
+INSTRUMENT_ID                 = MOLA
+INSTRUMENT_NAME               = "MARS ORBITER LASER ALTIMETER"
+TARGET_NAME                   = MARS
+START_TIME                    = 1997-09-15T19:10:00.000
+STOP_TIME                     = 2001-06-30T11:10:40.000
+START_ORBIT_NUMBER            = 3
+STOP_ORBIT_NUMBER             = 20333
+PRODUCT_CREATION_TIME         = 2003-04-03T01:00:00
+PRODUCT_VERSION_ID            = "2.0"
+PRODUCER_ID                   = MGS_MOLA_TEAM
+PRODUCER_FULL_NAME            = "DAVID E. SMITH"
+PRODUCER_INSTITUTION_NAME     = "GODDARD SPACE FLIGHT CENTER"
+DESCRIPTION                   = "This data product is the reference datum
+  used to generate the MOLA topographic maps. The map is in the form of
+  a binary table with one row for each 0.0625-degree latitude. The datum
+  consists of an equipotential surface described by the potential model
+  GMM3, the Goddard Mars Gravity Model mgm1025 evaluated to degree and
+  order 50. Truncation of this degree and order 80 field to degree 50, for
+  consistency with earlier MOLA releases, introduces about 3 m of
+  truncation error except over large volcanoes, where it may remove up to
+  50 m of the areoid height. The uncertainty in the areoid through degree
+  60 is 1.8 m RMS. The mean radius of the equipotential surface at the
+  equator is 3,396,000 meters. The radius at a given latitude and longitude
+  is found iteratively by evaluating the potential model at that location
+  and matching the calculated potential to the mean equatorial potential."
+
+OBJECT                        = IMAGE
+ NAME                         = AREOID_RADIUS
+ DESCRIPTION                  = "Areoid radius at the center of the
+  0.0625 by 0.0625 degree area, after subtracting 3,396,000 meters."
+ LINES                        = 2880
+ LINE_SAMPLES                 = 5760
+ SAMPLE_TYPE                  = MSB_INTEGER
+ SAMPLE_BITS                  = 16
+ UNIT                         = METER
+ SCALING_FACTOR               = 1
+ OFFSET                       = 3396000
+END_OBJECT                    = IMAGE
+
+OBJECT                        = IMAGE_MAP_PROJECTION
+ ^DATA_SET_MAP_PROJECTION     = "DSMAP.CAT"
+ MAP_PROJECTION_TYPE          = "SIMPLE CYLINDRICAL"
+ A_AXIS_RADIUS                = 3396.0 <KM>
+ B_AXIS_RADIUS                = 3396.0 <KM>
+ C_AXIS_RADIUS                = 3396.0 <KM>
+ FIRST_STANDARD_PARALLEL      = "N/A"
+ SECOND_STANDARD_PARALLEL     = "N/A"
+ POSITIVE_LONGITUDE_DIRECTION = "EAST"
+ CENTER_LATITUDE              = 0.0 <DEGREE>
+ CENTER_LONGITUDE             = 180.0 <DEGREE>
+ REFERENCE_LATITUDE           = "N/A"
+ REFERENCE_LONGITUDE          = "N/A"
+ LINE_FIRST_PIXEL             = 1
+ LINE_LAST_PIXEL              = 2880
+ SAMPLE_FIRST_PIXEL           = 1
+ SAMPLE_LAST_PIXEL            = 5760
+ MAP_PROJECTION_ROTATION      = 0.0
+ MAP_RESOLUTION               = 16.0 <PIXEL/DEGREE>
+ MAP_SCALE                    = 3.705 <KM/PIXEL>
+ MAXIMUM_LATITUDE             = 90.0 <DEGREE>
+ MINIMUM_LATITUDE             = -90.0 <DEGREE>
+ WESTERNMOST_LONGITUDE        = 0.0 <DEGREE>
+ EASTERNMOST_LONGITUDE        = 360.0 <DEGREE>
+ LINE_PROJECTION_OFFSET       = 1440.5
+ SAMPLE_PROJECTION_OFFSET     = 2880.5
+ COORDINATE_SYSTEM_TYPE       = "BODY-FIXED ROTATING"
+ COORDINATE_SYSTEM_NAME       = "PLANETOCENTRIC"
+END_OBJECT                    = IMAGE_MAP_PROJECTION
+END

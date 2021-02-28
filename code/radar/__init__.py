@@ -135,6 +135,17 @@ class pick(object):
 
         return
 
+
+    # set_srf defines the surface horizon name
+    def set_srf(self, srf=None):
+        self.srf = srf
+
+
+    # get_srf returns the defined surface horizon name
+    def get_srf(self):
+        return self.srf
+
+
     # get_pick_flag returns true if interpretations exist, false otherwise
     def get_pick_flag(self):
         flag = False

@@ -61,5 +61,6 @@ class ingest:
                 if horizon not in self.rdata.pick.horizons.keys():
                     self.rdata.pick.horizons[horizon] = sample
                 else:
+                    horizon = "bed_imported"
                     self.rdata.pick.horizons["bed_imported"] = sample
-        return 
+        return  horizon

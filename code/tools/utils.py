@@ -139,8 +139,8 @@ def compare_horizon_paths(dicta=None, dictb=None):
     return out
 
 
-# surfpick2elev function
-def surfpick2elev(a, b, tnum, dt):
+# srfpick2elev function
+def srfpick2elev(a, b, tnum, dt):
     """
     calculate surface elevation from updated surface pick, subtracting distance form navdf["elev"] to surface
     #: np.ndarray(tnum,) a, surface index per trace [samle #]
@@ -150,9 +150,9 @@ def surfpick2elev(a, b, tnum, dt):
     """
     if a.shape == (tnum,):
         dist = twtt2depth(sample2twtt(a, dt), eps_r=1)
-        surfElev = b - dist
+        srfElev = b - dist
 
-        return surfElev
+        return srfElev
 
 
 # twtt2depth function
