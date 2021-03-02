@@ -181,8 +181,8 @@ class mainGUI(tk.Frame):
 
         # processing menu items
         procMenu.add_command(label="Set Time Zero", command=lambda:self.procTools("tzero"))
-        procMenu.add_command(label="Dewow", command=lambda:self.procTools("dewow"))
-        procMenu.add_command(label="Remove Mean Trace", command=lambda:self.procTools("remMnTr"))
+        # procMenu.add_command(label="Dewow", command=lambda:self.procTools("dewow"))
+        # procMenu.add_command(label="Remove Mean Trace", command=lambda:self.procTools("remMnTr"))
 
         # processing submenu items
         filtMenu = tk.Menu(procMenu,tearoff=0)
@@ -193,7 +193,7 @@ class mainGUI(tk.Frame):
         procMenu.add_cascade(label="Filter", menu=filtMenu)
 
         # gain menu items
-        gainMenu.add_command(label="AGC", command=lambda:self.procTools("agc"))
+        # gainMenu.add_command(label="AGC", command=lambda:self.procTools("agc"))
         gainMenu.add_command(label="T-Pow", command=lambda:self.procTools("tpow"))
         procMenu.add_cascade(label="Gain", menu=gainMenu)
 
