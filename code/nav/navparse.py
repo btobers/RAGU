@@ -257,7 +257,7 @@ def getnav_sharad(navfile, navcrs, body):
         df["y"].to_numpy(),
         df["z"].to_numpy())
 
-    # SHARAD FPB sample 1800 corresponds to the areoid height - use areoid to reference SP elevation and get absolute twtt
+    # SHARAD FPB sample 1800 corresponds to the areoid height - use areoid to reference SC elevation and get absolute twtt
     aerPath = os.path.split(os.getcwd())[0] + "/dat/mars/mega90n000eb.tif"
     try:
         aer = rio.open(aerPath, mode="r")
@@ -282,7 +282,7 @@ def getnav_sharad(navfile, navcrs, body):
     # this will be added back in upon export to get absolute twtt of picks
     df["twtt_wind"] = 2*(df["scRad"] - df["elev"])/C
 
-    return df[["lon", "lat", "elev", "x", "y", "z", ,"twtt_wind", "dist"]]
+    return df[["lon", "lat", "elev", "x", "y", "z","twtt_wind", "dist"]]
 
 
 def getnav_marsis(navfile, navcrs, body):

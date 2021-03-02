@@ -18,29 +18,39 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 from matplotlib.widgets import Button
 
 
-def set_tzero(raw, proc, dt):
+def get_tzero(raw):
     """
-    set time zero of radar data based on average trace
+    get time zero of radar data based on average trace
     INPUT:
-    data       data matrix whose columns contain the traces 
+    raw         raw data matrix whose columns contain the traces 
 
     OUTPUT:
-    newdata    data matrix after setting time zero
+    samp        sample number to set as time zero
     """
     # get mean trace and find max sample
-    meanTrace = np.mean(proc, axis=1)
-    tzeroSamp = np.nanargmax(meanTrace)
-    if tzeroSamp > 0:    
+    meanTrace = np.mean(np.abs(raw), axis=1)
+    samp = np.nanargmax(meanTrace)
+    return samp
+
+def tzero_shift(samp, raw):
+    """
+    get time zero of radar data based on average trace
+    INPUT:
+    samp        sample number to shift to time zero
+    raw         raw data matrix whose columns contain the traces 
+
+    OUTPUT:
+    out         shifted output data array
+    """
+    if samp > 0:    
         # roll data and set last chunk as nan
-        datOut = np.zeros(raw.shape)
-        datOut[:-tzeroSamp,:] = raw[tzeroSamp:,:]
-        datOut[-tzeroSamp:,:] = np.nan
+        out = np.zeros(raw.shape)
+        out[:-samp,:] = raw[samp:,:]
+        out[-samp:,:] = np.nan
 
     else:
-        datOut = None
-    print("new time zero:\t" + str(tzeroSamp * dt * 1e9) + " nanoseconds")
-
-    return tzeroSamp, datOut
+        out = raw
+    return out
 
 def dewow(data,window):
     """

@@ -799,9 +799,12 @@ class mainGUI(tk.Frame):
             procFlag = None
             simFlag = None
             if arg == "tzero":
-                sampzero, proc = processing.set_tzero(self.rdata.dat, self.rdata.proc, self.rdata.dt)
+                sampzero = processing.get_tzero(self.rdata.dat)
                 if sampzero > 0:
+                    # set sampzero flag and roll data array
                     self.rdata.flags.sampzero = sampzero
+                    proc = processing.tzero_shift(sampzero, self.rdata.dat)
+                    print("Time zero shifted to:\nsample:\t" + str(sampzero) + "\ntime:\t"  + str(sampzero * self.rdata.dt * 1e9) + " nanoseconds")
                     # define surface horizon name to set index to zeros
                     self.srf_define()
                     self.impick.set_picks(horizon=self.rdata.pick.get_srf())
@@ -834,6 +837,9 @@ class mainGUI(tk.Frame):
             elif arg == "tpow":
                 power = tk.simpledialog.askfloat("input","power for tpow gain?")
                 proc = processing.tpowGain(np.abs(self.rdata.dat), np.arange(self.rdata.snum)*self.rdata.dt, power=power)
+                # reapply tzero shift if necessary
+                if self.rdata.flags.sampzero:
+                    proc = processing.tzero_shift(self.rdata.flags.sampzero, proc)
                 procFlag = True
 
             elif arg == "shiftSim":
