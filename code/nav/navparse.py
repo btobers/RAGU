@@ -8,9 +8,11 @@ nav library contains various fucntions for reading radar nav data and transformi
 """
 ### imports ###
 from nav.gps import GPSdat
+from tools.constants import *
 import sys,os
 import pandas as pd
 import rasterio as rio
+from rasterio.plot import show
 import numpy as np
 import scipy.io as scio
 import pyproj, h5py, codecs
@@ -229,7 +231,7 @@ def getnav_sharad(navfile, navcrs, body):
         "lat",
         "lon",
         "marsRad",
-        "elev",
+        "scRad",
         "radiVel",
         "tangVel",
         "SZA",
@@ -237,65 +239,50 @@ def getnav_sharad(navfile, navcrs, body):
     ]
     df = pd.read_csv(navfile, names=geomCols, index_col=False)
 
-    # Planetocentric lat, lon, radius to x,y,z - no need for navcrs
+    # Planetocentric lon,lat,radius to x,y,z
     df["x"] = (
-        (df["elev"] * 1000)
+        (df["scRad"] * 1000)
         * np.cos(np.radians(df["lat"]))
         * np.cos(np.radians(df["lon"]))
     )
     df["y"] = (
-        (df["elev"] * 1000)
+        (df["scRad"] * 1000)
         * np.cos(np.radians(df["lat"]))
         * np.sin(np.radians(df["lon"]))
     )
-    df["z"] = (df["elev"] * 1000) * np.sin(np.radians(df["lat"]))
+    df["z"] = (df["scRad"] * 1000) * np.sin(np.radians(df["lat"]))
 
     df["dist"] = euclid_dist(
         df["x"].to_numpy(),
         df["y"].to_numpy(),
         df["z"].to_numpy())
 
-    # SHARAD FPB sample 1800 corresponds to the aeroid height - use aeroid to reference SP elevation and get absolute twtt
-    # aerPath = os.path.split(os.getcwd())[0] + "/dat/mars/mega90n000eb.img"
+    # SHARAD FPB sample 1800 corresponds to the areoid height - use areoid to reference SP elevation and get absolute twtt
+    aerPath = os.path.split(os.getcwd())[0] + "/dat/mars/mega90n000eb.tif"
+    try:
+        aer = rio.open(aerPath, mode="r")
 
-    # # convert binary .img PDS aeroid to numpy array
-    # # LINES                        = 2880
-    # # LINE_SAMPLES                 = 5760   
-    # lines = 2880
-    # samps = 5760
- 
-    # dtype = np.dtype("int16")     
-    # with open(aerPath, "rb") as f:
-    #     dat = np.fromfile(f, dtype)     
+    except:
+        print("Unable to open areoid file. Is it located at : " + aerPath + " ?")
+        sys.exit(1)
 
-    # dat = dat.reshape((lines, samps))
+    # transform MRO lon/lat to areoid x/y to sample areoid radius along SC path 
+    aerX, aerY = pyproj.transform(
+        navcrs, aer.crs, df["lon"].to_numpy(), df["lat"].to_numpy()
+    )
 
-    # aer = rio.open(aerPath, "r")
+    # get raster x/y index of SC x/y positions
+    ix,iy = aer.index(aerX,aerY)
+    aerZ = aer.read(1)[ix,iy]
 
-    # # except:
-    # #     print("Unable to open areoid file. Is it located at : " + aerPath + " ?")
-    # #     sys.exit(1)
+    # use elevation above areiod as radar elevation  = scRad - (3396000 + rAreoid) - (2*1800*dt/c)
+    df["elev"] = (1000.0*df["scRad"]) - 3396000.0 - aerZ - (2*1800*37.5e-9/C)
 
-    # aerX, aerY, aerZ = pyproj.transform(
-    #     xyzsys, aer.crs, df["x"].to_numpy(), df["y"].to_numpy(), df["z"].to_numpy()
-    # )
+    # get twtt for SHARAD opening receive window from SC to top of radargram = 2*(scRad - evel_samp0)/c
+    # this will be added back in upon export to get absolute twtt of picks
+    df["twtt_wind"] = 2*(df["scRad"] - df["elev"])/C
 
-    # iy, ix = aer.index(aerX, aerY)
-    # ix = np.array(ix)
-    # iy = np.array(iy)
-
-    # # Temp fix mola meters/pix issue
-    # ix[ix > aer.width - 1] = aer.width - 1
-    # ix[ix < 0] = 0
-
-    # zval = aer.read(1)[iy, ix]
-
-    # df["datum"] = ((1000.0 * df["elev"] - 3396000.0 - zval) * 2.0 / c) - (
-    #     1800.0 * 37.5e-9
-    # )
-
-
-    return df[["lon", "lat", "elev", "x", "y", "z", "dist"]]
+    return df[["lon", "lat", "elev", "x", "y", "z", ,"twtt_wind", "dist"]]
 
 
 def getnav_marsis(navfile, navcrs, body):
