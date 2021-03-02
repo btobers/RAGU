@@ -45,26 +45,25 @@ def pick_math(rdata, eps_r=3.15, amp_out=True, horizon=None, srf=None):
 
     # if horizon specified export unmerged interpretation
     if horizon and horizon in horizons:
-        sample = sample[horizon]
-        out["sample"] = sample
-        twtt = utils.sample2twtt(sample, rdata.dt)
+        # apply sample time zero shift back in
+        samp_arr = sample[horizon] + rdata.flags.sampzero
+        out["sample"] = samp_arr
+        twtt = utils.sample2twtt(samp_arr, rdata.dt)
         out["twtt"] = twtt
 
-        if damp is None:
-            pass
-        else:
+        if type(damp) is np.ndarray:
             amp = np.repeat(np.nan, rdata.tnum)
-            idx = ~np.isnan(sample)
-            # add any applied shift to index to pull proper sample amplitude from data array
-            amp[idx] = damp[(sample[idx].astype(np.int) + rdata.flags.sampzero), idx]
+            idx = ~np.isnan(samp_arr)
+            amp[idx] = damp[samp_arr[idx].astype(np.int), idx]
             out["amp"] = amp
         return out
     
     if srf:
         # iterate through interpretation horizons
         for i, (horizon, array) in enumerate(sample.items()):
-            out[horizon + "_sample"] = array
-            out[horizon + "_twtt"] = utils.sample2twtt(array, rdata.dt)
+            samp_arr = array + rdata.flags.sampzero
+            out[horizon + "_sample"] = samp_arr
+            out[horizon + "_twtt"] = utils.sample2twtt(samp_arr, rdata.dt)
 
             if horizon == srf: 
                 # elev[horizon] = rdata.srfElev
@@ -73,9 +72,9 @@ def pick_math(rdata, eps_r=3.15, amp_out=True, horizon=None, srf=None):
                 if type(damp) is np.ndarray:
                     # export horizon amplitude values
                     amp = np.repeat(np.nan, rdata.tnum)
-                    idx = ~np.isnan(array)
+                    idx = ~np.isnan(samp_arr)
                     # add any applied shift to index to pull proper sample amplitude from data array
-                    amp[idx] = damp[(array[idx].astype(np.int) + rdata.flags.sampzero), idx]
+                    amp[idx] = damp[samp_arr[idx].astype(np.int), idx]
                     out[srf + "_amp"] = amp
                 continue
 
@@ -88,9 +87,9 @@ def pick_math(rdata, eps_r=3.15, amp_out=True, horizon=None, srf=None):
             if type(damp) is np.ndarray:
                     # export horizon amplitude values
                     amp = np.repeat(np.nan, rdata.tnum)
-                    idx = ~np.isnan(array)
+                    idx = ~np.isnan(samp_arr)
                     # add any applied shift to index to pull proper sample amplitude from data array
-                    amp[idx] = damp[(array[idx].astype(np.int) + rdata.flags.sampzero), idx]
+                    amp[idx] = damp[samp_arr[idx].astype(np.int), idx]
                     out[horizon + "_amp"] = amp
 
             # if not 0th layer, reference bed elevation of upper layer for thickness
@@ -109,15 +108,16 @@ def pick_math(rdata, eps_r=3.15, amp_out=True, horizon=None, srf=None):
     else:
         # iterate through interpretation horizons
         for i, (horizon, array) in enumerate(sample.items()):
-            out[horizon + "_sample"] = array
-            out[horizon + "_twtt"] = utils.sample2twtt(array, rdata.dt)
+            samp_arr = array + rdata.flags.sampzero
+            out[horizon + "_sample"] = samp_arr
+            out[horizon + "_twtt"] = utils.sample2twtt(samp_arr, rdata.dt)
 
             if type(damp) is np.ndarray:
                     # export horizon amplitude values
                     amp = np.repeat(np.nan, rdata.tnum)
-                    idx = ~np.isnan(array)
+                    idx = ~np.isnan(samp_arr)
                     # add any applied shift to index to pull proper sample amplitude from data array
-                    amp[idx] = damp[(array[idx].astype(np.int) + rdata.flags.sampzero), idx]
+                    amp[idx] = damp[samp_arr[idx].astype(np.int), idx]
                     out[horizon + "_amp"] = amp
 
             # calculate thickness between subsequent horizons

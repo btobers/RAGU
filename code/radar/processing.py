@@ -17,7 +17,6 @@ import tkinter as tk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.widgets import Button
 
-
 def get_tzero(raw):
     """
     get time zero of radar data based on average trace
@@ -32,9 +31,10 @@ def get_tzero(raw):
     samp = np.nanargmax(meanTrace)
     return samp
 
+
 def tzero_shift(samp, raw):
     """
-    get time zero of radar data based on average trace
+    roll 2d data array so first row is time zero sample
     INPUT:
     samp        sample number to shift to time zero
     raw         raw data matrix whose columns contain the traces 
@@ -51,6 +51,7 @@ def tzero_shift(samp, raw):
     else:
         out = raw
     return out
+
 
 def dewow(data,window):
     """
