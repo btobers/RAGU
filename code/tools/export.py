@@ -13,7 +13,7 @@ import pandas as pd
 import geopandas as gpd
 from shapely.geometry import Point
 import tkinter as tk
-import sys, h5py, fnmatch
+import os, sys, h5py, fnmatch
 from tools.constants import *
 import matplotlib.pyplot as plt
 
@@ -191,3 +191,13 @@ def proc(fpath, dat):
     amp = utils.powdB2amp(dat)
     np.savetxt(fpath, amp, fmt="%s", delimiter=",")
     print("processed amplitude data exported successfully:\t" + fpath)
+
+
+# log is a method to export the processing log as a python script
+def log(fpath, log):
+    with open(fpath,"w") as ofile:
+        cdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        ofile.write("### RAGU processing log ###\nimport sys\n\n# change dir to RAGU code directory\nsys.path.append('{}')\nfrom ingest import ingest\n".format(cdir))
+        for _i in log:
+            ofile.write(_i.replace("self.","") + "\n")
+        ofile.close()

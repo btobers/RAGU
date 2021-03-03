@@ -53,7 +53,6 @@ def read(fpath, simpath, navcrs, body):
     rdata.set_sim(sim)
 
     # assign signal info
-    rdata.sig = {}
     rdata.sig["signal type"] = "chirp"
     rdata.sig["cf [MHz]"] = 20
     rdata.sig["badwidth [%]"] = 50

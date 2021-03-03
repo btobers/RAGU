@@ -72,7 +72,6 @@ def read(fpath, simpath, navcrs, body):
     rdata.set_sim(sim)
 
     # assign signal info
-    rdata.sig = {}
     rdata.sig["signal type"] = "chirp"
 
     # open geom nav file for rgram

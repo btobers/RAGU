@@ -32,20 +32,24 @@ class ingest:
         # better ways to do this than an if/else
         # but for a few file types this is easier
         if (self.ftype == "h5"):
-            self.rdata = ingest_oibAK.read_h5(fpath, navcrs, body)
+            cmd = 'self.rdata = ingest_oibAK.read_h5("{}", "{}", "{}")'.format(fpath, navcrs, body)
         elif (self.ftype == "mat"):
-            self.rdata = ingest_oibAK.read_mat(fpath, navcrs, body)
+            cmd = 'self.rdata = ingest_oibAK.read_mat("{}", "{}", "{}")'.format(fpath, navcrs, body)
         elif (self.ftype == "img"):
-            self.rdata = ingest_sharad.read(fpath, simpath, navcrs, body)
+            cmd = 'self.rdata = ingest_sharad.read("{}", "{}", "{}", "{}")'.format(fpath, simpath, navcrs, body)
         elif (self.ftype == "dat"):
-            self.rdata = ingest_marsis.read(fpath, simpath, navcrs, body)
+            cmd = 'self.rdata = ingest_marsis.read("{}", "{}", "{}", "{}")'.format(fpath, simpath, navcrs, body)
         elif (self.ftype == "DT1"):
-            self.rdata = ingest_pulseekko.read(fpath, navcrs, body)
+            cmd = 'self.rdata = ingest_pulseekko.read("{}", "{}", "{}")'.format(fpath, navcrs, body)
         elif (self.ftype == "DZT"):
-            self.rdata = ingest_gssi.read(fpath, navcrs, body)
+            cmd = 'self.rdata = ingest_gssi.read("{}", "{}", "{}")'.format(fpath, navcrs, body)
         else:
             print("File reader for format {} not built yet".format(self.ftype))
             exit(1)
+
+        # execute ingest command and add to log
+        exec(cmd)
+        self.rdata.log.append(cmd)
 
         return self.rdata
 

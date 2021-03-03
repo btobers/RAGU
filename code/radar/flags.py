@@ -4,7 +4,7 @@
 #
 # distributed under terms of the GNU GPL3.0 license
 """
-rdata flags cto hold the key information for a radar profile
+rdata flags to hold the key information for a radar profile
 """
 
 class flags(object):

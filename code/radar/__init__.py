@@ -4,16 +4,19 @@
 #
 # distributed under terms of the GNU GPL3.0 license
 ### imports ###
+from radar.flags import flags
+from radar.pick import pick
 import numpy as np
-import sys, copy
-from radar import flags
-from tools import utils
+import scipy.signal as signal
 
 class radar(object):
     """
     the radar class holds the relevant information for a radar profile.
     keep track of processing steps with the flags attribute.
     """
+    # import processing tools
+    from radar.processing import get_tzero_samp, tzero_shift, tpowGain, lowpass, shiftSim, restore
+
     def __init__(self, fpath):
         # basic data file attributes
         #: str, file path
@@ -35,7 +38,7 @@ class radar(object):
         #: dict, signal info
         self.sig = {}
         #: radar flags object
-        self.flags = flags.flags()
+        self.flags = flags()
 
         # per-trace attributes
         #: navdf consisting of [lon, lat, hgt, x, y, z, dist]
@@ -46,8 +49,8 @@ class radar(object):
         self.twtt = None
 
         # optional attributes
-        #: list, history
-        self.hist = []
+        #: list, log of dataset operations history
+        self.log = []
         #: np.ndarray(tnum,), surface elevation per trace
         self.srfElev = None
         #: np.ndarray(snum x tnum), processed radat data - this is what will actually be displayed, as to not modify original data
@@ -120,42 +123,3 @@ class radar(object):
             pyramid.append(dat)
 
         return pyramid
-
-
-class pick(object):
-    """
-    pick class holds the relevant radar pick information.
-    """
-    def __init__(self):
-        #: dict horizons, nested containing  file pick horizons
-        # each horizon is itself a dictionary with each key 
-        # of type np.ndarray(tnum,), representing the
-        # pick in sample number for each trace
-        self.horizons = {}
-        #: str srf, surface horizon name
-        self.srf = None
-
-        return
-
-
-    # set_srf defines the surface horizon name
-    def set_srf(self, srf=None):
-        self.srf = srf
-
-
-    # get_srf returns the defined surface horizon name
-    def get_srf(self):
-        return self.srf
-
-
-    # get_pick_flag returns true if interpretations exist, false otherwise
-    def get_pick_flag(self):
-        flag = False
-        for key, item in self.horizons.items():
-            if np.isnan(item).all():
-                continue
-            else:
-                flag = True
-                break
-
-        return flag

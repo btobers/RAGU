@@ -138,6 +138,7 @@ class mainGUI(tk.Frame):
         exportMenu.add_cascade(label="Picks", menu=pickExportMenu)
         exportMenu.add_command(label="Figure", command=self.export_fig)
         exportMenu.add_command(label="Processed Data", command=self.export_proc)
+        exportMenu.add_command(label="Processing Script", command=self.export_log)
         fileMenu.add_cascade(label="Export", menu=exportMenu)
         fileMenu.add_separator()
 
@@ -198,6 +199,7 @@ class mainGUI(tk.Frame):
         procMenu.add_cascade(label="Gain", menu=gainMenu)
 
         procMenu.add_command(label="Shift Sim", command=lambda:self.procTools("shiftSim"))
+        procMenu.add_command(label="Undo", command=lambda:self.procTools("undo"))        
         procMenu.add_command(label="Restore Original Data", command=lambda:self.procTools("restore"))
 
         # view menu items
@@ -679,6 +681,18 @@ class mainGUI(tk.Frame):
                 export.proc(fn + ".csv", self.rdata.proc)
 
 
+    # export_log is a method to save the processing log
+    def export_log(self):
+        if self.f_loadName:
+            tmp_fn_out = ""
+            tmp_fn_out = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + ".py",
+                            initialdir = self.conf["path"]["outPath"], title = "save process script")
+
+            if tmp_fn_out:
+                fn, ext = os.path.splitext(tmp_fn_out)
+
+                export.log(fn + ".py", self.rdata.log)
+
     # export_fig is a method to export the radargram image
     def export_fig(self):
         if self.f_loadName:
@@ -799,12 +813,17 @@ class mainGUI(tk.Frame):
             procFlag = None
             simFlag = None
             if arg == "tzero":
-                sampzero = processing.get_tzero(self.rdata.dat)
-                if sampzero > 0:
-                    # set sampzero flag and roll data array
-                    self.rdata.flags.sampzero = sampzero
-                    proc = processing.tzero_shift(sampzero, self.rdata.dat)
-                    print("Time zero shifted to:\nsample:\t" + str(sampzero) + "\ntime:\t"  + str(sampzero * self.rdata.dt * 1e9) + " nanoseconds")
+                cmd = 'self.rdata.get_tzero_samp()'
+                exec(cmd)
+                self.rdata.log.append(cmd)
+
+                if self.rdata.flags.sampzero > 0:
+                    cmd = 'self.rdata.tzero_shift()'
+                    exec(cmd)
+                    self.rdata.log.append(cmd)
+                    out = '# Time zero shifted to:\n# sample:\t {}\n# time:\t\t {} nanoseconds'.format(self.rdata.flags.sampzero,(self.rdata.flags.sampzero * self.rdata.dt * 1e9))
+                    print(out)
+                    self.rdata.log.append(out)
                     # define surface horizon name to set index to zeros
                     self.srf_define(srf="srf")
                     self.impick.set_picks(horizon=self.rdata.pick.get_srf())
@@ -824,8 +843,10 @@ class mainGUI(tk.Frame):
                 # procFlag = True
 
             elif arg == "lowpass":
-                cutoff = tk.simpledialog.askfloat("input","butterworth filter cutoff frequency?")
-                proc = processing.lowpassFilt(self.rdata.dat, Wn = cutoff, fs = 1/self.rdata.dt)
+                cutoff = tk.simpledialog.askfloat("Input","Butterworth filter cutoff frequency?")
+                cmd = 'self.rdata.lowpass(cf = {})'.format(cutoff)
+                exec(cmd)
+                self.rdata.log.append(cmd)
                 procFlag = True
 
             elif arg == "agc":
@@ -835,20 +856,36 @@ class mainGUI(tk.Frame):
                 # procFlag = True
 
             elif arg == "tpow":
-                power = tk.simpledialog.askfloat("input","power for tpow gain?")
-                proc = processing.tpowGain(np.abs(self.rdata.dat), np.arange(self.rdata.snum)*self.rdata.dt, power=power)
+                power = tk.simpledialog.askfloat("Input","Power for tpow gain?")
+                cmd = 'self.rdata.tpowGain(power={})'.format(power)
+                exec(cmd)
+                self.rdata.log.append(cmd)
                 # reapply tzero shift if necessary
                 if self.rdata.flags.sampzero > 0:
-                    proc = processing.tzero_shift(self.rdata.flags.sampzero, proc)
+                    cmd = 'self.rdata.tzero_shift()'
+                    exec(cmd)
+                    self.rdata.log.append(cmd)
                 procFlag = True
 
             elif arg == "shiftSim":
                 shift = tk.simpledialog.askinteger("input","clutter sim lateral shift (# traces)?")
                 if shift:
-                    sim = processing.shiftSim(self.rdata.sim, shift)
-                    self.rdata.flags.simshift += shift
+                    cmd = 'self.rdata.shiftSim()'
+                    exec(cmd)
+                    self.rdata.log.append(cmd)
+                    # sim = processing.shiftSim(self.rdata.sim, shift)
+                    # self.rdata.flags.simshift += shift
                     simFlag = True
                     print("clutter simulation shifted by a total of " + str(self.rdata.flags.simshift) + " traces, or " + str(self.rdata.flags.simshift * self.rdata.sig["prf [kHz]"] * 1e3) + " seconds")
+
+            elif arg == "undo":
+                # undo last processing step
+                for _i in range(1,len(self.rdata.log)):
+                    print(self.rdata.log[_i])
+                    try:
+                        exec(self.rdata.log[_i])
+                    except:
+                        pass
 
             elif arg == "restore":
                 # restore origianl rdata
@@ -860,7 +897,7 @@ class mainGUI(tk.Frame):
                 exit(1)
 
             if procFlag:
-                self.rdata.set_proc(proc)
+                # self.rdata.set_proc(proc)
                 self.impick.set_crange()
                 self.impick.drawData(force=True)
                 self.wvpick.clear()
@@ -916,7 +953,7 @@ class mainGUI(tk.Frame):
 
         row = tk.Frame(settingsWindow)
         row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-        lab = tk.Label(row, width=25, text="Figure size [w,h]", anchor='w')
+        lab = tk.Label(row, width=25, text='Figure size [w",h"]', anchor='w')
         lab.pack(side=tk.LEFT)
         self.figEnt = tk.Entry(row,textvariable=self.figsettings["figsize"])
         self.figEnt.pack(side=tk.RIGHT, expand=tk.YES, fill=tk.X)

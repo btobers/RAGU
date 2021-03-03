@@ -7,51 +7,90 @@
 RAGU radar data processing tools
 """
 ### imports ###
+from tools import utils
 import numpy as np
 import numpy.matlib as matlib
 import scipy.interpolate as interp
 import scipy.signal as signal
-import matplotlib.pyplot as plt
-import matplotlib as mpl
-import tkinter as tk
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-from matplotlib.widgets import Button
 
-def get_tzero(raw):
+def get_tzero_samp(self):
+    # get mean trace and find max sample and update sampzero flag
+    meanTrace = np.mean(np.abs(self.dat), axis=1)
+    self.flags.sampzero = np.nanargmax(meanTrace)
+
+    return
+
+
+def tzero_shift(self):
+    # shift 2d proc data array so first row is time zero sample - use nan to fill bottom samples
+    out = np.zeros_like(self.proc)
+    out[:-self.flags.sampzero,:] = self.dat[self.flags.sampzero:,:]
+    out[-self.flags.sampzero:,:] = np.nan
+    self.set_proc(out)
+    
+    return
+
+
+def lowpass(self, order = 5, cf = 1e6):
+    # apply low pass filter to data array
+    [b, a] = signal.butter(order, cf, btype="lowpass", fs=(1/self.dt))
+    lp = signal.filtfilt(b, a, self.dat, axis=0)
+    # use amplitude of lp filtered data to reset as pc array
+    self.set_proc(np.abs(lp))
+
+    return  
+
+
+def tpowGain(self, power):
     """
-    get time zero of radar data based on average trace
+    Apply a t-power gain to each trace with the given exponent.
+
     INPUT:
-    raw         raw data matrix whose columns contain the traces 
+    power       exponent
 
     OUTPUT:
-    samp        sample number to set as time zero
+    out         data matrix after t-power gain
     """
-    # get mean trace and find max sample
-    meanTrace = np.mean(np.abs(raw), axis=1)
-    samp = np.nanargmax(meanTrace)
-    return samp
+    twtt = np.arange(self.snum)*self.dt
+    factor = np.reshape(twtt**(float(power)),(len(twtt),1))
+    factmat = np.matlib.repmat(factor,1,self.tnum)
+    out = np.multiply(np.abs(self.dat),factmat)
+    self.set_proc(out)
+
+    return 
 
 
-def tzero_shift(samp, raw):
+def shiftSim(self, shift):
     """
-    roll 2d data array so first row is time zero sample
+    apply lateral shift to clutter sim to line up with data.
     INPUT:
-    samp        sample number to shift to time zero
-    raw         raw data matrix whose columns contain the traces 
-
+    data      data matrix whose columns contain the traces
+    shift     lateral shift [# columns]
+    prf       pulse repitition frequency to get total time of shift
+    
     OUTPUT:
-    out         shifted output data array
+    out_sim rolled sim array
     """
-    if samp > 0:    
-        # roll data and set last chunk as nan
-        out = np.zeros(raw.shape)
-        out[:-samp,:] = raw[samp:,:]
-        out[-samp:,:] = np.nan
-
-    else:
-        out = raw
+    self.flags.simshift += shift
+    out = np.roll(self.dat, shift, axis=1)
+    self.set_sim(utils.powdB2amp(out))
     return out
 
+
+def restore(dtype, dat):
+    if dtype == "oibak":
+        return np.abs(dat)
+    elif dtype == "gssi":
+        return dat
+    elif dtype == "sharad":
+        return dat
+    else:
+        print("processing error: restore received unknown data type, " + dtype)
+
+
+
+
+### proc functions still in dev ###
 
 def dewow(data,window):
     """
@@ -140,13 +179,6 @@ def remMeanTrace(data,ntraces):
     return newdata
 
 
-def lowpassFilt(pc, order = 5, Wn = 1e6, fs = None):
-    [b, a] = signal.butter(order, Wn, btype="lowpass", fs=fs)
-    pc_lp = signal.filtfilt(b, a, pc, axis=0)
-    print("lowpass filter applied")
-    return np.abs(pc_lp) 
-
-
 def agcGain(data, window=50, scaling_factor=50):
     """Try to do some automatic gain control
 
@@ -167,48 +199,3 @@ def agcGain(data, window=50, scaling_factor=50):
     newdata = data * (scaling_factor / np.atleast_2d(maxamp).transpose()).astype(data.dtype)
 
     return newdata
-
-
-def tpowGain(data, twtt, power):
-    """
-    Apply a t-power gain to each trace with the given exponent.
-
-    INPUT:
-    data      data matrix whose columns contain the traces
-    twtt      two-way travel time values for the rows in data
-    power     exponent
-
-    OUTPUT:
-    newdata   data matrix after t-power gain
-    """
-    factor = np.reshape(twtt**(float(power)),(len(twtt),1))
-    factmat = np.matlib.repmat(factor,1,data.shape[1])
-    out = np.multiply(data,factmat)
-    print("t^" + str(power) + " gain applied")
-    return out
-
-
-def shiftSim(data, shift):
-    """
-    apply lateral shift to clutter sim to line up with data.
-    INPUT:
-    data      data matrix whose columns contain the traces
-    shift     lateral shift [# columns]
-    prf       pulse repitition frequency to get total time of shift
-    
-    OUTPUT:
-    out_sim rolled sim array
-    """
-    out = np.roll(data, shift, axis=1)
-    return out
-
-
-def restore(dtype, dat):
-    if dtype == "oibak":
-        return np.abs(dat)
-    elif dtype == "gssi":
-        return dat
-    elif dtype == "sharad":
-        return dat
-    else:
-        print("processing error: restore received unknown data type, " + dtype)
