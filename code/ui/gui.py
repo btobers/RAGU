@@ -457,27 +457,31 @@ class mainGUI(tk.Frame):
             # prompt save check
             if (self.save_check() == False) and (tk.messagebox.askyesno("Warning", "Discard unsaved picks?", icon = "warning") == False):
                 return
+
+            # if h5 file already open, save pick layer to data file
+            if (self.rdata) and (self.rdata.out is None) and (self.rdata.fpath.endswith(".h5")) and (self.rdata.dtype=="oibak"):
+                export.h5(self.rdata.fpath, dict({"bed_twtt":np.repeat(np.nan, self.rdata.tnum)}), self.rdata.dtype)
+            
+            # get index of crurrently displayed file in directory
+            file_path = self.f_loadName.rstrip(self.f_loadName.split("/")[-1])
+            file_list = []
+
+            # step through files in current directory of same extension as currently loaded data
+            # determine index of currently loaded data within directory 
+            for count,file in enumerate(sorted(glob.glob(file_path + "*." + self.igst.ftype))):
+                file_list.append(file)
+                if file == self.f_loadName:
+                    file_index = count
+
+            # add one to index to load next file
+            file_index += 1
+
+            # check if more files exist in directory following current file
+            if file_index <= (len(file_list) - 1):
+                self.open_dfile(file_list[file_index])
+
             else:
-                # get index of crurrently displayed file in directory
-                file_path = self.f_loadName.rstrip(self.f_loadName.split("/")[-1])
-                file_list = []
-
-                # step through files in current directory of same extension as currently loaded data
-                # determine index of currently loaded data within directory 
-                for count,file in enumerate(sorted(glob.glob(file_path + "*." + self.igst.ftype))):
-                    file_list.append(file)
-                    if file == self.f_loadName:
-                        file_index = count
-
-                # add one to index to load next file
-                file_index += 1
-
-                # check if more files exist in directory following current file
-                if file_index <= (len(file_list) - 1):
-                    self.open_dfile(file_list[file_index])
-
-                else:
-                    print("Note: " + self.f_loadName.split("/")[-1] + " is the last file in " + file_path + "*." + self.f_loadName.split(".")[-1])
+                print("Note: " + self.f_loadName.split("/")[-1] + " is the last file in " + file_path + "*." + self.f_loadName.split(".")[-1])
 
 
     # generate new interpretation horizon
