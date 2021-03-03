@@ -32,8 +32,8 @@ class radar(object):
         self.dat = None
         #: int, number of data channels
         self.nchan = None
-        #:sig, signal type
-        self.sig = None
+        #: dict, signal info
+        self.sig = {}
         #: radar flags object
         self.flags = flags.flags()
 
@@ -46,11 +46,13 @@ class radar(object):
         self.twtt = None
 
         # optional attributes
-        #: np.ndarray(tnum,) surface elevation per trace
+        #: list, history
+        self.hist = []
+        #: np.ndarray(tnum,), surface elevation per trace
         self.srfElev = None
-        #: np.ndarray(snum x tnum) processed radat data - this is what will actually be displayed, as to not modify original data
+        #: np.ndarray(snum x tnum), processed radat data - this is what will actually be displayed, as to not modify original data
         self.proc = None
-        #: np.ndarray(snum x tnum) clutter simulation stored in dB for viewing
+        #: np.ndarray(snum x tnum), clutter simulation stored in dB for viewing
         self.sim = None
         #: pick object
         self.pick = pick()

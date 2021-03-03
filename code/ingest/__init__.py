@@ -22,8 +22,7 @@ class ingest:
         if (ftype not in valid_types):
 
             raise ValueError("Invalid file type specifier: " + ftype + 
-                            "\nValid file types: " + str(valid_types))
-
+                            "\nValid file types: " + str(valid_types)) 
 
         self.ftype = ftype
 

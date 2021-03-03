@@ -55,7 +55,6 @@ def read_h5(fpath, navcrs, body):
         rdata.set_sim(np.ones(rdata.dat.shape))                                 # empty clutter array if no sim exists
 
     # assign signal info
-    rdata.sig = {}
     rdata.sig["Signal Type"] = f["raw"]["tx0"].attrs["signal"].decode().capitalize() 
     rdata.sig["CF [MHz]"] = f["raw"]["tx0"].attrs["centerFrequency"] * 1e-6
     if rdata.sig["Signal Type"] == "chirp":
