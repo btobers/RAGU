@@ -15,7 +15,6 @@ mainGUI class is a tkinter frame which runs the RAGU master GUI
 ### imports ###
 from ui import impick, wvpick, basemap 
 from tools import utils, export
-from radar import processing
 from ingest import ingest
 import os, sys, scipy, glob, configparser
 import numpy as np
@@ -198,7 +197,6 @@ class mainGUI(tk.Frame):
         gainMenu.add_command(label="T-Pow", command=lambda:self.procTools("tpow"))
         procMenu.add_cascade(label="Gain", menu=gainMenu)
 
-        procMenu.add_command(label="Shift Sim", command=lambda:self.procTools("shiftSim"))
         procMenu.add_command(label="Undo", command=lambda:self.procTools("undo"))        
         procMenu.add_command(label="Restore Original Data", command=lambda:self.procTools("restore"))
 
@@ -326,6 +324,10 @@ class mainGUI(tk.Frame):
             elif event.keysym=="s":
                 self.impick.panDown()
 
+            # Ctrl+z undo last processing
+            elif event.state & 4 and event.keysym == "z":
+                            self.procTools(arg="undo")
+
         # waveform view keys
         if self.tab == "Waveform":
             # h key to set axes limits to home extent
@@ -414,41 +416,41 @@ class mainGUI(tk.Frame):
     # open_dat loads the data file and passes to other modules
     def open_dfile(self, f_loadName=None):
             # if input selected, clear impick canvas, ingest data and pass to impick
-            try:
-                if f_loadName:
-                    # switch to profile tab
-                    if self.tab == "Waveform":
-                        self.nb.select(self.nb.tabs()[0])
-                    self.f_loadName = f_loadName
-                    # ingest the data
-                    self.igst = ingest(self.f_loadName.split(".")[-1])
-                    self.rdata = self.igst.read(self.f_loadName, self.conf["path"]["simPath"], self.conf["nav"]["crs"], self.conf["nav"]["body"])
-                    self.impick.clear_canvas()  
-                    self.impick.set_vars()
-                    self.impick.load(self.rdata)
-                    self.impick.set_pickState(state=False)
-                    self.impick.update_hor_opt_menu()
-                    self.impick.update_seg_opt_menu
-                    self.impick.set_axes()
-                    self.impick.drawData()
-                    self.impick.update_pickLabels()
-                    self.impick.update_bg()
-                    self.wvpick.set_vars()
-                    self.wvpick.clear()
-                    self.wvpick.set_data(self.rdata)
-                    self.siglbl.config(text = '\t\t'.join('{}: {}'.format(k, d) for k, d in self.rdata.sig.items()))
+            # try:
+            if f_loadName:
+                # switch to profile tab
+                if self.tab == "Waveform":
+                    self.nb.select(self.nb.tabs()[0])
+                self.f_loadName = f_loadName
+                # ingest the data
+                self.igst = ingest(self.f_loadName)
+                self.rdata = self.igst.read(self.conf["path"]["simPath"], self.conf["nav"]["crs"], self.conf["nav"]["body"])
+                self.impick.clear_canvas()  
+                self.impick.set_vars()
+                self.impick.load(self.rdata)
+                self.impick.set_pickState(state=False)
+                self.impick.update_hor_opt_menu()
+                self.impick.update_seg_opt_menu
+                self.impick.set_axes()
+                self.impick.drawData()
+                self.impick.update_pickLabels()
+                self.impick.update_bg()
+                self.wvpick.set_vars()
+                self.wvpick.clear()
+                self.wvpick.set_data(self.rdata)
+                self.siglbl.config(text = '\t\t'.join('{}: {}'.format(k, d) for k, d in self.rdata.sig.items()))
 
-                # pass basemap to impick for plotting pick location
-                if self.map_loadName and self.basemap.get_state() == 1:
-                    self.basemap.set_track(self.rdata.fn)
-                    self.basemap.set_nav(self.rdata.fn, self.rdata.navdf)
-                    self.basemap.plot_tracks()
-                    self.impick.get_basemap(self.basemap)
+            # pass basemap to impick for plotting pick location
+            if self.map_loadName and self.basemap.get_state() == 1:
+                self.basemap.set_track(self.rdata.fn)
+                self.basemap.set_nav(self.rdata.fn, self.rdata.navdf)
+                self.basemap.plot_tracks()
+                self.impick.get_basemap(self.basemap)
 
             # recall choose_dfile if wrong file type is selected 
-            except Exception as err:
-                print(err)
-                self.choose_dfile() 
+            # except Exception as err:
+            #     print(err)
+            #     self.choose_dfile() 
 
 
     # next_loc is a method to get the filename of the next data file in the directory then call impick.load()
@@ -695,7 +697,7 @@ class mainGUI(tk.Frame):
             if tmp_fn_out:
                 fn, ext = os.path.splitext(tmp_fn_out)
 
-                export.log(fn + ".py", self.rdata.log)
+                export.log(fn + ".py", self.rdata.hist)
 
     # export_fig is a method to export the radargram image
     def export_fig(self):
@@ -816,18 +818,10 @@ class mainGUI(tk.Frame):
         if self.f_loadName:
             procFlag = None
             simFlag = None
-            if arg == "tzero":
-                cmd = 'self.rdata.get_tzero_samp()'
-                exec(cmd)
-                self.rdata.log.append(cmd)
-
+            if (arg == "tzero") and ((self.rdata.dtype == "gssi") or (self.rdata.dtype == "pekko")):
+                # set tzero should only be used for ground-based GPR data
+                self.rdata.set_tzero()
                 if self.rdata.flags.sampzero > 0:
-                    cmd = 'self.rdata.tzero_shift()'
-                    exec(cmd)
-                    self.rdata.log.append(cmd)
-                    out = '# Time zero shifted to:\n# sample:\t {}\n# time:\t\t {} nanoseconds'.format(self.rdata.flags.sampzero,(self.rdata.flags.sampzero * self.rdata.dt * 1e9))
-                    print(out)
-                    self.rdata.log.append(out)
                     # define surface horizon name to set index to zeros
                     self.srf_define(srf="srf")
                     self.impick.set_picks(horizon=self.rdata.pick.get_srf())
@@ -848,9 +842,12 @@ class mainGUI(tk.Frame):
 
             elif arg == "lowpass":
                 cutoff = tk.simpledialog.askfloat("Input","Butterworth filter cutoff frequency?")
-                cmd = 'self.rdata.lowpass(cf = {})'.format(cutoff)
-                exec(cmd)
-                self.rdata.log.append(cmd)
+                self.rdata.lowpass(cf = cutoff)
+                procFlag = True
+
+            elif arg == "tpow":
+                power = tk.simpledialog.askfloat("Input","Power for tpow gain?")
+                self.rdata.tpowGain(power=power)
                 procFlag = True
 
             elif arg == "agc":
@@ -859,41 +856,13 @@ class mainGUI(tk.Frame):
                 # proc = processing.agcGain(self.rdata.dat, window=window)
                 # procFlag = True
 
-            elif arg == "tpow":
-                power = tk.simpledialog.askfloat("Input","Power for tpow gain?")
-                cmd = 'self.rdata.tpowGain(power={})'.format(power)
-                exec(cmd)
-                self.rdata.log.append(cmd)
-                # reapply tzero shift if necessary
-                if self.rdata.flags.sampzero > 0:
-                    cmd = 'self.rdata.tzero_shift()'
-                    exec(cmd)
-                    self.rdata.log.append(cmd)
-                procFlag = True
-
-            elif arg == "shiftSim":
-                shift = tk.simpledialog.askinteger("input","clutter sim lateral shift (# traces)?")
-                if shift:
-                    cmd = 'self.rdata.shiftSim()'
-                    exec(cmd)
-                    self.rdata.log.append(cmd)
-                    # sim = processing.shiftSim(self.rdata.sim, shift)
-                    # self.rdata.flags.simshift += shift
-                    simFlag = True
-                    print("clutter simulation shifted by a total of " + str(self.rdata.flags.simshift) + " traces, or " + str(self.rdata.flags.simshift * self.rdata.sig["prf [kHz]"] * 1e3) + " seconds")
-
             elif arg == "undo":
-                # undo last processing step
-                for _i in range(1,len(self.rdata.log)):
-                    print(self.rdata.log[_i])
-                    try:
-                        exec(self.rdata.log[_i])
-                    except:
-                        pass
+                self.rdata.undo()
+                procFlag = True
 
             elif arg == "restore":
                 # restore origianl rdata
-                proc = processing.restore(self.rdata.dtype, self.rdata.dat)
+                self.rdata.restore()
                 procFlag = True
 
             else:
@@ -901,17 +870,11 @@ class mainGUI(tk.Frame):
                 exit(1)
 
             if procFlag:
-                # self.rdata.set_proc(proc)
                 self.impick.set_crange()
                 self.impick.drawData(force=True)
                 self.wvpick.clear()
                 self.wvpick.set_vars()
                 self.wvpick.set_data(self.rdata)
-
-            if simFlag:
-                self.rdata.set_sim(utils.powdB2amp(sim))
-                self.impick.set_crange()
-                self.impick.drawData(force=True)
 
 
     def settings(self):

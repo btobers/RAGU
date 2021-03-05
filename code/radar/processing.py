@@ -4,7 +4,7 @@
 #
 # distributed under terms of the GNU GPL3.0 license
 """
-RAGU radar data processing tools
+RAGU radar data processing class and tools
 """
 ### imports ###
 from tools import utils
@@ -13,81 +13,123 @@ import numpy.matlib as matlib
 import scipy.interpolate as interp
 import scipy.signal as signal
 
-def get_tzero_samp(self):
+class proc(object):
+    def __init__(self):
+        #: np.ndarray(snum x tnum), previously processed radar data (amp)
+        self.prev_amp = None
+        #: np.ndarray(snum x tnum), previously processed radar data (dB)
+        self.prev_dB = None
+        #: np.ndarray(snum x tnum), current processed radar data (amp)
+        self.curr_amp = None
+        #: np.ndarray(snum x tnum), current processed radar data (dB)
+        self.curr_dB = None
+
+    def set_prev_amp(self, amp):
+        self.prev_amp = amp
+
+    def get_prev_amp(self):
+        return self.prev_amp
+
+    def set_prev_dB(self, dB):
+        self.prev_dB = dB
+
+    def get_prev_dB(self):
+        return self.prev_dB
+
+    def set_curr_amp(self, amp):
+        self.curr_amp = amp
+
+    def get_curr_amp(self):
+        return self.curr_amp
+
+    def set_curr_dB(self, dB):
+        self.curr_dB = dB
+
+    def get_curr_dB(self):
+        return self.curr_dB
+
+
+def set_tzero(self):
     # get mean trace and find max sample and update sampzero flag
     meanTrace = np.mean(np.abs(self.dat), axis=1)
     self.flags.sampzero = np.nanargmax(meanTrace)
+
+    if self.flags.sampzero > 0:
+        self.tzero_shift()
+        out = '# Time zero shifted to:\n# sample:\t {}\n# time:\t\t {} nanoseconds'\
+        .format(self.flags.sampzero,(self.flags.sampzero * self.dt * 1e9))
+        print(out)
+        # log
+        self.log("self.rdata.set_tzero()" + "\n" + out)
 
     return
 
 
 def tzero_shift(self):
     # shift 2d proc data array so first row is time zero sample - use nan to fill bottom samples
-    out = np.zeros_like(self.proc)
-    out[:-self.flags.sampzero,:] = self.dat[self.flags.sampzero:,:]
+    amp = self.proc.get_curr_amp()
+    self.proc.set_prev_amp(amp)
+    self.proc.set_prev_dB(self.proc.get_curr_dB())
+    out = np.zeros_like(amp)
+    out[:-self.flags.sampzero,:] = amp[self.flags.sampzero:,:]
     out[-self.flags.sampzero:,:] = np.nan
     self.set_proc(out)
-    
+
     return
 
 
 def lowpass(self, order = 5, cf = 1e6):
     # apply low pass filter to data array
+    amp = self.proc.get_curr_amp()
+    self.proc.set_prev_amp(amp)
+    self.proc.set_prev_dB(self.proc.get_curr_dB())
     [b, a] = signal.butter(order, cf, btype="lowpass", fs=(1/self.dt))
-    lp = signal.filtfilt(b, a, self.dat, axis=0)
+    out = signal.filtfilt(b, a, np.abs(amp), axis=0)
     # use amplitude of lp filtered data to reset as pc array
-    self.set_proc(np.abs(lp))
+    self.set_proc(out)
+    # log
+    self.log("self.rdata.lowpass(order={}, cf={})".format(order,cf))
 
-    return  
+    return
 
 
 def tpowGain(self, power):
-    """
-    Apply a t-power gain to each trace with the given exponent.
-
-    INPUT:
-    power       exponent
-
-    OUTPUT:
-    out         data matrix after t-power gain
-    """
+    # t-power gain to each trace with the given exponent.
+    amp = self.proc.get_curr_amp()
+    self.proc.set_prev_amp(amp)
+    self.proc.set_prev_dB(self.proc.get_curr_dB())
     twtt = np.arange(self.snum)*self.dt
     factor = np.reshape(twtt**(float(power)),(len(twtt),1))
     factmat = np.matlib.repmat(factor,1,self.tnum)
-    out = np.multiply(np.abs(self.dat),factmat)
+    out = np.multiply(amp,factmat)
     self.set_proc(out)
+    # log
+    self.log("self.rdata.tpowGain(power={})".format(power))
 
-    return 
-
-
-def shiftSim(self, shift):
-    """
-    apply lateral shift to clutter sim to line up with data.
-    INPUT:
-    data      data matrix whose columns contain the traces
-    shift     lateral shift [# columns]
-    prf       pulse repitition frequency to get total time of shift
-    
-    OUTPUT:
-    out_sim rolled sim array
-    """
-    self.flags.simshift += shift
-    out = np.roll(self.dat, shift, axis=1)
-    self.set_sim(utils.powdB2amp(out))
-    return out
+    return
 
 
-def restore(dtype, dat):
-    if dtype == "oibak":
-        return np.abs(dat)
-    elif dtype == "gssi":
-        return dat
-    elif dtype == "sharad":
-        return dat
+def undo(self):
+    # undo last processing step
+    self.set_proc(self.proc.get_prev_amp()) 
+    # clear last log entry
+    del self.hist[-1]
+
+    return
+
+
+def restore(self):
+    # reset processed data to original
+    if self.dtype == "oibak":
+        self.set_proc(np.abs(self.dat))
+
     else:
-        print("processing error: restore received unknown data type, " + dtype)
+        self.set_proc(self.dat)
 
-
+    # clear log of all processing
+    del self.hist[2:]
+    
+    return
 
 
 ### proc functions still in dev ###
@@ -102,7 +144,7 @@ def dewow(data,window):
     INPUT:
     data       data matrix whose columns contain the traces 
     window     length of moving average window 
-               [in "number of samples"]
+            [in "number of samples"]
 
     OUTPUT:
     newdata    data matrix after dewow
@@ -145,7 +187,7 @@ def remMeanTrace(data,ntraces):
     INPUT:
     data       data matrix whose columns contain the traces 
     ntraces    window width; over how many traces 
-               to take the moving average.
+            to take the moving average.
 
     OUTPUT:
     newdata    data matrix after subtracting average traces

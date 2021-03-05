@@ -197,7 +197,7 @@ def proc(fpath, dat):
 def log(fpath, log):
     with open(fpath,"w") as ofile:
         cdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        ofile.write("### RAGU processing log ###\nimport sys\n\n# change dir to RAGU code directory\nsys.path.append('{}')\nfrom ingest import ingest\n".format(cdir))
+        ofile.write("### RAGU processing log ###\nimport sys\n# change dir to RAGU code directory\nsys.path.append('{}')\nfrom ingest import ingest\n\n".format(cdir))
         for _i in log:
             ofile.write(_i.replace("self.","") + "\n")
         ofile.close()

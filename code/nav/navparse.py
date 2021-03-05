@@ -266,21 +266,26 @@ def getnav_sharad(navfile, navcrs, body):
         print("Unable to open areoid file. Is it located at : " + aerPath + " ?")
         sys.exit(1)
 
-    # transform MRO lon/lat to areoid x/y to sample areoid radius along SC path 
-    aerX, aerY = pyproj.transform(
-        navcrs, aer.crs, df["lon"].to_numpy(), df["lat"].to_numpy()
-    )
+    try:
+        # transform MRO lon/lat to areoid x/y to sample areoid radius along SC path 
+        aerX, aerY = pyproj.transform(
+            navcrs, aer.crs, df["lon"].to_numpy(), df["lat"].to_numpy()
+        )
 
-    # get raster x/y index of SC x/y positions
-    ix,iy = aer.index(aerX,aerY)
-    aerZ = aer.read(1)[ix,iy]
+        # get raster x/y index of SC x/y positions
+        ix,iy = aer.index(aerX,aerY)
+        aerZ = aer.read(1)[ix,iy]
 
-    # use elevation above areiod as radar elevation  = scRad - (3396000 + rAreoid) - (2*1800*dt/c)
-    df["elev"] = (1000.0*df["scRad"]) - 3396000.0 - aerZ - (2*1800*37.5e-9/C)
+        # use elevation above areiod as radar elevation  = scRad - (3396000 + rAreoid) - (2*1800*dt/c)
+        df["elev"] = (1000.0*df["scRad"]) - 3396000.0 - aerZ - (2*1800*37.5e-9/C)
 
-    # get twtt for SHARAD opening receive window from SC to top of radargram = 2*(scRad - evel_samp0)/c
-    # this will be added back in upon export to get absolute twtt of picks
-    df["twtt_wind"] = 2*(df["scRad"] - df["elev"])/C
+        # get twtt for SHARAD opening receive window from SC to top of radargram = 2*(scRad - evel_samp0)/c
+        # this will be added back in upon export to get absolute twtt of picks
+        df["twtt_wind"] = 2*(df["scRad"] - df["elev"])/C
+    
+    except:
+        print("SHARAD Areiod referencing error. Are the proper planetary body and coordinate reference system set in the config file?\nbody:\t{}\ncrs:\t{}".format(body,navcrs))
+        sys.exit(1)
 
     return df[["lon", "lat", "elev", "x", "y", "z","twtt_wind", "dist"]]
 

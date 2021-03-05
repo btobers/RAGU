@@ -6,6 +6,7 @@
 ### imports ###
 from radar.flags import flags
 from radar.pick import pick
+from radar.processing import proc
 import numpy as np
 import scipy.signal as signal
 
@@ -15,7 +16,7 @@ class radar(object):
     keep track of processing steps with the flags attribute.
     """
     # import processing tools
-    from radar.processing import get_tzero_samp, tzero_shift, tpowGain, lowpass, shiftSim, restore
+    from radar.processing import set_tzero, tzero_shift, tpowGain, lowpass, undo, restore
 
     def __init__(self, fpath):
         # basic data file attributes
@@ -31,12 +32,20 @@ class radar(object):
         self.tnum = None
         #: float, time between samples
         self.dt = None
-        #: np.ndarray(snum x tnum) ingested radar data
-        self.dat = None
         #: int, number of data channels
         self.nchan = None
         #: dict, signal info
         self.sig = {}
+        #: np.ndarray(snum x tnum), raw ingested radar data
+        self.dat = None
+        #: np.ndarray(snum x tnum), processed radar data class object
+        self.proc = proc()
+        #: np.ndarray(snum x tnum), dB'd radar data pyramids
+        self.dPyramid = None
+        #: np.ndarray(snum x tnum), dB'd clutter simulation
+        self.sim = None
+        #: np.ndarray(snum x tnum), dB's clutter simulation pyramids
+        self.sPyramid = None
         #: radar flags object
         self.flags = flags()
 
@@ -49,14 +58,10 @@ class radar(object):
         self.twtt = None
 
         # optional attributes
-        #: list, log of dataset operations history
-        self.log = []
+        #: list, history of dataset operations history - may be exported as script
+        self.hist = []
         #: np.ndarray(tnum,), surface elevation per trace
         self.srfElev = None
-        #: np.ndarray(snum x tnum), processed radat data - this is what will actually be displayed, as to not modify original data
-        self.proc = None
-        #: np.ndarray(snum x tnum), clutter simulation stored in dB for viewing
-        self.sim = None
         #: pick object
         self.pick = pick()
         #: pandas dataframe output data
@@ -66,17 +71,18 @@ class radar(object):
 
 
     # set processed radar data method
-    def set_proc(self, dat):
+    def set_proc(self, dat, dB_it=True):
+        self.proc.set_curr_amp(dat)
         # dB it
-        self.proc = self.dBscale(dat)
+        self.proc.set_curr_dB(self.dBscale(self.proc.curr_amp))
         # generate pyramid arrays
-        self.dPyramid = self.genPyramids(self.proc)
+        self.dPyramid = self.genPyramids(self.proc.get_curr_dB())
 
         return
 
 
     # set simter simulation data method
-    def set_sim(self, dat):
+    def set_sim(self, dat, dB_it=True):
         # dB it
         self.sim = self.dBscale(dat)
         # generate pyramid arrays
@@ -123,3 +129,9 @@ class radar(object):
             pyramid.append(dat)
 
         return pyramid
+
+
+    # append previous command to log
+    def log(self, cmd=None):
+        if cmd and isinstance(cmd,str):
+            self.hist.append(cmd)
