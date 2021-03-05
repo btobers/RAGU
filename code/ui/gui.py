@@ -198,7 +198,7 @@ class mainGUI(tk.Frame):
         procMenu.add_cascade(label="Gain", menu=gainMenu)
 
         procMenu.add_command(label="Undo", command=lambda:self.procTools("undo"))        
-        procMenu.add_command(label="Restore Original Data", command=lambda:self.procTools("restore"))
+        procMenu.add_command(label="Reset", command=lambda:self.procTools("reset"))
 
         # view menu items
         viewMenu.add_checkbutton(label="Interpretations", onvalue=True, offvalue=False, variable=self.pick_vis, command=self.set_pick_vis)
@@ -416,41 +416,41 @@ class mainGUI(tk.Frame):
     # open_dat loads the data file and passes to other modules
     def open_dfile(self, f_loadName=None):
             # if input selected, clear impick canvas, ingest data and pass to impick
-            # try:
-            if f_loadName:
-                # switch to profile tab
-                if self.tab == "Waveform":
-                    self.nb.select(self.nb.tabs()[0])
-                self.f_loadName = f_loadName
-                # ingest the data
-                self.igst = ingest(self.f_loadName)
-                self.rdata = self.igst.read(self.conf["path"]["simPath"], self.conf["nav"]["crs"], self.conf["nav"]["body"])
-                self.impick.clear_canvas()  
-                self.impick.set_vars()
-                self.impick.load(self.rdata)
-                self.impick.set_pickState(state=False)
-                self.impick.update_hor_opt_menu()
-                self.impick.update_seg_opt_menu
-                self.impick.set_axes()
-                self.impick.drawData()
-                self.impick.update_pickLabels()
-                self.impick.update_bg()
-                self.wvpick.set_vars()
-                self.wvpick.clear()
-                self.wvpick.set_data(self.rdata)
-                self.siglbl.config(text = '\t\t'.join('{}: {}'.format(k, d) for k, d in self.rdata.sig.items()))
+            try:
+                if f_loadName:
+                    # switch to profile tab
+                    if self.tab == "Waveform":
+                        self.nb.select(self.nb.tabs()[0])
+                    self.f_loadName = f_loadName
+                    # ingest the data
+                    self.igst = ingest(self.f_loadName)
+                    self.rdata = self.igst.read(self.conf["path"]["simPath"], self.conf["nav"]["crs"], self.conf["nav"]["body"])
+                    self.impick.clear_canvas()  
+                    self.impick.set_vars()
+                    self.impick.load(self.rdata)
+                    self.impick.set_pickState(state=False)
+                    self.impick.update_hor_opt_menu()
+                    self.impick.update_seg_opt_menu
+                    self.impick.set_axes()
+                    self.impick.drawData()
+                    self.impick.update_pickLabels()
+                    self.impick.update_bg()
+                    self.wvpick.set_vars()
+                    self.wvpick.clear()
+                    self.wvpick.set_data(self.rdata)
+                    self.siglbl.config(text = '\t\t'.join('{}: {}'.format(k, d) for k, d in self.rdata.sig.items()))
 
-            # pass basemap to impick for plotting pick location
-            if self.map_loadName and self.basemap.get_state() == 1:
-                self.basemap.set_track(self.rdata.fn)
-                self.basemap.set_nav(self.rdata.fn, self.rdata.navdf)
-                self.basemap.plot_tracks()
-                self.impick.get_basemap(self.basemap)
+                # pass basemap to impick for plotting pick location
+                if self.map_loadName and self.basemap.get_state() == 1:
+                    self.basemap.set_track(self.rdata.fn)
+                    self.basemap.set_nav(self.rdata.fn, self.rdata.navdf)
+                    self.basemap.plot_tracks()
+                    self.impick.get_basemap(self.basemap)
 
             # recall choose_dfile if wrong file type is selected 
-            # except Exception as err:
-            #     print(err)
-            #     self.choose_dfile() 
+            except Exception as err:
+                print(err)
+                self.choose_dfile() 
 
 
     # next_loc is a method to get the filename of the next data file in the directory then call impick.load()
@@ -860,9 +860,9 @@ class mainGUI(tk.Frame):
                 self.rdata.undo()
                 procFlag = True
 
-            elif arg == "restore":
-                # restore origianl rdata
-                self.rdata.restore()
+            elif arg == "reset":
+                # reset origianl rdata
+                self.rdata.reset()
                 procFlag = True
 
             else:

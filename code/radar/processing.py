@@ -118,7 +118,7 @@ def undo(self):
     return
 
 
-def restore(self):
+def reset(self):
     # reset processed data to original
     if self.dtype == "oibak":
         self.set_proc(np.abs(self.dat))

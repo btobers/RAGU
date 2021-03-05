@@ -20,14 +20,14 @@ class ingest:
         valid_types = ["h5", "mat", "img", "dat", "DT1", "DZT" ]
         if (ftype not in valid_types):
 
-            raise ValueError("Invalid file type specifier: " + ftype + 
-                            "\nValid file types: " + str(valid_types))
+            raise ValueError("Invalid file type specifier: " + 
+                ftype + "\nValid file types: " + str(valid_types))
+
         self.fpath = fpath
         self.ftype = ftype
 
 
     def read(self, simpath, navcrs, body):
-        print(self.fpath)
         # wrapper method for reading in a file
         # better ways to do this than an if/else
         # but for a few file types this is easier
