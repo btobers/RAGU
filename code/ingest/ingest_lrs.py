@@ -4,8 +4,7 @@
 #
 # distributed under terms of the GNU GPL3.0 license
 """
-ingest_sharad is a module developed to ingest NASA MRO-SHARAD FPB radar sounding data. 
-data format is binary 32-bit floating point pulse compressed amplitude data acquired from the PDS
+ingest_lrs is a module developed to ingest JAXA KAGUYA (SELENE) Lunar Radar Sounder (LRS) data.
 """
 ### imports ###
 from radar import radar
@@ -14,7 +13,7 @@ from tools import utils
 import numpy as np
 import os, sys
 
-# method to read PDS SHARAD USRDR data
+# method to read KAGUYA (SELENE) LRS SAR data
 def read(fpath, simpath, navcrs, body):
     fn = fpath.split("/")[-1]
     root = fpath.rstrip(fn)
@@ -27,13 +26,13 @@ def read(fpath, simpath, navcrs, body):
     fd.close()
 
     rdata = radar(fpath.replace(".lbl", ".img"))
+    # get number of traces (file records in lbl file) and samples per trace
     rdata.tnum = int(lbl[19].split('=')[1])
     rdata.snum = 1000
 
     rdata.fn = fn.rstrip(".lbl")
     rdata.dtype = "lrs"
-    # convert binary .img PDS RGRAM to numpy array
-    # reshape array with 3600 lines
+    # convert binary .img RGRAM to numpy array - data begins after 55 bytes of header info
     with open(rdata.fpath, "rb") as f:
         f.seek(rdata.tnum*55)
         data = f.read(rdata.tnum*rdata.snum)
@@ -62,16 +61,16 @@ def read(fpath, simpath, navcrs, body):
 
     # assign signal info
     rdata.sig = {}
-    rdata.sig["signal type"] = "chirp"
-    rdata.sig["cf [MHz]"] = 5
-    rdata.sig["badwidth [%]"] = 40
-    rdata.sig["pulse length [\u03BCs]"] = 200
-    rdata.sig["prf [Hz]"] = 20
+    rdata.sig["Signal Type"] = "Chirp"
+    rdata.sig["CF [MHz]"] = 5
+    rdata.sig["Bandwidth [%]"] = 40
+    rdata.sig["Pulse Length [\u03BCs]"] = 200
+    rdata.sig["PRF [Hz]"] = 20
 
     # open geom nav file for rgram
     geom_path = fpath.replace(".lbl","_geom.csv")
 
-    # parse nav
+    # parse nav - use spice derived nav, not header data due to header data issues
     rdata.navdf = navparse.getnav_lrs(geom_path, navcrs, body)
 
     rdata.set_srfElev(np.repeat(np.nan, rdata.tnum))

@@ -17,7 +17,7 @@ class ingest:
     def __init__(self, fpath):
         # ftype is a string specifying filetype
         # valid options -
-        # hdf5, mat, segy, img
+        # hdf5, mat, segy, img, dat, dt1, dzt, lbl
         valid_types = ["h5", "mat", "img", "dat", "DT1", "DZT", "lbl" ]
         ftype = fpath.split(".")[-1]
         
@@ -37,9 +37,9 @@ class ingest:
         if (self.ftype == "h5"):
             self.rdata = ingest_oibAK.read_h5(self.fpath, navcrs, body)
         elif (self.ftype == "mat"):
-            self.rdata = ingest_oibAK.read_mat(fpath, navcrs, body)
+            self.rdata = ingest_oibAK.read_mat(self.fpath, navcrs, body)
         elif (self.ftype == "lbl"):
-            self.rdata = ingest_lrs.read(fpath, simpath, navcrs, body)
+            self.rdata = ingest_lrs.read(self.fpath, simpath, navcrs, body)
         elif (self.ftype == "img"):
             self.rdata = ingest_sharad.read(self.fpath, simpath, navcrs, body)
         elif (self.ftype == "dat"):
