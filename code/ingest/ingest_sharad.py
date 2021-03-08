@@ -39,15 +39,16 @@ def read(fpath, simpath, navcrs, body):
     
     # convert binary .img clutter sim product to numpy array
     if simpath:
-        simpath = simpath + "/" + fn.replace("rgram","geom_combined")
+        simpath = simpath + fn.replace("rgram","geom_combined")
     else:
-        simpath = root + "/" + fn.replace("rgram","geom_combined")
+        simpath = root + fn.replace("rgram","geom_combined")
 
     if os.path.isfile(simpath):
         with open(simpath, "rb") as f:
             sim = np.fromfile(f, dtype)   
         sim = sim.reshape(rdata.snum,rdata.tnum)
     else:
+        print("Clutter simulation not found:\t{}\nSpecify alternate path in configuration file.".format(simpath))
         sim = np.ones(rdata.dat.shape)
 
     rdata.set_sim(sim)
