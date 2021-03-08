@@ -289,6 +289,18 @@ def getnav_sharad(navfile, navcrs, body):
 
     return df[["lon", "lat", "elev", "x", "y", "z","twtt_wind", "dist"]]
 
+def getnav_lrs(navfile, navcrs, body):
+    df = pd.read_csv(navfile, index_col=False)
+
+    df["dist"] = euclid_dist(
+        df["x"].to_numpy(),
+        df["y"].to_numpy(),
+        df["z"].to_numpy())
+
+    df["elev"] = df["hgt"]
+
+    return df[["lon", "lat", "elev", "x", "y", "z", "dist"]]
+
 
 def getnav_marsis(navfile, navcrs, body):
     geomCols = [
