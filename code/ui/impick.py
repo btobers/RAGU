@@ -313,8 +313,8 @@ class impick(tk.Frame):
     # set radar and sim array bounds for setting image color limits - just doing this once based off original arrays, not pyramids
     def set_crange(self):
         # get clim bounds - take 10th percentile for min, ignore nd values
-        self.mindB_data = np.floor(np.nanpercentile(self.rdata.proc,10))
-        self.maxdB_data = np.nanmax(self.rdata.proc)
+        self.mindB_data = np.floor(np.nanpercentile(self.rdata.proc.get_curr_dB(),10))
+        self.maxdB_data = np.nanmax(self.rdata.proc.get_curr_dB())
         # handle possible missing sim data for cmap bounds
         if (self.rdata.sim == 0).all():
             self.mindB_sim = 0
@@ -1164,7 +1164,7 @@ class impick(tk.Frame):
             # if windize >=2, loop over segment and take maximum sample within window of cubic spline interp
             if winSize >= 2:
                 for _i in range(len(picked_traces)):
-                    sample[_i] = int(sample[_i] - (winSize/2)) + np.argmax(self.rdata.proc[int(sample[_i] - (winSize/2)):int(sample[_i] + (winSize/2)), picked_traces[_i]])
+                    sample[_i] = int(sample[_i] - (winSize/2)) + np.argmax(np.abs(self.rdata.dat)[int(sample[_i] - (winSize/2)):int(sample[_i] + (winSize/2)), picked_traces[_i]])
             # add pick interpolation to horizon objects for current segment
             self.horizon_paths[horizon][seg].x[picked_traces] = picked_traces
             self.horizon_paths[horizon][seg].y[picked_traces] = sample

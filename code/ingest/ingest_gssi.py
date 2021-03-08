@@ -72,7 +72,6 @@ def read(fpath, navcrs, body):
     rdata.set_sim(np.ones(rdata.dat.shape))                 # place holder for clutter data
 
     # assign signal info
-    rdata.sig = {}
     rdata.sig["signal type"] = "impulse"
 
     # read in gps data if exists

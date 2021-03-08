@@ -15,7 +15,6 @@ mainGUI class is a tkinter frame which runs the RAGU master GUI
 ### imports ###
 from ui import impick, wvpick, basemap 
 from tools import utils, export
-from radar import processing
 from ingest import ingest
 import os, sys, scipy, glob, configparser
 import numpy as np
@@ -138,6 +137,7 @@ class mainGUI(tk.Frame):
         exportMenu.add_cascade(label="Picks", menu=pickExportMenu)
         exportMenu.add_command(label="Figure", command=self.export_fig)
         exportMenu.add_command(label="Processed Data", command=self.export_proc)
+        exportMenu.add_command(label="Processing Script", command=self.export_log)
         fileMenu.add_cascade(label="Export", menu=exportMenu)
         fileMenu.add_separator()
 
@@ -197,8 +197,8 @@ class mainGUI(tk.Frame):
         gainMenu.add_command(label="T-Pow", command=lambda:self.procTools("tpow"))
         procMenu.add_cascade(label="Gain", menu=gainMenu)
 
-        procMenu.add_command(label="Shift Sim", command=lambda:self.procTools("shiftSim"))
-        procMenu.add_command(label="Restore Original Data", command=lambda:self.procTools("restore"))
+        procMenu.add_command(label="Undo", command=lambda:self.procTools("undo"))        
+        procMenu.add_command(label="Reset", command=lambda:self.procTools("reset"))
 
         # view menu items
         viewMenu.add_checkbutton(label="Interpretations", onvalue=True, offvalue=False, variable=self.pick_vis, command=self.set_pick_vis)
@@ -324,6 +324,10 @@ class mainGUI(tk.Frame):
             elif event.keysym=="s":
                 self.impick.panDown()
 
+            # Ctrl+z undo last processing
+            elif event.state & 4 and event.keysym == "z":
+                            self.procTools(arg="undo")
+
         # waveform view keys
         if self.tab == "Waveform":
             # h key to set axes limits to home extent
@@ -419,8 +423,8 @@ class mainGUI(tk.Frame):
                         self.nb.select(self.nb.tabs()[0])
                     self.f_loadName = f_loadName
                     # ingest the data
-                    self.igst = ingest(self.f_loadName.split(".")[-1])
-                    self.rdata = self.igst.read(self.f_loadName, self.conf["path"]["simPath"], self.conf["nav"]["crs"], self.conf["nav"]["body"])
+                    self.igst = ingest(self.f_loadName)
+                    self.rdata = self.igst.read(self.conf["path"]["simPath"], self.conf["nav"]["crs"], self.conf["nav"]["body"])
                     self.impick.clear_canvas()  
                     self.impick.set_vars()
                     self.impick.load(self.rdata)
@@ -683,6 +687,18 @@ class mainGUI(tk.Frame):
                 export.proc(fn + ".csv", self.rdata.proc)
 
 
+    # export_log is a method to save the processing log
+    def export_log(self):
+        if self.f_loadName:
+            tmp_fn_out = ""
+            tmp_fn_out = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + ".py",
+                            initialdir = self.conf["path"]["outPath"], title = "save process script")
+
+            if tmp_fn_out:
+                fn, ext = os.path.splitext(tmp_fn_out)
+
+                export.log(fn + ".py", self.rdata.hist)
+
     # export_fig is a method to export the radargram image
     def export_fig(self):
         if self.f_loadName:
@@ -802,13 +818,10 @@ class mainGUI(tk.Frame):
         if self.f_loadName:
             procFlag = None
             simFlag = None
-            if arg == "tzero":
-                sampzero = processing.get_tzero(self.rdata.dat)
-                if sampzero > 0:
-                    # set sampzero flag and roll data array
-                    self.rdata.flags.sampzero = sampzero
-                    proc = processing.tzero_shift(sampzero, self.rdata.dat)
-                    print("Time zero shifted to:\nsample:\t" + str(sampzero) + "\ntime:\t"  + str(sampzero * self.rdata.dt * 1e9) + " nanoseconds")
+            if (arg == "tzero") and ((self.rdata.dtype == "gssi") or (self.rdata.dtype == "pekko")):
+                # set tzero should only be used for ground-based GPR data
+                self.rdata.set_tzero()
+                if self.rdata.flags.sampzero > 0:
                     # define surface horizon name to set index to zeros
                     self.srf_define(srf="srf")
                     self.impick.set_picks(horizon=self.rdata.pick.get_srf())
@@ -828,8 +841,13 @@ class mainGUI(tk.Frame):
                 # procFlag = True
 
             elif arg == "lowpass":
-                cutoff = tk.simpledialog.askfloat("input","butterworth filter cutoff frequency?")
-                proc = processing.lowpassFilt(self.rdata.dat, Wn = cutoff, fs = 1/self.rdata.dt)
+                cutoff = tk.simpledialog.askfloat("Input","Butterworth filter cutoff frequency?")
+                self.rdata.lowpass(cf = cutoff)
+                procFlag = True
+
+            elif arg == "tpow":
+                power = tk.simpledialog.askfloat("Input","Power for tpow gain?")
+                self.rdata.tpowGain(power=power)
                 procFlag = True
 
             elif arg == "agc":
@@ -838,25 +856,13 @@ class mainGUI(tk.Frame):
                 # proc = processing.agcGain(self.rdata.dat, window=window)
                 # procFlag = True
 
-            elif arg == "tpow":
-                power = tk.simpledialog.askfloat("input","power for tpow gain?")
-                proc = processing.tpowGain(np.abs(self.rdata.dat), np.arange(self.rdata.snum)*self.rdata.dt, power=power)
-                # reapply tzero shift if necessary
-                if self.rdata.flags.sampzero > 0:
-                    proc = processing.tzero_shift(self.rdata.flags.sampzero, proc)
+            elif arg == "undo":
+                self.rdata.undo()
                 procFlag = True
 
-            elif arg == "shiftSim":
-                shift = tk.simpledialog.askinteger("input","clutter sim lateral shift (# traces)?")
-                if shift:
-                    sim = processing.shiftSim(self.rdata.sim, shift)
-                    self.rdata.flags.simshift += shift
-                    simFlag = True
-                    print("clutter simulation shifted by a total of " + str(self.rdata.flags.simshift) + " traces, or " + str(self.rdata.flags.simshift * self.rdata.sig["prf [kHz]"] * 1e3) + " seconds")
-
-            elif arg == "restore":
-                # restore origianl rdata
-                proc = processing.restore(self.rdata.dtype, self.rdata.dat)
+            elif arg == "reset":
+                # reset origianl rdata
+                self.rdata.reset()
                 procFlag = True
 
             else:
@@ -864,17 +870,11 @@ class mainGUI(tk.Frame):
                 exit(1)
 
             if procFlag:
-                self.rdata.set_proc(proc)
                 self.impick.set_crange()
                 self.impick.drawData(force=True)
                 self.wvpick.clear()
                 self.wvpick.set_vars()
                 self.wvpick.set_data(self.rdata)
-
-            if simFlag:
-                self.rdata.set_sim(utils.powdB2amp(sim))
-                self.impick.set_crange()
-                self.impick.drawData(force=True)
 
 
     def settings(self):
@@ -920,7 +920,7 @@ class mainGUI(tk.Frame):
 
         row = tk.Frame(settingsWindow)
         row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-        lab = tk.Label(row, width=25, text="Figure size [w,h]", anchor='w')
+        lab = tk.Label(row, width=25, text='Figure size [w",h"]', anchor='w')
         lab.pack(side=tk.LEFT)
         self.figEnt = tk.Entry(row,textvariable=self.figsettings["figsize"])
         self.figEnt.pack(side=tk.RIGHT, expand=tk.YES, fill=tk.X)

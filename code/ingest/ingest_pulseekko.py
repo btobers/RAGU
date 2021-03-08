@@ -122,6 +122,7 @@ def read(fpath, navcrs, body):
     """Load data from a pulse_ekko file."""
     rdata = radar(fpath)
     rdata.fn = fpath.split("/")[-1][:-4]
+    rdata.dtype = "pekko"
     print("----------------------------------------")
     print("Loading: " + rdata.fn)
     infile_gps = fpath[:-4] + ".GPS"
@@ -198,7 +199,6 @@ def read(fpath, navcrs, body):
     rdata.set_sim(np.ones(rdata.dat.shape))                # place holder for clutter data
 
     # assign signal info
-    rdata.sig = {}
     rdata.sig["signal type"] = "impulse"
 
     # create nav object to hold lon, lat, elev

@@ -4,16 +4,20 @@
 #
 # distributed under terms of the GNU GPL3.0 license
 ### imports ###
+from radar.flags import flags
+from radar.pick import pick
+from radar.processing import proc
 import numpy as np
-import sys, copy
-from radar import flags
-from tools import utils
+import scipy.signal as signal
 
 class radar(object):
     """
     the radar class holds the relevant information for a radar profile.
     keep track of processing steps with the flags attribute.
     """
+    # import processing tools
+    from radar.processing import set_tzero, tzero_shift, tpowGain, lowpass, undo, reset
+
     def __init__(self, fpath):
         # basic data file attributes
         #: str, file path
@@ -28,14 +32,22 @@ class radar(object):
         self.tnum = None
         #: float, time between samples
         self.dt = None
-        #: np.ndarray(snum x tnum) ingested radar data
-        self.dat = None
         #: int, number of data channels
         self.nchan = None
         #: dict, signal info
         self.sig = {}
+        #: np.ndarray(snum x tnum), raw ingested radar data
+        self.dat = None
+        #: np.ndarray(snum x tnum), processed radar data class object
+        self.proc = proc()
+        #: np.ndarray(snum x tnum), dB'd radar data pyramids
+        self.dPyramid = None
+        #: np.ndarray(snum x tnum), dB'd clutter simulation
+        self.sim = None
+        #: np.ndarray(snum x tnum), dB's clutter simulation pyramids
+        self.sPyramid = None
         #: radar flags object
-        self.flags = flags.flags()
+        self.flags = flags()
 
         # per-trace attributes
         #: navdf consisting of [lon, lat, hgt, x, y, z, dist]
@@ -46,14 +58,10 @@ class radar(object):
         self.twtt = None
 
         # optional attributes
-        #: list, history
+        #: list, history of dataset operations history - may be exported as script
         self.hist = []
         #: np.ndarray(tnum,), surface elevation per trace
         self.srfElev = None
-        #: np.ndarray(snum x tnum), processed radat data - this is what will actually be displayed, as to not modify original data
-        self.proc = None
-        #: np.ndarray(snum x tnum), clutter simulation stored in dB for viewing
-        self.sim = None
         #: pick object
         self.pick = pick()
         #: pandas dataframe output data
@@ -63,17 +71,18 @@ class radar(object):
 
 
     # set processed radar data method
-    def set_proc(self, dat):
+    def set_proc(self, dat, dB_it=True):
+        self.proc.set_curr_amp(dat)
         # dB it
-        self.proc = self.dBscale(dat)
+        self.proc.set_curr_dB(self.dBscale(self.proc.curr_amp))
         # generate pyramid arrays
-        self.dPyramid = self.genPyramids(self.proc)
+        self.dPyramid = self.genPyramids(self.proc.get_curr_dB())
 
         return
 
 
     # set simter simulation data method
-    def set_sim(self, dat):
+    def set_sim(self, dat, dB_it=True):
         # dB it
         self.sim = self.dBscale(dat)
         # generate pyramid arrays
@@ -122,40 +131,7 @@ class radar(object):
         return pyramid
 
 
-class pick(object):
-    """
-    pick class holds the relevant radar pick information.
-    """
-    def __init__(self):
-        #: dict horizons, nested containing  file pick horizons
-        # each horizon is itself a dictionary with each key 
-        # of type np.ndarray(tnum,), representing the
-        # pick in sample number for each trace
-        self.horizons = {}
-        #: str srf, surface horizon name
-        self.srf = None
-
-        return
-
-
-    # set_srf defines the surface horizon name
-    def set_srf(self, srf=None):
-        self.srf = srf
-
-
-    # get_srf returns the defined surface horizon name
-    def get_srf(self):
-        return self.srf
-
-
-    # get_pick_flag returns true if interpretations exist, false otherwise
-    def get_pick_flag(self):
-        flag = False
-        for key, item in self.horizons.items():
-            if np.isnan(item).all():
-                continue
-            else:
-                flag = True
-                break
-
-        return flag
+    # append previous command to log
+    def log(self, cmd=None):
+        if cmd and isinstance(cmd,str):
+            self.hist.append(cmd)
