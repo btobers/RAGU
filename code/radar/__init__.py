@@ -99,6 +99,11 @@ class radar(object):
         return
 
 
+    # get ground height
+    def get_srfElev(self, dat):
+        return self.srfElev
+
+
     # set output dataframe
     def set_out(self, dat):
         self.out = dat

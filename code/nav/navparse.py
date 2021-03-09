@@ -75,7 +75,7 @@ def getnav_oibAK_h5(navfile, navcrs, body):
         df["y"].to_numpy(),
         df["z"].to_numpy())
 
-    return df[["lon", "lat", "elev", "x", "y", "z", "dist"]]
+    return df[["lon", "lat", "elev", "dist"]]
 
 
 def getnav_oibAK_mat(navfile, navcrs, body):
@@ -112,7 +112,7 @@ def getnav_oibAK_mat(navfile, navcrs, body):
         df["y"].to_numpy(),
         df["z"].to_numpy())
 
-    return df[["lon", "lat", "elev", "x", "y", "z", "dist"]]
+    return df[["lon", "lat", "elev", "dist"]]
 
 
 def getnav_gssi(navfile, tnum, navcrs, body):
@@ -160,7 +160,7 @@ def getnav_gssi(navfile, tnum, navcrs, body):
                                     "x": nd, "y": nd, "z": nd,
                                     "dist": nd})
 
-    return df[["lon", "lat", "elev", "x", "y", "z", "dist"]]
+    return df[["lon", "lat", "elev", "dist"]]
 
 
 def getnav_pulseekko(navfile, tnum, navcrs, body):
@@ -221,7 +221,7 @@ def getnav_pulseekko(navfile, tnum, navcrs, body):
                                     "x": nd, "y": nd, "z": nd,
                                     "dist": nd})
 
-    return df[["lon", "lat", "elev", "x", "y", "z", "dist"]]
+    return df[["lon", "lat", "elev", "dist"]]
 
     
 def getnav_sharad(navfile, navcrs, body):
@@ -276,13 +276,13 @@ def getnav_sharad(navfile, navcrs, body):
         ix,iy = aer.index(aerX,aerY)
         aerZ = aer.read(1)[ix,iy]
 
-        # use elevation above areiod as radar elevation  = scRad - aerZ
-        df["elev"] = (1000.0*df["scRad"]) - aerZ
+        # reference sc elevation to areoid height  = scRad - (3396km + aerZ)
+        df["elev"] = (1000.0*df["scRad"]) - 3396000.0 - aerZ
 
-        # elevation at the top of radargram is based off sample 1800 being centered on aerZ
+        # elevation at top of radargram (sample 0) = aerZ + offset = aerZ + (1800 [samples] * 37.5e-9 [sec/sample] * 3e8 [m/sec] / 2)
         elevSamp0 = aerZ + (1800*37.5e-9*C/2)
 
-        # get twtt for SHARAD opening receive window from SC to top of radargram = 2*(scRad - evel_samp0)/c
+        # get twtt window from sc to top of radargram = 2*(elev - evelSamp0)/c
         # this will be added back in upon export to get absolute twtt of picks
         df["twtt_wind"] = 2*((df["elev"]) - elevSamp0)/C
 
@@ -290,7 +290,7 @@ def getnav_sharad(navfile, navcrs, body):
         print("SHARAD Areiod referencing error. Are the proper planetary body and coordinate reference system set in the config file?\nbody:\t{}\ncrs:\t{}".format(body,navcrs))
         sys.exit(1)
 
-    return df[["lon", "lat", "elev", "x", "y", "z","twtt_wind", "dist"]]
+    return df[["lon", "lat", "elev", "twtt_wind", "dist"]]
 
 
 def getnav_lrs(navfile, navcrs, body):
@@ -303,7 +303,7 @@ def getnav_lrs(navfile, navcrs, body):
 
     df["elev"] = df["hgt"]
 
-    return df[["lon", "lat", "elev", "x", "y", "z", "dist"]]
+    return df[["lon", "lat", "elev", "dist"]]
 
 
 def getnav_marsis(navfile, navcrs, body):
@@ -334,7 +334,7 @@ def getnav_marsis(navfile, navcrs, body):
         df["y"].to_numpy(),
         df["z"].to_numpy())
 
-    return df[["lon", "lat", "elev", "x", "y", "z", "dist"]]
+    return df[["lon", "lat", "elev", "dist"]]
 
 
 def euclid_dist(xarray, yarray,zarray):
