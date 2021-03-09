@@ -71,7 +71,7 @@ def pick_math(rdata, eps_r=3.15, amp_out=True, horizon=None, srf=None):
             if rdata.dtype == "sharad":
                 out[horizon + "_twtt"] += rdata.navdf["twtt_wind"]
 
-            if horizon == srf: 
+            if horizon == srf:
                 # elev[horizon] = rdata.srfElev
                 out[horizon + "_elev"] = rdata.get_srfElev()
 

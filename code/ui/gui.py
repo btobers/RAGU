@@ -575,10 +575,12 @@ class mainGUI(tk.Frame):
         # if srf horizon does not exist, initialize as zeros
         if srf not in self.rdata.pick.horizons:
             self.rdata.pick.horizons[srf] = np.zeros((self.rdata.tnum))
-        self.rdata.set_srfElev(utils.srfpick2elev(self.rdata.pick.horizons[srf], 
-                                self.rdata.navdf["elev"].to_numpy(), 
-                                self.rdata.tnum,
-                                self.rdata.dt))
+        self.rdata.set_srfElev(utils.srfpick2elev(
+                                                self.rdata.pick.horizons[srf],
+                                                self.rdata.navdf["twtt_wind"].to_numpy(),
+                                                self.rdata.navdf["elev"].to_numpy(), 
+                                                self.rdata.dt,
+                                                self.rdata.tnum))
 
 
     # srf_autopick

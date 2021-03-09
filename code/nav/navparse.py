@@ -19,8 +19,8 @@ import pyproj, h5py, codecs
 import matplotlib.pyplot as plt
 
 # various getnav functions must return a pandas dataframe consisting of the following cols -
-# ["lon", "lat", "elev", "x", "y", "z", "dist"], where xyz are planetocentric radar platform location
-# and dist is along track distance in meters
+# ["lon", "lat", "elev", "x", "y", "z", "twtt_wind", "dist"], where xyz are planetocentric radar platform location,
+# dist is along track distance in meters, and twtt_wind is the twtt between radar platform and sample 0
 
 # geocentric crd dict
 xyzsys = {
@@ -75,7 +75,9 @@ def getnav_oibAK_h5(navfile, navcrs, body):
         df["y"].to_numpy(),
         df["z"].to_numpy())
 
-    return df[["lon", "lat", "elev", "dist"]]
+    df["twtt_wind"] = 0.0
+
+    return df[["lon", "lat", "elev", "twtt_wind", "dist"]]
 
 
 def getnav_oibAK_mat(navfile, navcrs, body):
@@ -112,7 +114,9 @@ def getnav_oibAK_mat(navfile, navcrs, body):
         df["y"].to_numpy(),
         df["z"].to_numpy())
 
-    return df[["lon", "lat", "elev", "dist"]]
+    df["twtt_wind"] = 0.0
+
+    return df[["lon", "lat", "elev", "twtt_wind", "dist"]]
 
 
 def getnav_gssi(navfile, tnum, navcrs, body):
@@ -160,7 +164,9 @@ def getnav_gssi(navfile, tnum, navcrs, body):
                                     "x": nd, "y": nd, "z": nd,
                                     "dist": nd})
 
-    return df[["lon", "lat", "elev", "dist"]]
+    df["twtt_wind"] = 0.0
+
+    return df[["lon", "lat", "elev", "twtt_wind", "dist"]]
 
 
 def getnav_pulseekko(navfile, tnum, navcrs, body):
@@ -221,7 +227,9 @@ def getnav_pulseekko(navfile, tnum, navcrs, body):
                                     "x": nd, "y": nd, "z": nd,
                                     "dist": nd})
 
-    return df[["lon", "lat", "elev", "dist"]]
+    df["twtt_wind"] = 0.0
+
+    return df[["lon", "lat", "elev", "twtt_wind", "dist"]]
 
     
 def getnav_sharad(navfile, navcrs, body):
@@ -334,7 +342,9 @@ def getnav_marsis(navfile, navcrs, body):
         df["y"].to_numpy(),
         df["z"].to_numpy())
 
-    return df[["lon", "lat", "elev", "dist"]]
+    df["twtt_wind"] = 0.0
+
+    return df[["lon", "lat", "elev", "twtt_wind", "dist"]]
 
 
 def euclid_dist(xarray, yarray,zarray):

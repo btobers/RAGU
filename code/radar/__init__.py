@@ -100,7 +100,7 @@ class radar(object):
 
 
     # get ground height
-    def get_srfElev(self, dat):
+    def get_srfElev(self):
         return self.srfElev
 
 

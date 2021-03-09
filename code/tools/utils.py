@@ -140,17 +140,20 @@ def compare_horizon_paths(dicta=None, dictb=None):
 
 
 # srfpick2elev function
-def srfpick2elev(a, b, tnum, dt):
+def srfpick2elev(samp, twtt_wind, elev, dt, tnum):
     """
     calculate surface elevation from updated surface pick, subtracting distance form navdf["elev"] to surface
-    #: np.ndarray(tnum,) a, surface index per trace [samle #]
-    #: np.ndarray(tnum,) b, radar elevation per trace [m.a.s.l.]
-    #: int tnum, the number of traces in the file
+    #: np.ndarray(tnum,) samp, surface index per trace [samle #]
+    #: np.ndarray(tnum,) twtt_wind, twtt_window between radar platform and sample 0 in radargram
+    #: np.ndarray(tnum,) elev, radar elevation per trace [m.a.s.l.]
     #: float dt, spacing between samples in travel time [seconds]
+    #: int tnum, the number of traces in the file
     """
-    if a.shape == (tnum,):
-        dist = twtt2depth(sample2twtt(a, dt), eps_r=1)
-        srfElev = b - dist
+    # check shapes
+    if samp.shape == twtt_wind.shape == elev.shape == (tnum,):
+        twtt = sample2twtt(samp, dt) + twtt_wind
+        dist = twtt2depth(twtt, eps_r=1)
+        srfElev = elev - dist
 
         return srfElev
 
