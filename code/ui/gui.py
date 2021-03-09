@@ -584,7 +584,7 @@ class mainGUI(tk.Frame):
     # srf_autopick
     def srf_autopick(self):
         if "srf" not in self.impick.get_horizon_paths().keys() or tk.messagebox.askyesno("Warning","Surface horizon 'srf' already exists. Overwrite with auto-pick surface?"):
-            self.rdata.pick.horizons["srf"] = utils.get_srf(self.rdata.proc)
+            self.rdata.pick.horizons["srf"] = utils.get_srf(np.abs(self.rdata.dat))
             self.srf_define(srf="srf")
             self.impick.set_picks(horizon="srf")
             self.impick.blit()
@@ -597,11 +597,12 @@ class mainGUI(tk.Frame):
             if  self.rdata.pick.get_pick_flag():
                 # initialize horizon and srf
                 horizon = None
-                srf = None
                 # if merged export, append outfile name with _pk_uid
                 if merged:
                     tmp_fn_out = self.rdata.fn + "_pk_" + self.conf["param"]["uid"]
-                    self.srf_define()
+                    if self.rdata.pick.get_srf() is None:
+                        self.srf_define()
+                        
 
                 # otherwise have user select horizon to export
                 else:
@@ -658,7 +659,7 @@ class mainGUI(tk.Frame):
                 # sort horizons by mean twtt in array
                 self.rdata.pick.horizons = utils.sort_array_dict(self.rdata.pick.horizons)
                 # set output dataframe
-                self.rdata.set_out(export.pick_math(self.rdata, self.eps_r.get(), self.conf["output"]["amp"], horizon=horizon, srf=srf))
+                self.rdata.set_out(export.pick_math(self.rdata, self.eps_r.get(), self.conf["output"]["amp"], horizon=horizon, srf=self.rdata.pick.get_srf()))
 
                 # export
                 if (self.conf["output"].getboolean("csv")) or (ext == ".csv"):

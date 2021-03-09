@@ -48,8 +48,9 @@ def pick_math(rdata, eps_r=3.15, amp_out=True, horizon=None, srf=None):
         # apply sample time zero shift back in
         samp_arr = sample[horizon] + rdata.flags.sampzero
         out["sample"] = samp_arr
-        twtt = utils.sample2twtt(samp_arr, rdata.dt)
-        out["twtt"] = twtt
+        out["twtt"] = utils.sample2twtt(samp_arr, rdata.dt)
+        if rdata.dtype == "sharad":
+            out["twtt"] += rdata.navdf["twtt_wind"]
 
         if type(damp) is np.ndarray:
             amp = np.repeat(np.nan, rdata.tnum)
@@ -59,11 +60,14 @@ def pick_math(rdata, eps_r=3.15, amp_out=True, horizon=None, srf=None):
         return out
     
     if srf:
+        print(srf)
         # iterate through interpretation horizons
         for i, (horizon, array) in enumerate(sample.items()):
             samp_arr = array + rdata.flags.sampzero
             out[horizon + "_sample"] = samp_arr
             out[horizon + "_twtt"] = utils.sample2twtt(samp_arr, rdata.dt)
+            if rdata.dtype == "sharad":
+                out[horizon + "_twtt"] += rdata.navdf["twtt_wind"]
 
             if horizon == srf: 
                 # elev[horizon] = rdata.srfElev
@@ -111,6 +115,8 @@ def pick_math(rdata, eps_r=3.15, amp_out=True, horizon=None, srf=None):
             samp_arr = array + rdata.flags.sampzero
             out[horizon + "_sample"] = samp_arr
             out[horizon + "_twtt"] = utils.sample2twtt(samp_arr, rdata.dt)
+            if rdata.dtype == "sharad":
+                out[horizon + "_twtt"] += rdata.navdf["twtt_wind"]
 
             if type(damp) is np.ndarray:
                     # export horizon amplitude values

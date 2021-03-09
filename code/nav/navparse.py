@@ -257,7 +257,7 @@ def getnav_sharad(navfile, navcrs, body):
         df["y"].to_numpy(),
         df["z"].to_numpy())
 
-    # SHARAD FPB sample 1800 corresponds to the areoid height - use areoid to reference SC elevation and get absolute twtt
+    # SHARAD FPB sample 1800 corresponds to the areoid height - use areoid to reference elevation and get absolute twtt - aeroid height in meters after subtracting 3396000 m
     aerPath = os.path.split(os.getcwd())[0] + "/dat/mars/mega90n000eb.tif"
     try:
         aer = rio.open(aerPath, mode="r")
@@ -276,18 +276,22 @@ def getnav_sharad(navfile, navcrs, body):
         ix,iy = aer.index(aerX,aerY)
         aerZ = aer.read(1)[ix,iy]
 
-        # use elevation above areiod as radar elevation  = scRad - (3396000 + rAreoid) - (2*1800*dt/c)
-        df["elev"] = (1000.0*df["scRad"]) - 3396000.0 - aerZ - (2*1800*37.5e-9/C)
+        # use elevation above areiod as radar elevation  = scRad - aerZ
+        df["elev"] = (1000.0*df["scRad"]) - aerZ
+
+        # elevation at the top of radargram is based off sample 1800 being centered on aerZ
+        elevSamp0 = aerZ + (1800*37.5e-9*C/2)
 
         # get twtt for SHARAD opening receive window from SC to top of radargram = 2*(scRad - evel_samp0)/c
         # this will be added back in upon export to get absolute twtt of picks
-        df["twtt_wind"] = 2*(df["scRad"] - df["elev"])/C
-    
+        df["twtt_wind"] = 2*((df["elev"]) - elevSamp0)/C
+
     except:
         print("SHARAD Areiod referencing error. Are the proper planetary body and coordinate reference system set in the config file?\nbody:\t{}\ncrs:\t{}".format(body,navcrs))
         sys.exit(1)
 
     return df[["lon", "lat", "elev", "x", "y", "z","twtt_wind", "dist"]]
+
 
 def getnav_lrs(navfile, navcrs, body):
     df = pd.read_csv(navfile, index_col=False)
