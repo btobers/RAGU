@@ -47,7 +47,8 @@ class ingest:
         elif (self.ftype == "dt1"):
             self.rdata = ingest_pulseekko.read_dt1(self.fpath, navcrs, body)
         elif (self.ftype == "gpz"):
-            self.rdata = ingest_pulseekko.partition_project_file(self.fpath, navcrs, body)
+            raise ValueError("Error: \tPulseEKKO GPZ project file ingester currently in development.\n\tExport lineset from EKKO_Project to read DT1 files with RAGU")
+            # self.rdata = ingest_pulseekko.partition_project_file(self.fpath, navcrs, body)
         elif (self.ftype == "dzt"):
             self.rdata = ingest_gssi.read(self.fpath, navcrs, body)
 
