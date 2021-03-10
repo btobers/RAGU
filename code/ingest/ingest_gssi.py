@@ -72,7 +72,7 @@ def read(fpath, navcrs, body):
     rdata.set_sim(np.ones(rdata.dat.shape))                 # place holder for clutter data
 
     # assign signal info
-    rdata.sig["signal type"] = "impulse"
+    rdata.info["signal type"] = "impulse"
 
     # read in gps data if exists
     infile_gps = fpath.replace(".DZT",".DZG")

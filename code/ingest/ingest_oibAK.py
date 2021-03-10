@@ -55,12 +55,12 @@ def read_h5(fpath, navcrs, body):
         rdata.set_sim(np.ones(rdata.dat.shape))                                 # empty clutter array if no sim exists
 
     # assign signal info
-    rdata.sig["Signal Type"] = f["raw"]["tx0"].attrs["signal"].decode().capitalize() 
-    rdata.sig["CF [MHz]"] = f["raw"]["tx0"].attrs["centerFrequency"] * 1e-6
-    if rdata.sig["Signal Type"] == "chirp":
-        rdata.sig["Badwidth [%]"] = f["raw"]["tx0"].attrs["bandwidth"] * 100
-        rdata.sig["Pulse Length [\u03BCs]"] = f["raw"]["tx0"].attrs["length"] * 1e6
-    rdata.sig["PRF [kHz]"] = f["raw"]["tx0"].attrs["pulseRepetitionFrequency"] * 1e-3
+    rdata.info["Signal Type"] = f["raw"]["tx0"].attrs["signal"].decode().capitalize() 
+    rdata.info["CF [MHz]"] = f["raw"]["tx0"].attrs["centerFrequency"] * 1e-6
+    if rdata.info["Signal Type"] == "chirp":
+        rdata.info["Badwidth [%]"] = f["raw"]["tx0"].attrs["bandwidth"] * 100
+        rdata.info["Pulse Length [\u03BCs]"] = f["raw"]["tx0"].attrs["length"] * 1e6
+    rdata.info["PRF [kHz]"] = f["raw"]["tx0"].attrs["pulseRepetitionFrequency"] * 1e-3
 
     # parse nav
     rdata.navdf = navparse.getnav_oibAK_h5(fpath, navcrs, body)
@@ -88,7 +88,7 @@ def read_h5(fpath, navcrs, body):
     f.close()                                                   # close the file
 
     # # temporary fix to roll array for impulse data to line up with surface - find offset by windowing around lidar surface
-    # if (rdata.sig["signal type"] == "impulse") and (not np.isnan(rdata.pick.existing_twttSurf).all()):
+    # if (rdata.info["signal type"] == "impulse") and (not np.isnan(rdata.pick.existing_twttSurf).all()):
     #     lidarsrf = utils.twtt2sample(rdata.pick.existing_twttSurf, rdata.dt)
     #     pksrf = utils.pkampwind(rdata.dat, lidarsrf, 60)
     #     avoffset = np.nanmean(lidarsrf - pksrf)

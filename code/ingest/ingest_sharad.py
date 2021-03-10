@@ -54,11 +54,11 @@ def read(fpath, simpath, navcrs, body):
     rdata.set_sim(sim)
 
     # assign signal info
-    rdata.sig["signal type"] = "chirp"
-    rdata.sig["cf [MHz]"] = 20
-    rdata.sig["badwidth [%]"] = 50
-    rdata.sig["pulse length [\u03BCs]"] = 85
-    rdata.sig["prf [Hz]"] = 700.28
+    rdata.info["signal type"] = "chirp"
+    rdata.info["cf [MHz]"] = 20
+    rdata.info["badwidth [%]"] = 50
+    rdata.info["pulse length [\u03BCs]"] = 85
+    rdata.info["prf [Hz]"] = 700.28
 
     # open geom nav file for rgram
     geom_path = fpath.replace("rgram","geom").replace("img","tab")

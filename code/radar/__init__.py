@@ -12,7 +12,7 @@ import scipy.signal as signal
 
 class radar(object):
     """
-    the radar class holds the relevant information for a radar profile.
+    the radar class holds the relevant .information for a radar profile.
     keep track of processing steps with the flags attribute.
     """
     # import processing tools
@@ -35,7 +35,7 @@ class radar(object):
         #: int, number of data channels
         self.nchan = None
         #: dict, signal info
-        self.sig = {}
+        self.info = {}
         #: np.ndarray(snum x tnum), raw ingested radar data
         self.dat = None
         #: np.ndarray(snum x tnum), processed radar data class object

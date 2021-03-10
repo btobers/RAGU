@@ -72,7 +72,7 @@ def read(fpath, simpath, navcrs, body):
     rdata.set_sim(sim)
 
     # assign signal info
-    rdata.sig["signal type"] = "chirp"
+    rdata.info["signal type"] = "chirp"
 
     # open geom nav file for rgram
     geom_path = glob.glob(root + "*tab")[0]

@@ -18,8 +18,8 @@ class ingest:
         # ftype is a string specifying filetype
         # valid options -
         # hdf5, mat, segy, img, dat, dt1, dzt, lbl
-        valid_types = ["h5", "mat", "img", "dat", "DT1", "DZT", "lbl" ]
-        ftype = fpath.split(".")[-1]
+        valid_types = ["h5", "mat", "img", "dat", "dt1", "dzt", "gpz", "lbl" ]
+        ftype = fpath.split(".")[-1].lower()
         
         if (ftype not in valid_types):
 
@@ -44,10 +44,13 @@ class ingest:
             self.rdata = ingest_sharad.read(self.fpath, simpath, navcrs, body)
         elif (self.ftype == "dat"):
             self.rdata = ingest_marsis.read(self.fpath, simpath, navcrs, body)
-        elif (self.ftype == "DT1"):
-            self.rdata = ingest_pulseekko.read(self.fpath, navcrs, body)
-        elif (self.ftype == "DZT"):
+        elif (self.ftype == "dt1"):
+            self.rdata = ingest_pulseekko.read_dt1(self.fpath, navcrs, body)
+        elif (self.ftype == "gpz"):
+            self.rdata = ingest_pulseekko.partition_project_file(self.fpath, navcrs, body)
+        elif (self.ftype == "dzt"):
             self.rdata = ingest_gssi.read(self.fpath, navcrs, body)
+
         else:
             print("File reader for format {} not built yet".format(self.ftype))
             exit(1)

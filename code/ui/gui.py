@@ -245,8 +245,8 @@ class mainGUI(tk.Frame):
         # set up  info frame
         infoFrame = tk.Frame(self.parent)
         infoFrame.pack(side="bottom",fill="x")
-        self.siglbl = tk.Label(infoFrame)
-        self.siglbl.pack(side="left")
+        self.rinfolbl = tk.Label(infoFrame)
+        self.rinfolbl.pack(side="left")
 
         # handle x-button closing of window
         self.parent.protocol("WM_DELETE_WINDOW", self.close_window)
@@ -438,7 +438,7 @@ class mainGUI(tk.Frame):
                     self.wvpick.set_vars()
                     self.wvpick.clear()
                     self.wvpick.set_data(self.rdata)
-                    self.siglbl.config(text = '\t\t'.join('{}: {}'.format(k, d) for k, d in self.rdata.sig.items()))
+                    self.rinfolbl.config(text = '\t\t'.join('{}: {}'.format(k, d) for k, d in self.rdata.info.items()))
 
                 # pass basemap to impick for plotting pick location
                 if self.map_loadName and self.basemap.get_state() == 1:
