@@ -154,6 +154,9 @@ def gpkg(fpath, df, crs):
     # df pick output dataframe
     # crs is the coordinate reference system for the shapefile output
     df_copy = df.copy()
+    if df_copy["lon"].isnull().all() or df_copy["lat"].isnull().all():
+        print("no geopackage was exported due to missing gps data")
+        return
     # convert lon, lat to shapely points
     geometry = [Point(xy) for xy in zip(df_copy["lon"], df_copy["lat"])]
     df_copy.drop(["lon", "lat"], axis=1)
