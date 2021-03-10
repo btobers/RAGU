@@ -464,16 +464,11 @@ class mainGUI(tk.Frame):
             if (self.rdata) and (self.rdata.out is None) and (self.rdata.fpath.endswith(".h5")) and (self.rdata.dtype=="oibak"):
                 export.h5(self.rdata.fpath, dict({"bed_twtt":np.repeat(np.nan, self.rdata.tnum)}), self.rdata.dtype)
             
-            # get index of crurrently displayed file in directory
-            file_path = self.f_loadName.rstrip(self.f_loadName.split("/")[-1])
-            file_list = []
+            file_path = os.path.dirname(self.f_loadName)
 
-            # step through files in current directory of same extension as currently loaded data
-            # determine index of currently loaded data within directory 
-            for count,file in enumerate(sorted(glob.glob(file_path + "*." + self.igst.ftype))):
-                file_list.append(file)
-                if file == self.f_loadName:
-                    file_index = count
+            # get index of crurrently displayed file in directory
+            file_list = [file_path + "/" + f for f in os.listdir(file_path) if f.endswith(self.igst.ftype) or f.endswith(self.igst.ftype.upper())]
+            file_index = file_list.index(self.f_loadName)
 
             # add one to index to load next file
             file_index += 1
