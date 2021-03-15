@@ -16,6 +16,7 @@ RAGU is an open source user-interface package developed to interpret radar sound
 RAGU was originally developed to work with NASA's Operation IceBridge Alaska radar sounding data. The dataset capabilities have since been expanded to include the following:
 
 - NASA OIB-AK
+- CReSIS (Radar Depth Sounds & Snow Radar)
 - SHARAD (USRDR, USGEOM, US clutter sims)
 - MARSIS (JPL multilook products)
 - KAGUYA (SELENE) Lunar Radar Sounder (LRS)
