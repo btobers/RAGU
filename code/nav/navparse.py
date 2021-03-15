@@ -119,6 +119,33 @@ def getnav_oibAK_mat(navfile, navcrs, body):
     return df[["lon", "lat", "elev", "twtt_wind", "dist"]]
 
 
+def getnav_cresis_mat(navfile, navcrs, body):
+    f = h5py.File(navfile, "r")
+    lon = f["Longitude"][:].flatten()
+    lat = f["Latitude"][:].flatten()
+    elev = f["Elevation"][:].flatten()
+    f.close()
+
+    df = pd.DataFrame({"lon": lon, "lat": lat, "elev": elev})
+
+    df["x"], df["y"], df["z"] = pyproj.transform(
+        navcrs,
+        xyzsys[body],
+        df["lon"].to_numpy(),
+        df["lat"].to_numpy(),
+        df["elev"].to_numpy(),
+    )
+
+    df["dist"] = euclid_dist(
+        df["x"].to_numpy(),
+        df["y"].to_numpy(),
+        df["z"].to_numpy())
+
+    df["twtt_wind"] = 0.0
+
+    return df[["lon", "lat", "elev", "twtt_wind", "dist"]]
+
+
 def getnav_gssi(navfile, tnum, navcrs, body):
     if os.path.isfile(navfile):
         with codecs.open(navfile, "r", encoding="utf-8", errors="ignore") as f_in:

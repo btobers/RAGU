@@ -314,6 +314,7 @@ class basemap(tk.Frame):
             if tmp_datPath:
                 # get list of data files in dir
                 flist = glob.glob(tmp_datPath + "/*")
+                print(tmp_datPath)
 
         else: 
             flist = ""
@@ -326,9 +327,17 @@ class basemap(tk.Frame):
 
             # iterate through file list and retrieve navdat from proper getnav function
         for f in flist:
+
             if f.endswith("h5"):
                 navdf = navparse.getnav_oibAK_h5(f, self.navcrs, self.body)
                 fn = f.split("/")[-1].rstrip(".h5")
+            elif f.endswith("mat"):
+                try:
+                    navdf = navparse.getnav_cresis_mat(f, self.navcrs, self.body)
+                    fn = f.split("/")[-1].rstrip(".mat")
+                except:
+                    navdf = navparse.getnav_oibAK_h5(f, self.navcrs, self.body)
+                    fn = f.split("/")[-1].rstrip(".mat")
             elif f.lower().endswith("dzg"):
                 navdf = navparse.getnav_gssi(f, self.navcrs, self.body)
                 fn = f.split("/")[-1].rstrip(".DZG")
