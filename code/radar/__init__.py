@@ -127,7 +127,7 @@ class radar(object):
         # downsample in fast time by 2^0, 2^1, 2^2, 2^3
         pyramid = []
         # add pyramid arrays to list
-        if self.fpath.endswith("h5"):
+        if (self.dtype == "oibak") or (self.dtype == "cresis_snow") or (self.dtype == "cresis_rds"):
             for i in range(4):
                 pyramid.append(dat[::2**i,:])
         else:

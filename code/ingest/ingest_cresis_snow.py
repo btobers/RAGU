@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 def read_mat(fpath, navcrs, body):
     rdata = radar(fpath)
     rdata.fn = fpath.split("/")[-1][:-4]
-    rdata.dtype = "cresis_rds"
+    rdata.dtype = "cresis_snow"
     f = h5py.File(rdata.fpath, "r")                      
 
     # assign signal info
