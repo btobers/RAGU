@@ -215,22 +215,29 @@ def pkampwind(array, idx, windsize):
 def print_pickInfo(data, trace, sample, eps_r=3.15):
     v = C/(np.sqrt(eps_r))        # EM wave veloity in ice - for thickness calculation
 
-    if not np.isnan(data.pick.current_surf).all():
-        surfTwtt = sample2twtt(data.pick.current_surf[trace],data.dt)
-    else:
-        surfTwtt = data.pick.existing_twttSurf[trace]
-    alt = data.navdf["elev"].iloc[trace]    
-    surfElev = data.surfelev[trace]
-    subsurfTwtt = sample * data.dt
-    thick = (((subsurfTwtt - surfTwtt) * v) / 2)
-    subsurfelev = surfelev - thick
+    if data.pick.srf:
+        srfTwtt = sample2twtt(data.pick.horizons[data.pick.srf][trace],data.dt)
+        elev = data.navdf["elev"].iloc[trace]    
+        srfElev = data.srfElev[trace]
+        subsrfTwtt = sample2twtt(sample, data.dt)
+        thick = (((subsrfTwtt - srfTwtt) * v) / 2)
+        subsrfElev = srfElev - thick
 
-    print("trace:\t\t",trace)
-    print("sample:\t\t",sample)
-    print("alt:\t\t%8.2f" % (alt))
-    print("surfelev:\t\t%8.2f" % (surfelev))
-    print("surfTwtt:\t\t%8.2e" % (surfTwtt))
-    print("subsurfTwtt:\t\t%8.2e" % (subsurfTwtt))
-    print("subsurfelev:\t\t%8.2f" % (subsurfelev))
-    print("thick:\t\t%8.2f" % (thick))
-    print()
+        # create table header
+        header = "{:<12s} {:<12s} {:<12s} {:<12s} {:<12s} {:<12s} {:<12s} {:<12s}".format\
+            ("trace", "sample", "radar elev", data.pick.srf, data.pick.srf + " TWTT", "pick TWTT", "pick elev", "thick")
+        markers = "-" * len(header)
+        header = [markers, header, markers]
+        dat = ["{:<12d} {:<12d} {:<12.4f} {:<12.4f} {:<12.4e} {:<12.4e} {:<12.4f} {:<12.4f}".format(trace, sample, elev, srfElev, srfTwtt, subsrfTwtt, subsrfElev, thick)]
+        print("\n".join(header + dat)+"\n")
+
+    else:
+        subsrfTwtt = sample2twtt(sample, data.dt)
+
+        # create table header
+        header = "{:<12s} {:<12s} {:<12s}".format\
+            ("trace", "sample", "pick TWTT")
+        markers = "-" * len(header)
+        header = [markers, header, markers]
+        dat = ["{:<12d} {:<12d} {:<12.4e} ".format(trace, sample, subsrfTwtt)]
+        print("\n".join(header + dat)+"\n")

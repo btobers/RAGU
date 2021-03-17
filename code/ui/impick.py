@@ -833,6 +833,8 @@ class impick(tk.Frame):
                 del self.horizon_paths[h]
                 del self.rdata.pick.horizons[h]
                 del self.ln_colors["used"][h]
+                if h == self.rdata.pick.srf:
+                    self.rdata.pick.set_srf(None)
             # reset horizon and segment variables
             if len(self.horizon_paths) > 0:
                 h = list(self.horizon_paths.keys())[-1]
