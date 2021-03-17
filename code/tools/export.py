@@ -183,8 +183,8 @@ def h5(fpath, df=None, dtype=None):
                 del f["drv"]["pick"]["twtt_bed"]
 
             twtt_bed = f["drv"]["pick"].require_dataset("twtt_bed", data=dat, shape=dat.shape, dtype=np.float32)
-            twtt_subsurf_pick.attrs.create("Unit", np.string_("Seconds"))
-            twtt_subsurf_pick.attrs.create("Source", np.string_("Manual pick layer"))
+            twtt_bed.attrs.create("Unit", np.string_("Seconds"))
+            twtt_bed.attrs.create("Source", np.string_("Manual pick layer"))
             f.close()
             print("hdf5 pick layer exported successfully:\t" + fpath)
     else:

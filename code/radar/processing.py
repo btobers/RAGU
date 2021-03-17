@@ -56,11 +56,11 @@ def set_tzero(self):
 
     if self.flags.sampzero > 0:
         self.tzero_shift()
+        # log
         out = '# Time zero shifted to:\n# sample:\t {}\n# time:\t\t {} nanoseconds'\
         .format(self.flags.sampzero,(self.flags.sampzero * self.dt * 1e9))
-        print(out)
-        # log
         self.log("self.rdata.set_tzero()" + "\n" + out)
+        print(out)
 
     return
 
@@ -89,6 +89,7 @@ def lowpass(self, order = 5, cf = 1e6):
     self.set_proc(out)
     # log
     self.log("self.rdata.lowpass(order={}, cf={})".format(order,cf))
+    print("# Lowpass filter applied: order={}, cutoff={:2e} Hz".format(order,cf))
 
     return
 
@@ -105,6 +106,7 @@ def tpowGain(self, power):
     self.set_proc(out)
     # log
     self.log("self.rdata.tpowGain(power={})".format(power))
+    print("# time^{} gain applied".format(power))
 
     return
 

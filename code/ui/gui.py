@@ -816,7 +816,7 @@ class mainGUI(tk.Frame):
         if self.f_loadName:
             procFlag = None
             simFlag = None
-            if (arg == "tzero") and ((self.rdata.dtype == "gssi") or (self.rdata.dtype == "pekko")):
+            if arg == "tzero":
                 # set tzero should only be used for ground-based GPR data
                 self.rdata.set_tzero()
                 if self.rdata.flags.sampzero > 0:
