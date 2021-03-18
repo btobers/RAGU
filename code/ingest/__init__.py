@@ -73,12 +73,28 @@ class ingest:
     def import_pick(self, fpath):
         if fpath.endswith("csv"):
             dat = pd.read_csv(fpath)
-            horizon = "bed"
-            sample = dat[horizon + "_sample"]
+            horizons = []
+            # check if surface to import
+            horizon = "srf"
+            sample = dat[horizon + "_sample"].to_numpy()
             if len(sample) == self.rdata.tnum:
                 if horizon not in self.rdata.pick.horizons.keys():
                     self.rdata.pick.horizons[horizon] = sample
-                else:
+                    horizons.append(horizon)
+                elif not utils.nan_array_equal(self.rdata.pick.horizons[horizon], sample):
+                    horizon = "srf_imported"
+                    self.rdata.pick.horizons[horizon] = sample
+                    horizons.append(horizon)
+
+            horizon = "bed"
+            sample = dat[horizon + "_sample"].to_numpy()
+            if len(sample) == self.rdata.tnum:
+                if horizon not in self.rdata.pick.horizons.keys():
+                    self.rdata.pick.horizons[horizon] = sample
+                    horizons.append(horizon)
+                elif not utils.nan_array_equal(self.rdata.pick.horizons[horizon], sample):
                     horizon = "bed_imported"
-                    self.rdata.pick.horizons["bed_imported"] = sample
-        return  horizon
+                    self.rdata.pick.horizons[horizon] = sample
+                    horizons.append(horizon)
+
+        return  horizons

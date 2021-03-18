@@ -526,8 +526,9 @@ class mainGUI(tk.Frame):
             pk_file = ""
             pk_file = tk.filedialog.askopenfilename(initialdir = self.conf["path"]["outPath"], title = "load picks", filetypes = (("comma separated value", "*.csv"),))
             if pk_file:
-                horizon = self.igst.import_pick(pk_file)
-                self.impick.set_picks(horizon=horizon)
+                horizons = self.igst.import_pick(pk_file)
+                for horizon in horizons:
+                    self.impick.set_picks(horizon=horizon)
                 self.impick.blit()
 
 
@@ -666,7 +667,7 @@ class mainGUI(tk.Frame):
                 if (self.conf["output"].getboolean("fig")) or (ext == ".png"):
                     self.impick.export_fig(fn + ".png")
                 if (self.rdata.fpath.endswith(".h5")):
-                    export.h5(self.rdata.fpath, self.rdata.out, self.rdata.dtype)
+                    export.h5(self.rdata.fpath, self.rdata.out, self.rdata.dtype, self.rdata.pick.get_srf())
 
 
     # export_proc is a method to save processed radar data

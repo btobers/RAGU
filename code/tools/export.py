@@ -169,24 +169,43 @@ def gpkg(fpath, df, crs):
 
 
 # h5 is a function for saving twtt_bed pick to h5 data file
-def h5(fpath, df=None, dtype=None):
+def h5(fpath, df=None, dtype=None, srf=None):
     # fpath is the data file path [str]
     # df pick output dataframe
-    if dtype=="oibak":
-        if (tk.messagebox.askyesno("Update Picks","Update twtt_bed pick layer saved to data file?")):
-            dat = df["bed_twtt"]
-            f = h5py.File(fpath, "a")
-            # replace np.nan values in pick layer with -9
-            dat[np.isnan(dat)] = -9
+    if (dtype=="oibak"):
+        f = h5py.File(fpath, "a")
+        flag = False
+        # update twtt_surf
+        if srf:
+            dat = df[srf + "_twtt"].to_numpy()
+            # if twtt_surf exists in file, see it current picks have been modified
+            if "twtt_surf" in f["drv"]["pick"].keys():
+                twtt_srf_dfile = f["drv"]["pick"]["twtt_surf"][:]
+                twtt_srf_dfile[twtt_srf_dfile == -1] = np.nan
+                if not utils.nan_array_equal(twtt_srf_dfile, dat) or (np.isnan(twtt_srf_dfile).all()) and (tk.messagebox.askyesno("twtt_surf","Export twtt_surf pick layer to data file?")):
+                    del f["drv"]["pick"]["twtt_surf"]
+                    flag = True
+            elif (tk.messagebox.askyesno("twtt_surf","Export twtt_surf pick layer to data file?")):
+                flag = True
+            if flag:
+                dat[np.isnan(dat)] = -9
+                twtt_surf = f["drv"]["pick"].require_dataset("twtt_surf", data=dat, shape=dat.shape, dtype=np.float32)
+                # twtt_surf.attrs.create("Unit", np.string_("Seconds"))
+                # twtt_surf.attrs.create("Source", np.string_("Manual pick layer"))
+                print("twtt_surf exported successfully:\t" + fpath + "/drv/pick/twtt_surf")
 
+        # update twtt_bed
+        if "bed_twtt" in df.keys() and (tk.messagebox.askyesno("twtt_bed","Export twtt_bed pick layer to data file?")):
+            dat = df["bed_twtt"].to_numpy()
+            dat[np.isnan(dat)] = -9
             if "twtt_bed" in f["drv"]["pick"].keys():
                 del f["drv"]["pick"]["twtt_bed"]
-
             twtt_bed = f["drv"]["pick"].require_dataset("twtt_bed", data=dat, shape=dat.shape, dtype=np.float32)
-            twtt_bed.attrs.create("Unit", np.string_("Seconds"))
-            twtt_bed.attrs.create("Source", np.string_("Manual pick layer"))
-            f.close()
-            print("hdf5 pick layer exported successfully:\t" + fpath)
+            # twtt_bed.attrs.create("Unit", np.string_("Seconds"))
+            # twtt_bed.attrs.create("Source", np.string_("Manual pick layer"))
+            print("twtt_bed exported successfully:\t\t" + fpath + "/drv/pick/twtt_bed")
+        f.close()
+
     else:
         return
 

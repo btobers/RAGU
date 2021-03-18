@@ -240,7 +240,7 @@ class wvpick(tk.Frame):
 
         # plot trace power
         self.t = self.trace[horizon]
-        self.ax.plot(self.rdata.proc[:,self.t], c="0.5")
+        self.ax.plot(self.rdata.proc.curr_dB[:,self.t], c="0.5")
         self.ax.set(xlabel = "Sample", ylabel = "Power [dB]", title="Trace: " + str(int(self.trace[horizon] + 1)) + "/" + str(int(self.rdata.tnum)))
 
         # get pick value range
@@ -285,7 +285,7 @@ class wvpick(tk.Frame):
     def fullExtent(self):
         horizon = self.horVar.get()
         self.ax.set_xlim(0, self.rdata.snum)
-        self.ax.set_ylim(self.rdata.proc[:,self.trace[horizon]].min(), self.rdata.proc[:,self.trace[horizon]].max())
+        self.ax.set_ylim(self.rdata.proc.curr_dB[:,self.trace[horizon]].min(), self.rdata.proc.curr_dB[:,self.trace[horizon]].max())
         self.dataCanvas.draw()
 
 
@@ -392,7 +392,7 @@ class wvpick(tk.Frame):
             for _i in range(len(x)):
                 if not np.isnan(y[_i]):
                     # find argmax for window for given data trace in pick
-                    max_idx = np.nanargmax(self.rdata.proc[int(y[_i] - (winSize/2)):int(y[_i] + (winSize/2)), x[_i]])
+                    max_idx = np.nanargmax(self.rdata.proc.curr_dB[int(y[_i] - (winSize/2)):int(y[_i] + (winSize/2)), x[_i]])
                     # add argmax index to pick_dict1 - account for window index shift
                     self.horizon_paths_opt[horizon][seg].y[x[_i]] = max_idx + int(y[_i] - (winSize/2))
             self.plot_wv()
@@ -517,7 +517,7 @@ class wvpick(tk.Frame):
         x = event.xdata
         y = event.ydata
         if event.inaxes == self.ax:
-            y = self.rdata.proc[int(x),self.trace[self.horVar.get()]]
+            y = self.rdata.proc.curr_dB[int(x),self.trace[self.horVar.get()]]
         self.horizontal_line.set_ydata(y)
         self.vertical_line.set_xdata(x)
         self.ax.figure.canvas.restore_region(self.axbg)

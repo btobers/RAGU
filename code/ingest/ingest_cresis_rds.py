@@ -23,7 +23,7 @@ def read_mat(fpath, navcrs, body):
 
     # assign signal info
     rdata.info["System"] = str(f["param_records"]["radar_name"][:], 'utf-16')
-    rdata.info["PRF [kHz]"] = f["param_records"]["radar"]["prf"][:]
+    rdata.info["PRF [kHz]"] = f["param_records"]["radar"]["prf"][0][0]
     if "mcords" not in rdata.info["System"]:
         raise ValueError(None)
         return
