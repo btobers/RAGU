@@ -98,7 +98,7 @@ class wvpick(tk.Frame):
         interpFrameBr.pack(side="left",fill="both",expand=True)
         interpFrameBr.pack_propagate(0)
 
-        tk.Label(interpFrameTl,text="Horizon: ").pack(side="left")
+        tk.Label(interpFrameTl,text="{:8}".format("Horizon: ")).pack(side="left")
         self.horMenu = tk.OptionMenu(interpFrameTl, self.horVar, *[None])
         self.horMenu.pack(side="left")
         self.horMenu.config(width=10)
@@ -109,7 +109,7 @@ class wvpick(tk.Frame):
         button.pack(side="left",fill="both",expand=True)
         self.button_tip(self.parent, button, "Reset pick data from profile interpretations")
 
-        tk.Label(interpFrameBl,text="Segment: ").pack(side="left")
+        tk.Label(interpFrameBl,text="{:8}".format("Segment: ")).pack(side="left")
         self.segMenu = tk.OptionMenu(interpFrameBl, self.segVar, *[None])
         self.segMenu.pack(side="left")
         self.segMenu.config(width=10)
