@@ -32,7 +32,7 @@ class impick(tk.Frame):
         self.button_tip = button_tip
         self.popup = popup
         # variables only setup once
-        self.im_status = tk.StringVar()
+        self.im_status = tk.IntVar(value=0)
         self.chan = tk.IntVar()
         self.winSize = tk.IntVar(value=0)
         self.horVar = tk.StringVar()
@@ -57,11 +57,11 @@ class impick(tk.Frame):
         self.dataFrame.pack(side="bottom", fill="both", expand=1)
 
         # add radio buttons for toggling between radargram and clutter sim
-        radarRadio = tk.Radiobutton(infoFrame, text="Radargram", variable=self.im_status, value="data",command=self.show_data)
+        radarRadio = tk.Radiobutton(infoFrame, text="Radargram", variable=self.im_status, value=0, command=self.set_im)
         radarRadio.pack(side="left")
         self.button_tip(self.parent, radarRadio, "View radar profile")
 
-        simRadio = tk.Radiobutton(infoFrame,text="Clutter Sim", variable=self.im_status, value="sim",command=self.show_sim)
+        simRadio = tk.Radiobutton(infoFrame,text="Clutter Sim", variable=self.im_status, value=1, command=self.set_im)
         simRadio.pack(side="left")
         self.button_tip(self.parent, simRadio, "View clutter simulation")
         tk.ttk.Separator(infoFrame,orient="vertical").pack(side="left", fill="both", padx=10, pady=4)
@@ -248,7 +248,7 @@ class impick(tk.Frame):
         self.sim_imSwitch_flag = False
         self.edit_flag = False
 
-        self.im_status.set("data")
+        self.im_status.set(0)
         self.debugState = False
         self.horVar.set("")
         self.segVar.set(0)
@@ -544,12 +544,15 @@ class impick(tk.Frame):
 
 
    # set_im is a method to set which rdata is being displayed
-    def set_im(self):
-        if self.im_status.get() == "data":
-            self.show_sim()
+    def set_im(self, from_gui=False):
+        if from_gui:
+            self.im_status.set(int(not self.im_status.get()))
 
-        elif self.im_status.get() =="sim":
+        if self.im_status.get() == 0:
             self.show_data()
+
+        elif self.im_status.get() == 1:
+            self.show_sim()
 
 
     # toggle to radar data
@@ -1435,7 +1438,7 @@ class impick(tk.Frame):
         # self.remove_existing_subsurf()
 
         # save data fig with picks
-        if self.im_status.get() =="sim":
+        if self.im_status.get() ==1:
             self.show_data()
         export.fig(f_saveName, self.fig, imtype="dat")
 

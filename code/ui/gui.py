@@ -282,7 +282,7 @@ class mainGUI(tk.Frame):
         if self.tab == "Profile":
             # Space key to toggle impick between radar image and sim
             if event.keysym=="space":
-                self.impick.set_im()
+                self.impick.set_im(from_gui=True)
 
             elif event.state & 4 and event.keysym == "n":
                 self.start_pick()
@@ -1116,9 +1116,9 @@ class button_tip(object):
     popup info on gui button
     """
     def __init__(self, parent, widget, text="widget info"):
-        self.waittime = 500     #miliseconds
-        self.wraplength = 180   #pixels
-        self.parent = parent    #parent frame
+        self.waittime = 500     # miliseconds
+        self.wraplength = 180   # pixels
+        self.parent = parent    # parent frame
         self.widget = widget
         self.text = text
         self.widget.bind("<Enter>", self.enter)
@@ -1145,28 +1145,31 @@ class button_tip(object):
             self.widget.after_cancel(id)
 
     def showtip(self, event=None):
-        self.parent.update()    # update parent to get size
-        bounds = (self.parent.winfo_rootx(),(self.parent.winfo_rootx()+self.parent.winfo_width()))
-        x = y = 0
-        x, y, cx, cy = self.widget.bbox("insert")
-        x += self.widget.winfo_rootx() + 25
-        y += self.widget.winfo_rooty() + 25
+        try:
+            self.parent.update()    # update parent to get size
+            bounds = (self.parent.winfo_rootx(),(self.parent.winfo_rootx()+self.parent.winfo_width()))
+            x = y = 0
+            x, y, cx, cy = self.widget.bbox("insert")
+            x += self.widget.winfo_rootx() + 25
+            y += self.widget.winfo_rooty() + 25
 
-        # creates a toplevel window
-        self.tw = tk.Toplevel(self.widget)
-        # Leaves only the label and removes the app window
-        self.tw.wm_overrideredirect(True)
-        self.tw.wm_geometry("+%d+%d" % (x, y))
-        label = tk.Label(self.tw, text=self.text, justify='left',
-                       background="#ffffff", relief='solid', borderwidth=1,
-                       wraplength = self.wraplength)
-        label.pack(ipadx=1)
-        self.tw.update()
-
-        # move tip window left if outside parent window bounds
-        if (x + self.tw.winfo_width()) > bounds[1]:
-            self.tw.wm_geometry("+%d+%d" % (x-self.tw.winfo_width(), y))
+            # creates a toplevel window
+            self.tw = tk.Toplevel(self.widget)
+            # Leaves only the label and removes the app window
+            self.tw.wm_overrideredirect(True)
+            self.tw.wm_geometry("+%d+%d" % (x, y))
+            label = tk.Label(self.tw, text=self.text, justify='left',
+                        background="#ffffff", relief='solid', borderwidth=1,
+                        wraplength = self.wraplength)
+            label.pack(ipadx=1)
             self.tw.update()
+
+            # move tip window left if outside parent window bounds
+            if (x + self.tw.winfo_width()) > bounds[1]:
+                self.tw.wm_geometry("+%d+%d" % (x-self.tw.winfo_width(), y))
+                self.tw.update()
+        except:
+            pass
 
     def hidetip(self):
         tw = self.tw
