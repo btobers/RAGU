@@ -31,7 +31,7 @@ def main():
 
     # get screen size - open root window half screen
     w, h = root.winfo_screenwidth(), root.winfo_screenheight()
-    root.geometry("%dx%d+0+0" % (1*w, .5*h))
+    root.geometry("%dx%d+0+0" % (.5*w, .5*h))
     root.title("RAGU")
     root.config(bg="#d9d9d9")
     try:
