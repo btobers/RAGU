@@ -292,11 +292,6 @@ class impick(tk.Frame):
         self.vertical_line = self.ax.axvline(color="r", lw=1, ls="--")
         self.set_cross_hair_visible(self.get_pickState())
 
-        # plot existing surface pick horizon as cyan
-        if "srf" in self.rdata.pick.horizons:
-            # initialize surface path dictionary and create line object
-            self.set_picks(horizon="srf")
-
         # update the canvas
         self.dataCanvas._tkcanvas.pack()
 

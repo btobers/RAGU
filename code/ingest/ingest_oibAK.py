@@ -64,26 +64,30 @@ def read_h5(fpath, navcrs, body):
 
     # parse nav
     rdata.navdf = navparse.getnav_oibAK_h5(fpath, navcrs, body)
-    
     # pull lidar surface elevation and initilize horizon
     if "srf0" in f["ext"].keys():
         rdata.set_srfElev(f["ext"]["srf0"][:])  
         if "twtt_surf" in f["drv"]["pick"].keys():
             twtt_srf = f["drv"]["pick"]["twtt_surf"][:]
+            # replace -1 and -9 null values with np.nan
             twtt_srf[twtt_srf == -1] = np.nan
-            rdata.pick.horizons["srf"] = utils.twtt2sample(twtt_srf, rdata.dt)
+            twtt_srf[twtt_srf == -9] = np.nan
+            if not np.isnan(twtt_srf).all():
+                rdata.pick.horizons["srf"] = utils.twtt2sample(twtt_srf, rdata.dt)
         else:
             rdata.pick.horizons["srf"] = utils.twtt2sample(utils.depth2twtt(rdata.navdf["elev"] - rdata.srfElev, eps_r=1), rdata.dt)
         rdata.pick.srf = "srf"
     else:
         rdata.set_srfElev(np.repeat(np.nan, rdata.tnum))
 
-    # read in existing subsurface picks
-    num_file_pick_lyr = len(fnmatch.filter(f["drv"]["pick"].keys(), "twtt_subsurf*"))
-    if num_file_pick_lyr > 0:
-        # iterate through any existing subsurface pick layers to import
-        for _i in range(num_file_pick_lyr):
-            rdata.pick.existing_twttSubsurf[str(_i)] = np.array(f["drv"]["pick"]["twtt_subsurf" + str(_i)])
+    # read in existing bed picks
+    if "twtt_bed" in f["drv"]["pick"].keys():
+        twtt_bed = f["drv"]["pick"]["twtt_bed"][:]
+        # replace -1 and -9 null values with np.nan
+        twtt_bed[twtt_bed == -1] = np.nan
+        twtt_bed[twtt_bed == -9] = np.nan
+        if not np.isnan(twtt_bed).all():
+            rdata.pick.horizons["bed"] = utils.twtt2sample(twtt_bed, rdata.dt)
 
     f.close()                                                   # close the file
 

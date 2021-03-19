@@ -428,6 +428,9 @@ class mainGUI(tk.Frame):
                     self.impick.clear_canvas()  
                     self.impick.set_vars()
                     self.impick.load(self.rdata)
+                    # set existing horizons
+                    for horizon in self.rdata.pick.horizons.keys():
+                        self.impick.set_picks(horizon=horizon)
                     self.impick.set_pickState(state=False)
                     self.impick.update_hor_opt_menu()
                     self.impick.update_seg_opt_menu
