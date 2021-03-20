@@ -197,7 +197,7 @@ class mainGUI(tk.Frame):
         gainMenu.add_command(label="T-Pow", command=lambda:self.procTools("tpow"))
         procMenu.add_cascade(label="Gain", menu=gainMenu)
 
-        procMenu.add_command(label="Undo", command=lambda:self.procTools("undo"))        
+        procMenu.add_command(label="Undo [Ctrl+Z]", command=lambda:self.procTools("undo"))        
         procMenu.add_command(label="Reset", command=lambda:self.procTools("reset"))
 
         # view menu items
