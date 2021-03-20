@@ -11,6 +11,7 @@ from ingest import ingest_oibAK, ingest_pulseekko, ingest_gssi, ingest_sharad, i
 from tools import utils
 import numpy as np
 import pandas as pd
+import fnmatch
 
 class ingest:
     # ingest is a class which builds a dictionary holding data and metadata from the file
@@ -73,28 +74,39 @@ class ingest:
     def import_pick(self, fpath):
         if fpath.endswith("csv"):
             dat = pd.read_csv(fpath)
+            if dat.shape[0] != self.rdata.tnum:
+                raise ValueError("import_pick error:\t pick file size does not match radar data")
+                return
             horizons = []
-            # check if surface to import
-            horizon = "srf"
-            sample = dat[horizon + "_sample"].to_numpy()
-            if len(sample) == self.rdata.tnum:
-                if horizon not in self.rdata.pick.horizons.keys():
-                    self.rdata.pick.horizons[horizon] = sample
-                    horizons.append(horizon)
-                elif not utils.nan_array_equal(self.rdata.pick.horizons[horizon], sample):
-                    horizon = "srf_imported"
+            keys = fnmatch.filter(dat.keys(), "*sample*")
+            if len(keys) >= 1:
+                for horizon in keys:
+                    horizon = horizon.split("_")[0]
+                    sample = dat[horizon + "_sample"].to_numpy()
+                    if horizon == "surf":
+                        horizon = "srf"
+                    if horizon in self.rdata.pick.horizons.keys():
+                        if utils.nan_array_equal(self.rdata.pick.horizons[horizon], sample):
+                            continue
+                        else:
+                            horizon = horizon + "_imported"
                     self.rdata.pick.horizons[horizon] = sample
                     horizons.append(horizon)
 
-            horizon = "bed"
-            sample = dat[horizon + "_sample"].to_numpy()
-            if len(sample) == self.rdata.tnum:
-                if horizon not in self.rdata.pick.horizons.keys():
-                    self.rdata.pick.horizons[horizon] = sample
-                    horizons.append(horizon)
-                elif not utils.nan_array_equal(self.rdata.pick.horizons[horizon], sample):
-                    horizon = "bed_imported"
-                    self.rdata.pick.horizons[horizon] = sample
-                    horizons.append(horizon)
+            else:
+                keys = fnmatch.filter(dat.keys(), "*twtt*")
+                if len(keys) >= 1:
+                    for horizon in keys:
+                        horizon = horizon.split("_")[1]
+                        sample = utils.twtt2sample(dat["twtt_" + horizon].to_numpy(), self.rdata.dt)
+                        if horizon == "surf":
+                            horizon = "srf"
+                        if horizon in self.rdata.pick.horizons.keys():
+                            if utils.nan_array_equal(self.rdata.pick.horizons[horizon], sample):
+                                continue
+                            else:
+                                horizon = horizon + "_imported"
+                        self.rdata.pick.horizons[horizon] = sample
+                        horizons.append(horizon)
 
         return  horizons
