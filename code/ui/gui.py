@@ -13,7 +13,7 @@ environment requirements in nose_env.yml
 mainGUI class is a tkinter frame which runs the RAGU master GUI
 """
 ### imports ###
-from ui import impick, wvpick, basemap 
+from ui import impick, wvpick, basemap, note
 from tools import utils, export
 from ingest import ingest
 import os, sys, scipy, glob, configparser
@@ -124,7 +124,8 @@ class mainGUI(tk.Frame):
         # open submenu
         openMenu = tk.Menu(fileMenu,tearoff=0)
         openMenu.add_command(label="Data File    [Ctrl+O]", command=self.choose_dfile)
-        openMenu.add_command(label="Basemap  [Ctrl+M]", command=self.map_loc)
+        openMenu.add_command(label="Basemap  [Ctrl+M]", command=self.init_bm)
+        openMenu.add_command(label="Notes", command=self.init_note)
         fileMenu.add_cascade(label="Open", menu=openMenu)
 
         fileMenu.add_command(label="Next      [→]", command=self.next_loc)
@@ -272,7 +273,7 @@ class mainGUI(tk.Frame):
 
         # Ctrl+M open map
         elif event.state & 4 and event.keysym == "m":
-            self.map_loc()
+            self.init_bm()
 
         # Ctrl+Q close RAGU
         elif event.state & 4 and event.keysym == "q":
@@ -717,8 +718,34 @@ class mainGUI(tk.Frame):
             self.impick.export_fig(fn + ".png")
 
 
-    # map_loc is a method to get the desired basemap location and initialize
-    def map_loc(self):
+    # init_note is a method to initialize the ragu notes widget
+    def init_note(self):
+        return
+        tmp_map_loadName = ""
+        if self.os == "darwin":
+            tmp_map_loadName = tk.filedialog.askopenfilename(initialdir = self.conf["path"]["mapPath"], title = "select basemap file")
+
+        else:
+            tmp_map_loadName = tk.filedialog.askopenfilename(initialdir = self.conf["path"]["mapPath"], title = "select basemap file", filetypes = [("geotiff files","*.tif"),
+                                                                                                                                                    ("all files","*.*")])
+        if tmp_map_loadName:
+            # initialize basemap if not currently open
+            if not self.map_loadName or self.basemap.get_state() == 0:
+                self.basemap = basemap.basemap(self.parent, self.datPath, self.conf["nav"]["crs"], self.conf["nav"]["body"], self.from_basemap)
+            self.map_loadName = tmp_map_loadName
+            self.basemap.set_vars()
+            self.basemap.map(self.map_loadName)
+
+            if self.f_loadName:
+                # pass basemap to impick for plotting pick location
+                self.basemap.clear_nav()
+                self.basemap.set_track(self.rdata.fn)
+                self.basemap.set_nav(self.rdata.fn, self.rdata.navdf)
+                self.basemap.plot_tracks()
+
+
+    # init_bm is a method to get the desired basemap location and initialize
+    def init_bm(self):
         tmp_map_loadName = ""
         if self.os == "darwin":
             tmp_map_loadName = tk.filedialog.askopenfilename(initialdir = self.conf["path"]["mapPath"], title = "select basemap file")
