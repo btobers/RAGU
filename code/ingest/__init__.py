@@ -75,6 +75,7 @@ class ingest:
         if fpath.endswith("csv"):
             dat = pd.read_csv(fpath)
             if dat.shape[0] != self.rdata.tnum:
+                raise ValueError("import_pick error:\t pick file size does not match radar data")
                 return
             horizons = []
             keys = fnmatch.filter(dat.keys(), "*sample*")
