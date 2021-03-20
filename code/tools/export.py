@@ -182,9 +182,11 @@ def h5(fpath, df=None, dtype=None, srf=None):
             if "twtt_surf" in f["drv"]["pick"].keys():
                 twtt_srf_dfile = f["drv"]["pick"]["twtt_surf"][:]
                 twtt_srf_dfile[twtt_srf_dfile == -1] = np.nan
-                if not utils.nan_array_equal(twtt_srf_dfile, dat) or (np.isnan(twtt_srf_dfile).all()) and (tk.messagebox.askyesno("twtt_surf","Export twtt_surf pick layer to data file?")):
-                    del f["drv"]["pick"]["twtt_surf"]
-                    flag = True
+                twtt_srf_dfile[twtt_srf_dfile == -9] = np.nan
+                if not utils.nan_array_equal(twtt_srf_dfile, dat) or (np.isnan(twtt_srf_dfile).all()):
+                    if (tk.messagebox.askyesno("twtt_surf","Export twtt_surf pick layer to data file?")):
+                        del f["drv"]["pick"]["twtt_surf"]
+                        flag = True
             elif (tk.messagebox.askyesno("twtt_surf","Export twtt_surf pick layer to data file?")):
                 flag = True
             if flag:
