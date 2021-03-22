@@ -243,6 +243,9 @@ class mainGUI(tk.Frame):
         self.wvpick.update_figsettings(self.figsettings)
         self.wvpick.set_vars()
 
+        # initialize note
+        self.note = note.note(parent=self.parent, init_dir=self.datPath)
+
         # set up  info frame
         infoFrame = tk.Frame(self.parent)
         infoFrame.pack(side="bottom",fill="x")
@@ -254,8 +257,6 @@ class mainGUI(tk.Frame):
 
         # bind keypress events
         self.parent.bind("<Key>", self.key)
-
-        self.choose_dfile()
 
 
     # key is a method to handle UI keypress events
@@ -450,6 +451,9 @@ class mainGUI(tk.Frame):
                     self.basemap.set_nav(self.rdata.fn, self.rdata.navdf)
                     self.basemap.plot_tracks()
                     self.impick.get_basemap(self.basemap)
+
+                if self.note.get_state():
+                    self.note.write_track(fn=self.rdata.fn)
 
             # recall choose_dfile if wrong file type is selected 
             except Exception as err:
@@ -720,28 +724,10 @@ class mainGUI(tk.Frame):
 
     # init_note is a method to initialize the ragu notes widget
     def init_note(self):
-        return
-        tmp_map_loadName = ""
-        if self.os == "darwin":
-            tmp_map_loadName = tk.filedialog.askopenfilename(initialdir = self.conf["path"]["mapPath"], title = "select basemap file")
-
-        else:
-            tmp_map_loadName = tk.filedialog.askopenfilename(initialdir = self.conf["path"]["mapPath"], title = "select basemap file", filetypes = [("geotiff files","*.tif"),
-                                                                                                                                                    ("all files","*.*")])
-        if tmp_map_loadName:
-            # initialize basemap if not currently open
-            if not self.map_loadName or self.basemap.get_state() == 0:
-                self.basemap = basemap.basemap(self.parent, self.datPath, self.conf["nav"]["crs"], self.conf["nav"]["body"], self.from_basemap)
-            self.map_loadName = tmp_map_loadName
-            self.basemap.set_vars()
-            self.basemap.map(self.map_loadName)
-
-            if self.f_loadName:
-                # pass basemap to impick for plotting pick location
-                self.basemap.clear_nav()
-                self.basemap.set_track(self.rdata.fn)
-                self.basemap.set_nav(self.rdata.fn, self.rdata.navdf)
-                self.basemap.plot_tracks()
+        if not self.note.get_state():
+            self.note.setup()
+            if self.rdata:
+                self.note.write_track(self.rdata.fn)
 
 
     # init_bm is a method to get the desired basemap location and initialize
