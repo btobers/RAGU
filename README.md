@@ -31,6 +31,7 @@ RAGU was originally developed to work with NASA's Operation IceBridge Alaska rad
 - *ui/impick.py* handles profile-view, radargram image picking
 - *ui/wvpick.py* handles waveform-view picking optimization
 - *ui/basemap.py* handles the basemap
+- *ui/notepad.py* handles the notepad
 - *radar/* contains radar data object information
 - *radar/processing.py* performs simple user-specified radar data processing
 - *ingest/* hadnles radar data ingest
