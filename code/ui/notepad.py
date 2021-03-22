@@ -38,6 +38,7 @@ class notepad(tk.Frame):
         self.__root.config(bg="#d9d9d9")
         self.__root.title("RAGU - Session Notes")
         self.__root.bind("<Control-q>", self.__quit)
+        self.__root.protocol("WM_DELETE_WINDOW", self.__quit)
         self.__thisMenuBar = tk.Menu(self.__root) 
         self.__thisFileMenu = tk.Menu(self.__thisMenuBar, tearoff=0) 
         self.__thisEditMenu = tk.Menu(self.__thisMenuBar, tearoff=0) 
@@ -118,7 +119,10 @@ class notepad(tk.Frame):
         self.set_state(1)
       
           
-    def __quit(self): 
+    def __quit(self):
+        if len(self.get_text()) > 1:
+            if not tk.messagebox.askyesno("Warning", "Exit notepad without saving?", icon = "warning"):
+                return
         self.__root.destroy() 
         self.set_state(0)
 
