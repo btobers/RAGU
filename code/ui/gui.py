@@ -13,7 +13,7 @@ environment requirements in nose_env.yml
 mainGUI class is a tkinter frame which runs the RAGU master GUI
 """
 ### imports ###
-from ui import impick, wvpick, basemap, note
+from ui import impick, wvpick, basemap, notepad
 from tools import utils, export
 from ingest import ingest
 import os, sys, scipy, glob, configparser
@@ -125,7 +125,7 @@ class mainGUI(tk.Frame):
         openMenu = tk.Menu(fileMenu,tearoff=0)
         openMenu.add_command(label="Data File    [Ctrl+O]", command=self.choose_dfile)
         openMenu.add_command(label="Basemap  [Ctrl+M]", command=self.init_bm)
-        openMenu.add_command(label="Notes", command=self.init_note)
+        openMenu.add_command(label="Notes", command=self.init_notepad)
         fileMenu.add_cascade(label="Open", menu=openMenu)
 
         fileMenu.add_command(label="Next      [→]", command=self.next_loc)
@@ -244,7 +244,7 @@ class mainGUI(tk.Frame):
         self.wvpick.set_vars()
 
         # initialize note
-        self.note = note.note(parent=self.parent, init_dir=self.datPath)
+        self.notepad = notepad.notepad(parent=self.parent, init_dir=self.datPath)
 
         # set up  info frame
         infoFrame = tk.Frame(self.parent)
@@ -452,8 +452,8 @@ class mainGUI(tk.Frame):
                     self.basemap.plot_tracks()
                     self.impick.get_basemap(self.basemap)
 
-                if self.note.get_state():
-                    self.note.write_track(fn=self.rdata.fn)
+                if self.notepad.get_state() == 1:
+                    self.notepad.write_track(fn=self.rdata.fn)
 
             # recall choose_dfile if wrong file type is selected 
             except Exception as err:
@@ -722,12 +722,12 @@ class mainGUI(tk.Frame):
             self.impick.export_fig(fn + ".png")
 
 
-    # init_note is a method to initialize the ragu notes widget
-    def init_note(self):
-        if not self.note.get_state():
-            self.note.setup()
+    # init_notepad is a method to initialize the ragu notepad widget
+    def init_notepad(self):
+        if self.notepad.get_state() == 0:
+            self.notepad.setup()
             if self.rdata:
-                self.note.write_track(self.rdata.fn)
+                self.notepad.write_track(self.rdata.fn)
 
 
     # init_bm is a method to get the desired basemap location and initialize
