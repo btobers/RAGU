@@ -127,14 +127,14 @@ class notepad(tk.Frame):
         self.set_state(0)
 
     def __openFile(self): 
-          
+
         self.__file = tk.filedialog.askopenfilename(defaultextension=".txt", 
                                                     filetypes=[("All Files","*.*"), 
                                                     ("Text Documents","*.txt")],
                                                     initialdir=self.__init_dir) 
-  
+
         if self.__file == "": 
-              
+
             # no file to open 
             self.__file = None
         else: 
@@ -142,19 +142,21 @@ class notepad(tk.Frame):
             # set the window title 
             self.__root.title(os.path.basename(self.__file) + " - Notepad") 
             self.__thisTextArea.delete(1.0,tk.END) 
-  
+
             file = open(self.__file,"r") 
-  
+
             self.__thisTextArea.insert(1.0,file.read()) 
-  
+
             file.close() 
-  
-          
-    def __newFile(self): 
+
+    def __newFile(self):
+        if len(self.get_text()) > 1:
+            if not tk.messagebox.askyesno("Warning", "Discard changes?", icon = "warning"):
+                return
         self.__root.title("Untitled - Notepad") 
         self.__file = None
         self.__thisTextArea.delete(1.0,tk.END) 
-  
+
     def __saveFile(self): 
   
         if self.__file == None: 
@@ -185,7 +187,7 @@ class notepad(tk.Frame):
                                                             defaultextension=".txt", 
                                                             filetypes=[("All Files","*.*"), 
                                                             ("Text Documents","*.txt")]) 
-                
+
                 if self.__file == "": 
                     self.__file = None
                     return
@@ -202,7 +204,6 @@ class notepad(tk.Frame):
 
     # write_track adds the current track from gui to a new line
     def write_track(self, fn=None):
-        print('write',fn)
         if fn:
             text = self.get_text()
             if fn in text:
@@ -218,7 +219,7 @@ class notepad(tk.Frame):
     def search_text(self, lookup):
         for num, line in enumerate(self.get_text().splitlines()):
             if lookup in line:
-                self.__thisTextArea.mark_set("insert", str(num) + "." + str(len(line)))
+                self.__thisTextArea.mark_set("insert", str(num+1) + "." + str(len(line)))
                 self.__thisTextArea.see("insert")
 
 

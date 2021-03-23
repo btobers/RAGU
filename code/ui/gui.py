@@ -125,7 +125,7 @@ class mainGUI(tk.Frame):
         openMenu = tk.Menu(fileMenu,tearoff=0)
         openMenu.add_command(label="Data File    [Ctrl+O]", command=self.choose_dfile)
         openMenu.add_command(label="Basemap  [Ctrl+M]", command=self.init_bm)
-        openMenu.add_command(label="Notes", command=self.init_notepad)
+        openMenu.add_command(label="Notepad", command=self.init_notepad)
         fileMenu.add_cascade(label="Open", menu=openMenu)
 
         fileMenu.add_command(label="Next      [→]", command=self.next_loc)
@@ -469,8 +469,8 @@ class mainGUI(tk.Frame):
                 return
 
             # if h5 file already open, save pick layer to data file
-            # if (self.rdata) and (self.rdata.out is None) and (self.rdata.fpath.endswith(".h5")) and (self.rdata.dtype=="oibak"):
-            #     export.h5(self.rdata.fpath, dict({"bed_twtt":np.repeat(np.nan, self.rdata.tnum)}), self.rdata.dtype)
+            if (self.rdata) and (self.rdata.out is None) and (self.rdata.fpath.endswith(".h5")) and (self.rdata.dtype=="oibak"):
+                export.h5(self.rdata.fpath, dict({"bed_twtt":np.repeat(np.nan, self.rdata.tnum)}), self.rdata.dtype)
             
             file_path = os.path.dirname(self.f_loadName)
 
