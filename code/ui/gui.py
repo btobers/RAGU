@@ -469,13 +469,13 @@ class mainGUI(tk.Frame):
                 return
 
             # if h5 file already open, save pick layer to data file
-            if (self.rdata) and (self.rdata.out is None) and (self.rdata.fpath.endswith(".h5")) and (self.rdata.dtype=="oibak"):
-                export.h5(self.rdata.fpath, dict({"bed_twtt":np.repeat(np.nan, self.rdata.tnum)}), self.rdata.dtype)
+            # if (self.rdata) and (self.rdata.out is None) and (self.rdata.fpath.endswith(".h5")) and (self.rdata.dtype=="oibak"):
+            #     export.h5(self.rdata.fpath, dict({"bed_twtt":np.repeat(np.nan, self.rdata.tnum)}), self.rdata.dtype)
             
             file_path = os.path.dirname(self.f_loadName)
 
             # get index of crurrently displayed file in directory
-            file_list = [file_path + "/" + f for f in os.listdir(file_path) if f.endswith(self.igst.ftype) or f.endswith(self.igst.ftype.upper())]
+            file_list = [file_path + "/" + f for f in sorted(os.listdir(file_path)) if f.endswith(self.igst.ftype) or f.endswith(self.igst.ftype.upper())]
             file_index = file_list.index(self.f_loadName)
 
             # add one to index to load next file
