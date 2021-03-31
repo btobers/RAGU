@@ -33,6 +33,7 @@ def read(fpath, simpath, navcrs, body):
     rdata.snum = 3600
     rdata.tnum = int(len(rdata.dat)/rdata.snum)
     rdata.dt = .0375e-6
+    rdata.prf = 700.28
     rdata.nchan = 1
     rdata.dat = rdata.dat.reshape(rdata.snum,rdata.tnum)
     rdata.set_proc(rdata.dat)
@@ -58,7 +59,7 @@ def read(fpath, simpath, navcrs, body):
     rdata.info["cf [MHz]"] = 20
     rdata.info["badwidth [%]"] = 50
     rdata.info["pulse length [\u03BCs]"] = 85
-    rdata.info["prf [Hz]"] = 700.28
+    rdata.info["prf [Hz]"] = rdata.prf
 
     # open geom nav file for rgram
     geom_path = fpath.replace("rgram","geom").replace("img","tab")

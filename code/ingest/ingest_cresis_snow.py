@@ -23,7 +23,7 @@ def read_mat(fpath, navcrs, body):
 
     # assign signal info
     rdata.info["System"] = str(f["param_records"]["radar_name"][:], 'utf-16')
-    rdata.info["PRF [kHz]"] = f["param_records"]["radar"]["prf"][0][0]
+    rdata.info["PRF [kHz]"] = 
     if "snow" not in rdata.info["System"]:
         raise ValueError("Not snow radar data")
         return
@@ -38,6 +38,7 @@ def read_mat(fpath, navcrs, body):
     rdata.snum = rdata.dat.shape[0]                                                 # samples per trace in rgram
     rdata.tnum = rdata.dat.shape[1]                                                 # number of traces in rgram 
     rdata.dt = np.mean(np.diff(f["Time"]))                                          # sampling interval, sec
+    rdata.prf = f["param_records"]["radar"]["prf"][0][0]                            # pulse repitition frequency
     rdata.nchan = 1
 
     # parse nav
@@ -50,6 +51,7 @@ def read_mat(fpath, navcrs, body):
     rdata.set_srfElev(rdata.navdf["elev"] - utils.twtt2depth(rdata.pick.horizons["srf"], eps_r=1))
     rdata.pick.srf = "srf"
 
+    rdata.info["PRF [kHz]"] = rdata.prf * 1e-3
 
     f.close()                                                   # close the file
 

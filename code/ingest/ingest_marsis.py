@@ -39,6 +39,7 @@ def read(fpath, simpath, navcrs, body):
     rdata.tnum = int(l/rdata.snum/8)
     # dt per pixel from reprocessed oversampled data
     rdata.dt = 1/(2*(1.4e6))
+    rdata.prf = 127
     rdata.nchan = 2
 
     # reshape into 8 stacked rgrams

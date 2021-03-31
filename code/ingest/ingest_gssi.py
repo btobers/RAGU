@@ -37,6 +37,7 @@ def read(fpath, navcrs, body):
         f.seek(52)
         rdata.nchan = struct.unpack('<h', f.read(2))[0]     # number of data channels
         rdata.dt = range_ns / rdata.snum * 1.0e-9           # sampling interval
+        rdata.prf = struct.unpack('<f', lines[10:14])[0]    # scans per second (prf)
 
         if bits == 8:
             dtype = np.uint8    # 8-bit unsigned
