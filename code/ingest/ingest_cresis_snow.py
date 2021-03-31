@@ -23,7 +23,6 @@ def read_mat(fpath, navcrs, body):
 
     # assign signal info
     rdata.info["System"] = str(f["param_records"]["radar_name"][:], 'utf-16')
-    rdata.info["PRF [kHz]"] = 
     if "snow" not in rdata.info["System"]:
         raise ValueError("Not snow radar data")
         return
