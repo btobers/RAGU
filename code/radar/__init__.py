@@ -16,7 +16,7 @@ class radar(object):
     keep track of processing steps with the flags attribute.
     """
     # import processing tools
-    from radar.processing import set_tzero, tzero_shift, tpowGain, lowpass, undo, reset
+    from radar.processing import set_tzero, tzero_shift, tpowGain, filter, undo, reset
 
     def __init__(self, fpath):
         # basic data file attributes
@@ -32,6 +32,8 @@ class radar(object):
         self.tnum = None
         #: float, time between samples
         self.dt = None
+        #: float, pulse repition frequency
+        self.prf = None
         #: int, number of data channels
         self.nchan = None
         #: dict, signal info

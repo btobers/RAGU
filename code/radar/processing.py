@@ -78,18 +78,29 @@ def tzero_shift(self):
     return
 
 
-def lowpass(self, order = 5, cf = 1e6):
+def butter(cutoff, fs, order=5, btype="lowpass"):
+    nyq = 0.5 * fs
+    normal_cutoff = cutoff / nyq
+    b, a = signal.butter(order, normal_cutoff, btype=btype)
+    return b, a
+
+
+def filter(self, order = 5, btype="lowpass", cf = 1e6, direction=0):
     # apply low pass filter to data array
     amp = self.proc.get_curr_amp()
     self.proc.set_prev_amp(amp)
     self.proc.set_prev_dB(self.proc.get_curr_dB())
-    [b, a] = signal.butter(order, cf, btype="lowpass", fs=(1/self.dt))
-    out = signal.filtfilt(b, a, np.abs(amp), axis=0)
+    if direction == 0:
+        fs=1/self.dt
+    elif direction == 1:
+        fs=self.prf
+    b, a = butter(order=order, cutoff=cf, btype=btype, fs=fs)
+    out = signal.filtfilt(b, a, np.abs(amp), axis=direction)
     # use amplitude of lp filtered data to reset as pc array
     self.set_proc(out)
     # log
-    self.log("self.rdata.lowpass(order={}, cf={})".format(order,cf))
-    print("# Lowpass filter applied: order={}, cutoff={:2e} Hz".format(order,cf))
+    self.log("self.rdata.filter(order={}, cf={}, btype={})".format(order,cf,btype))
+    print("# {} filter applied: order={}, cutoff={} Hz".format(btype,order,cf))
 
     return
 

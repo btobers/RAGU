@@ -18,6 +18,7 @@ from tools import utils, export
 from ingest import ingest
 import os, sys, scipy, glob, configparser
 import numpy as np
+import pandas as pd
 import matplotlib as mpl
 mpl.use("TkAgg")
 import matplotlib.pyplot as plt
@@ -102,6 +103,7 @@ class mainGUI(tk.Frame):
         # |  |-remove mean trace
         # |  |-filter
         # |  |  |-low pass
+        # |  |  |-high pass
         # |  |-gain
         # |  |  |-acg
         # |-help
@@ -128,7 +130,7 @@ class mainGUI(tk.Frame):
         openMenu.add_command(label="Notepad", command=self.init_notepad)
         fileMenu.add_cascade(label="Open", menu=openMenu)
 
-        fileMenu.add_command(label="Next      [→]", command=self.next_loc)
+        fileMenu.add_command(label="Next      [→]", command=self.next_dfile)
 
         # save submenu
         exportMenu = tk.Menu(fileMenu,tearoff=0)
@@ -190,8 +192,7 @@ class mainGUI(tk.Frame):
         gainMenu = tk.Menu(procMenu,tearoff=0)
 
         # filtering menu items
-        filtMenu.add_command(label="Low Pass", command=lambda:self.procTools("lowpass"))
-        procMenu.add_cascade(label="Filter", menu=filtMenu)
+        procMenu.add_command(label="Filter", command=lambda:self.procTools("filter"))
 
         # gain menu items
         # gainMenu.add_command(label="AGC", command=lambda:self.procTools("agc"))
@@ -304,7 +305,7 @@ class mainGUI(tk.Frame):
 
             # right key next file
             elif event.keysym =="Right":
-                self.next_loc()
+                self.next_dfile()
 
             # h key to set axes limits to home extent
             elif event.keysym=="h":
@@ -399,7 +400,7 @@ class mainGUI(tk.Frame):
 
         # if h5 file already open, save pick layer to data file
         if (self.rdata) and (self.rdata.out is None) and (self.rdata.fpath.endswith(".h5")) and (self.rdata.dtype=="oibak"):
-            export.h5(self.rdata.fpath, dict({"bed_twtt":np.repeat(np.nan, self.rdata.tnum)}), self.rdata.dtype)
+            export.h5(self.rdata.fpath, pd.DataFrame({"bed_twtt":np.repeat(np.nan, self.rdata.tnum)}), self.rdata.dtype)
 
         # select input file
         if self.os == "darwin":
@@ -452,8 +453,8 @@ class mainGUI(tk.Frame):
                     self.basemap.plot_tracks()
                     self.impick.get_basemap(self.basemap)
 
-                if self.notepad.get_state() == 1:
-                    self.notepad.write_track(fn=self.rdata.fn)
+                if self.notepad._notepad__get_state() == 1:
+                    self.notepad._notepad__write_track(fn=self.rdata.fn)
 
             # recall choose_dfile if wrong file type is selected 
             except Exception as err:
@@ -461,8 +462,8 @@ class mainGUI(tk.Frame):
                 self.choose_dfile() 
 
 
-    # next_loc is a method to get the filename of the next data file in the directory then call impick.load()
-    def next_loc(self):
+    # next_dfile is a method to get the filename of the next data file in the directory to open
+    def next_dfile(self):
         if self.tab == "Profile" and self.f_loadName:
             # prompt save check
             if (self.save_check() == False) and (tk.messagebox.askyesno("Warning", "Discard unsaved picks?", icon = "warning") == False):
@@ -470,7 +471,7 @@ class mainGUI(tk.Frame):
 
             # if h5 file already open, save pick layer to data file
             if (self.rdata) and (self.rdata.out is None) and (self.rdata.fpath.endswith(".h5")) and (self.rdata.dtype=="oibak"):
-                export.h5(self.rdata.fpath, dict({"bed_twtt":np.repeat(np.nan, self.rdata.tnum)}), self.rdata.dtype)
+                export.h5(self.rdata.fpath, pd.DataFrame({"bed_twtt":np.repeat(np.nan, self.rdata.tnum)}), self.rdata.dtype)
             
             file_path = os.path.dirname(self.f_loadName)
 
@@ -724,10 +725,10 @@ class mainGUI(tk.Frame):
 
     # init_notepad is a method to initialize the ragu notepad widget
     def init_notepad(self):
-        if self.notepad.get_state() == 0:
-            self.notepad.setup()
+        if self.notepad._notepad__get_state() == 0:
+            self.notepad._notepad__setup()
             if self.rdata:
-                self.notepad.write_track(self.rdata.fn)
+                self.notepad._notepad__write_track(self.rdata.fn)
 
 
     # init_bm is a method to get the desired basemap location and initialize
@@ -855,10 +856,44 @@ class mainGUI(tk.Frame):
                 # proc = processing.remMeanTrace(self.rdata.dat, ntraces=ntraces)
                 # procFlag = True
 
-            elif arg == "lowpass":
-                cutoff = tk.simpledialog.askfloat("Input","Butterworth filter cutoff frequency?")
-                self.rdata.lowpass(cf = cutoff)
-                procFlag = True
+            elif arg == "filter":
+                if self.popup.flag == 1:
+                    return
+                # create popup window to get filter cutoff and direction
+                popup = self.popup.new(title="Butterworth filter")
+                row = tk.Frame(popup)
+                row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+                tk.Label(row, text="Cutoff Frequency:").pack(side="left")
+                cf = tk.DoubleVar()
+                cf_entry = tk.Entry(row,textvariable=cf).pack(side="left")
+                # cf_entry.pack(side=tk.RIGHT, expand=tk.YES, fill=tk.X)
+                row = tk.Frame(popup)
+                row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+                tk.Label(row, text="Filter type:").pack(side="left")
+                btype = tk.StringVar(value="lowpass")
+                tk.Radiobutton(row,text="lowpass", variable=btype, value="lowpass").pack(side="left")
+                tk.Radiobutton(row,text="highpass", variable=btype, value="highpass").pack(side="left")
+                row = tk.Frame(popup)
+                row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+                tk.Label(row, text="Filter direction:").pack(side="left")
+                direction = tk.IntVar(value=0)
+                tk.Radiobutton(row,text="fast-time", variable=direction, value=0).pack(side="left")
+                tk.Radiobutton(row,text="slow-time", variable=direction, value=1).pack(side="left")
+                row = tk.Frame(popup)
+                row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+                button = tk.Button(row, text="OK", command=lambda:self.popup.close(flag=0), width=20).pack(side="left", fill="none", expand=True)
+                button = tk.Button(row, text="Cancel", command=lambda:self.popup.close(flag=-1), width=20).pack(side="left", fill="none", expand=True)
+                # wait for window to be closed
+                self.parent.wait_window(popup)
+                # remove the trace
+                cutoff = cf.get()
+                if (cutoff <= 0) or (self.popup.flag == -1):
+                    return
+                try:
+                    self.rdata.filter(btype=btype.get(), cf=cutoff, direction=direction.get())
+                    procFlag = True
+                except Exception as err:
+                    print(err)
 
             elif arg == "tpow":
                 power = tk.simpledialog.askfloat("Input","Power for tpow gain?")

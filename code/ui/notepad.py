@@ -32,7 +32,7 @@ class notepad(tk.Frame):
         except KeyError: 
             pass
     
-    def setup(self):
+    def __setup(self):
         # create tkinter toplevel window to display note
         self.__root = tk.Toplevel(self.__parent)
         self.__root.config(bg="#d9d9d9")
@@ -116,44 +116,48 @@ class notepad(tk.Frame):
         # Scrollbar will adjust automatically according to the content         
         self.__thisScrollBar.config(command=self.__thisTextArea.yview)      
         self.__thisTextArea.config(yscrollcommand=self.__thisScrollBar.set)
-        self.set_state(1)
+        self.__set_state(1)
       
           
     def __quit(self):
-        if len(self.get_text()) > 1:
-            if not tk.messagebox.askyesno("Warning", "Exit notepad without saving?", icon = "warning"):
-                return
+        # check if text exists and changes made since last save
+        if len(self.__get_text()) > 1:
+            if self.__file:
+                f = open(self.__file,"r")
+                text = f.read().strip()
+                if (self.__get_text().strip() != text) and not (tk.messagebox.askyesno("Warning", "Exit notepad without saving?", icon = "warning")):
+                    return
         self.__root.destroy() 
-        self.set_state(0)
+        self.__set_state(0)
 
     def __openFile(self): 
 
-        self.__file = tk.filedialog.askopenfilename(defaultextension=".txt", 
+        self.__file = tk.filedialog.askopenfilename(initialfile='Untitled.csv',
+                                                    initialdir=self.__init_dir,
+                                                    defaultextension=".csv", 
                                                     filetypes=[("All Files","*.*"), 
-                                                    ("Text Documents","*.txt")],
-                                                    initialdir=self.__init_dir) 
+                                                    ("Comma-separated value","*.csv")]) 
 
         if self.__file == "": 
-
             # no file to open 
             self.__file = None
         else: 
             # Try to open the file 
             # set the window title 
-            self.__root.title(os.path.basename(self.__file) + " - Notepad") 
+            self.__root.title(os.path.basename(self.__file) + " - RAGU Notepad") 
             self.__thisTextArea.delete(1.0,tk.END) 
 
             file = open(self.__file,"r") 
 
-            self.__thisTextArea.insert(1.0,file.read()) 
+            self.__thisTextArea.insert(1.0,file.read().strip()) 
 
             file.close() 
 
     def __newFile(self):
-        if len(self.get_text()) > 1:
+        if len(self.__get_text()) > 1:
             if not tk.messagebox.askyesno("Warning", "Discard changes?", icon = "warning"):
                 return
-        self.__root.title("Untitled - Notepad") 
+        self.__root.title("Untitled - RAGU Notepad") 
         self.__file = None
         self.__thisTextArea.delete(1.0,tk.END) 
 
@@ -161,53 +165,53 @@ class notepad(tk.Frame):
   
         if self.__file == None: 
             # Save as new file 
-            self.__file = tk.filedialog.asksaveasfilename(initialfile='Untitled.txt',
+            self.__file = tk.filedialog.asksaveasfilename(initialfile='Untitled.csv',
                                                         initialdir=self.__init_dir,
-                                                        defaultextension=".txt", 
+                                                        defaultextension=".csv", 
                                                         filetypes=[("All Files","*.*"), 
-                                                        ("Text Documents","*.txt")]) 
+                                                        ("Comma-separated value","*.csv")]) 
   
             if self.__file == "": 
                 self.__file = None
             else: 
                 # Try to save the file 
                 file = open(self.__file,"w") 
-                file.write(self.__thisTextArea.get(1.0,tk.END)) 
+                file.write(self.__thisTextArea.get(1.0,tk.END).strip()) 
                 file.close() 
                   
                 # Change the window title 
-                self.__root.title(os.path.basename(self.__file) + " - Notepad") 
+                self.__root.title(os.path.basename(self.__file) + " - RAGU Notepad") 
                   
               
         else:
             if not tk.messagebox.askyesno("Warning", "Overwrite file?", icon = "warning"):
                 # Save as new file 
-                self.__file = tk.filedialog.asksaveasfilename(initialfile='Untitled.txt',
+                self.__file = tk.filedialog.asksaveasfilename(initialfile='Untitled.csv',
                                                             initialdir=self.__init_dir,
-                                                            defaultextension=".txt", 
+                                                            defaultextension=".csv", 
                                                             filetypes=[("All Files","*.*"), 
-                                                            ("Text Documents","*.txt")]) 
+                                                            ("Comma-separated value","*.csv")]) 
 
                 if self.__file == "": 
                     self.__file = None
                     return
 
             file = open(self.__file,"w") 
-            file.write(self.__thisTextArea.get(1.0,tk.END)) 
+            file.write(self.__thisTextArea.get(1.0,tk.END).strip()) 
             file.close() 
 
             # Change the window title 
-            self.__root.title(os.path.basename(self.__file) + " - Notepad") 
+            self.__root.title(os.path.basename(self.__file) + " - RAGU Notepad") 
 
     def __showAbout(self): 
         tk.messagebox.showinfo("RAGU Notepad","Notepad designed to hold session notes. Radar data file names will be added to new notepad line in a comma-separated value format. Type file notes following file name.") 
 
-    # write_track adds the current track from gui to a new line
-    def write_track(self, fn=None):
+    # __write_track adds the current track from gui to a new line
+    def __write_track(self, fn=None):
         if fn:
-            text = self.get_text()
+            text = self.__get_text()
             if fn in text:
-                self.search_text(fn)
+                self.__search_text(fn)
             else:
                 if len(text) > 1:
                     fn = "\n" + fn
@@ -215,16 +219,16 @@ class notepad(tk.Frame):
                 self.__thisTextArea.see("insert")
 
 
-    # search_text
-    def search_text(self, lookup):
-        for num, line in enumerate(self.get_text().splitlines()):
+    # __search_text
+    def __search_text(self, lookup):
+        for num, line in enumerate(self.__get_text().splitlines()):
             if lookup in line:
                 self.__thisTextArea.mark_set("insert", str(num+1) + "." + str(len(line)))
                 self.__thisTextArea.see("insert")
 
 
-    # get_text returns the text entry string
-    def get_text(self):
+    # __get_text returns the text entry string
+    def __get_text(self):
         return self.__thisTextArea.get(1.0, tk.END)
   
     def __cut(self): 
@@ -236,8 +240,8 @@ class notepad(tk.Frame):
     def __paste(self): 
         self.__thisTextArea.event_generate("<<Paste>>") 
   
-    def get_state(self):
+    def __get_state(self):
         return self.__state
 
-    def set_state(self, state=0):
+    def __set_state(self, state=0):
         self.__state = state

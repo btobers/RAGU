@@ -213,9 +213,9 @@ def h5(fpath, df=None, dtype=None, srf=None):
 
 
 # fig is a function for exporting the pick image
-def fig(fpath, fig, imtype=None):
+def fig(fpath, fig):
     fig.savefig(fpath, dpi=500, bbox_inches='tight', pad_inches=0.05, transparent=True)# facecolor = "#d9d9d9")
-    print(imtype + " figure exported successfully:\t" + fpath)
+    print("figure exported successfully:\t" + fpath)
 
 
 # proc is a method to export the processed radar data - for now just as a csv file array

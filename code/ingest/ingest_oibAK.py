@@ -44,6 +44,7 @@ def read_h5(fpath, navcrs, body):
     rdata.snum = int(f["raw"]["rx0"].attrs["samplesPerTrace"])                  # samples per trace in rgram
     rdata.tnum = int(f["raw"]["rx0"].attrs["numTrace"])                         # number of traces in rgram 
     rdata.dt = 1/ f["raw"]["rx0"].attrs["samplingFrequency"][0]                 # sampling interval, sec
+    rdata.prf = f["raw"]["tx0"].attrs["pulseRepetitionFrequency"][0]            # pulse repition frequency, Hz
     rdata.nchan = 1
 
     # pull radar proc and sim arrays
@@ -60,7 +61,7 @@ def read_h5(fpath, navcrs, body):
     if rdata.info["Signal Type"] == "chirp":
         rdata.info["Badwidth [%]"] = f["raw"]["tx0"].attrs["bandwidth"][0] * 100
         rdata.info["Pulse Length [\u03BCs]"] = f["raw"]["tx0"].attrs["length"][0] * 1e6
-    rdata.info["PRF [kHz]"] = f["raw"]["tx0"].attrs["pulseRepetitionFrequency"][0] * 1e-3
+    rdata.info["PRF [kHz]"] = rdata.prf * 1e-3
 
     # parse nav
     rdata.navdf = navparse.getnav_oibAK_h5(fpath, navcrs, body)

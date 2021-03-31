@@ -1419,6 +1419,9 @@ class impick(tk.Frame):
         # zoom out to full rgram extent to save pick image
         self.fullExtent()
         self.verticalClip(self.figsettings["figclip"].get())
+        w0 ,h0 = self.fig.get_size_inches()    # get pre-save figure size
+        w, h = self.figsettings["figsize"].get().split(",")
+        self.fig.set_size_inches((float(w),float(h)))    # set figsize to wide aspect ratio
         # temporarily turn sliders to invisible for saving image
         self.ax_cmax.set_visible(False)
         self.ax_cmin.set_visible(False)
@@ -1427,28 +1430,23 @@ class impick(tk.Frame):
         # hide pick annotations
         vis = self.ann_vis
         if vis:
-            self.show_labels(vis=False)     
-        # ensure picks are visible
-        # self.pick_vis.set(True)
-        self.show_picks(vis=True)
-        w0 ,h0 = self.fig.get_size_inches()    # get pre-save figure size
-        w, h = self.figsettings["figsize"].get().split(",")
-        self.fig.set_size_inches((float(w),float(h)))    # set figsize to wide aspect ratio
-        # hide existing picks
-        # self.remove_existing_subsurf()
+            self.show_labels(vis=False)  
 
-        # save data fig with picks
+        # save data fig with and without picks
         if self.im_status.get() ==1:
             self.show_data()
-        export.fig(f_saveName, self.fig, imtype="dat")
-
+        self.show_picks(vis=False)
+        export.fig(f_saveName.rstrip(f_saveName.split("/")[-1]) + self.rdata.fn + ".png", self.fig)
+        self.show_picks(vis=True)
+        export.fig(f_saveName, self.fig)
+    
         # save sim fig if sim exists
         if not (self.rdata.sim == 0).all():
             self.show_sim()
             # ensure picks are hidden
             # self.pick_vis.set(False)
             self.show_picks(vis=False)
-            export.fig(f_saveName.rstrip(f_saveName.split("/")[-1]) + self.rdata.fn + "_sim.png", self.fig, imtype="sim")
+            export.fig(f_saveName.rstrip(f_saveName.split("/")[-1]) + self.rdata.fn + "_sim.png", self.fig)
             # self.pick_vis.set(True)
             self.show_picks(vis=True)
             self.show_data()
