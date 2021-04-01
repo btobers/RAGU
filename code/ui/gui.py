@@ -860,37 +860,43 @@ class mainGUI(tk.Frame):
                 if self.popup.flag == 1:
                     return
                 # create popup window to get filter cutoff and direction
-                popup = self.popup.new(title="Butterworth filter")
+                popup = self.popup.new(title="Butterworth Filter")
                 row = tk.Frame(popup)
                 row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-                tk.Label(row, text="Cutoff Frequency:").pack(side="left")
-                cf = tk.DoubleVar()
-                cf_entry = tk.Entry(row,textvariable=cf).pack(side="left")
-                # cf_entry.pack(side=tk.RIGHT, expand=tk.YES, fill=tk.X)
+                tk.Label(row, text="Lowcut Frequency: ").pack(side="left")
+                lowcut = tk.DoubleVar()
+                tk.Entry(row, textvariable=lowcut, width = 10).pack(side="left")
+                tk.Label(row, text="\tHighcut Frequency: ").pack(side="left")
+                highcut = tk.DoubleVar()
+                tk.Entry(row, textvariable=highcut, width = 10).pack(side="left")
                 row = tk.Frame(popup)
                 row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-                tk.Label(row, text="Filter type:").pack(side="left")
+                tk.Label(row, text="Filter Type: ").pack(side="left")
                 btype = tk.StringVar(value="lowpass")
-                tk.Radiobutton(row,text="lowpass", variable=btype, value="lowpass").pack(side="left")
-                tk.Radiobutton(row,text="highpass", variable=btype, value="highpass").pack(side="left")
+                tk.Radiobutton(row,text="Lowpass", variable=btype, value="lowpass").pack(side="left")
+                tk.Radiobutton(row,text="Highpass", variable=btype, value="highpass").pack(side="left")
+                tk.Radiobutton(row,text="Bandpass", variable=btype, value="band").pack(side="left")
                 row = tk.Frame(popup)
                 row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-                tk.Label(row, text="Filter direction:").pack(side="left")
+                tk.Label(row, text="Filter Direction: ").pack(side="left")
                 direction = tk.IntVar(value=0)
-                tk.Radiobutton(row,text="fast-time", variable=direction, value=0).pack(side="left")
-                tk.Radiobutton(row,text="slow-time", variable=direction, value=1).pack(side="left")
+                tk.Radiobutton(row,text="Fast-Time", variable=direction, value=0).pack(side="left")
+                tk.Radiobutton(row,text="Slow-Time", variable=direction, value=1).pack(side="left")
                 row = tk.Frame(popup)
                 row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-                button = tk.Button(row, text="OK", command=lambda:self.popup.close(flag=0), width=20).pack(side="left", fill="none", expand=True)
-                button = tk.Button(row, text="Cancel", command=lambda:self.popup.close(flag=-1), width=20).pack(side="left", fill="none", expand=True)
+                tk.Label(row, text="Order: ").pack(side="left")
+                order = tk.IntVar(value=5)
+                tk.Entry(row, textvariable=order, width = 10).pack(side="left")
+                row = tk.Frame(popup)
+                row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+                tk.Button(row, text="OK", command=lambda:self.popup.close(flag=0), width=10).pack(side="left", fill="none", expand=True)
+                tk.Button(row, text="Cancel", command=lambda:self.popup.close(flag=-1), width=10).pack(side="left", fill="none", expand=True)
                 # wait for window to be closed
                 self.parent.wait_window(popup)
-                # remove the trace
-                cutoff = cf.get()
-                if (cutoff <= 0) or (self.popup.flag == -1):
+                if self.popup.flag == -1:
                     return
                 try:
-                    self.rdata.filter(btype=btype.get(), cf=cutoff, direction=direction.get())
+                    self.rdata.filter(btype=btype.get(), lowcut=lowcut.get(), highcut=highcut.get(), order=order.get(), direction=direction.get())
                     procFlag = True
                 except Exception as err:
                     print(err)
