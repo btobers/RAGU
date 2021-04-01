@@ -864,18 +864,22 @@ class mainGUI(tk.Frame):
                 row = tk.Frame(popup)
                 row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
                 tk.Label(row, text="Lowcut Frequency: ").pack(side="left")
-                lowcut = tk.DoubleVar()
-                tk.Entry(row, textvariable=lowcut, width = 10).pack(side="left")
+                lowcut = tk.StringVar()
+                ent = tk.Entry(row, textvariable=lowcut, width = 10)
+                ent.pack(side="left")
+                ent.delete(0, 'end')
                 tk.Label(row, text="\tHighcut Frequency: ").pack(side="left")
-                highcut = tk.DoubleVar()
-                tk.Entry(row, textvariable=highcut, width = 10).pack(side="left")
+                highcut = tk.StringVar()
+                ent = tk.Entry(row, textvariable=highcut, width = 10)
+                ent.pack(side="left")
+                ent.delete(0, 'end')
                 row = tk.Frame(popup)
                 row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
                 tk.Label(row, text="Filter Type: ").pack(side="left")
                 btype = tk.StringVar(value="lowpass")
                 tk.Radiobutton(row,text="Lowpass", variable=btype, value="lowpass").pack(side="left")
                 tk.Radiobutton(row,text="Highpass", variable=btype, value="highpass").pack(side="left")
-                tk.Radiobutton(row,text="Bandpass", variable=btype, value="band").pack(side="left")
+                tk.Radiobutton(row,text="Bandpass", variable=btype, value="bandpass").pack(side="left")
                 row = tk.Frame(popup)
                 row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
                 tk.Label(row, text="Filter Direction: ").pack(side="left")
@@ -896,7 +900,17 @@ class mainGUI(tk.Frame):
                 if self.popup.flag == -1:
                     return
                 try:
-                    self.rdata.filter(btype=btype.get(), lowcut=lowcut.get(), highcut=highcut.get(), order=order.get(), direction=direction.get())
+                    if lowcut.get():
+                        lowcut = float(lowcut.get())
+                    else:
+                        lowcut = None
+                    if highcut.get():
+                        highcut = float(highcut.get())
+                    else:
+                        highcut = None
+                    if lowcut is None and highcut is None:
+                        raise ValueError("Filter error: no lowcut or highcut frequencies specified.")
+                    self.rdata.filter(btype=btype.get(), lowcut=lowcut, highcut=highcut, order=order.get(), direction=direction.get())
                     procFlag = True
                 except Exception as err:
                     print(err)

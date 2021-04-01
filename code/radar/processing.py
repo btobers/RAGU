@@ -80,16 +80,19 @@ def tzero_shift(self):
 
 def butter(btype="lowpass", lowcut=None, highcut=None, fs=None, order=5):
     nyq = 0.5 * fs
-    
-    if lowcut > 0:
-        low = lowcut / nyq
+    cutoff = []
+    if btype=="lowpass" and lowcut > 0:
+        cutoff.append(lowcut / nyq)
+    elif btype=="highpass" and highcut > 0:
+        cutoff.append(highcut / nyq)
+    elif btype=="bandpass" and lowcut > 0 and highcut > 0:
+        cutoff.append(lowcut / nyq)
+        cutoff.append(highcut / nyq)
     else:
-        low = None
-    if highcut > 0:
-        high = highcut / nyq
-    else:
-        high = None
-    b, a = signal.butter(order, [low,high], btype=btype)
+        raise ValueError("Critical frequency error: Lowcut={}, Highcut={}".format(lowcut, highcut))
+        return
+    b, a = signal.butter(order, cutoff, btype=btype)
+
     return b, a
 
 
@@ -107,8 +110,8 @@ def filter(self, btype="lowpass", lowcut=None, highcut=None, order=5, direction=
     # use amplitude of lp filtered data to reset as pc array
     self.set_proc(out)
     # log
-    self.log("self.rdata.filter(order={}, cf={}, btype={})".format(order,cf,btype))
-    print("# {} filter applied: order={}, cutoff={} Hz".format(btype,order,cf))
+    self.log("self.rdata.filter(btype={}, lowcut={}, highcut={}, order={}, direction={})".format(btype, lowcut, highcut, order, direction))
+    print("# filter applied: btype={}, lowcut={}, highcut={}, order={}, direction={})".format(btype, lowcut, highcut, order, direction))
 
     return
 
