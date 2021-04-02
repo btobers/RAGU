@@ -32,12 +32,15 @@ class notepad(tk.Frame):
         except KeyError: 
             pass
     
-    def __setup(self):
+    def __setup(self, path=None):
         # create tkinter toplevel window to display note
         self.__root = tk.Toplevel(self.__parent)
         self.__root.config(bg="#d9d9d9")
         self.__root.title("RAGU - Session Notes")
         self.__root.bind("<Control-q>", self.__quit)
+        self.__root.bind("<Control-s>", self.__saveFile)
+        self.__root.bind("<Control-o>", self.__openFile)
+        self.__root.bind("<Control-n>", self.__newFile)
         self.__root.protocol("WM_DELETE_WINDOW", self.__quit)
         self.__thisMenuBar = tk.Menu(self.__root) 
         self.__thisFileMenu = tk.Menu(self.__thisMenuBar, tearoff=0) 
@@ -117,9 +120,11 @@ class notepad(tk.Frame):
         self.__thisScrollBar.config(command=self.__thisTextArea.yview)      
         self.__thisTextArea.config(yscrollcommand=self.__thisScrollBar.set)
         self.__set_state(1)
+        if path:
+            self.__file = path
       
           
-    def __quit(self):
+    def __quit(self, event=None):
         # check if text exists and changes made since last save
         if len(self.__get_text()) > 1:
             if self.__file:
@@ -130,13 +135,13 @@ class notepad(tk.Frame):
         self.__root.destroy() 
         self.__set_state(0)
 
-    def __openFile(self): 
-
-        self.__file = tk.filedialog.askopenfilename(initialfile='Untitled.csv',
-                                                    initialdir=self.__init_dir,
-                                                    defaultextension=".csv", 
-                                                    filetypes=[("All Files","*.*"), 
-                                                    ("Comma-separated value","*.csv")]) 
+    def __openFile(self, event=None): 
+        if not self.__file:
+            self.__file = tk.filedialog.askopenfilename(initialfile='Untitled.csv',
+                                                        initialdir=self.__init_dir,
+                                                        defaultextension=".csv", 
+                                                        filetypes=[("Comma-separated value","*.csv"),
+                                                        ("All Files","*.*")]) 
 
         if self.__file == "": 
             # no file to open 
@@ -153,7 +158,7 @@ class notepad(tk.Frame):
 
             file.close() 
 
-    def __newFile(self):
+    def __newFile(self, event=None):
         if len(self.__get_text()) > 1:
             if not tk.messagebox.askyesno("Warning", "Discard changes?", icon = "warning"):
                 return
@@ -161,15 +166,15 @@ class notepad(tk.Frame):
         self.__file = None
         self.__thisTextArea.delete(1.0,tk.END) 
 
-    def __saveFile(self): 
+    def __saveFile(self, event=None): 
   
         if self.__file == None: 
             # Save as new file 
             self.__file = tk.filedialog.asksaveasfilename(initialfile='Untitled.csv',
                                                         initialdir=self.__init_dir,
                                                         defaultextension=".csv", 
-                                                        filetypes=[("All Files","*.*"), 
-                                                        ("Comma-separated value","*.csv")]) 
+                                                        filetypes=[("Comma-separated value","*.csv"),
+                                                        ("All Files","*.*")]) 
   
             if self.__file == "": 
                 self.__file = None
@@ -181,6 +186,7 @@ class notepad(tk.Frame):
                   
                 # Change the window title 
                 self.__root.title(os.path.basename(self.__file) + " - RAGU Notepad") 
+                print("Notepad saved successfully:\t{}".format(self.__file))
                   
               
         else:
@@ -189,8 +195,8 @@ class notepad(tk.Frame):
                 self.__file = tk.filedialog.asksaveasfilename(initialfile='Untitled.csv',
                                                             initialdir=self.__init_dir,
                                                             defaultextension=".csv", 
-                                                            filetypes=[("All Files","*.*"), 
-                                                            ("Comma-separated value","*.csv")]) 
+                                                            filetypes=[("Comma-separated value","*.csv"),
+                                                            ("All Files","*.*")]) 
 
                 if self.__file == "": 
                     self.__file = None
@@ -245,3 +251,6 @@ class notepad(tk.Frame):
 
     def __set_state(self, state=0):
         self.__state = state
+
+    def __get_file(self):
+        return self.__file

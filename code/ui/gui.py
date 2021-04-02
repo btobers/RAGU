@@ -48,6 +48,7 @@ class mainGUI(tk.Frame):
         self.tab = "Profile"
         self.eps_r = tk.DoubleVar(value=self.conf["output"]["eps_r"])
         self.popup = popup(self.parent)
+        self.proj = project()
         self.pick_vis = tk.BooleanVar()
         self.pick_vis.set(True)
         self.ann_vis = tk.BooleanVar()
@@ -125,6 +126,7 @@ class mainGUI(tk.Frame):
         # file menu items
         # open submenu
         openMenu = tk.Menu(fileMenu,tearoff=0)
+        openMenu.add_command(label="Project", command=self.open_proj)
         openMenu.add_command(label="Data File    [Ctrl+O]", command=self.choose_dfile)
         openMenu.add_command(label="Basemap  [Ctrl+M]", command=self.init_bm)
         openMenu.add_command(label="Notepad", command=self.init_notepad)
@@ -137,6 +139,7 @@ class mainGUI(tk.Frame):
         pickExportMenu = tk.Menu(exportMenu,tearoff=0)
         pickExportMenu.add_command(label="Horizon", command=lambda:self.export_pick(merged=False))
         pickExportMenu.add_command(label="Merged  [Ctrl+S]", command=lambda:self.export_pick(merged=True))
+        exportMenu.add_command(label="Project", command=self.export_proj)
         exportMenu.add_cascade(label="Picks", menu=pickExportMenu)
         exportMenu.add_command(label="Figure", command=self.export_fig)
         exportMenu.add_command(label="Processed Data", command=self.export_proc)
@@ -188,7 +191,6 @@ class mainGUI(tk.Frame):
         # procMenu.add_command(label="Remove Mean Trace", command=lambda:self.procTools("remMnTr"))
 
         # processing submenu items
-        filtMenu = tk.Menu(procMenu,tearoff=0)
         gainMenu = tk.Menu(procMenu,tearoff=0)
 
         # filtering menu items
@@ -399,6 +401,36 @@ class mainGUI(tk.Frame):
                                        mustexist=True)
 
 
+    # open project
+    def open_proj(self):
+        # save_check
+        if (self.save_check() == False) and (tk.messagebox.askyesno("Warning", "Discard unsaved picks?", icon = "warning") == False):
+            return
+
+        # if h5 file already open, save pick layer to data file
+        if (self.rdata) and (self.rdata.out is None) and (self.rdata.fpath.endswith(".h5")) and (self.rdata.dtype=="oibak"):
+            export.h5(self.rdata.fpath, pd.DataFrame({"bed_twtt":np.repeat(np.nan, self.rdata.tnum)}), self.rdata.dtype)
+
+        # select input file
+        if self.os == "darwin":
+            tmp = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select project file")
+        else:
+            tmp = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select project file",filetypes = [("ragu project", ".ragu"),
+                                                                                                                            ("all files",".*")])
+        
+        if tmp:
+            try:
+                self.proj.set_projPath(tmp)
+                self.proj.load()
+                if self.proj.get_datPath():
+                    self.open_dfile(self.proj.get_datPath())
+                if self.proj.get_mapPath():
+                    self.init_bm(self.proj.get_mapPath())
+                if self.proj.get_notePath():
+                    self.init_notepad(self.proj.get_notePath())
+            except Exception as err:
+                print("Load project error: {}".format(err))
+
 
     # choose_dfile is a gui method which has the user select and input data file - then passed to impick.load()
     def choose_dfile(self):
@@ -433,6 +465,7 @@ class mainGUI(tk.Frame):
                     if self.tab == "Waveform":
                         self.nb.select(self.nb.tabs()[0])
                     self.f_loadName = f_loadName
+                    self.proj.set_datPath(self.f_loadName)
                     # ingest the data
                     self.igst = ingest(self.f_loadName)
                     self.rdata = self.igst.read(self.conf["path"]["simPath"], self.conf["nav"]["crs"], self.conf["nav"]["body"])
@@ -453,7 +486,7 @@ class mainGUI(tk.Frame):
                     self.wvpick.clear()
                     self.wvpick.set_data(self.rdata)
                     self.rinfolbl.config(text = '\t\t'.join('{}: {}'.format(k, d) for k, d in self.rdata.info.items()))
-
+        
                 # pass basemap to impick for plotting pick location
                 if self.map_loadName and self.basemap.get_state() == 1:
                     self.basemap.set_track(self.rdata.fn)
@@ -461,7 +494,7 @@ class mainGUI(tk.Frame):
                     self.basemap.plot_tracks()
                     self.impick.get_basemap(self.basemap)
 
-                if self.notepad._notepad__get_state() == 1:
+                if self.rdata and self.notepad._notepad__get_state() == 1:
                     self.notepad._notepad__write_track(fn=self.rdata.fn)
 
             # recall choose_dfile if wrong file type is selected 
@@ -605,6 +638,30 @@ class mainGUI(tk.Frame):
             self.impick.blit()
 
 
+    # export_proj
+    def export_proj(self):
+        # select input file
+        tmp = self.proj.get_projPath()
+        if not tmp:
+            if self.os == "darwin":
+                tmp = tk.filedialog.asksaveasfilename(initialdir = self.datPath,title = "save project file")
+            else:
+                tmp = tk.filedialog.asksaveasfilename(initialdir = self.datPath,title = "save project file",filetypes = [("ragu project", ".ragu"),
+                                                                                                                            ("all files",".*")])
+        
+        if tmp:
+            fn, ext = os.path.splitext(tmp)
+
+            try:
+                self.proj.set_projPath(fn + ".ragu")
+                self.proj.set_notePath(self.notepad._notepad__get_file())
+                self.proj.save()
+
+            except Exception as err:
+                print("Load project error: {}".format(err))
+
+        return
+
     # export_pick is method to receieve the desired pick save location from user input
     def export_pick(self, merged=True):
         if self.f_loadName:
@@ -685,6 +742,7 @@ class mainGUI(tk.Frame):
                     self.impick.export_fig(fn + ".png")
                 if (self.rdata.fpath.endswith(".h5")):
                     export.h5(self.rdata.fpath, self.rdata.out, self.rdata.dtype, self.rdata.pick.get_srf())
+                self.export_proj()
 
 
     # export_proc is a method to save processed radar data
@@ -732,27 +790,33 @@ class mainGUI(tk.Frame):
 
 
     # init_notepad is a method to initialize the ragu notepad widget
-    def init_notepad(self):
+    def init_notepad(self, path=None):
         if self.notepad._notepad__get_state() == 0:
-            self.notepad._notepad__setup()
+            self.notepad._notepad__setup(path=path)
+            if path:
+                self.notepad._notepad__openFile()
             if self.rdata:
                 self.notepad._notepad__write_track(self.rdata.fn)
 
 
     # init_bm is a method to get the desired basemap location and initialize
-    def init_bm(self):
-        tmp_map_loadName = ""
-        if self.os == "darwin":
-            tmp_map_loadName = tk.filedialog.askopenfilename(initialdir = self.conf["path"]["mapPath"], title = "select basemap file")
+    def init_bm(self, path=None):
+        print(path)
+        print(path is None)
+        if not path:
+            path = ""
+            if self.os == "darwin":
+                path = tk.filedialog.askopenfilename(initialdir = self.conf["path"]["mapPath"], title = "select basemap file")
 
-        else:
-            tmp_map_loadName = tk.filedialog.askopenfilename(initialdir = self.conf["path"]["mapPath"], title = "select basemap file", filetypes = [("geotiff files","*.tif"),
-                                                                                                                                                    ("all files","*.*")])
-        if tmp_map_loadName:
+            else:
+                path = tk.filedialog.askopenfilename(initialdir = self.conf["path"]["mapPath"], title = "select basemap file", filetypes = [("geotiff files","*.tif"),
+                                                                                                                                                        ("all files","*.*")])
+        if path:
             # initialize basemap if not currently open
             if not self.map_loadName or self.basemap.get_state() == 0:
                 self.basemap = basemap.basemap(self.parent, self.datPath, self.conf["nav"]["crs"], self.conf["nav"]["body"], self.from_basemap)
-            self.map_loadName = tmp_map_loadName
+            self.map_loadName = path
+            self.proj.set_mapPath(self.map_loadName)
             self.basemap.set_vars()
             self.basemap.map(self.map_loadName)
 
@@ -1256,3 +1320,54 @@ class button_tip(object):
         self.tw= None
         if tw:
             tw.destroy()
+
+    
+class project():
+    # handle current project
+    def __init__(self):
+        self.projPath = ""
+        self.datPath = ""
+        self.mapPath = ""
+        self.notePath = ""
+
+    def set_projPath(self, path=""):
+        self.projPath = path
+
+    def get_projPath(self):
+        return self.projPath
+
+    def set_datPath(self, path=""):
+        self.datPath = path
+
+    def get_datPath(self):
+        return self.datPath
+
+    def set_mapPath(self, path=""):
+        self.mapPath = path
+
+    def get_mapPath(self):
+        return self.mapPath
+
+    def set_notePath(self, path=""):
+        self.notePath = path
+
+    def get_notePath(self):
+        return self.notePath
+
+    def save(self):
+        if self.projPath:
+            file = open(self.projPath,"w") 
+            file.write("[paths]\n") 
+            file.write("datPath = {}\n".format(self.datPath)) 
+            file.write("mapPath = {}\n".format(self.mapPath)) 
+            file.write("notePath = {}\n".format(self.notePath)) 
+            file.close() 
+
+    def load(self):
+        if self.projPath:
+            # read and parse config
+            conf = configparser.ConfigParser()
+            conf.read(self.projPath)
+            self.set_datPath(conf["paths"]["datPath"])
+            self.set_mapPath(conf["paths"]["mapPath"])
+            self.set_notePath(conf["paths"]["notePath"])
