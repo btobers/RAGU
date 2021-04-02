@@ -197,11 +197,16 @@ def h5(fpath, df=None, dtype=None, srf=None):
                 print("twtt_surf exported successfully:\t" + fpath + "/drv/pick/twtt_surf")
 
         # update twtt_bed
-        if "bed_twtt" in df.keys() and (tk.messagebox.askyesno("twtt_bed","Export twtt_bed pick layer to data file?")):
+        if "bed_twtt" in df.keys():
             dat = df["bed_twtt"].to_numpy()
             dat[np.isnan(dat)] = -9
             if "twtt_bed" in f["drv"]["pick"].keys():
-                del f["drv"]["pick"]["twtt_bed"]
+                if (f["drv"]["pick"]["twtt_bed"][:] == dat).all():
+                    return
+                elif tk.messagebox.askyesno("twtt_bed","Export twtt_bed pick layer to data file?"):
+                    del f["drv"]["pick"]["twtt_bed"]
+            elif not tk.messagebox.askyesno("twtt_bed","Export twtt_bed pick layer to data file?"):
+                return
             twtt_bed = f["drv"]["pick"].require_dataset("twtt_bed", data=dat, shape=dat.shape, dtype=np.float32)
             # twtt_bed.attrs.create("Unit", np.string_("Seconds"))
             # twtt_bed.attrs.create("Source", np.string_("Manual pick layer"))

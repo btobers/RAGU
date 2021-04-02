@@ -110,8 +110,8 @@ def filter(self, btype="lowpass", lowcut=None, highcut=None, order=5, direction=
     # use amplitude of lp filtered data to reset as pc array
     self.set_proc(out)
     # log
-    self.log("self.rdata.filter(btype={}, lowcut={}, highcut={}, order={}, direction={})".format(btype, lowcut, highcut, order, direction))
-    print("# filter applied: btype={}, lowcut={}, highcut={}, order={}, direction={})".format(btype, lowcut, highcut, order, direction))
+    self.log("self.rdata.filter(btype='{}', lowcut={}, highcut={}, order={}, direction={})".format(btype, lowcut, highcut, order, direction))
+    print("# filter applied: btype='{}', lowcut={}, highcut={}, order={}, direction={})".format(btype, lowcut, highcut, order, direction))
 
     return
 
@@ -135,9 +135,22 @@ def tpowGain(self, power):
 
 def undo(self):
     # undo last processing step
-    self.set_proc(self.proc.get_prev_amp()) 
-    # clear last log entry
-    del self.hist[-1]
+    if len(self.hist) > 2:
+        tmp = self.proc.get_curr_amp()
+        self.set_proc(self.proc.get_prev_amp())
+        self.proc.set_prev_amp(tmp)
+        # clear last log entry
+        self.last = self.hist[-1]
+        del self.hist[-1]
+
+    return
+
+
+def redo(self):
+    tmp = self.proc.get_curr_amp()
+    self.set_proc(self.proc.get_prev_amp())
+    self.proc.set_prev_amp(tmp)
+    self.log(self.last)
 
     return
 

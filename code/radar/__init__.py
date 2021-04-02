@@ -16,7 +16,7 @@ class radar(object):
     keep track of processing steps with the flags attribute.
     """
     # import processing tools
-    from radar.processing import set_tzero, tzero_shift, tpowGain, filter, undo, reset
+    from radar.processing import set_tzero, tzero_shift, tpowGain, filter, undo, redo, reset
 
     def __init__(self, fpath):
         # basic data file attributes
@@ -73,7 +73,7 @@ class radar(object):
 
 
     # set processed radar data method
-    def set_proc(self, dat, dB_it=True):
+    def set_proc(self, dat):
         self.proc.set_curr_amp(dat)
         # dB it
         self.proc.set_curr_dB(self.dBscale(self.proc.curr_amp))
@@ -84,7 +84,7 @@ class radar(object):
 
 
     # set simter simulation data method
-    def set_sim(self, dat, dB_it=True):
+    def set_sim(self, dat):
         # dB it
         self.sim = self.dBscale(dat)
         # generate pyramid arrays

@@ -311,25 +311,33 @@ class mainGUI(tk.Frame):
             elif event.keysym=="h":
                 self.impick.fullExtent()
 
-            # d key to set axes limits to home extent
+            # d key to set axes limits to pan right
             elif event.keysym=="d":
                 self.impick.panRight()
 
-            # a key to set axes limits to home extent
+            # a key to set axes limits to pan left
             elif event.keysym=="a":
                 self.impick.panLeft()
 
-            # w key to set axes limits to home extent
+            # w key to set axes limits to pan up
             elif event.keysym=="w":
                 self.impick.panUp()
 
-            # s key to set axes limits to home extent
+            # s key to set axes limits to pan down
             elif event.keysym=="s":
                 self.impick.panDown()
 
             # Ctrl+z undo last processing
+            elif event.state & 4 and event.keysym == "f":
+                            self.procTools(arg="filter")
+
+            # Ctrl+z undo last processing
             elif event.state & 4 and event.keysym == "z":
                             self.procTools(arg="undo")
+
+            # Ctrl+z undo last processing
+            elif event.state & 4 and event.keysym == "y":
+                            self.procTools(arg="redo")
 
         # waveform view keys
         if self.tab == "Waveform":
@@ -928,6 +936,10 @@ class mainGUI(tk.Frame):
 
             elif arg == "undo":
                 self.rdata.undo()
+                procFlag = True
+
+            elif arg == "redo":
+                self.rdata.redo()
                 procFlag = True
 
             elif arg == "reset":
