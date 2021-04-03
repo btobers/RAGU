@@ -32,6 +32,8 @@ class radar(object):
         self.tnum = None
         #: float, time between samples
         self.dt = None
+        #: float, sampling frequency
+        self.fs = None
         #: float, pulse repition frequency
         self.prf = None
         #: int, number of data channels

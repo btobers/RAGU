@@ -247,7 +247,7 @@ class mainGUI(tk.Frame):
         self.wvpick.set_vars()
 
         # initialize note
-        self.notepad = notepad.notepad(parent=self.parent, init_dir=self.datPath)
+        self.notepad = notepad.notepad(parent=self.parent, init_dir=self.conf["path"]["outPath"])
 
         # set up  info frame
         infoFrame = tk.Frame(self.parent)

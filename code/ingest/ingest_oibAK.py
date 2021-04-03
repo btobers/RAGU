@@ -43,7 +43,8 @@ def read_h5(fpath, navcrs, body):
     # pull necessary raw group data
     rdata.snum = int(f["raw"]["rx0"].attrs["samplesPerTrace"])                  # samples per trace in rgram
     rdata.tnum = int(f["raw"]["rx0"].attrs["numTrace"])                         # number of traces in rgram 
-    rdata.dt = 1/ f["raw"]["rx0"].attrs["samplingFrequency"][0]                 # sampling interval, sec
+    rdata.fs = f["raw"]["rx0"].attrs["samplingFrequency"][0]                    # sampling frequency
+    rdata.dt = 1/rdata.fs                                                       # sampling interval, sec
     rdata.prf = f["raw"]["tx0"].attrs["pulseRepetitionFrequency"][0]            # pulse repition frequency, Hz
     rdata.nchan = 1
 
@@ -61,6 +62,7 @@ def read_h5(fpath, navcrs, body):
     if rdata.info["Signal Type"] == "chirp":
         rdata.info["Badwidth [%]"] = f["raw"]["tx0"].attrs["bandwidth"][0] * 100
         rdata.info["Pulse Length [\u03BCs]"] = f["raw"]["tx0"].attrs["length"][0] * 1e6
+    rdata.info["Sampling Frequency [MHz]"] = rdata.fs * 1e-6
     rdata.info["PRF [kHz]"] = rdata.prf * 1e-3
 
     # parse nav

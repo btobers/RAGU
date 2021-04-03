@@ -13,7 +13,7 @@ import os
 class notepad(tk.Frame):
 
     # default window width and height 
-    __thisWidth = 300
+    __thisWidth = 500
     __thisHeight = 300      
     __file = None
 
@@ -190,13 +190,13 @@ class notepad(tk.Frame):
                   
               
         else:
-            if not tk.messagebox.askyesno("Warning", "Overwrite file?", icon = "warning"):
+            if not tk.messagebox.askyesno("Warning", "Overwrite {}?".format(self.__file), icon = "warning"):
                 # Save as new file 
                 self.__file = tk.filedialog.asksaveasfilename(initialfile='Untitled.csv',
                                                             initialdir=self.__init_dir,
-                                                            defaultextension=".csv", 
+                                                            defaultextension=".csv",
                                                             filetypes=[("Comma-separated value","*.csv"),
-                                                            ("All Files","*.*")]) 
+                                                            ("All Files","*.*")])
 
                 if self.__file == "": 
                     self.__file = None
