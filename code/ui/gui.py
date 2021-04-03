@@ -60,7 +60,7 @@ class mainGUI(tk.Frame):
                             "figtitle": tk.BooleanVar(),
                             "figxaxis": tk.BooleanVar(),
                             "figyaxis": tk.BooleanVar(),
-                            "figclip": tk.DoubleVar(value=1.0)}
+                            "figclip": tk.DoubleVar(value=0.4)}
         self.figsettings["figxaxis"].set(True)        
         self.figsettings["figyaxis"].set(True)        
         self.figsettings["figtitle"].set(True)        
@@ -801,8 +801,6 @@ class mainGUI(tk.Frame):
 
     # init_bm is a method to get the desired basemap location and initialize
     def init_bm(self, path=None):
-        print(path)
-        print(path is None)
         if not path:
             path = ""
             if self.os == "darwin":
