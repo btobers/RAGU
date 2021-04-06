@@ -174,6 +174,7 @@ class mainGUI(tk.Frame):
         rmMenu.add_command(label="Horizon", command=lambda:self.clear_pick(hFlag=True))
         rmMenu.add_command(label="Segment", command=lambda:self.clear_pick(segFlag=True))
         rmMenu.add_command(label="All", command=lambda:self.clear_pick(allFlag=True))
+        rmMenu.add_command(label="From File", command=self.delete_datafilePicks)
         interpretMenu.add_cascade(label="Remove", menu=rmMenu)
         interpretMenu.add_command(label="Import", command=self.import_pick)
         srfMenu = tk.Menu(fileMenu,tearoff=0)
@@ -891,12 +892,10 @@ class mainGUI(tk.Frame):
                     self.impick.blit()
 
 
-    # # delete_datafilePicks is a method to clear subsurface picks saved to the data file
-    # def delete_datafilePicks(self):
-    #         if self.f_loadName and tk.messagebox.askokcancel("warning", "delte any existing data file subsurface picks?", icon = "warning") == True:
-    #             utils.delete_savedPicks(self.f_loadName)
-    #             self.impick.remove_existing_subsurf()
-    #             self.impick.update_bg()
+    # delete_datafilePicks is a method to clear subsurface picks saved to the data file
+    def delete_datafilePicks(self):
+            if self.f_loadName and tk.messagebox.askokcancel("Warning", "Delete any existing data file bed picks?", icon = "warning") == True:
+                utils.delete_savedPicks(self.f_loadName)
 
 
     # processing tools

@@ -39,9 +39,8 @@ def remove_outliers(array):
 def delete_savedPicks(fpath):
     if fpath.endswith("h5"):
         f =  h5py.File(fpath, "a")
-        num_file_pick_lyr = len(fnmatch.filter(f["drv"]["pick"].keys(), "twtt_subsurf*"))
-        for _i in range(num_file_pick_lyr):
-            del f["drv/pick"]["twtt_subsurf" + str(_i)]
+        if "twtt_bed" in f["drv"]["pick"].keys():
+            del f["drv/pick"]["twtt_bed" ]
         f.close()
 
 
