@@ -196,6 +196,7 @@ class mainGUI(tk.Frame):
 
         # filtering menu items
         procMenu.add_command(label="Filter", command=lambda:self.procTools("filter"))
+        procMenu.add_command(label="Hilbert Xform", command=lambda:self.procTools("hilbert"))
 
         # gain menu items
         # gainMenu.add_command(label="AGC", command=lambda:self.procTools("agc"))
@@ -924,6 +925,10 @@ class mainGUI(tk.Frame):
                 # nraces = tk.simpledialog.askfloat("input","moving average window size (# traces/" +  str(int(self.rdata.tnum)) + ")?")
                 # proc = processing.remMeanTrace(self.rdata.dat, ntraces=ntraces)
                 # procFlag = True
+
+            elif arg == "hilbert":
+                self.rdata.hilbertxform()
+                procFlag = True
 
             elif arg == "filter":
                 if self.popup.flag == 1:

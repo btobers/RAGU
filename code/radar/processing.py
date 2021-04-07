@@ -10,6 +10,7 @@ RAGU radar data processing class and tools
 from tools import utils
 import numpy as np
 import numpy.matlib as matlib
+import matplotlib.pyplot as plt
 import scipy.interpolate as interp
 import scipy.signal as signal
 
@@ -94,6 +95,19 @@ def butter(btype="lowpass", lowcut=None, highcut=None, fs=None, order=5):
     b, a = signal.butter(order, cutoff, btype=btype)
 
     return b, a
+
+
+def hilbertxform(self):
+    amp = self.proc.get_curr_amp()
+    self.proc.set_prev_amp(amp)
+    self.proc.set_prev_dB(self.proc.get_curr_dB())
+    amp_env = np.abs(signal.hilbert(self.proc.get_curr_amp()))
+    self.set_proc(amp_env)
+    # log
+    self.log("self.rdata.hilbertxform()")
+    print("# hilbert transform applied applied")
+
+    return 
 
 
 def filter(self, btype="lowpass", lowcut=None, highcut=None, order=5, direction=0):
