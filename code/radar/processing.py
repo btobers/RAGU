@@ -99,13 +99,17 @@ def butter(btype="lowpass", lowcut=None, highcut=None, fs=None, order=5):
 
 def hilbertxform(self):
     amp = self.proc.get_curr_amp()
+    plt.plot(amp[:,0],c='r')
     self.proc.set_prev_amp(amp)
     self.proc.set_prev_dB(self.proc.get_curr_dB())
-    amp_env = np.abs(signal.hilbert(self.proc.get_curr_amp()))
-    self.set_proc(amp_env)
+    analytic_signal = signal.hilbert(amp)
+    amplitude_envelope = np.abs(analytic_signal)
+    self.set_proc(amplitude_envelope)
     # log
     self.log("self.rdata.hilbertxform()")
     print("# hilbert transform applied applied")
+    plt.plot(amplitude_envelope[:,0],c='b')
+    plt.show()
 
     return 
 
