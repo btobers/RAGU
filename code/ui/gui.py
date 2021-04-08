@@ -927,8 +927,9 @@ class mainGUI(tk.Frame):
                 # procFlag = True
 
             elif arg == "hilbert":
-                self.rdata.hilbertxform()
-                procFlag = True
+                print("hilbert transform currently in development")
+                # self.rdata.hilbertxform()
+                # procFlag = True
 
             elif arg == "filter":
                 if self.popup.flag == 1:
