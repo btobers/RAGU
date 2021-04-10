@@ -7,7 +7,7 @@
 ingest_lrs is a module developed to ingest JAXA KAGUYA (SELENE) Lunar Radar Sounder (LRS) data.
 """
 ### imports ###
-from radar import radar
+from radar import garlic
 from nav import navparse
 from tools import utils
 import numpy as np
@@ -25,7 +25,7 @@ def read(fpath, simpath, navcrs, body):
     lbl = fd.read().split('\n')
     fd.close()
 
-    rdata = radar(fpath.replace(".lbl", ".img"))
+    rdata = garlic(fpath.replace(".lbl", ".img"))
     # get number of traces (file records in lbl file) and samples per trace
     rdata.tnum = int(lbl[19].split('=')[1])
     rdata.snum = 1000

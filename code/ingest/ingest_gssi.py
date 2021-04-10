@@ -8,7 +8,7 @@ this module contains functions parsed from https://github.com/iannesbitt/readgss
 much of the header data which is not necessary for RAGU use has been removed
 """
 ### imports ###
-from radar import radar
+from radar import garlic
 from nav import navparse
 import struct
 import os,sys
@@ -20,7 +20,7 @@ def read(fpath, navcrs, body):
     fn = fpath.split("/")[-1]
     print("----------------------------------------")
     print("Loading: " + fn)
-    rdata = radar(fpath)
+    rdata = garlic(fpath)
     rdata.fn = fn[:-4]
     rdata.dtype = "gssi"
 

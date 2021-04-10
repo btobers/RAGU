@@ -121,11 +121,11 @@ class basemap(tk.Frame):
                 with rio.open(map_path, mode="r") as dataset:
                     # downsample if raster is too large
                     fac = 1
-                    if dataset.height >= 3e3 or dataset.width >= 3e3:
-                        fac = 4
-                    elif dataset.height >= 2e3 or dataset.width >= 2e3:
-                        fac = 3
-                    elif dataset.height >= 1e3 or dataset.width >= 1e3:
+                    # if dataset.height >= 3e3 or dataset.width >= 3e3:
+                    #     fac = 4
+                    # elif dataset.height >= 2e3 or dataset.width >= 2e3:
+                    #     fac = 3
+                    if dataset.height >= 1e3 or dataset.width >= 1e3:
                         fac = 2
                     data = dataset.read(
                         out_shape=(dataset.count, int(dataset.height // fac), int(dataset.width // fac)),

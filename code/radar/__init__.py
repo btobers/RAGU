@@ -10,9 +10,10 @@ from radar.processing import proc
 import numpy as np
 import scipy.signal as signal
 
-class radar(object):
+class garlic(object):
     """
-    the radar class holds the relevant .information for a radar profile.
+    garlic is the main dataset object for ragu - the supreme ingredient -
+    containing all of the relevant information for each radar profile.
     keep track of processing steps with the flags attribute.
     """
     # import processing tools
