@@ -82,10 +82,10 @@ def tzero_shift(self):
 def butter(btype="lowpass", lowcut=None, highcut=None, fs=None, order=5):
     nyq = 0.5 * fs
     cutoff = []
-    if btype=="lowpass" and lowcut > 0:
-        cutoff.append(lowcut / nyq)
-    elif btype=="highpass" and highcut > 0:
+    if btype=="lowpass" and highcut > 0:
         cutoff.append(highcut / nyq)
+    elif btype=="highpass" and lowcut > 0:
+        cutoff.append(lowcut / nyq)
     elif btype=="bandpass" and lowcut > 0 and highcut > 0:
         cutoff.append(lowcut / nyq)
         cutoff.append(highcut / nyq)
