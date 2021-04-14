@@ -83,8 +83,6 @@ class ingest:
                 for horizon in keys:
                     horizon = horizon.split("_")[0]
                     sample = dat[horizon + "_sample"].to_numpy()
-                    if horizon == "surf":
-                        horizon = "srf"
                     if horizon in self.rdata.pick.horizons.keys():
                         if utils.nan_array_equal(self.rdata.pick.horizons[horizon], sample):
                             continue
@@ -92,21 +90,5 @@ class ingest:
                             horizon = horizon + "_imported"
                     self.rdata.pick.horizons[horizon] = sample
                     horizons.append(horizon)
-
-            else:
-                keys = fnmatch.filter(dat.keys(), "*twtt*")
-                if len(keys) >= 1:
-                    for horizon in keys:
-                        horizon = horizon.split("_")[1]
-                        sample = utils.twtt2sample(dat["twtt_" + horizon].to_numpy(), self.rdata.dt)
-                        if horizon == "surf":
-                            horizon = "srf"
-                        if horizon in self.rdata.pick.horizons.keys():
-                            if utils.nan_array_equal(self.rdata.pick.horizons[horizon], sample):
-                                continue
-                            else:
-                                horizon = horizon + "_imported"
-                        self.rdata.pick.horizons[horizon] = sample
-                        horizons.append(horizon)
 
         return  horizons

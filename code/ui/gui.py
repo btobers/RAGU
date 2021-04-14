@@ -16,7 +16,7 @@ mainGUI class is a tkinter frame which runs the RAGU master GUI
 from ui import impick, wvpick, basemap, notepad
 from tools import utils, export
 from ingest import ingest
-import os, sys, scipy, glob, configparser
+import os, sys, scipy, glob, configparser, datetime
 import numpy as np
 import pandas as pd
 import matplotlib as mpl
@@ -131,8 +131,8 @@ class mainGUI(tk.Frame):
         openMenu.add_command(label="Basemap  [Ctrl+M]", command=self.init_bm)
         openMenu.add_command(label="Notepad", command=self.init_notepad)
         fileMenu.add_cascade(label="Open", menu=openMenu)
-
-        fileMenu.add_command(label="Next      [→]", command=self.next_dfile)
+        fileMenu.add_command(label="Last      [◀]", command=lambda:self.switch_dfile(direction="Left"))
+        fileMenu.add_command(label="Next      [▶]", command=lambda:self.switch_dfile(direction="Right"))
 
         # save submenu
         exportMenu = tk.Menu(fileMenu,tearoff=0)
@@ -266,95 +266,97 @@ class mainGUI(tk.Frame):
 
     # key is a method to handle UI keypress events
     def key(self,event):
+        state = event.state
+        key = event.keysym
         # event.state & 4 True for Ctrl+Key
         # event.state & 1 True for Shift+Key
         # general keps for either tab
         # Ctrl+O open file
-        if event.state & 4 and event.keysym == "o":
+        if state & 4 and key == "o":
             self.choose_dfile()
 
         # Ctrl+S save picks
-        elif event.state & 4 and event.keysym == "s":
+        elif state & 4 and key == "s":
             self.export_pick()
 
         # Ctrl+M open map
-        elif event.state & 4 and event.keysym == "m":
+        elif state & 4 and key == "m":
             self.init_bm()
 
         # Ctrl+Q close RAGU
-        elif event.state & 4 and event.keysym == "q":
+        elif state & 4 and key == "q":
             self.close_window()
 
         # profile view keys
         if self.tab == "Profile":
             # Space key to toggle impick between radar image and sim
-            if event.keysym=="space":
+            if key =="space":
                 self.impick.set_im(from_gui=True)
 
-            elif event.state & 4 and event.keysym == "n":
+            elif state & 4 and key == "n":
                 self.start_pick()
 
             # Escape key to stop picking current layer
-            elif event.keysym == "Escape":
+            elif key == "Escape":
                 self.end_pick()
 
             # BackSpace to clear last pick 
-            elif event.keysym =="BackSpace":
+            elif key =="BackSpace":
                 self.impick.clear_last()
 
             # c key to clear all picks in impick
-            elif event.keysym =="c":
+            elif key =="c":
                 # clear picks
                 self.clear_pick(allFlag=True)
 
             # right key next file
-            elif event.keysym =="Right":
-                self.next_dfile()
+            elif key =="Left" or key == "Right":
+                self.switch_dfile(direction=key)
 
             # h key to set axes limits to home extent
-            elif event.keysym=="h":
+            elif key =="h":
                 self.impick.fullExtent()
 
             # d key to set axes limits to pan right
-            elif event.keysym=="d":
+            elif key =="d":
                 self.impick.panRight()
 
             # a key to set axes limits to pan left
-            elif event.keysym=="a":
+            elif key =="a":
                 self.impick.panLeft()
 
             # w key to set axes limits to pan up
-            elif event.keysym=="w":
+            elif key =="w":
                 self.impick.panUp()
 
             # s key to set axes limits to pan down
-            elif event.keysym=="s":
+            elif  key=="s":
                 self.impick.panDown()
 
             # Ctrl+z undo last processing
-            elif event.state & 4 and event.keysym == "f":
+            elif state & 4 and key == "f":
                             self.procTools(arg="filter")
 
             # Ctrl+z undo last processing
-            elif event.state & 4 and event.keysym == "z":
+            elif state & 4 and key == "z":
                             self.procTools(arg="undo")
 
             # Ctrl+z undo last processing
-            elif event.state & 4 and event.keysym == "y":
+            elif state & 4 and key == "y":
                             self.procTools(arg="redo")
 
         # waveform view keys
         if self.tab == "Waveform":
             # h key to set axes limits to home extent
-            if event.keysym=="h":
+            if key =="h":
                 self.wvpick.fullExtent()
     
             # a key to step back in trace count
-            elif event.keysym=="Right":
+            elif key =="Right":
                 self.wvpick.stepForward()
 
             # d key to step forward in trace count
-            elif event.keysym=="Left":
+            elif key =="Left":
                 self.wvpick.stepBackward()
 
 
@@ -415,9 +417,9 @@ class mainGUI(tk.Frame):
 
         # select input file
         if self.os == "darwin":
-            tmp = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select project file")
+            tmp = tk.filedialog.askopenfilename(initialdir = self.datPath + "/..",title = "select project file")
         else:
-            tmp = tk.filedialog.askopenfilename(initialdir = self.datPath,title = "select project file",filetypes = [("ragu project", ".ragu"),
+            tmp = tk.filedialog.askopenfilename(initialdir = self.datPath + "/..",title = "select project file",filetypes = [("ragu project", ".ragu"),
                                                                                                                             ("all files",".*")])
         
         if tmp:
@@ -488,7 +490,7 @@ class mainGUI(tk.Frame):
                     self.wvpick.clear()
                     self.wvpick.set_data(self.rdata)
                     self.rinfolbl.config(text = '\t\t'.join('{}: {}'.format(k, d) for k, d in self.rdata.info.items()))
-        
+
                 # pass basemap to impick for plotting pick location
                 if self.map_loadName and self.basemap.get_state() == 1:
                     self.basemap.set_track(self.rdata.fn)
@@ -505,8 +507,8 @@ class mainGUI(tk.Frame):
                 self.choose_dfile() 
 
 
-    # next_dfile is a method to get the filename of the next data file in the directory to open
-    def next_dfile(self):
+    # switch_dfile is a method to get the filename of the last/next data file in the directory to open
+    def switch_dfile(self, direction="Right"):
         if self.tab == "Profile" and self.f_loadName:
             # prompt save check
             if (self.save_check() == False) and (tk.messagebox.askyesno("Warning", "Discard unsaved picks?", icon = "warning") == False):
@@ -522,16 +524,28 @@ class mainGUI(tk.Frame):
             file_list = [file_path + "/" + f for f in sorted(os.listdir(file_path)) if f.endswith(self.igst.ftype) or f.endswith(self.igst.ftype.upper())]
             file_index = file_list.index(self.f_loadName)
 
-            # add one to index to load next file
-            file_index += 1
+            if direction=="Right":
+                # add one to index to load next file
+                file_index += 1
 
-            # check if more files exist in directory following current file
-            if file_index <= (len(file_list) - 1):
-                self.open_dfile(file_list[file_index])
+                # check if more files exist in directory following current file
+                if file_index <= (len(file_list) - 1):
+                    self.open_dfile(file_list[file_index])
 
-            else:
-                print("Note: " + self.f_loadName.split("/")[-1] + " is the last file in " + file_path + "*." + self.f_loadName.split(".")[-1])
+                else:
+                    print("Note: " + self.f_loadName.split("/")[-1] + " is the last file in " + file_path + "/*." + self.f_loadName.split(".")[-1])
 
+            elif direction=="Left":
+                # add one to index to load next file
+                file_index -= 1
+
+                # check if more files exist in directory following current file
+                if file_index >= 0:
+                    self.open_dfile(file_list[file_index])
+
+                else:
+                    print("Note: " + self.f_loadName.split("/")[-1] + " is the first file in " + file_path + "/*." + self.f_loadName.split(".")[-1])
+    
 
     # generate new interpretation horizon
     def new_horizon(self):
