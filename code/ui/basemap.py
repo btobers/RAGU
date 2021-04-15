@@ -197,7 +197,12 @@ class basemap(tk.Frame):
             self.track_start_ln.set_data(self.start_x, self.start_y)
             self.track_end_ln.set_data(self.end_x, self.end_y)
 
-            self.map_fig_ax.axis([(np.amin(self.x)- 15),(np.amax(self.x)+ 15),(np.amin(self.y)- 15),(np.amax(self.y)+ 15)])
+            x_range = [np.amin(self.x)- 5,np.amax(self.x)+ 5]
+            y_range = [np.amin(self.y)- 5,np.amax(self.y)+ 5]
+            r = max(x_range[1]-x_range[0],y_range[1]-y_range[0])
+            x = np.median(x_range)
+            y = np.median(y_range)
+            self.map_fig_ax.axis([x-r,x+r,y-r,y+r])
         # otherwise just set track points from last line to appropriate lines
         else:
             # set track ending line data
@@ -207,7 +212,13 @@ class basemap(tk.Frame):
             # set track line data
             idx = np.where(self.track_name == self.profile_track)[0]
             self.track_ln.set_data(self.x[idx], self.y[idx])
-            self.map_fig_ax.axis([(np.amin(self.x[idx])- 15),(np.amax(self.x[idx])+ 15),(np.amin(self.y[idx])- 15),(np.amax(self.y[idx])+ 15)])
+    
+            x_range = [np.amin(self.x[idx])- 5,np.amax(self.x[idx])+ 5]
+            y_range = [np.amin(self.y[idx])- 5,np.amax(self.y[idx])+ 5]
+            r = max(x_range[1]-x_range[0],y_range[1]-y_range[0])
+            x = np.median(x_range)
+            y = np.median(y_range)
+            self.map_fig_ax.axis([x-r,x+r,y-r,y+r])
 
         if not self.legend:
             self.legend = self.map_fig_ax.legend()
