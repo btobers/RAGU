@@ -586,48 +586,42 @@ class mainGUI(tk.Frame):
     # srf_define
     def srf_define(self, srf=None):
         horizons = list(self.rdata.pick.horizons)
-        if "srf" in horizons:
-            srf = "srf"
-        elif "surface" in horizons:
-            srf = "surface"
-        else:
-            if len(horizons) > 0:
-                if self.popup.flag == 1:
-                    return
-                horizon_colors = self.impick.get_horizon_colors()
-                # create popup window to get new horizon name and interpreatation color
-                hname =tk.StringVar()
-                hname.set(horizons[-1])
-                popup = self.popup.new(title="Surface Horizon")
-                tk.Label(popup, text="Select surface horizon from which to reference subsurface interpretations:").pack(fill="both", expand=True)
-                dropdown = tk.OptionMenu(popup, hname, *horizons)
-                dropdown["menu"].delete(0, "end")
-                dropdown.config(width=20)
-                dropdown.pack(fill="none", expand=True)
-                self.set_menu_color(menu=dropdown, horizon=hname, colors=horizon_colors)
-                # trace change in self.color to self.set_menu_color
-                trace = hname.trace("w", lambda *args, menu=dropdown, horizon=hname, colors=horizon_colors : self.set_menu_color(menu, horizon, colors))
-                for key, val in horizon_colors.items():
-                    dropdown["menu"].add_command(label=key, foreground=val, activeforeground=val, command=tk._setit(hname, key))
-                button = tk.Button(popup, text="OK", command=lambda:self.popup.close(flag=0), width=20).pack(side="left", fill="none", expand=True)
-                button = tk.Button(popup, text="Cancel", command=lambda:[hname.set(""), self.popup.close(flag=-1)], width=20).pack(side="left", fill="none", expand=True)
-                # wait for window to be closed
-                self.parent.wait_window(popup)
-                # remove the trace
-                hname.trace_vdelete("w", trace)
-                srf = hname.get()
-                if (not srf) or (self.popup.flag == -1):
-                    return
+        for h in ["srf","surf","surface"]:
+            if h in horizons:
+                srf = h
+                break
+
+        if srf is None and len(horizons) > 0:
+            if self.popup.flag == 1:
+                return
+            horizon_colors = self.impick.get_horizon_colors()
+            # create popup window to get new horizon name and interpreatation color
+            hname =tk.StringVar()
+            hname.set(horizons[-1])
+            popup = self.popup.new(title="Surface Horizon")
+            tk.Label(popup, text="Select surface horizon from which to reference subsurface interpretations:").pack(fill="both", expand=True)
+            dropdown = tk.OptionMenu(popup, hname, *horizons)
+            dropdown["menu"].delete(0, "end")
+            dropdown.config(width=20)
+            dropdown.pack(fill="none", expand=True)
+            self.set_menu_color(menu=dropdown, horizon=hname, colors=horizon_colors)
+            # trace change in self.color to self.set_menu_color
+            trace = hname.trace("w", lambda *args, menu=dropdown, horizon=hname, colors=horizon_colors : self.set_menu_color(menu, horizon, colors))
+            for key, val in horizon_colors.items():
+                dropdown["menu"].add_command(label=key, foreground=val, activeforeground=val, command=tk._setit(hname, key))
+            button = tk.Button(popup, text="OK", command=lambda:self.popup.close(flag=0), width=20).pack(side="left", fill="none", expand=True)
+            button = tk.Button(popup, text="Cancel", command=lambda:[hname.set(""), self.popup.close(flag=-1)], width=20).pack(side="left", fill="none", expand=True)
+            # wait for window to be closed
+            self.parent.wait_window(popup)
+            # remove the trace
+            hname.trace_vdelete("w", trace)
+            srf = hname.get()
+            if (not srf) or (self.popup.flag == -1):
+                return
         self.rdata.pick.set_srf(srf)
-        # if srf horizon does not exist, initialize as zeros
-        if srf not in self.rdata.pick.horizons:
-            self.rdata.pick.horizons[srf] = np.zeros((self.rdata.tnum))
-        self.rdata.set_srfElev(utils.srfpick2elev(
-                                                self.rdata.pick.horizons[srf],
-                                                self.rdata.navdf["twtt_wind"].to_numpy(),
-                                                self.rdata.navdf["elev"].to_numpy(), 
-                                                self.rdata.dt,
-                                                self.rdata.tnum))
+        # # if srf horizon does not exist, initialize as zeros
+        # if srf not in self.rdata.pick.horizons:
+        #     self.rdata.pick.horizons[srf] = np.zeros((self.rdata.tnum))
 
 
     # srf_autopick
@@ -675,9 +669,16 @@ class mainGUI(tk.Frame):
                     tmp_fn_out = self.rdata.fn + "_pk_" + self.conf["param"]["uid"]
                     if self.rdata.pick.get_srf() is None:
                         self.srf_define()
+                    # update srf_elev
+                    if self.rdata.pick.get_srf():
+                        self.rdata.set_srfElev(utils.srfpick2elev(
+                                                            self.rdata.pick.horizons[srf],
+                                                            self.rdata.navdf["twtt_wind"].to_numpy(),
+                                                            self.rdata.navdf["elev"].to_numpy(), 
+                                                            self.rdata.dt,
+                                                            self.rdata.tnum))
                         
-
-                # otherwise have user select horizon to export
+                # otherwise have user select single horizon to export
                 else:
                     if self.popup.flag == 1:
                         return
