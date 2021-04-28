@@ -8,7 +8,7 @@ ingest_pulseekko is a module developed to ingest Sensors & Software pulseEKKO GP
 adapted from ImpDAR/lib/load/load_pulse_ekko.py
 """
 ### imports ###
-from radar import radar
+from radar import garlic
 from nav import navparse
 import os,sys,struct,datetime,re
 import numpy as np
@@ -126,11 +126,11 @@ def read_dt1(fpath, navcrs, body):
     navcrs          nav data coordinate reference system
     body            planetary body for coordinate transformation
     OUTPUT:
-    rdata           radar class object
+    rdata           garlic class object
 
     Load data from a pulse_ekko file."""
 
-    rdata = radar(fpath)
+    rdata = garlic(fpath)
     rdata.fn = fpath.split("/")[-1][:-4]
     rdata.dtype = "pekko"
     print("----------------------------------------")
@@ -254,7 +254,7 @@ def read_hd(fpath):
 # # method to read pulseekko data
 # def read(fpath, navcrs, body):
 #     """Load data from a pulse_ekko file."""
-#     rdata = radar(fpath)
+#     rdata = garlic(fpath)
 #     rdata.fn = fpath.split("/")[-1][:-4]
 #     rdata.dtype = "pekko"
 #     print("----------------------------------------")

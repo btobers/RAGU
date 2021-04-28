@@ -8,7 +8,7 @@ ingest_marsis is a module developed to ingest JPL MARSIS radar sounding data.
 data format is binary 32-bit floating point pulse compressed data
 """
 ### imports ###
-from radar import radar
+from radar import garlic
 from nav import navparse
 from tools import utils
 from PIL import Image
@@ -21,7 +21,7 @@ def read(fpath, simpath, navcrs, body):
     orbit = fpath.split("/")[-2]
     fn = fpath.split("/")[-1]
     root = fpath.rstrip(fn)
-    rdata = radar(fpath)
+    rdata = garlic(fpath)
     rdata.fn = orbit + "_" + fn.replace(".","_")[:-4]
     rdata.dtype = "marsis"
     print("----------------------------------------")

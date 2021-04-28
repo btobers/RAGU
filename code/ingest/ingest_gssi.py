@@ -8,7 +8,7 @@ this module contains functions parsed from https://github.com/iannesbitt/readgss
 much of the header data which is not necessary for RAGU use has been removed
 """
 ### imports ###
-from radar import radar
+from radar import garlic
 from nav import navparse
 import struct
 import os,sys
@@ -20,7 +20,7 @@ def read(fpath, navcrs, body):
     fn = fpath.split("/")[-1]
     print("----------------------------------------")
     print("Loading: " + fn)
-    rdata = radar(fpath)
+    rdata = garlic(fpath)
     rdata.fn = fn[:-4]
     rdata.dtype = "gssi"
 
@@ -32,12 +32,14 @@ def read(fpath, navcrs, body):
         data_offset = struct.unpack("<h", f.read(2))[0]     # offset to data array [bits]
         rdata.snum = struct.unpack('<h', f.read(2))[0]      # number of samples per trace
         bits = struct.unpack('<h', f.read(2))[0]            # number of bits - datatype
+        f.seek(10)
+        rdata.prf = struct.unpack('<f', f.read(4))[0]       # scans per second (prf)
         f.seek(26)
         range_ns = struct.unpack('<f', f.read(4))[0]        # data range [ns] - record time per trace
         f.seek(52)
         rdata.nchan = struct.unpack('<h', f.read(2))[0]     # number of data channels
         rdata.dt = range_ns / rdata.snum * 1.0e-9           # sampling interval
-        rdata.prf = struct.unpack('<f', lines[10:14])[0]    # scans per second (prf)
+        rdata.fs = 1/rdata.dt                               # sampling freq
 
         if bits == 8:
             dtype = np.uint8    # 8-bit unsigned
@@ -73,7 +75,9 @@ def read(fpath, navcrs, body):
     rdata.set_sim(np.ones(rdata.dat.shape))                 # place holder for clutter data
 
     # assign signal info
-    rdata.info["signal type"] = "impulse"
+    rdata.info["Signal Type"] = "Impulse"
+    rdata.info["Sampling Frequency [MHz]"] = rdata.fs * 1e-6
+    rdata.info["PRF [kHz]"] = rdata.prf * 1e-3
 
     # read in gps data if exists
     infile_gps = fpath.replace(".DZT",".DZG")

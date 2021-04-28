@@ -7,7 +7,7 @@
 ingest_cresis_rds is a module developed to ingest CReSIS radar depth sounder (RDS) data. 
 """
 ### imports ###
-from radar import radar
+from radar import garlic
 from nav import navparse
 from tools import utils
 import h5py, fnmatch
@@ -16,7 +16,7 @@ import sys
 import matplotlib.pyplot as plt
 # method to ingest CReSIS RDS data
 def read_mat(fpath, navcrs, body):
-    rdata = radar(fpath)
+    rdata = garlic(fpath)
     rdata.fn = fpath.split("/")[-1][:-4]
     rdata.dtype = "cresis_rds"
     f = h5py.File(rdata.fpath, "r")                      

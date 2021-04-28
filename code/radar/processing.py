@@ -10,6 +10,7 @@ RAGU radar data processing class and tools
 from tools import utils
 import numpy as np
 import numpy.matlib as matlib
+import matplotlib.pyplot as plt
 import scipy.interpolate as interp
 import scipy.signal as signal
 
@@ -81,10 +82,10 @@ def tzero_shift(self):
 def butter(btype="lowpass", lowcut=None, highcut=None, fs=None, order=5):
     nyq = 0.5 * fs
     cutoff = []
-    if btype=="lowpass" and lowcut > 0:
-        cutoff.append(lowcut / nyq)
-    elif btype=="highpass" and highcut > 0:
+    if btype=="lowpass" and highcut > 0:
         cutoff.append(highcut / nyq)
+    elif btype=="highpass" and lowcut > 0:
+        cutoff.append(lowcut / nyq)
     elif btype=="bandpass" and lowcut > 0 and highcut > 0:
         cutoff.append(lowcut / nyq)
         cutoff.append(highcut / nyq)
@@ -94,6 +95,20 @@ def butter(btype="lowpass", lowcut=None, highcut=None, fs=None, order=5):
     b, a = signal.butter(order, cutoff, btype=btype)
 
     return b, a
+
+
+def hilbertxform(self):
+    amp = self.proc.get_curr_amp()
+    self.proc.set_prev_amp(amp)
+    self.proc.set_prev_dB(self.proc.get_curr_dB())
+    analytic_signal = signal.hilbert(amp, axis=0)
+    amplitude_envelope = np.abs(analytic_signal)
+    self.set_proc(amplitude_envelope)
+    # log
+    self.log("self.rdata.hilbertxform()")
+    print("# hilbert transform applied applied")
+
+    return 
 
 
 def filter(self, btype="lowpass", lowcut=None, highcut=None, order=5, direction=0):

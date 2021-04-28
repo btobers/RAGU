@@ -8,7 +8,7 @@ ingest_sharad is a module developed to ingest NASA MRO-SHARAD FPB radar sounding
 data format is binary 32-bit floating point pulse compressed amplitude data acquired from the PDS
 """
 ### imports ###
-from radar import radar
+from radar import garlic
 from nav import navparse
 from tools import utils
 import numpy as np
@@ -20,7 +20,7 @@ def read(fpath, simpath, navcrs, body):
     root = fpath.rstrip(fn)
     print("----------------------------------------")
     print("Loading: " + fn)
-    rdata = radar(fpath)
+    rdata = garlic(fpath)
     rdata.fn = fn.rstrip("_rgram.img")
     rdata.dtype = "sharad"
     # convert binary .img PDS RGRAM to numpy array
