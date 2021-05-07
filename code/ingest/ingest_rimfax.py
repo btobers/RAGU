@@ -32,7 +32,7 @@ def read(fpath, navcrs, body):
 
     rdata.snum =  np.max(f["n_samples"])                                                # samples per trace in rgram
     rdata.tnum = len(f)                                                                 # number of traces in rgram 
-    rdata.dt = f.loc[0,"sample_time_increment"]                                        # sampling interval, sec
+    rdata.dt = f.loc[0,"sample_time_increment"]                                         # sampling interval, sec
     # rdata.prf = f["param_records"]["radar"]["prf"][0][0]                            # pulse repitition frequency
     rdata.nchan = 1
 
