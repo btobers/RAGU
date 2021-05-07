@@ -411,9 +411,9 @@ class mainGUI(tk.Frame):
         if (self.save_check() == False) and (tk.messagebox.askyesno("Warning", "Discard unsaved picks?", icon = "warning") == False):
             return
 
-        # if h5 file already open, save pick layer to data file
-        if (self.rdata) and (self.rdata.out is None) and (self.rdata.fpath.endswith(".h5")) and (self.rdata.dtype=="oibak"):
-            export.h5(self.rdata.fpath, pd.DataFrame({"bed_twtt":np.repeat(np.nan, self.rdata.tnum)}), self.rdata.dtype)
+        # # if h5 file already open, save pick layer to data file
+        # if (self.rdata) and (self.rdata.out is None) and (self.rdata.fpath.endswith(".h5")) and (self.rdata.dtype=="oibak"):
+        #     export.h5(self.rdata.fpath, pd.DataFrame({"bed_twtt":np.repeat(np.nan, self.rdata.tnum)}), self.rdata.dtype)
 
         # select input file
         if self.os == "darwin":
@@ -442,9 +442,9 @@ class mainGUI(tk.Frame):
         if (self.save_check() == False) and (tk.messagebox.askyesno("Warning", "Discard unsaved picks?", icon = "warning") == False):
             return
 
-        # if h5 file already open, save pick layer to data file
-        if (self.rdata) and (self.rdata.out is None) and (self.rdata.fpath.endswith(".h5")) and (self.rdata.dtype=="oibak"):
-            export.h5(self.rdata.fpath, pd.DataFrame({"bed_twtt":np.repeat(np.nan, self.rdata.tnum)}), self.rdata.dtype)
+        # # if h5 file already open, save pick layer to data file
+        # if (self.rdata) and (self.rdata.out is None) and (self.rdata.fpath.endswith(".h5")) and (self.rdata.dtype=="oibak"):
+        #     export.h5(self.rdata.fpath, pd.DataFrame({"bed_twtt":np.repeat(np.nan, self.rdata.tnum)}), self.rdata.dtype)
 
         # select input file
         if self.os == "darwin":
@@ -514,9 +514,9 @@ class mainGUI(tk.Frame):
             if (self.save_check() == False) and (tk.messagebox.askyesno("Warning", "Discard unsaved picks?", icon = "warning") == False):
                 return
 
-            # if h5 file already open, save pick layer to data file
-            if (self.rdata) and (self.rdata.out is None) and (self.rdata.fpath.endswith(".h5")) and (self.rdata.dtype=="oibak"):
-                export.h5(self.rdata.fpath, pd.DataFrame({"bed_twtt":np.repeat(np.nan, self.rdata.tnum)}), self.rdata.dtype)
+            # # if h5 file already open, save pick layer to data file
+            # if (self.rdata) and (self.rdata.out is None) and (self.rdata.fpath.endswith(".h5")) and (self.rdata.dtype=="oibak"):
+            #     export.h5(self.rdata.fpath, pd.DataFrame({"bed_twtt":np.repeat(np.nan, self.rdata.tnum)}), self.rdata.dtype)
             
             file_path = os.path.dirname(self.f_loadName)
 
@@ -687,7 +687,7 @@ class mainGUI(tk.Frame):
                     # update srf_elev
                     if self.rdata.pick.get_srf():
                         self.rdata.set_srfElev(utils.srfpick2elev(
-                                                            self.rdata.pick.horizons[srf],
+                                                            self.rdata.pick.horizons[self.rdata.pick.get_srf()],
                                                             self.rdata.navdf["twtt_wind"].to_numpy(),
                                                             self.rdata.navdf["elev"].to_numpy(), 
                                                             self.rdata.dt,
@@ -757,8 +757,8 @@ class mainGUI(tk.Frame):
                     export.gpkg(fn + ".gpkg", self.rdata.out, self.conf["nav"]["crs"])
                 if (self.conf["output"].getboolean("fig")) or (ext == ".png"):
                     self.impick.export_fig(fn + ".png")
-                if (self.rdata.fpath.endswith(".h5")):
-                    export.h5(self.rdata.fpath, self.rdata.out, self.rdata.dtype, self.rdata.pick.get_srf())
+                # if (self.rdata.fpath.endswith(".h5")):
+                #     export.h5(self.rdata.fpath, self.rdata.out, self.rdata.dtype, self.rdata.pick.get_srf())
                 self.export_proj()
 
 

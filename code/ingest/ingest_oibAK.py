@@ -59,7 +59,7 @@ def read_h5(fpath, navcrs, body):
     # assign signal info
     rdata.info["Signal Type"] = f["raw"]["tx0"].attrs["signal"].decode().capitalize() 
     rdata.info["CF [MHz]"] = f["raw"]["tx0"].attrs["centerFrequency"][0] * 1e-6
-    if rdata.info["Signal Type"] == "chirp":
+    if rdata.info["Signal Type"] == "Chirp":
         rdata.info["Badwidth [%]"] = f["raw"]["tx0"].attrs["bandwidth"][0] * 100
         rdata.info["Pulse Length [\u03BCs]"] = f["raw"]["tx0"].attrs["length"][0] * 1e6
     rdata.info["Sampling Frequency [MHz]"] = rdata.fs * 1e-6

@@ -7,7 +7,7 @@
 radar data ingest wrapper
 """
 ### imports ###
-from ingest import ingest_oibAK, ingest_pulseekko, ingest_gssi, ingest_sharad, ingest_marsis, ingest_lrs, ingest_cresis_rds, ingest_cresis_snow
+from ingest import ingest_oibAK, ingest_pulseekko, ingest_gssi, ingest_sharad, ingest_marsis, ingest_lrs, ingest_cresis_rds, ingest_cresis_snow, ingest_rimfax
 from tools import utils
 import numpy as np
 import pandas as pd
@@ -19,7 +19,7 @@ class ingest:
         # ftype is a string specifying filetype
         # valid options -
         # hdf5, mat, segy, img, dat, dt1, dzt, lbl
-        valid_types = ["h5", "mat", "img", "dat", "dt1", "dzt", "gpz", "lbl" ]
+        valid_types = ["h5", "mat", "img", "dat", "dt1", "dzt", "gpz", "lbl" ,"csv"]
         ftype = fpath.split(".")[-1].lower()
         
         if (ftype not in valid_types):
@@ -51,6 +51,8 @@ class ingest:
             self.rdata = ingest_sharad.read(self.fpath, simpath, navcrs, body)
         elif (self.ftype == "dat"):
             self.rdata = ingest_marsis.read(self.fpath, simpath, navcrs, body)
+        elif (self.ftype == "csv"):
+            self.rdata = ingest_rimfax.read(self.fpath, navcrs, body)
         elif (self.ftype == "dt1"):
             self.rdata = ingest_pulseekko.read_dt1(self.fpath, navcrs, body)
         elif (self.ftype == "gpz"):

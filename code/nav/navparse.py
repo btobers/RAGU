@@ -374,6 +374,31 @@ def getnav_marsis(navfile, navcrs, body):
     return df[["lon", "lat", "elev", "twtt_wind", "dist"]]
 
 
+def getnav_rimfax(navfile, navcrs, body):
+
+    df = pd.read_csv(navfile, header=0, skiprows=range(1,6))
+
+    df.rename(columns={"ant_lat": "lat", "ant_lon": "lon", "ant_elev": "elev"}, inplace=True)
+
+    df["x"], df["y"], df["z"] = pyproj.transform(
+        navcrs,
+        xyzsys[body],
+        df["lon"].to_numpy(),
+        df["lat"].to_numpy(),
+        df["elev"].to_numpy(),
+    )
+
+    df["dist"] = euclid_dist(
+        df["x"].to_numpy(),
+        df["y"].to_numpy(),
+        df["z"].to_numpy())
+
+
+    df["twtt_wind"] = 0.0
+
+    return df[["lon", "lat", "elev", "twtt_wind", "dist"]]
+
+
 def euclid_dist(xarray, yarray,zarray):
     dist = np.zeros_like(xarray)
     dist[1:] = np.cumsum(np.sqrt(np.diff(xarray) ** 2.0 + np.diff(yarray) ** 2.0 + np.diff(zarray) ** 2.0))
