@@ -74,6 +74,6 @@ def read(fpath, simpath, navcrs, body):
     # parse nav - use spice derived nav, not header data due to header data issues
     rdata.navdf = navparse.getnav_lrs(geom_path, navcrs, body)
 
-    rdata.set_srfElev(np.repeat(np.nan, rdata.tnum))
+    rdata.set_srfElev(dat = np.repeat(np.nan, rdata.tnum))
 
     return rdata

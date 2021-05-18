@@ -184,7 +184,7 @@ def read_dt1(fpath, navcrs, body):
     rdata.navdf = navparse.getnav_pulseekko(infile_gps, rdata.tnum, navcrs, body)
 
     # for ground-based GPR, elev_gnd is the same as GPS recorded elev
-    rdata.set_srfElev(rdata.navdf["elev"])
+    rdata.set_srfElev(dat = rdata.navdf["elev"])
 
     return rdata
         

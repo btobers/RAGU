@@ -4,6 +4,7 @@
 #
 # distributed under terms of the GNU GPL3.0 license
 ### imports ###
+from tools import utils
 from radar.flags import flags
 from radar.pick import pick
 from radar.processing import proc
@@ -97,9 +98,16 @@ class garlic(object):
 
 
     # set ground height
-    def set_srfElev(self, dat):
+    def set_srfElev(self, dat=None):
         #: np.ndarray(tnum,) data, surface elevation per trace
-        self.srfElev = dat
+        if dat is not None:
+            self.srfElev = dat
+        else:
+            self.srfElev = utils.srfpick2elev(self.pick.horizons[self.pick.get_srf()],
+                                            self.navdf["twtt_wind"].to_numpy(),
+                                            self.navdf["elev"].to_numpy(), 
+                                            self.dt,
+                                            self.tnum)
 
         return
 

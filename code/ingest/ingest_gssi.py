@@ -86,6 +86,6 @@ def read(fpath, navcrs, body):
     rdata.navdf = navparse.getnav_gssi(infile_gps, rdata.tnum, navcrs, body)
 
     # for ground-based GPR, elev_gnd is the same as GPS recorded elev
-    rdata.set_srfElev(rdata.navdf["elev"])
+    rdata.set_srfElev(dat = rdata.navdf["elev"])
     
     return rdata

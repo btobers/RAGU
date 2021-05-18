@@ -634,6 +634,7 @@ class mainGUI(tk.Frame):
             if (not srf) or (self.popup.flag == -1):
                 return
         self.rdata.pick.set_srf(srf)
+        self.rdata.set_srfElev()
         # # if srf horizon does not exist, initialize as zeros
         # if srf not in self.rdata.pick.horizons:
         #     self.rdata.pick.horizons[srf] = np.zeros((self.rdata.tnum))
@@ -686,12 +687,7 @@ class mainGUI(tk.Frame):
                         self.srf_define()
                     # update srf_elev
                     if self.rdata.pick.get_srf():
-                        self.rdata.set_srfElev(utils.srfpick2elev(
-                                                            self.rdata.pick.horizons[self.rdata.pick.get_srf()],
-                                                            self.rdata.navdf["twtt_wind"].to_numpy(),
-                                                            self.rdata.navdf["elev"].to_numpy(), 
-                                                            self.rdata.dt,
-                                                            self.rdata.tnum))
+                        self.rdata.set_srfElev()
                         
                 # otherwise have user select single horizon to export
                 else:

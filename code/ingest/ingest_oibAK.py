@@ -69,7 +69,7 @@ def read_h5(fpath, navcrs, body):
     rdata.navdf = navparse.getnav_oibAK_h5(fpath, navcrs, body)
     # pull lidar surface elevation and initilize horizon
     if "srf0" in f["ext"].keys():
-        rdata.set_srfElev(f["ext"]["srf0"][:])  
+        rdata.set_srfElev(dat = f["ext"]["srf0"][:])  
         if "twtt_surf" in f["drv"]["pick"].keys():
             twtt_srf = f["drv"]["pick"]["twtt_surf"][:]
             # replace -1 and -9 null values with np.nan
@@ -81,7 +81,7 @@ def read_h5(fpath, navcrs, body):
             rdata.pick.horizons["srf"] = utils.twtt2sample(utils.depth2twtt(rdata.navdf["elev"] - rdata.srfElev, eps_r=1), rdata.dt)
         rdata.pick.srf = "srf"
     else:
-        rdata.set_srfElev(np.repeat(np.nan, rdata.tnum))
+        rdata.set_srfElev(dat = np.repeat(np.nan, rdata.tnum))
 
     # read in existing bed picks
     if "twtt_bed" in f["drv"]["pick"].keys():
@@ -147,6 +147,6 @@ def read_mat(fpath, navcrs, body):
 
     # calculate surface elevation 
     dist = utils.twtt2depth(rdata.pick.existing_twttSurf, eps_r=1)
-    rdata.set_srfElev(rdata.navdf["elev"].to_numpy() - dist)
+    rdata.set_srfElev(dat = rdata.navdf["elev"].to_numpy() - dist)
     
     return rdata

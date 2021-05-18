@@ -44,10 +44,10 @@ def read_mat(fpath, navcrs, body):
     rdata.navdf = navparse.getnav_cresis_mat(fpath, navcrs, body)
 
     # pull surface elevation and initilize horizon
-    rdata.set_srfElev(f["Surface"][:].flatten()) 
+    rdata.set_srfElev(dat = f["Surface"][:].flatten()) 
 
-    rdata.pick.horizons["srf"] = utils.twtt2sample(f["Surface"][:].flatten(), rdata.dt)
-    rdata.set_srfElev(rdata.navdf["elev"] - utils.twtt2depth(rdata.pick.horizons["srf"], eps_r=1))
+    rdata.pick.horizons["srf"] = utils.twtt2sample(rdata.get_srfElev(), rdata.dt)
+    # rdata.set_srfElev(rdata.navdf["elev"] - utils.twtt2depth(rdata.pick.horizons["srf"], eps_r=1))
     rdata.pick.srf = "srf"
 
     rdata.info["PRF [kHz]"] = rdata.prf * 1e-3

@@ -39,7 +39,7 @@ def read(fpath, navcrs, body):
     # parse nav
     rdata.navdf = navparse.getnav_rimfax(fpath, navcrs, body)
 
-    rdata.set_srfElev(np.repeat(np.nan, rdata.tnum))
+    rdata.set_srfElev(dat = np.repeat(np.nan, rdata.tnum))
 
     # rdata.info["PRF [kHz]"] = rdata.prf * 1e-3
 
