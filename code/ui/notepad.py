@@ -8,7 +8,7 @@ notepad class is a tkinter frame which handles the RAGU session notes
 """
 
 import tkinter as tk
-import os
+import os, sys
   
 class notepad(tk.Frame):
 
@@ -220,7 +220,15 @@ class notepad(tk.Frame):
                 self.__search_text(fn)
             else:
                 if len(text) > 1:
+                    lline = text.rsplit("\n")[-2]
+                    new = ""
+                    while len(lline.split(",")) < 3:
+                        new += ","
+                        lline += new
+                    self.__thisTextArea.insert(tk.END, new)
+                    self.__thisTextArea.see("insert")
                     fn = "\n" + fn
+
                 self.__thisTextArea.insert(tk.END, fn + ",")
                 self.__thisTextArea.see("insert")
 

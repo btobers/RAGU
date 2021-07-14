@@ -81,7 +81,9 @@ def read_h5(fpath, navcrs, body):
             rdata.pick.horizons["srf"] = utils.twtt2sample(utils.depth2twtt(rdata.navdf["elev"] - rdata.srfElev, eps_r=1), rdata.dt)
         rdata.pick.srf = "srf"
     else:
+        rdata.pick.horizons["srf"] = np.repeat(np.nan, rdata.tnum)
         rdata.set_srfElev(dat = np.repeat(np.nan, rdata.tnum))
+    rdata.pick.srf = "srf"
 
     # read in existing bed picks
     if "twtt_bed" in f["drv"]["pick"].keys():
