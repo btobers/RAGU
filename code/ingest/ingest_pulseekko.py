@@ -149,7 +149,7 @@ def read_dt1(fpath, navcrs, body):
         tnum, = struct.unpack('f',datafile.read(4))
         rdata.tnum = int(tnum)
         # Initialize matrix
-        rdata.dat = np.zeros((rdata.snum,rdata.tnum))
+        rdata.set_dat(np.zeros((rdata.snum,rdata.tnum)))
         head = np.zeros((headlen,rdata.tnum))
         # Set the reader to the beginning of the file
         datafile.seek(0,0)
@@ -176,7 +176,7 @@ def read_dt1(fpath, navcrs, body):
     rdata.info.pop("Total_time_window")
 
     # convert signed int amplitude to floating point for displaying
-    rdata.set_proc(rdata.dat.astype(np.float))
+    rdata.set_proc(rdata.get_dat().astype(np.float))
 
     rdata.set_sim(np.ones(rdata.dat.shape))                # place holder for clutter data
 

@@ -136,13 +136,16 @@ class mainGUI(tk.Frame):
 
         # save submenu
         exportMenu = tk.Menu(fileMenu,tearoff=0)
+        exportMenu.add_command(label="Project", command=self.export_proj)
+        datExportMenu = tk.Menu(exportMenu,tearoff=0)
+        datExportMenu.add_command(label="Raw Amplitude", command=lambda:self.export_dat(type="raw"))
+        datExportMenu.add_command(label="Processed Amplitude", command=lambda:self.export_dat(type="proc"))
+        exportMenu.add_cascade(label="Data Array", menu=datExportMenu)
         pickExportMenu = tk.Menu(exportMenu,tearoff=0)
         pickExportMenu.add_command(label="Horizon", command=lambda:self.export_pick(merged=False))
         pickExportMenu.add_command(label="Merged  [Ctrl+S]", command=lambda:self.export_pick(merged=True))
-        exportMenu.add_command(label="Project", command=self.export_proj)
         exportMenu.add_cascade(label="Picks", menu=pickExportMenu)
         exportMenu.add_command(label="Figure", command=self.export_fig)
-        exportMenu.add_command(label="Processed Data", command=self.export_proc)
         exportMenu.add_command(label="Processing Script", command=self.export_log)
         fileMenu.add_cascade(label="Export", menu=exportMenu)
         fileMenu.add_separator()
@@ -758,20 +761,23 @@ class mainGUI(tk.Frame):
                 self.export_proj()
 
 
-    # export_proc is a method to save processed radar data
-    def export_proc(self):
+    # export_dat is a method to save processed radar data
+    def export_dat(self, type="raw"):
         if self.f_loadName:
             tmp_fn_out = ""
             if self.os == "darwin":
-                tmp_fn_out = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_proc.csv",
+                tmp_fn_out = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_" + type + "_amp.csv",
                                 initialdir = self.conf["path"]["outPath"], title = "save processed data")
             else:
-                tmp_fn_out = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_proc",
+                tmp_fn_out = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + "_" + type + "_amp",
                                 initialdir = self.conf["path"]["outPath"], title = "save processed data", filetypes = [("comma-separated values",".csv")])
             if tmp_fn_out:
                 fn, ext = os.path.splitext(tmp_fn_out)
 
-                export.proc(fn + ".csv", self.rdata.proc)
+                if type == "raw":
+                    export.dat(fn + ".csv", self.rdata.get_dat())
+                elif type == "proc":
+                    export.dat(fn + ".csv", self.rdata.proc.get_curr_amp())
 
 
     # export_log is a method to save the processing log
@@ -779,7 +785,7 @@ class mainGUI(tk.Frame):
         if self.f_loadName:
             tmp_fn_out = ""
             tmp_fn_out = tk.filedialog.asksaveasfilename(initialfile = os.path.splitext(self.f_loadName.split("/")[-1])[0] + ".py",
-                            initialdir = self.conf["path"]["outPath"], title = "save process script")
+                            initialdir = self.conf["path"]["outPath"], title = "save processing script")
 
             if tmp_fn_out:
                 fn, ext = os.path.splitext(tmp_fn_out)

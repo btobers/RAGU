@@ -223,12 +223,10 @@ def fig(fpath, fig):
     print("figure exported successfully:\t" + fpath)
 
 
-# proc is a method to export the processed radar data - for now just as a csv file array
-def proc(fpath, dat):
-    # convert from dB to amp
-    amp = utils.powdB2amp(dat)
-    np.savetxt(fpath, amp, fmt="%s", delimiter=",")
-    print("processed amplitude data exported successfully:\t" + fpath)
+# dat is a method to export the radar data - for now just as a csv file array
+def dat(fpath, dat):
+    np.savetxt(fpath, dat, fmt="%s", delimiter=",")
+    print("data exported successfully:\t" + fpath)
 
 
 # log is a method to export the processing log as a python script

@@ -49,12 +49,12 @@ def read(fpath, simpath, navcrs, body):
     dat = dat[-(rdata.snum*rdata.nchan):,:]
 
     # reshape into stacked 3D array for two channels
-    rdata.dat = np.zeros((rdata.snum,rdata.tnum,rdata.nchan))
-    rdata.dat[:,:,0] = dat[:rdata.snum,:]
-    rdata.dat[:,:,1] = dat[-rdata.snum:,:]
+    tmp = np.zeros((rdata.snum,rdata.tnum,rdata.nchan))
+    tmp[:,:,0] = dat[:rdata.snum,:]
+    tmp[:,:,1] = dat[-rdata.snum:,:]
     # apparently data arrays are already power values, so revert to amplitude (abs(amplitude))
-    rdata.dat = np.sqrt(rdata.dat)
-    rdata.set_proc(rdata.dat)
+    rdata.set_dat(np.sqrt(tmp))
+    rdata.set_proc(rdata.get_dat())
 
     # convert png clutter sim product to numpy array
     if simpath:

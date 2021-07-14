@@ -26,8 +26,8 @@ def read(fpath, navcrs, body):
 
     f = pd.read_csv(rdata.fpath, header=0, skiprows=range(1,6))
     f = f.loc[f["record_type"]==0]
-    rdata.dat = np.array(f.iloc[:,85:]).T
-    rdata.set_proc(np.abs(rdata.dat))
+    rdata.set_dat(np.array(f.iloc[:,85:]).T)
+    rdata.set_proc(np.abs(rdata.get_dat()))
     rdata.set_sim(np.ones(rdata.dat.shape))  
 
     rdata.snum =  np.max(f["n_samples"])                                                # samples per trace in rgram

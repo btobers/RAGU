@@ -61,7 +61,7 @@ def read(fpath, navcrs, body):
         f.seek(didx)
 
         # read in data - need to transpose to get correct shape
-        rdata.dat = np.fromfile(f, dtype).reshape(-1,(rdata.snum*rdata.nchan)).T
+        rdata.set_dat(np.fromfile(f, dtype).reshape(-1,(rdata.snum*rdata.nchan)).T)
 
     # ensure data file is not empty
     if not np.any(rdata.dat):
@@ -70,7 +70,7 @@ def read(fpath, navcrs, body):
     rdata.tnum = rdata.dat.shape[1]
 
     # convert gssi signed int amplitude to floating point for displaying
-    rdata.set_proc(rdata.dat.astype(np.float))
+    rdata.set_proc(rdata.get_dat().astype(np.float))
 
     rdata.set_sim(np.ones(rdata.dat.shape))                 # place holder for clutter data
 

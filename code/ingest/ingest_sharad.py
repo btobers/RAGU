@@ -27,16 +27,16 @@ def read(fpath, simpath, navcrs, body):
     # reshape array with 3600 lines
     dtype = np.dtype("float32")     
     with open(fpath, "rb") as f:
-        rdata.dat = np.fromfile(f, dtype)     
-    l = len(rdata.dat)
+        tmp = np.fromfile(f, dtype)     
+    l = len(tmp)
 
     rdata.snum = 3600
-    rdata.tnum = int(len(rdata.dat)/rdata.snum)
+    rdata.tnum = int(len(tmp)/rdata.snum)
     rdata.dt = .0375e-6
     rdata.prf = 700.28
     rdata.nchan = 1
-    rdata.dat = rdata.dat.reshape(rdata.snum,rdata.tnum)
-    rdata.set_proc(rdata.dat)
+    rdata.set_dat(tmp.reshape(rdata.snum,rdata.tnum))
+    rdata.set_proc(rdata.get_dat())
     
     # convert binary .img clutter sim product to numpy array
     if simpath:

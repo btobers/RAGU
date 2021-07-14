@@ -35,15 +35,15 @@ def read(fpath, simpath, navcrs, body):
     # convert binary .img RGRAM to numpy array - data begins after 55 bytes of header info
     with open(rdata.fpath, "rb") as f:
         f.seek(rdata.tnum*55)
-        data = f.read(rdata.tnum*rdata.snum)
-        rdata.dat = np.frombuffer(data, np.uint8)     
+        tmp = f.read(rdata.tnum*rdata.snum)
+        dat = np.frombuffer(tmp, np.uint8)
     l = len(rdata.dat)
 
     rdata.dt = 305.17578125e-09
     rdata.prf = 20
     rdata.nchan = 1
-    rdata.dat = rdata.dat.reshape(rdata.snum,rdata.tnum)
-    rdata.set_proc(rdata.dat)
+    rdata.set_dat(dat.reshape(rdata.snum,rdata.tnum))
+    rdata.set_proc(rdata.get_dat())
     
     # convert binary .img clutter sim product to numpy array
     if simpath:

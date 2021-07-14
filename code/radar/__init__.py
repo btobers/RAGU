@@ -76,6 +76,16 @@ class garlic(object):
         return
 
 
+    # set radar data
+    def set_dat(self,dat):
+        self.dat = dat
+
+
+    # get radar data
+    def get_dat(self):
+        return self.dat
+
+
     # set processed radar data method
     def set_proc(self, dat):
         self.proc.set_curr_amp(dat)

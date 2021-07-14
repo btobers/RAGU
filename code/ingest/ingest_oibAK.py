@@ -48,9 +48,10 @@ def read_h5(fpath, navcrs, body):
     rdata.prf = f["raw"]["tx0"].attrs["pulseRepetitionFrequency"][0]            # pulse repition frequency, Hz
     rdata.nchan = 1
 
-    # pull radar proc and sim arrays
-    rdata.dat = f["drv/proc0"][:]                                               # pulse compressed array
-    rdata.set_proc(np.abs(rdata.dat))
+    # pull radar proc and sim arrayss
+    print(rdata.get_dat())
+    rdata.set_dat(f["drv/proc0"][:])                                            # pulse compressed array
+    rdata.set_proc(np.abs(rdata.get_dat()))
     if "clutter0" in f["drv"].keys():
         rdata.set_sim(f["drv"]["clutter0"][:])                                  # simulated clutter array
     else:
