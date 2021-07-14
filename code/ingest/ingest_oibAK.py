@@ -49,7 +49,6 @@ def read_h5(fpath, navcrs, body):
     rdata.nchan = 1
 
     # pull radar proc and sim arrayss
-    print(rdata.get_dat())
     rdata.set_dat(f["drv/proc0"][:])                                            # pulse compressed array
     rdata.set_proc(np.abs(rdata.get_dat()))
     if "clutter0" in f["drv"].keys():
