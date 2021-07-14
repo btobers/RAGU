@@ -140,7 +140,7 @@ class mainGUI(tk.Frame):
         datExportMenu = tk.Menu(exportMenu,tearoff=0)
         datExportMenu.add_command(label="Raw Amplitude", command=lambda:self.export_dat(type="raw"))
         datExportMenu.add_command(label="Processed Amplitude", command=lambda:self.export_dat(type="proc"))
-        exportMenu.add_cascade(label="Data Array", menu=datExportMenu)
+        exportMenu.add_cascade(label="Radar Data", menu=datExportMenu)
         pickExportMenu = tk.Menu(exportMenu,tearoff=0)
         pickExportMenu.add_command(label="Horizon", command=lambda:self.export_pick(merged=False))
         pickExportMenu.add_command(label="Merged  [Ctrl+S]", command=lambda:self.export_pick(merged=True))
