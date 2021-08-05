@@ -79,6 +79,21 @@ def tzero_shift(self):
     return
 
 
+def vertical_roll(self, samples=0):
+    # roll 2d proc data array vertically to fix mismatch
+    amp = self.proc.get_curr_amp()
+    self.proc.set_prev_amp(amp)
+    self.proc.set_prev_dB(self.proc.get_curr_dB())
+    out = np.roll(amp, shift=samples, axis=0)
+    self.set_proc(out)
+
+    # log
+    self.log("self.rdata.vertical_roll(samples={})".format(samples))
+    print("# data array rolled by {} samples".format(samples))
+
+    return
+
+
 def butter(btype="lowpass", lowcut=None, highcut=None, fs=None, order=5):
     nyq = 0.5 * fs
     cutoff = []
@@ -126,7 +141,7 @@ def filter(self, btype="lowpass", lowcut=None, highcut=None, order=5, direction=
     self.set_proc(out)
     # log
     self.log("self.rdata.filter(btype='{}', lowcut={}, highcut={}, order={}, direction={})".format(btype, lowcut, highcut, order, direction))
-    print("# filter applied: btype='{}', lowcut={}, highcut={}, order={}, direction={})".format(btype, lowcut, highcut, order, direction))
+    print("# filter applied: btype='{}', lowcut={}, highcut={}, order={}, direction={}".format(btype, lowcut, highcut, order, direction))
 
     return
 
@@ -157,6 +172,7 @@ def undo(self):
         # clear last log entry
         self.last = self.hist[-1]
         del self.hist[-1]
+        print("# last processing step removed")
 
     return
 

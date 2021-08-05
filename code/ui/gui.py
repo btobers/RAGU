@@ -191,6 +191,7 @@ class mainGUI(tk.Frame):
 
         # processing menu items
         procMenu.add_command(label="Set Time Zero", command=lambda:self.procTools("tzero"))
+        procMenu.add_command(label="Vertical Data Roll", command=lambda:self.procTools("vroll"))
         # procMenu.add_command(label="Dewow", command=lambda:self.procTools("dewow"))
         # procMenu.add_command(label="Remove Mean Trace", command=lambda:self.procTools("remMnTr"))
 
@@ -930,6 +931,12 @@ class mainGUI(tk.Frame):
                     self.impick.set_picks(horizon=self.rdata.pick.get_srf())
                     self.impick.blit()
                     procFlag = True
+
+            elif arg == "vroll":
+                samples = tk.simpledialog.askinteger("input","number of samples to roll data array")
+                self.rdata.vertical_roll(samples)
+                procFlag = True
+
 
             elif arg == "dewow":
                 print("dewow currently in development")
