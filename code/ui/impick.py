@@ -463,6 +463,68 @@ class impick(tk.Frame):
         self.secaxy1.set_ylim(ylim3[0]*val,)
         self.dataCanvas.draw()
 
+    # method to zoom in by factor of 2
+    def zoomIn(self, factor=1/4):
+        # get original axis limits
+        xlima1 = self.ax.get_xlim()
+        xlima2 = self.secaxx.get_xlim()
+        ylima1 = self.ax.get_ylim()
+        ylima2 = self.secaxy0.get_ylim()
+        ylima3 = self.secaxy1.get_ylim()
+
+        xstep1 = abs(xlima1[1] - xlima1[0]) * factor
+        xstep2 = abs(xlima2[1] - xlima2[0]) * factor
+        ystep1 = abs(ylima1[1] - ylima1[0]) * factor
+        ystep2 = abs(ylima2[1] - ylima2[0]) * factor
+        ystep3 = abs(ylima3[1] - ylima3[0]) * factor
+
+        # add steps
+        xlimb1 = [xlima1[0]+xstep1, xlima1[1]-xstep1]
+        xlimb2 = [xlima2[0]+xstep2, xlima2[1]-xstep2]
+        ylimb1 = [ylima1[0]-ystep1, ylima1[1]+ystep1]
+        ylimb2 = [ylima2[0]-ystep2, ylima2[1]+ystep2]
+        ylimb3 = [ylima3[0]-ystep3, ylima3[1]+ystep3]
+
+        self.ax.set_xlim(xlimb1[0], xlimb1[1])
+        self.secaxx.set_xlim(xlimb2[0], xlimb2[1])
+        self.ax.set_ylim(ylimb1[0], ylimb1[1])
+        self.secaxy0.set_ylim(ylimb2[0], ylimb2[1])
+        self.secaxy1.set_ylim(ylimb3[0], ylimb3[1])
+        self.dataCanvas.draw()
+
+
+    # method to zoom out by factor of 2
+    def zoomOut(self, factor=1/4):
+        # get original axis limits
+        xlima1 = self.ax.get_xlim()
+        xlima2 = self.secaxx.get_xlim()
+        ylima1 = self.ax.get_ylim()
+        ylima2 = self.secaxy0.get_ylim()
+        ylima3 = self.secaxy1.get_ylim()
+
+        xstep1 = abs(xlima1[1] - xlima1[0]) * factor
+        xstep2 = abs(xlima2[1] - xlima2[0]) * factor
+        ystep1 = abs(ylima1[1] - ylima1[0]) * factor
+        ystep2 = abs(ylima2[1] - ylima2[0]) * factor
+        ystep3 = abs(ylima3[1] - ylima3[0]) * factor
+
+        # add steps
+        xlimb1 = [xlima1[0]-xstep1, xlima1[1]+xstep1]
+        if xlimb1[0] < 0 or xlimb1[1] > self.rdata.tnum:
+            self.fullExtent()
+            return
+        xlimb2 = [xlima2[0]-xstep2, xlima2[1]+xstep2]
+        ylimb1 = [ylima1[0]+ystep1, ylima1[1]-ystep1]
+        ylimb2 = [ylima2[0]+ystep2, ylima2[1]-ystep2]
+        ylimb3 = [ylima3[0]+ystep3, ylima3[1]-ystep3]
+
+        self.ax.set_xlim(xlimb1[0], xlimb1[1])
+        self.secaxx.set_xlim(xlimb2[0], xlimb2[1])
+        self.ax.set_ylim(ylimb1[0], ylimb1[1])
+        self.secaxy0.set_ylim(ylimb2[0], ylimb2[1])
+        self.secaxy1.set_ylim(ylimb3[0], ylimb3[1])
+        self.dataCanvas.draw()
+
 
     # method to pan right
     def panRight(self):

@@ -122,6 +122,7 @@ class notepad(tk.Frame):
         self.__set_state(1)
         if path:
             self.__file = path
+        self.__header()
       
           
     def __quit(self, event=None):
@@ -158,6 +159,14 @@ class notepad(tk.Frame):
 
             file.close() 
 
+            self.__header()
+
+    def __header(self):
+        header = "track,bed (y/n/?),note"
+        if self.__get_text().splitlines()[0] != header:
+            self.__thisTextArea.insert(tk.END, header + "\n")
+            self.__thisTextArea.see("insert")
+
     def __newFile(self, event=None):
         if len(self.__get_text()) > 1:
             if not tk.messagebox.askyesno("Warning", "Discard changes?", icon = "warning"):
@@ -166,7 +175,7 @@ class notepad(tk.Frame):
         self.__file = None
         self.__thisTextArea.delete(1.0,tk.END) 
 
-    def __saveFile(self, event=None): 
+    def __saveFile(self, event=None, overwrite=False): 
   
         if self.__file == None: 
             # Save as new file 
@@ -190,7 +199,7 @@ class notepad(tk.Frame):
                   
               
         else:
-            if not tk.messagebox.askyesno("Warning", "Overwrite {}?".format(self.__file), icon = "warning"):
+            if overwrite==False and not tk.messagebox.askyesno("Warning", "Overwrite {}?".format(self.__file), icon = "warning"):
                 # Save as new file 
                 self.__file = tk.filedialog.asksaveasfilename(initialfile='Untitled.csv',
                                                             initialdir=self.__init_dir,

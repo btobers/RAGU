@@ -321,6 +321,14 @@ class mainGUI(tk.Frame):
             elif key =="h":
                 self.impick.fullExtent()
 
+            # plus key to zoom in
+            elif key =="plus":
+                self.impick.zoomIn()
+
+            # minus key to zoom out
+            elif key =="minus":
+                self.impick.zoomOut()
+
             # d key to set axes limits to pan right
             elif key =="d":
                 self.impick.panRight()
@@ -504,6 +512,8 @@ class mainGUI(tk.Frame):
 
                 if self.rdata and self.notepad._notepad__get_state() == 1:
                     self.notepad._notepad__write_track(fn=self.rdata.fn)
+                    if self.notepad._notepad__get_file():
+                        self.notepad._notepad__saveFile(overwrite=True)
 
             # recall choose_dfile if wrong file type is selected 
             except Exception as err:
