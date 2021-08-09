@@ -463,7 +463,7 @@ class impick(tk.Frame):
         self.secaxy1.set_ylim(ylim3[0]*val,)
         self.dataCanvas.draw()
 
-    # method to zoom in by factor of 2
+    # method to zoom in
     def zoomIn(self, factor=1/4):
         # get original axis limits
         xlima1 = self.ax.get_xlim()
@@ -493,7 +493,7 @@ class impick(tk.Frame):
         self.dataCanvas.draw()
 
 
-    # method to zoom out by factor of 2
+    # method to zoom out
     def zoomOut(self, factor=1/4):
         # get original axis limits
         xlima1 = self.ax.get_xlim()
@@ -510,14 +510,25 @@ class impick(tk.Frame):
 
         # add steps
         xlimb1 = [xlima1[0]-xstep1, xlima1[1]+xstep1]
-        if xlimb1[0] < 0 or xlimb1[1] > self.rdata.tnum:
-            self.fullExtent()
-            return
         xlimb2 = [xlima2[0]-xstep2, xlima2[1]+xstep2]
         ylimb1 = [ylima1[0]+ystep1, ylima1[1]-ystep1]
         ylimb2 = [ylima2[0]+ystep2, ylima2[1]-ystep2]
         ylimb3 = [ylima3[0]+ystep3, ylima3[1]-ystep3]
-
+        # handle bounds
+        if xlimb1[0] < 0:
+            xlimb1[0] = 0
+            xlimb2[0] = 0
+        if xlimb1[1] > self.rdata.tnum:
+            xlimb1[1] = self.rdata.tnum
+            xlimb2[1] = self.rdata.navdf["dist"].iloc[-1]*1e-3
+        if ylimb1[0] > self.rdata.snum:
+            ylimb1[0] = self.rdata.snum
+            ylimb2[0] = self.rdata.snum*self.rdata.dt
+            ylimb3[0] = utils.twtt2depth(self.rdata.snum*self.rdata.dt, self.eps_r)
+        if ylimb1[1] < 0:
+            ylimb1[1] = 0
+            ylimb2[1] = 0
+            ylimb3[1] = 0
         self.ax.set_xlim(xlimb1[0], xlimb1[1])
         self.secaxx.set_xlim(xlimb2[0], xlimb2[1])
         self.ax.set_ylim(ylimb1[0], ylimb1[1])

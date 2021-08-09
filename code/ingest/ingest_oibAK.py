@@ -75,24 +75,26 @@ def read_h5(fpath, navcrs, body):
             # replace -1 and -9 null values with np.nan
             twtt_srf[twtt_srf == -1] = np.nan
             twtt_srf[twtt_srf == -9] = np.nan
-            if not np.isnan(twtt_srf).all():
-                rdata.pick.horizons["srf"] = utils.twtt2sample(twtt_srf, rdata.dt)
+            arr = utils.twtt2sample(twtt_srf, rdata.dt)
         else:
-            rdata.pick.horizons["srf"] = utils.twtt2sample(utils.depth2twtt(rdata.navdf["elev"] - rdata.srfElev, eps_r=1), rdata.dt)
-        rdata.pick.srf = "srf"
+            arr = utils.twtt2sample(utils.depth2twtt(rdata.navdf["elev"] - rdata.srfElev, eps_r=1), rdata.dt)
     else:
-        rdata.pick.horizons["srf"] = np.repeat(np.nan, rdata.tnum)
-        rdata.set_srfElev(dat = np.repeat(np.nan, rdata.tnum))
+        arr = np.repeat(np.nan, rdata.tnum)
+        rdata.set_srfElev(dat = arr)
+    rdata.pick.horizons["srf"] = arr
     rdata.pick.srf = "srf"
 
-    # read in existing bed picks
+    # read in bed picks
     if "twtt_bed" in f["drv"]["pick"].keys():
         twtt_bed = f["drv"]["pick"]["twtt_bed"][:]
         # replace -1 and -9 null values with np.nan
         twtt_bed[twtt_bed == -1] = np.nan
         twtt_bed[twtt_bed == -9] = np.nan
-        if not np.isnan(twtt_bed).all():
-            rdata.pick.horizons["bed"] = utils.twtt2sample(twtt_bed, rdata.dt)
+        arr = utils.twtt2sample(twtt_bed, rdata.dt)
+    else:
+        arr = np.repeat(np.nan, rdata.tnum)
+    rdata.pick.horizons["bed"] = arr
+    
 
     f.close()                                                   # close the file
 
