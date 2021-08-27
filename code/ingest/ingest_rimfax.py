@@ -24,24 +24,26 @@ def read(fpath, navcrs, body):
     print("----------------------------------------")
     print("Loading: " + rdata.fn)
 
+    # only read necessary data from file
     f = pd.read_csv(rdata.fpath, header=0, skiprows=range(1,6))
     f = f.loc[f["record_type"]==0]
-    rdata.set_dat(np.array(f.iloc[:,85:]).T)
+    rdata.set_dat(np.array(f.iloc[:,90:]).T)
     rdata.set_proc(np.abs(rdata.get_dat()))
     rdata.set_sim(np.ones(rdata.dat.shape))  
 
     rdata.snum =  np.max(f["n_samples"])                                                # samples per trace in rgram
     rdata.tnum = len(f)                                                                 # number of traces in rgram 
-    rdata.dt = f.loc[0,"sample_time_increment"]                                         # sampling interval, sec
-    # rdata.prf = f["param_records"]["radar"]["prf"][0][0]                            # pulse repitition frequency
+    rdata.dt = np.mean(f["sample_time_increment"])                                      # sampling interval, sec
+
+    rdata.prf = 1 / rdata.dt                                                           # pulse repitition frequency
     rdata.nchan = 1
 
     # parse nav
     rdata.navdf = navparse.getnav_rimfax(fpath, navcrs, body)
-
+    print(rdata.navdf)
     rdata.set_srfElev(dat = np.repeat(np.nan, rdata.tnum))
 
-    # rdata.info["PRF [kHz]"] = rdata.prf * 1e-3
+    rdata.info["PRF [kHz]"] = rdata.prf * 1e-3
 
 
     return rdata
