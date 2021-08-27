@@ -1488,7 +1488,7 @@ class impick(tk.Frame):
 
 
     # export_fig is a method to receive the pick save location from gui export the radar figure
-    def export_fig(self, f_saveName):
+    def export_fig(self, f_saveName, compiled=True):
         # zoom out to full rgram extent to save pick image
         self.fullExtent()
         self.verticalClip(self.figsettings["figclip"].get())
@@ -1500,7 +1500,10 @@ class impick(tk.Frame):
         self.ax_cmin.set_visible(False)
         self.reset_ax.set_visible(False)
         self.secaxy1.set_visible(False)
-        # hide pick annotations
+        self.ax.title.set_visible(True)
+        self.ax.xaxis.set_visible(False)
+        self.secaxx.axis(False)
+
         vis = self.ann_vis
         if vis:
             self.show_labels(vis=False)  
@@ -1509,9 +1512,16 @@ class impick(tk.Frame):
         if self.im_status.get() ==1:
             self.show_data()
         self.show_picks(vis=False)
-        export.fig(f_saveName.rstrip(f_saveName.split("/")[-1]) + self.rdata.fn + ".png", self.fig)
+
+        fname0 = f_saveName.rstrip(f_saveName.split("/")[-1]) + self.rdata.fn + ".png"
+        export.fig(fname0, self.fig)
+
         self.show_picks(vis=True)
-        export.fig(f_saveName, self.fig)
+        self.ax.title.set_visible(False)
+        self.ax.xaxis.set_visible(True)
+        self.secaxx.axis(True)
+        fname2 = f_saveName
+        export.fig(fname2, self.fig)
     
         # save sim fig if sim exists
         if not (self.rdata.sim == 0).all():
@@ -1519,7 +1529,11 @@ class impick(tk.Frame):
             # ensure picks are hidden
             # self.pick_vis.set(False)
             self.show_picks(vis=False)
-            export.fig(f_saveName.rstrip(f_saveName.split("/")[-1]) + self.rdata.fn + "_sim.png", self.fig)
+            self.ax.xaxis.set_visible(False)
+            self.secaxx.axis(False)
+            fname1 = f_saveName.rstrip(f_saveName.split("/")[-1]) + self.rdata.fn + "_sim.png"
+            export.fig(fname1, self.fig)
+
             # self.pick_vis.set(True)
             self.show_picks(vis=True)
             self.show_data()
@@ -1533,7 +1547,20 @@ class impick(tk.Frame):
         self.secaxy1.set_visible(True)
         if vis:
             self.show_labels(True)   
-        self.fig.canvas.draw()
+        self.update_figsettings()
+
+        images = [PIL.Image.open(x) for x in [fname0, fname1, fname2]]
+        widths, heights = zip(*(i.size for i in images))
+        width = max(widths)
+        height = sum(heights)
+        new_im = PIL.Image.new('RGB', (width, height))
+        offset = 0
+        for im in images:
+            x = 0
+            x = int((width - im.size[0])/2)
+            new_im.paste(im, (x, offset))
+            offset += im.size[1]
+        new_im.save(f_saveName[:-7] + "compiled.png")
 
 
 class path():
