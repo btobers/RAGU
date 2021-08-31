@@ -11,7 +11,7 @@ from tools import utils, export
 from ui import basemap
 import numpy as np
 import tkinter as tk
-import sys,os,time,fnmatch,copy
+import sys,os,time,fnmatch,copy,PIL
 import matplotlib as mpl
 mpl.use("TkAgg")
 import matplotlib.pyplot as plt
@@ -1454,8 +1454,9 @@ class impick(tk.Frame):
 
 
     # update_figsettings
-    def update_figsettings(self, figsettings):
-        self.figsettings = figsettings
+    def update_figsettings(self, figsettings=None):
+        if figsettings:
+            self.figsettings = figsettings
 
         plt.rcParams.update({'font.size': self.figsettings["fontsize"].get()})
 
