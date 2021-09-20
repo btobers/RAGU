@@ -9,7 +9,6 @@ primary data format is hdf5, however some older data is still being converted ov
 """
 ### imports ###
 from radar import garlic
-import matplotlib.pyplot as plt
 from nav import navparse
 from tools import utils
 import h5py, fnmatch
