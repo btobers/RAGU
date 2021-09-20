@@ -9,6 +9,7 @@ primary data format is hdf5, however some older data is still being converted ov
 """
 ### imports ###
 from radar import garlic
+import matplotlib.pyplot as plt
 from nav import navparse
 from tools import utils
 import h5py, fnmatch
@@ -113,7 +114,7 @@ def read_mat(fpath, navcrs, body):
     fn = fpath.split("/")[-1]
     print("----------------------------------------")
     print("Loading: " + fn)
-    rdata = radar(fpath)
+    rdata = garlic(fpath)
     rdata.fn = fn[:-4]
     rdata.dtype = "oibak"
     # read in .mat file
@@ -127,8 +128,8 @@ def read_mat(fpath, navcrs, body):
 
         rdata.navdf = navparse.getnav_oibAK_mat(fpath, navcrs, body)
         rdata.set_sim(np.array(f["block"]["clutter"]))
+        twtt_srf = f["block"]["twtt_surf"].flatten()
 
-        rdata.pick.existing_twttSurf = f["block"]["twtt_surf"].flatten()
         f.close()
 
     except:
@@ -142,15 +143,19 @@ def read_mat(fpath, navcrs, body):
 
             rdata.navdf = navparse.getnav_oibAK_mat(fpath, navcrs, body)
             rdata.set_sim(f["block"]["clutter"][0][0])
-
-            rdata.pick.horizons["srf"] = f["block"]["twtt_surf"][0][0].flatten()
+            twtt_srf = f["block"]["twtt_surf"][0][0].flatten()
 
         except Exception as err:
             print("ingest Error: " + str(err))
             pass
+        
+        if not np.isnan(twtt_srf).all():
+            arr = utils.twtt2sample(twtt_srf, rdata.dt)
+            rdata.pick.horizons["srf"] = arr
+            rdata.pick.srf = "srf"
 
-    # calculate surface elevation 
-    dist = utils.twtt2depth(rdata.pick.existing_twttSurf, eps_r=1)
-    rdata.set_srfElev(dat = rdata.navdf["elev"].to_numpy() - dist)
-    
+            # get surface elevation
+            arr = rdata.navdf["elev"] - utils.twtt2depth(twtt_srf, eps_r=1)
+            rdata.set_srfElev(dat = arr)
+
     return rdata
