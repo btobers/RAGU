@@ -62,7 +62,7 @@ def read(fpath, simpath, navcrs, body):
     rdata.info["prf [Hz]"] = rdata.prf
 
     # open geom nav file for rgram
-    geom_path = fpath.replace("rgram","geom").replace("img","tab")
+    geom_path = root + fn.replace("rgram","geom").replace("img","tab")
 
     # parse nav
     rdata.navdf = navparse.getnav_sharad(geom_path, navcrs, body)
