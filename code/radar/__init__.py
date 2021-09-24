@@ -8,6 +8,7 @@ from tools import utils
 from radar.flags import flags
 from radar.pick import pick
 from radar.processing import proc
+from raguError import raguError
 import numpy as np
 import scipy.signal as signal
 
@@ -17,6 +18,18 @@ class garlic(object):
     containing all of the relevant information for each radar profile.
     keep track of processing steps with the flags attribute.
     """
+    #: Attributes that every RadarData object should have.
+    #: These should not be None.
+    required_attrs = ["fpath",
+                        "fn",
+                        "dtype",
+                        "nchan",
+                        "dat",
+                        "dt",
+                        "snum",
+                        "tnum",
+                        "twtt",
+                        "navdf"]
     # import processing tools
     from radar.processing import set_tzero, tzero_shift, vertical_roll, tpowGain, filter, hilbertxform, undo, redo, reset
 
@@ -44,13 +57,13 @@ class garlic(object):
         self.info = {}
         #: np.ndarray(snum x tnum), raw ingested radar data
         self.dat = None
-        #: np.ndarray(snum x tnum), processed radar data class object
+        #: radar data processing class object
         self.proc = proc()
-        #: np.ndarray(snum x tnum), dB'd radar data pyramids
+        #: np.ndarray(snum x tnum), dB"d radar data pyramids
         self.dPyramid = None
-        #: np.ndarray(snum x tnum), dB'd clutter simulation
+        #: np.ndarray(snum x tnum), dB"d clutter simulation
         self.sim = None
-        #: np.ndarray(snum x tnum), dB's clutter simulation pyramids
+        #: np.ndarray(snum x tnum), dB"s clutter simulation pyramids
         self.sPyramid = None
         #: radar flags object
         self.flags = flags()
@@ -72,7 +85,6 @@ class garlic(object):
         self.pick = pick()
         #: pandas dataframe output data
         self.out = None
-
         return
 
 
@@ -93,7 +105,6 @@ class garlic(object):
         self.proc.set_curr_dB(self.dBscale(self.proc.curr_amp))
         # generate pyramid arrays
         self.dPyramid = self.genPyramids(self.proc.get_curr_dB())
-
         return
 
 
@@ -103,7 +114,13 @@ class garlic(object):
         self.sim = self.dBscale(dat)
         # generate pyramid arrays
         self.sPyramid = self.genPyramids(self.sim)
+        return
 
+
+    # set twtt array
+    def set_twtt(self):
+        if not [x for x in (self.snum, self.tnum) if x is None]:
+            self.twtt = np.arange(self.snum) * self.dt
         return
 
 
@@ -118,7 +135,6 @@ class garlic(object):
                                             self.navdf["elev"].to_numpy(), 
                                             self.dt,
                                             self.tnum)
-
         return
 
 
@@ -130,7 +146,6 @@ class garlic(object):
     # set output dataframe
     def set_out(self, dat):
         self.out = dat
-
         return
 
 
@@ -142,7 +157,6 @@ class garlic(object):
         pow[pow == 0] = np.nan
         # dB it
         dB = 10*np.log10(pow)
-
         return dB
 
 
@@ -155,7 +169,6 @@ class garlic(object):
                 pyramid.append(dat[::2**i,:])
         else:
             pyramid.append(dat)
-
         return pyramid
 
 
@@ -163,3 +176,33 @@ class garlic(object):
     def log(self, cmd=None):
         if cmd and isinstance(cmd,str):
             self.hist.append(cmd)
+
+
+    def check_attrs(self):
+        """check if required garlic objects exist
+        this format is modified from ImpDAR
+        ------
+        raguError
+            If any required attribute is None,
+            or any optional attribute is fully absent
+        """
+        # fn is required but defined separately
+        for attr in self.required_attrs:
+            if not hasattr(self, attr):
+                raise raguError("{:s} is missing.".format(attr))
+            if getattr(self, attr) is None:
+                raise raguError("{:s} is None.".format(attr))
+ 
+        # check data array shape
+        if (self.dat.shape != (self.snum, self.tnum)):
+            raise raguError("Data shape is inconsistent with the number of traces and the number of samples.\nData Array Shape: {}\nSamples: {}\nTraces: {}".format(self.dat.shape,self.snum,self.tnum))
+
+        # check navdf
+        for k in ["lon","lat","elev","dist"]:
+            if k not in self.navdf:
+                raise raguError("{:s} is missing from the nav dataframe.".format(k))
+
+        if self.navdf.shape[0] != self.tnum:
+            raise raguError("Nav dataframe shape is inconsistent with the number of traces.\nNav dataframe shape: {}\nTraces: {}".format(self.navdf.shape[0],self.tnum))
+
+        return

@@ -55,7 +55,7 @@ def read_h5(fpath, navcrs, body):
         rdata.set_sim(f["drv"]["clutter0"][:])                                  # simulated clutter array
     else:
         rdata.set_sim(np.ones(rdata.dat.shape))                                 # empty clutter array if no sim exists
-
+    rdata.set_twtt()
     # assign signal info
     rdata.info["Signal Type"] = f["raw"]["tx0"].attrs["signal"].decode().capitalize() 
     rdata.info["CF [MHz]"] = f["raw"]["tx0"].attrs["centerFrequency"][0] * 1e-6
@@ -98,6 +98,8 @@ def read_h5(fpath, navcrs, body):
 
     f.close()                                                   # close the file
 
+    rdata.check_attrs()
+
     # # temporary fix to roll array for impulse data to line up with surface - find offset by windowing around lidar surface
     # if (rdata.info["signal type"] == "impulse") and (not np.isnan(rdata.pick.existing_twttSurf).all()):
     #     lidarsrf = utils.twtt2sample(rdata.pick.existing_twttSurf, rdata.dt)
@@ -121,7 +123,7 @@ def read_mat(fpath, navcrs, body):
         f = h5py.File(rdata.fpath, "r")
         rdata.snum = int(f["block"]["num_sample"][0])[-1]
         rdata.tnum = int(f["block"]["num_trace"][0])[-1] 
-        rdata.dt = float(f["block"]["dt"][0])
+        rdata.dt = float(f["block"]["dt"][0])*2
         rdata.dat = np.array(f["block"]["amp"])
         rdata.set_proc(rdata.dat)
 
@@ -136,7 +138,7 @@ def read_mat(fpath, navcrs, body):
             f = sp.io.loadmat(rdata.fpath)
             rdata.snum = int(f["block"]["num_sample"][0])
             rdata.tnum = int(f["block"]["num_trace"][0])
-            rdata.dt = float(f["block"]["dt"][0])
+            rdata.dt = float(f["block"]["dt"][0])*2
             rdata.dat = f["block"]["amp"][0][0]
             rdata.set_proc(rdata.dat)
 
@@ -147,14 +149,18 @@ def read_mat(fpath, navcrs, body):
         except Exception as err:
             print("ingest Error: " + str(err))
             pass
-        
-        if not np.isnan(twtt_srf).all():
-            arr = utils.twtt2sample(twtt_srf, rdata.dt)
-            rdata.pick.horizons["srf"] = arr
-            rdata.pick.srf = "srf"
 
-            # get surface elevation
-            arr = rdata.navdf["elev"] - utils.twtt2depth(twtt_srf, eps_r=1)
-            rdata.set_srfElev(dat = arr)
+    rdata.set_twtt()
+
+    if not np.isnan(twtt_srf).all():
+        arr = utils.twtt2sample(twtt_srf, rdata.dt)
+        rdata.pick.horizons["srf"] = arr
+        rdata.pick.srf = "srf"
+
+        # get surface elevation
+        arr = rdata.navdf["elev"] - utils.twtt2depth(twtt_srf, eps_r=1)
+        rdata.set_srfElev(dat = arr)
+
+    rdata.check_attrs()
 
     return rdata
