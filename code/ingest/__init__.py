@@ -39,7 +39,7 @@ class ingest:
             self.rdata = ingest_oibAK.read_h5(self.fpath, navcrs, body)
         elif (self.ftype == "mat"):
             try:
-                self.rdata = ingest_cresis_snow.read_mat(self.fpath, navcrs, body)
+                self.rdata = ingest_cresis_snow.read_mat(navcrs, body)
             except:
                 try:
                     self.rdata = ingest_cresis_rds.read_mat(self.fpath, navcrs, body)

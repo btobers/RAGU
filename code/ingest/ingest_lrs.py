@@ -60,6 +60,8 @@ def read(fpath, simpath, navcrs, body):
 
     rdata.set_sim(sim)
 
+    rdata.set_twtt()
+
     # assign signal info
     rdata.info = {}
     rdata.info["Signal Type"] = "Chirp"
@@ -75,5 +77,7 @@ def read(fpath, simpath, navcrs, body):
     rdata.navdf = navparse.getnav_lrs(geom_path, navcrs, body)
 
     rdata.set_srfElev(dat = np.repeat(np.nan, rdata.tnum))
+
+    rdata.check_attrs()
 
     return rdata

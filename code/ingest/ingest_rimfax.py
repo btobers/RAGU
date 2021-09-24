@@ -37,13 +37,14 @@ def read(fpath, navcrs, body):
 
     rdata.prf = 1 / rdata.dt                                                           # pulse repitition frequency
     rdata.nchan = 1
+    rdata.set_twtt()
 
     # parse nav
     rdata.navdf = navparse.getnav_rimfax(fpath, navcrs, body)
-    print(rdata.navdf)
     rdata.set_srfElev(dat = np.repeat(np.nan, rdata.tnum))
 
     rdata.info["PRF [kHz]"] = rdata.prf * 1e-3
 
+    rdata.check_attrs()
 
     return rdata

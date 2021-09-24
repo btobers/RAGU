@@ -74,6 +74,8 @@ def read(fpath, navcrs, body):
 
     rdata.set_sim(np.ones(rdata.dat.shape))                 # place holder for clutter data
 
+    rdata.set_twtt()
+
     # assign signal info
     rdata.info["Signal Type"] = "Impulse"
     rdata.info["Sampling Frequency [MHz]"] = rdata.fs * 1e-6
@@ -87,5 +89,7 @@ def read(fpath, navcrs, body):
 
     # for ground-based GPR, elev_gnd is the same as GPS recorded elev
     rdata.set_srfElev(dat = rdata.navdf["elev"])
-    
+
+    rdata.check_attrs()
+
     return rdata

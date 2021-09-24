@@ -39,6 +39,7 @@ def read_mat(fpath, navcrs, body):
     rdata.dt = np.mean(np.diff(f["Time"]))                                          # sampling interval, sec
     rdata.prf = f["param_records"]["radar"]["prf"][0][0]                            # pulse repitition frequency
     rdata.nchan = 1
+    rdata.set_twtt()
 
     # parse nav
     rdata.navdf = navparse.getnav_cresis_mat(fpath, navcrs, body)
@@ -53,5 +54,7 @@ def read_mat(fpath, navcrs, body):
     rdata.info["PRF [kHz]"] = rdata.prf * 1e-3
 
     f.close()                                                   # close the file
+
+    rdata.check_attrs()
 
     return rdata
