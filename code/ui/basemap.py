@@ -123,16 +123,13 @@ class basemap(tk.Frame):
                     fac = 1
                     h = dataset.height
                     w = dataset.width
+                    dx = dataset.transform[0]
                     if h >= 1e3 or w >= 1e3:
-                        fac = np.amax([h*1e-3,w*1e-3])
-                    # if h >= 10e3 or w >= 10e3:
-                    #     fac = 30
-                    # elif h >= 3e3 or w >= 3e3:
-                    #     fac = 4
-                    # elif h >= 2e3 or w >= 2e3:
-                    #     fac = 3
-                    # elif h >= 1e3 or w >= 1e3:
-                    #     fac = 2
+                        if dx < 10:
+                            fac = np.amin([h*1e-3,w*1e-3])
+                        else:
+                            fac = 2
+
                     data = dataset.read(
                         out_shape=(dataset.count, int(h // fac), int(w// fac)),
                         resampling=rio.enums.Resampling.nearest
