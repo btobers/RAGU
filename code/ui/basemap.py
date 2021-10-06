@@ -121,14 +121,20 @@ class basemap(tk.Frame):
                 with rio.open(map_path, mode="r") as dataset:
                     # downsample if raster is too large
                     fac = 1
-                    # if dataset.height >= 3e3 or dataset.width >= 3e3:
+                    h = dataset.height
+                    w = dataset.width
+                    if h >= 1e3 or w >= 1e3:
+                        fac = np.amax([h*1e-3,w*1e-3])
+                    # if h >= 10e3 or w >= 10e3:
+                    #     fac = 30
+                    # elif h >= 3e3 or w >= 3e3:
                     #     fac = 4
-                    # elif dataset.height >= 2e3 or dataset.width >= 2e3:
+                    # elif h >= 2e3 or w >= 2e3:
                     #     fac = 3
-                    if dataset.height >= 1e3 or dataset.width >= 1e3:
-                        fac = 2
+                    # elif h >= 1e3 or w >= 1e3:
+                    #     fac = 2
                     data = dataset.read(
-                        out_shape=(dataset.count, int(dataset.height // fac), int(dataset.width // fac)),
+                        out_shape=(dataset.count, int(h // fac), int(w// fac)),
                         resampling=rio.enums.Resampling.nearest
                     )
                     self.bmcrs = dataset.crs
@@ -189,6 +195,7 @@ class basemap(tk.Frame):
 
     # plot_tracks is a method to plot track geom
     def plot_tracks(self):
+        buff = 1
         # if track_viz variable is true, add all track points to appropriate lines
         if self.track_viz.get():
             # set track line data
@@ -197,12 +204,9 @@ class basemap(tk.Frame):
             self.track_start_ln.set_data(self.start_x, self.start_y)
             self.track_end_ln.set_data(self.end_x, self.end_y)
 
-            x_range = [np.amin(self.x)- 5,np.amax(self.x)+ 5]
-            y_range = [np.amin(self.y)- 5,np.amax(self.y)+ 5]
-            r = max(x_range[1]-x_range[0],y_range[1]-y_range[0])
-            x = np.median(x_range)
-            y = np.median(y_range)
-            self.map_fig_ax.axis([x-r,x+r,y-r,y+r])
+            x_range = [np.amin(self.x)- buff,np.amax(self.x)+ buff]
+            y_range = [np.amin(self.y)- buff,np.amax(self.y)+ buff]
+
         # otherwise just set track points from last line to appropriate lines
         else:
             # set track ending line data
@@ -213,12 +217,18 @@ class basemap(tk.Frame):
             idx = np.where(self.track_name == self.profile_track)[0]
             self.track_ln.set_data(self.x[idx], self.y[idx])
     
-            x_range = [np.amin(self.x[idx])- 5,np.amax(self.x[idx])+ 5]
-            y_range = [np.amin(self.y[idx])- 5,np.amax(self.y[idx])+ 5]
-            r = max(x_range[1]-x_range[0],y_range[1]-y_range[0])
-            x = np.median(x_range)
-            y = np.median(y_range)
-            self.map_fig_ax.axis([x-r,x+r,y-r,y+r])
+            x_range = [np.amin(self.x[idx])- buff,np.amax(self.x[idx])+ buff]
+            y_range = [np.amin(self.y[idx])- buff,np.amax(self.y[idx])+ buff]
+        r = max(x_range[1]-x_range[0],y_range[1]-y_range[0])
+        xl = np.median(x_range) - r
+        xr = np.median(x_range) + r
+        yt = np.median(y_range) - r
+        yb = np.median(y_range) + r
+        # if track falls within bm, zoom in
+        xaxis = self.map_fig_ax.get_xlim()
+        yaxis = self.map_fig_ax.get_ylim()      
+        if (xl > xaxis[0]) & (xr < xaxis[1]) & (yb > yaxis[0]) & (yt < yaxis[1]):
+            self.map_fig_ax.axis([xl,xr,yb,yt])
 
         if not self.legend:
             self.legend = self.map_fig_ax.legend()
