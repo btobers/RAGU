@@ -52,7 +52,7 @@ class proc(object):
 
 def set_tzero(self):
     # get mean trace and find max sample and update sampzero flag
-    meanTrace = np.mean(np.abs(self.dat), axis=1)
+    meanTrace = np.nanmean(np.abs(self.dat), axis=1)
     self.flags.sampzero = np.nanargmax(meanTrace)
 
     if self.flags.sampzero > 0:
