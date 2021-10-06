@@ -11,7 +11,7 @@ last updated: 08JUL2020
 environment requirements in ragu.yml
 """
 ### imports ###
-import os,sys,configparser
+import os,sys
 from ui import gui
 import tkinter as tk
 from tkinter import font
@@ -39,10 +39,10 @@ def main():
             tk.font.nametofont(_i).config(family="Times New Roman", size=10, weight="normal")
     except:
         pass
-    # img = tk.PhotoImage(file='../recs/NOSEpick_zoom.png')
-    # root.tk.call('wm', 'iconphoto', root._w, img)
+
     # call the RAGU mainGUI class
     gui.mainGUI(root, datPath = datPath)
+    root.lift()    
     root.mainloop()
 
 if __name__ == "__main__":

@@ -620,7 +620,7 @@ class mainGUI(tk.Frame):
                 srf = h
                 break
 
-        if srf is None and len(horizons) > 0:
+        if (srf is None) and (len(horizons) > 0):
             if self.popup.flag == 1:
                 return
             horizon_colors = self.impick.get_horizon_colors()
@@ -649,18 +649,20 @@ class mainGUI(tk.Frame):
                 return
         self.rdata.pick.set_srf(srf)
         self.rdata.set_srfElev()
-        # # if srf horizon does not exist, initialize as zeros
-        # if srf not in self.rdata.pick.horizons:
-        #     self.rdata.pick.horizons[srf] = np.zeros((self.rdata.tnum))
 
 
     # srf_autopick
     def srf_autopick(self):
-        if "srf" not in self.impick.get_horizon_paths().keys() or tk.messagebox.askyesno("Warning","Surface horizon 'srf' already exists. Overwrite with auto-pick surface?"):
-            self.rdata.pick.horizons["srf"] = utils.get_srf(np.abs(self.rdata.dat))
-            self.srf_define(srf="srf")
-            self.impick.set_picks(horizon="srf")
-            self.impick.blit()
+        srf = self.rdata.pick.get_srf()
+        if srf is None:
+            srf = "srf" 
+        elif not tk.messagebox.askyesno("Warning","Surface horizon already exists. Overwrite with auto-pick surface?"):
+            return
+
+        self.rdata.pick.horizons[srf] = utils.get_srf(np.abs(self.rdata.dat))
+        self.srf_define(srf=srf)
+        self.impick.set_picks(horizon=srf)
+        self.impick.blit()
 
 
     # export_proj
@@ -936,8 +938,12 @@ class mainGUI(tk.Frame):
                 # set tzero should only be used for ground-based GPR data
                 self.rdata.set_tzero()
                 if self.rdata.flags.sampzero > 0:
+                    srf = self.rdata.pick.get_srf()
+                    if srf is None:
+                        srf = "srf"
                     # define surface horizon name to set index to zeros
-                    self.srf_define(srf="srf")
+                    self.rdata.pick.horizons[srf] = np.zeros(self.rdata.tnum)
+                    self.srf_define(srf=srf)
                     self.impick.set_picks(horizon=self.rdata.pick.get_srf())
                     self.impick.blit()
                     procFlag = True
