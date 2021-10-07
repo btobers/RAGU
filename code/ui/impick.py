@@ -784,7 +784,10 @@ class impick(tk.Frame):
         # update horizon and segment options
         self.update_hor_opt_menu()  
         # set horVar to new horizon
-        self.horVar.set(horizon)  
+        self.horVar.set(horizon)
+        # update crosshairs and tmp pick line colors to match horizon color
+        for ln in [self.tmp_horizon_ln, self.horizontal_line, self.vertical_line]:
+            ln.set_color(self.ln_colors["str"][self.ln_colors["hex"].index(self.ln_colors["used"][horizon])])
 
 
     # rename horizon
