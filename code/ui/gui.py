@@ -647,7 +647,6 @@ class mainGUI(tk.Frame):
             # remove the trace
             hname.trace_vdelete("w", trace)
             srf = hname.get()
-            print(srf)
             if (not srf) or (self.popup.flag == -1):
                 return
         self.rdata.pick.set_srf(srf)
