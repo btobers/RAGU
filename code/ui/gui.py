@@ -477,50 +477,50 @@ class mainGUI(tk.Frame):
     # open_dat loads the data file and passes to other modules
     def open_dfile(self, f_loadName=None):
             # if input selected, clear impick canvas, ingest data and pass to impick
-            # try:
-            if f_loadName:
-                # switch to profile tab
-                if self.tab == "Waveform":
-                    self.nb.select(self.nb.tabs()[0])
-                self.f_loadName = f_loadName
-                self.proj.set_datPath(self.f_loadName)
-                # ingest the data
-                self.igst = ingest(self.f_loadName)
-                self.rdata = self.igst.read(self.conf["path"]["simPath"], self.conf["nav"]["crs"], self.conf["nav"]["body"])
-                self.impick.clear_canvas()  
-                self.impick.set_vars()
-                self.impick.load(self.rdata)
-                # set existing horizons
-                for horizon in self.rdata.pick.horizons.keys():
-                    self.impick.set_picks(horizon=horizon)
-                self.impick.set_pickState(state=False)
-                self.impick.update_hor_opt_menu()
-                self.impick.update_seg_opt_menu
-                self.impick.set_axes()
-                self.impick.drawData()
-                self.impick.update_pickLabels()
-                self.impick.update_bg()
-                self.wvpick.set_vars()
-                self.wvpick.clear()
-                self.wvpick.set_data(self.rdata)
-                self.rinfolbl.config(text = '\t\t'.join('{}: {}'.format(k, d) for k, d in self.rdata.info.items()))
+            try:
+                if f_loadName:
+                    # switch to profile tab
+                    if self.tab == "Waveform":
+                        self.nb.select(self.nb.tabs()[0])
+                    self.f_loadName = f_loadName
+                    self.proj.set_datPath(self.f_loadName)
+                    # ingest the data
+                    self.igst = ingest(self.f_loadName)
+                    self.rdata = self.igst.read(self.conf["path"]["simPath"], self.conf["nav"]["crs"], self.conf["nav"]["body"])
+                    self.impick.clear_canvas()  
+                    self.impick.set_vars()
+                    self.impick.load(self.rdata)
+                    # set existing horizons
+                    for horizon in self.rdata.pick.horizons.keys():
+                        self.impick.set_picks(horizon=horizon)
+                    self.impick.set_pickState(state=False)
+                    self.impick.update_hor_opt_menu()
+                    self.impick.update_seg_opt_menu
+                    self.impick.set_axes()
+                    self.impick.drawData()
+                    self.impick.update_pickLabels()
+                    self.impick.update_bg()
+                    self.wvpick.set_vars()
+                    self.wvpick.clear()
+                    self.wvpick.set_data(self.rdata)
+                    self.rinfolbl.config(text = '\t\t'.join('{}: {}'.format(k, d) for k, d in self.rdata.info.items()))
 
-            # pass basemap to impick for plotting pick location
-            if self.map_loadName and self.basemap.get_state() == 1:
-                self.basemap.set_track(self.rdata.fn)
-                self.basemap.set_nav(self.rdata.fn, self.rdata.navdf)
-                self.basemap.plot_tracks()
-                self.impick.get_basemap(self.basemap)
+                # pass basemap to impick for plotting pick location
+                if self.map_loadName and self.basemap.get_state() == 1:
+                    self.basemap.set_track(self.rdata.fn)
+                    self.basemap.set_nav(self.rdata.fn, self.rdata.navdf)
+                    self.basemap.plot_tracks()
+                    self.impick.get_basemap(self.basemap)
 
-            if self.rdata and self.notepad._notepad__get_state() == 1:
-                self.notepad._notepad__write_track(fn=self.rdata.fn)
-                if self.notepad._notepad__get_file():
-                    self.notepad._notepad__saveFile(overwrite=True)
+                if self.rdata and self.notepad._notepad__get_state() == 1:
+                    self.notepad._notepad__write_track(fn=self.rdata.fn)
+                    if self.notepad._notepad__get_file():
+                        self.notepad._notepad__saveFile(overwrite=True)
 
-            # # recall choose_dfile if wrong file type is selected 
-            # except Exception as err:
-            #     print(err)
-            #     self.choose_dfile() 
+            # recall choose_dfile if wrong file type is selected 
+            except Exception as err:
+                print(err)
+                self.choose_dfile() 
 
 
     # switch_dfile is a method to get the filename of the last/next data file in the directory to open
