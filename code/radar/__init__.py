@@ -114,6 +114,8 @@ class garlic(object):
         self.sim = self.dBscale(dat)
         # generate pyramid arrays
         self.sPyramid = self.genPyramids(self.sim)
+        # set sim flag to True
+        self.flags.sim = True
         return
 
 

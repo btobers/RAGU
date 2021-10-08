@@ -48,11 +48,9 @@ def read(fpath, simpath, navcrs, body):
         with open(simpath, "rb") as f:
             sim = np.fromfile(f, dtype)   
         sim = sim.reshape(rdata.snum,rdata.tnum)
+        rdata.set_sim(sim)
     else:
         print("Clutter simulation not found:\t{}\nSpecify alternate path in configuration file.".format(simpath))
-        sim = np.ones(rdata.dat.shape)
-
-    rdata.set_sim(sim)
 
     rdata.set_twtt()
 

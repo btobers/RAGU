@@ -67,10 +67,9 @@ def read(fpath, simpath, navcrs, body):
         # convert image to numpy array
         sim = np.asarray(image)
         sim = sim[int(rdata.snum/2):-int(rdata.snum/2),:]
+        rdata.set_sim(sim)
     else:
-        sim = np.ones((rdata.snum,rdata.tnum))
-
-    rdata.set_sim(sim)
+        print("Clutter simulation not found:\t{}\nSpecify alternate path in configuration file.".format(simpath))
 
     rdata.set_twtt()
 

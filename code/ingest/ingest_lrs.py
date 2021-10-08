@@ -55,10 +55,7 @@ def read(fpath, simpath, navcrs, body):
         with open(simpath, "rb") as f:
             sim = np.fromfile(f, np.float32)   
         sim = sim.reshape(rdata.snum,rdata.tnum)
-    else:
-        sim = np.ones(rdata.dat.shape)
-
-    rdata.set_sim(sim)
+        rdata.set_sim(sim)
 
     rdata.set_twtt()
 

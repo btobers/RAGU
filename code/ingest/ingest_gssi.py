@@ -72,8 +72,6 @@ def read(fpath, navcrs, body):
     # convert gssi signed int amplitude to floating point for displaying
     rdata.set_proc(rdata.get_dat().astype(np.float))
 
-    rdata.set_sim(np.ones(rdata.dat.shape))                 # place holder for clutter data
-
     rdata.set_twtt()
 
     # assign signal info

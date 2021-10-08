@@ -32,7 +32,6 @@ def read_mat(fpath, navcrs, body):
 
     rdata.set_dat(np.array(f["Data"][:]).T)
     rdata.set_proc(np.abs(rdata.get_dat()))
-    rdata.set_sim(np.ones(rdata.dat.shape))  
 
     rdata.snum = rdata.dat.shape[0]                                                 # samples per trace in rgram
     rdata.tnum = rdata.dat.shape[1]                                                 # number of traces in rgram 

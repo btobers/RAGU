@@ -53,8 +53,7 @@ def read_h5(fpath, navcrs, body):
     rdata.set_proc(np.abs(rdata.get_dat()))
     if "clutter0" in f["drv"].keys():
         rdata.set_sim(f["drv"]["clutter0"][:])                                  # simulated clutter array
-    else:
-        rdata.set_sim(np.ones(rdata.dat.shape))                                 # empty clutter array if no sim exists
+
     rdata.set_twtt()
     # assign signal info
     rdata.info["Signal Type"] = f["raw"]["tx0"].attrs["signal"].decode().capitalize() 

@@ -61,9 +61,9 @@ class impick(tk.Frame):
         radarRadio.pack(side="left")
         self.button_tip(self.parent, radarRadio, "View radar profile")
 
-        simRadio = tk.Radiobutton(infoFrame,text="Clutter Sim", variable=self.im_status, value=1, command=self.set_im)
-        simRadio.pack(side="left")
-        self.button_tip(self.parent, simRadio, "View clutter simulation")
+        self.simRadio = tk.Radiobutton(infoFrame,text="Clutter Sim", variable=self.im_status, value=1, command=self.set_im)
+        self.simRadio.pack(side="left")
+        self.button_tip(self.parent, self.simRadio, "View clutter simulation")
         tk.ttk.Separator(infoFrame,orient="vertical").pack(side="left", fill="both", padx=10, pady=4)
 
         # add radio buttons for toggling data channel
@@ -283,8 +283,11 @@ class impick(tk.Frame):
         self.im_sim  = self.ax.imshow(np.ones((100,100)), aspect="auto", 
                         extent=[0, self.rdata.tnum, self.rdata.snum, 0])
 
-        # # set clutter sim visibility to false
+        # set clutter sim visibility to false
         self.im_sim.set_visible(False)
+        # disable im toggle if no sim
+        if not self.rdata.flags.sim:
+            self.simRadio.config(state="disabled")
 
         # initialize line to hold current picks
         self.tmp_horizon_ln, = self.ax.plot(self.tmp_horizon_path.x, self.tmp_horizon_path.y, "rx")
@@ -311,20 +314,17 @@ class impick(tk.Frame):
         # get clim bounds - take 10th percentile for min, ignore nd values
         self.mindB_data = np.floor(np.nanpercentile(self.rdata.proc.get_curr_dB(),10))
         self.maxdB_data = np.nanmax(self.rdata.proc.get_curr_dB())
-        # handle possible missing sim data for cmap bounds
-        if (self.rdata.sim == 0).all():
-            self.mindB_sim = 0
-            self.maxdB_sim = 1
-        else:
+
+        if self.rdata.flags.sim:
             self.mindB_sim = np.floor(np.nanpercentile(self.rdata.sim,10))
             self.maxdB_sim = np.nanmax(self.rdata.sim)
+            self.sim_crange = self.maxdB_sim - self.mindB_sim
+            self.im_sim.set_clim([self.mindB_sim, self.maxdB_sim])
 
         # get colormap range
         self.data_crange = self.maxdB_data - self.mindB_data
-        self.sim_crange = self.maxdB_sim - self.mindB_sim
         # update color limits
         self.im_dat.set_clim([self.mindB_data, self.maxdB_data])
-        self.im_sim.set_clim([self.mindB_sim, self.maxdB_sim])
 
         # set slider bounds - use data clim values upon initial load
         self.s_cmin.valmin = self.mindB_data - (self.data_crange/2)
@@ -354,10 +354,14 @@ class impick(tk.Frame):
                 self.data_cmin = self.s_cmin.val
                 self.data_cmax = self.s_cmax.val
                 self.im_dat.set_clim([self.data_cmin, self.data_cmax])
+                # update norm
+                self.im_dat.set_norm(mpl.colors.LogNorm(self.data_cmin, self.data_cmax))
             else:
                 self.sim_cmin = self.s_cmin.val
                 self.sim_cmax = self.s_cmax.val
                 self.im_sim.set_clim([self.sim_cmin, self.sim_cmax])
+                # update norm
+                self.im_sim.set_norm(mpl.colors.LogNorm(self.sim_cmin, self.sim_cmax))
         except Exception as err:
             print("cmap_update error: " + str(err))
 
@@ -404,7 +408,8 @@ class impick(tk.Frame):
                 self.im_dat.set_data(self.rdata.dPyramid[self.pyramid][:,:,self.chan.get()])
             else:
                 self.im_dat.set_data(self.rdata.dPyramid[self.pyramid][:,:])
-            self.im_sim.set_data(self.rdata.sPyramid[self.pyramid][:,:])
+            if self.rdata.flags.sim:
+                self.im_sim.set_data(self.rdata.sPyramid[self.pyramid][:,:])
             flag = True
 
         # update cmap if necessary
@@ -618,7 +623,7 @@ class impick(tk.Frame):
 
    # set_im is a method to set which rdata is being displayed
     def set_im(self, from_gui=False):
-        if from_gui:
+        if from_gui and self.rdata.flags.sim:
             self.im_status.set(int(not self.im_status.get()))
 
         if self.im_status.get() == 0:
@@ -1519,7 +1524,7 @@ class impick(tk.Frame):
         export.fig(f_saveName, self.fig)
     
         # save sim fig if sim exists
-        if not (self.rdata.sim == 0).all():
+        if self.rdata.flags.sim:
             self.show_sim()
             # ensure picks are hidden
             # self.pick_vis.set(False)

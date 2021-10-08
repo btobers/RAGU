@@ -29,7 +29,6 @@ def read(fpath, navcrs, body):
     f = f.loc[f["record_type"]==0]
     rdata.set_dat(np.array(f.iloc[:,90:]).T)
     rdata.set_proc(np.abs(rdata.get_dat()))
-    rdata.set_sim(np.ones(rdata.dat.shape))  
 
     rdata.snum =  np.max(f["n_samples"])                                                # samples per trace in rgram
     rdata.tnum = len(f)                                                                 # number of traces in rgram 

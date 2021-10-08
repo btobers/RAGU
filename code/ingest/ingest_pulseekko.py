@@ -178,8 +178,6 @@ def read_dt1(fpath, navcrs, body):
     # convert signed int amplitude to floating point for displaying
     rdata.set_proc(rdata.get_dat().astype(np.float))
 
-    rdata.set_sim(np.ones(rdata.dat.shape))                # place holder for clutter data
-
     rdata.set_twtt()
 
     # create nav object to hold lon, lat, elev
