@@ -73,7 +73,7 @@ class ingest:
 
 
     # import_pick is a method of the ingester class which loads in existing picks from a text file
-    def import_pick(self, fpath):
+    def import_pick(self, fpath, uid):
         if fpath.endswith("csv"):
             dat = pd.read_csv(fpath)
             if dat.shape[0] != self.rdata.tnum:
@@ -83,8 +83,20 @@ class ingest:
             keys = fnmatch.filter(dat.keys(), "*sample*")
             if len(keys) >= 1:
                 for horizon in keys:
-                    horizon = horizon.split("_")[0]
-                    sample = dat[horizon + "_sample"].to_numpy()
+                    # handle merged and individual pick files
+                    # merged files will have ["horizon_sample"] keys, while individual will have "horizon" in pick file name and ["sample"] in keys
+                    horizon = horizon.split("_")
+                    if len(horizon) > 1:
+                        horizon = horizon[0]
+                        sample = dat[horizon + "_sample"].to_numpy()
+
+                    else:
+                        # get horizon name from pick file name
+                        fnl = len(self.rdata.fn) + 1
+                        extl = len(uid) + 4
+                        horizon = fpath.split("/")[-1][fnl:-extl]
+                        sample = dat["sample"].to_numpy()
+
                     if horizon in self.rdata.pick.horizons.keys():
                         if utils.nan_array_equal(self.rdata.pick.horizons[horizon], sample):
                             continue

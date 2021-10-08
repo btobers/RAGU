@@ -608,7 +608,7 @@ class mainGUI(tk.Frame):
             pk_file = ""
             pk_file = tk.filedialog.askopenfilename(initialdir = self.conf["path"]["outPath"], title = "load picks", filetypes = (("comma separated value", "*.csv"),))
             if pk_file:
-                horizons = self.igst.import_pick(pk_file)
+                horizons = self.igst.import_pick(pk_file, self.conf["param"]["uid"])
                 for horizon in horizons:
                     self.impick.set_picks(horizon=horizon)
                 self.impick.blit()
@@ -1149,25 +1149,26 @@ class mainGUI(tk.Frame):
 
         row = tk.Frame(settingsWindow)
         row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-        lab = tk.Label(row, width=25, text="Color map", anchor='w')
+        lab = tk.Label(row, width=25, text="Matplotlib color map", anchor='w')
         lab.pack(side=tk.LEFT)
-        tk.Radiobutton(row,text="greys_r", variable=self.figsettings["cmap"], value="Greys_r").pack(side="top",anchor="w")
-        tk.Radiobutton(row,text="gray", variable=self.figsettings["cmap"], value="gray").pack(side="top",anchor="w")
-        tk.Radiobutton(row,text="seismic", variable=self.figsettings["cmap"], value="seismic").pack(side="top",anchor="w")
+        entry = tk.Entry(row,textvariable=self.figsettings["cmap"])
+        entry.pack(side=tk.RIGHT, expand=tk.YES, fill=tk.X)
+        button_tip(self.parent, entry, "Choose a matplotlib colormap. https://matplotlib.org/2.0.2/users/colormaps.html")
+
 
         row = tk.Frame(settingsWindow)
         row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
         lab = tk.Label(row, width=25, text='Figure size [w",h"]', anchor='w')
         lab.pack(side=tk.LEFT)
-        self.figEnt = tk.Entry(row,textvariable=self.figsettings["figsize"])
-        self.figEnt.pack(side=tk.RIGHT, expand=tk.YES, fill=tk.X)
+        entry = tk.Entry(row,textvariable=self.figsettings["figsize"])
+        entry.pack(side=tk.RIGHT, expand=tk.YES, fill=tk.X)
 
         row = tk.Frame(settingsWindow)
         row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
         lab = tk.Label(row, width=25, text="Font size", anchor='w')
         lab.pack(side=tk.LEFT)
-        self.figEnt = tk.Entry(row,textvariable=self.figsettings["fontsize"])
-        self.figEnt.pack(side=tk.RIGHT, expand=tk.YES, fill=tk.X)
+        entry = tk.Entry(row,textvariable=self.figsettings["fontsize"])
+        entry.pack(side=tk.RIGHT, expand=tk.YES, fill=tk.X)
         
         row = tk.Frame(settingsWindow)
         row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
@@ -1199,8 +1200,8 @@ class mainGUI(tk.Frame):
         row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
         lab = tk.Label(row, width=25, text="Export fig. vertical clip factor:", anchor='w')
         lab.pack(side=tk.LEFT)
-        self.figEnt = tk.Entry(row,textvariable=self.figsettings["figclip"])
-        self.figEnt.pack(side=tk.RIGHT, expand=tk.YES, fill=tk.X)
+        entry = tk.Entry(row,textvariable=self.figsettings["figclip"])
+        entry.pack(side=tk.RIGHT, expand=tk.YES, fill=tk.X)
 
         row = tk.Frame(settingsWindow)
         row.pack(side=tk.TOP, anchor="c")
@@ -1215,6 +1216,12 @@ class mainGUI(tk.Frame):
             self.eps_r.set(self.epsEnt.get())
         except:
             self.eps_r.set(3.15)
+
+        # check if cmap is recognized
+        try:
+            plt.get_cmap(self.figsettings["cmap"].get())
+        except:
+            self.figsettings["cmap"].set("Greys_r")
 
         # make sure fig size is of correct format
         size = self.figsettings["figsize"].get().split(",")

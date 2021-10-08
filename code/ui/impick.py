@@ -260,7 +260,7 @@ class impick(tk.Frame):
     def set_cmap(self, cmap):
         cmap = copy.copy(mpl.cm.get_cmap(cmap))
         self.cmap = mpl.cm.get_cmap(cmap)
-        # set nodata value as darkest color in cmap
+        # set nodata value as bottom color in cmap
         nd = self.cmap(np.linspace(0,1,256))[0]
         self.cmap.set_bad(nd)
 
