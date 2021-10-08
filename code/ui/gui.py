@@ -118,23 +118,23 @@ class mainGUI(tk.Frame):
         fileMenu = tk.Menu(menubar, tearoff=0)
         pickMenu = tk.Menu(menubar, tearoff=0)
         interpretMenu = tk.Menu(menubar, tearoff=0)
-        mapMenu = tk.Menu(menubar, tearoff=0)
         procMenu = tk.Menu(menubar, tearoff=0)
         viewMenu = tk.Menu(menubar, tearoff=0)
         helpMenu = tk.Menu(menubar, tearoff=0)
 
-        # file menu items
+        ### file menu items ###
         # open submenu
         openMenu = tk.Menu(fileMenu,tearoff=0)
         openMenu.add_command(label="Project", command=self.open_proj)
         openMenu.add_command(label="Data File    [Ctrl+O]", command=self.choose_dfile)
         openMenu.add_command(label="Basemap  [Ctrl+M]", command=self.init_bm)
         openMenu.add_command(label="Notepad", command=self.init_notepad)
+
         fileMenu.add_cascade(label="Open", menu=openMenu)
         fileMenu.add_command(label="Last      [◀]", command=lambda:self.switch_dfile(direction="Left"))
         fileMenu.add_command(label="Next      [▶]", command=lambda:self.switch_dfile(direction="Right"))
 
-        # save submenu
+        # export submenu
         exportMenu = tk.Menu(fileMenu,tearoff=0)
         exportMenu.add_command(label="Project", command=self.export_proj)
         datExportMenu = tk.Menu(exportMenu,tearoff=0)
@@ -142,8 +142,9 @@ class mainGUI(tk.Frame):
         datExportMenu.add_command(label="Processed Amplitude", command=lambda:self.export_dat(type="proc"))
         exportMenu.add_cascade(label="Radar Data", menu=datExportMenu)
         pickExportMenu = tk.Menu(exportMenu,tearoff=0)
-        pickExportMenu.add_command(label="Horizon", command=lambda:self.export_pick(merged=False))
-        pickExportMenu.add_command(label="Merged  [Ctrl+S]", command=lambda:self.export_pick(merged=True))
+        pickExportMenu.add_command(label="Horizon", command=self.export_pick)
+        pickExportMenu.add_command(label="All Horizons", command=lambda:self.export_pick(flag="all"))
+        pickExportMenu.add_command(label="Merged Horizons  [Ctrl+S]", command=lambda:self.export_pick(flag="merged"))
         exportMenu.add_cascade(label="Picks", menu=pickExportMenu)
         exportMenu.add_command(label="Figure", command=self.export_fig)
         exportMenu.add_command(label="Processing Script", command=self.export_log)
@@ -161,35 +162,36 @@ class mainGUI(tk.Frame):
     
         fileMenu.add_command(label="Exit  [Ctrl+Q]", command=self.close_window)
 
-        # interpret menu items
-        pickMenu = tk.Menu(fileMenu,tearoff=0)
+        ### interpret menu items ###
+        pickMenu = tk.Menu(interpretMenu,tearoff=0)
         pickMenu.add_command(label="Start       [Ctrl+N]", command=self.start_pick)
         pickMenu.add_command(label="Stop        [Escape]", command=self.end_pick)
         interpretMenu.add_cascade(label="Pick", menu=pickMenu)
-        newMenu = tk.Menu(fileMenu,tearoff=0)
+        newMenu = tk.Menu(interpretMenu,tearoff=0)
         newMenu.add_command(label="Horizon", command=self.new_horizon)
         newMenu.add_command(label="Segment", command=self.new_segment)
         interpretMenu.add_cascade(label="New", menu=newMenu)
-        editMenu = tk.Menu(fileMenu,tearoff=0)
+        editMenu = tk.Menu(interpretMenu,tearoff=0)
         editMenu.add_command(label="Segment", command=self.edit_pick)
         interpretMenu.add_cascade(label="Edit", menu=editMenu)
-        rmMenu = tk.Menu(fileMenu,tearoff=0)
+        rmMenu = tk.Menu(interpretMenu,tearoff=0)
         rmMenu.add_command(label="Horizon", command=lambda:self.clear_pick(hFlag=True))
         rmMenu.add_command(label="Segment", command=lambda:self.clear_pick(segFlag=True))
         rmMenu.add_command(label="All", command=lambda:self.clear_pick(allFlag=True))
         rmMenu.add_command(label="From File", command=self.delete_datafilePicks)
         interpretMenu.add_cascade(label="Remove", menu=rmMenu)
         interpretMenu.add_command(label="Import", command=self.import_pick)
-        srfMenu = tk.Menu(fileMenu,tearoff=0)
+        srfMenu = tk.Menu(interpretMenu,tearoff=0)
         srfMenu.add_command(label="Define Horizon", command=self.srf_define)
         srfMenu.add_command(label="Auto-pick", command=self.srf_autopick)
         interpretMenu.add_cascade(label="Surface", menu=srfMenu)        
-        exportMenu = tk.Menu(fileMenu,tearoff=0)
-        exportMenu.add_command(label="Horizon", command=lambda:self.export_pick(merged=False))
-        exportMenu.add_command(label="Merged  [Ctrl+S]", command=lambda:self.export_pick(merged=True))
+        exportMenu = tk.Menu(interpretMenu,tearoff=0)
+        exportMenu.add_command(label="Horizon", command=self.export_pick)
+        exportMenu.add_command(label="All Horizons", command=lambda:self.export_pick(flag="all"))
+        exportMenu.add_command(label="Merged Horizons  [Ctrl+S]", command=lambda:self.export_pick(flag="merged"))
         interpretMenu.add_cascade(label="Export", menu=exportMenu)
 
-        # processing menu items
+        ### processing menu items ###
         procMenu.add_command(label="Set Time Zero", command=lambda:self.procTools("tzero"))
         procMenu.add_command(label="Vertical Data Roll", command=lambda:self.procTools("vroll"))
         # procMenu.add_command(label="Dewow", command=lambda:self.procTools("dewow"))
@@ -202,7 +204,7 @@ class mainGUI(tk.Frame):
         procMenu.add_command(label="Filter", command=lambda:self.procTools("filter"))
         procMenu.add_command(label="Hilbert Xform", command=lambda:self.procTools("hilbert"))
 
-        # gain menu items
+        # gain submenu items
         # gainMenu.add_command(label="AGC", command=lambda:self.procTools("agc"))
         gainMenu.add_command(label="T-Pow", command=lambda:self.procTools("tpow"))
         procMenu.add_cascade(label="Gain", menu=gainMenu)
@@ -210,11 +212,11 @@ class mainGUI(tk.Frame):
         procMenu.add_command(label="Undo [Ctrl+Z]", command=lambda:self.procTools("undo"))        
         procMenu.add_command(label="Reset", command=lambda:self.procTools("reset"))
 
-        # view menu items
+        ### view menu items ###
         viewMenu.add_checkbutton(label="Interpretations", onvalue=True, offvalue=False, variable=self.pick_vis, command=self.set_pick_vis)
         viewMenu.add_checkbutton(label="Labels", onvalue=True, offvalue=False, variable=self.ann_vis, command=self.set_ann_vis)
 
-        # help menu items
+        ### help menu items ###
         helpMenu.add_command(label="Instructions", command=self.help)
         helpMenu.add_command(label="Keyboard Shortcuts", command=self.shortcuts)
 
@@ -281,7 +283,7 @@ class mainGUI(tk.Frame):
 
         # Ctrl+S save picks
         elif state & 4 and key == "s":
-            self.export_pick()
+            self.export_pick(flag="merged")
 
         # Ctrl+M open map
         elif state & 4 and key == "m":
@@ -645,6 +647,7 @@ class mainGUI(tk.Frame):
             # remove the trace
             hname.trace_vdelete("w", trace)
             srf = hname.get()
+            print(srf)
             if (not srf) or (self.popup.flag == -1):
                 return
         self.rdata.pick.set_srf(srf)
@@ -690,29 +693,33 @@ class mainGUI(tk.Frame):
         return
 
     # export_pick is method to receieve the desired pick save location from user input
-    def export_pick(self, merged=True):
+    def export_pick(self, flag=None):
         if self.f_loadName:
             # see if any picks have been made
             if  self.rdata.pick.get_pick_flag():
-                # initialize horizon and srf
+                # get directory path to save data
+                dir_out = tk.filedialog.askdirectory(title = "Save Location",
+                                                    initialdir = self.conf["path"]["outPath"],
+                                                    mustexist = True)
+
+                if not dir_out:
+                    return
+
+                # end any active picking
+                self.end_pick()
+                # sort horizons by mean twtt in array
+                self.rdata.pick.horizons = utils.sort_array_dict(self.rdata.pick.horizons)
+                # get horizon to export
                 horizon = None
-                # if merged export, append outfile name with _pk_uid
-                if merged:
-                    tmp_fn_out = self.rdata.fn + "_pk_" + self.conf["param"]["uid"]
-                    if self.rdata.pick.get_srf() is None:
-                        self.srf_define()
-                    # update srf_elev
-                    if self.rdata.pick.get_srf():
-                        self.rdata.set_srfElev()
-                        
-                # otherwise have user select single horizon to export
-                else:
+                horizons = list(self.rdata.pick.horizons)
+
+                # if flag is none export single horizon
+                if flag is None:
                     if self.popup.flag == 1:
                         return
                     horizon_colors = self.impick.get_horizon_colors()
                     # create popup window to get new horizon name and interpreatation color
                     hname =tk.StringVar()
-                    horizons = list(self.rdata.pick.horizons)
                     hname.set(horizons[-1])
                     popup = self.popup.new(title="Export Horizon")
                     tk.Label(popup, text="Select horizon to export:").pack(fill="both", expand=True)
@@ -735,42 +742,43 @@ class mainGUI(tk.Frame):
                     if (not horizon) or (self.popup.flag == -1):
                         return
                     else:
-                        tmp_fn_out = self.rdata.fn + "_" + horizon + "_" + self.conf["param"]["uid"]
+                        fn_out = dir_out + "/" + self.rdata.fn + "_" + horizon + "_pk_" + self.conf["param"]["uid"]
 
-            else:
-                tmp_fn_out = self.rdata.fn
 
-            fn_out = ""
-            if self.os == "darwin":
-                fn_out = tk.filedialog.asksaveasfilename(initialfile = tmp_fn_out,
-                                initialdir = self.conf["path"]["outPath"], title = "save picks")
-                                
-            else:
-                fn_out = tk.filedialog.asksaveasfilename(initialfile = tmp_fn_out,
-                                initialdir = self.conf["path"]["outPath"], title = "save picks", filetypes = [("all files", ".*"),
-                                                                                                            ("comma-separated values",".csv"),
-                                                                                                            ("geopackage", ".gpkg"),
-                                                                                                            ("png image", ".png")])
+                # elif flag is merged export, append outfile name with _pk_uid
+                elif flag=="merged":
+                    fn_out = dir_out + "/" + self.rdata.fn + "_pk_" + self.conf["param"]["uid"]
+                    if self.rdata.pick.get_srf() is None:
+                        self.srf_define()
+                    # update srf_elev
+                    if self.rdata.pick.get_srf():
+                        self.rdata.set_srfElev()
+    
+                # export single or merged horizons
+                if flag is None or flag=="merged":
+                    # set output dataframe
+                    self.rdata.set_out(export.pick_math(self.rdata, self.eps_r.get(), self.conf["output"]["amp"], horizon=horizon, srf=self.rdata.pick.get_srf()))
+                    if self.conf["output"].getboolean("csv"):
+                        export.csv(fn_out + ".csv", self.rdata.out)
+                    if self.conf["output"].getboolean("gpkg"):
+                        export.gpkg(fn_out + ".gpkg", self.rdata.out, self.conf["nav"]["crs"])
 
-            if fn_out:
-                fn, ext = os.path.splitext(fn_out)
 
-                # end any active picking
-                self.end_pick()
-                # sort horizons by mean twtt in array
-                self.rdata.pick.horizons = utils.sort_array_dict(self.rdata.pick.horizons)
-                # set output dataframe
-                self.rdata.set_out(export.pick_math(self.rdata, self.eps_r.get(), self.conf["output"]["amp"], horizon=horizon, srf=self.rdata.pick.get_srf()))
+                # if flag is all, export all horizons individually
+                elif flag == "all":
+                    for h in horizons:
+                        fn_out = dir_out + "/" + self.rdata.fn + "_" + h + "_pk_" + self.conf["param"]["uid"]
+                        # export picks for each horizon
+                        self.rdata.set_out(export.pick_math(self.rdata, self.eps_r.get(), self.conf["output"]["amp"], horizon=h, srf=self.rdata.pick.get_srf()))
+                        if self.conf["output"].getboolean("csv"):
+                            export.csv(fn_out + ".csv", self.rdata.out)
+                        if self.conf["output"].getboolean("gpkg"):
+                            export.gpkg(fn_out + ".gpkg", self.rdata.out, self.conf["nav"]["crs"])
+                        fn_out = dir_out + "/" + self.rdata.fn + "_pk_" + self.conf["param"]["uid"]
+                        
 
-                # export
-                if (self.conf["output"].getboolean("csv")) or (ext == ".csv"):
-                    export.csv(fn + ".csv", self.rdata.out)
-                if (self.conf["output"].getboolean("gpkg")) or (ext == ".gpkg"):
-                    export.gpkg(fn + ".gpkg", self.rdata.out, self.conf["nav"]["crs"])
-                if (self.conf["output"].getboolean("fig")) or (ext == ".png"):
-                    self.impick.export_fig(fn + ".png")
-                # if (self.rdata.fpath.endswith(".h5")):
-                #     export.h5(self.rdata.fpath, self.rdata.out, self.rdata.dtype, self.rdata.pick.get_srf())
+                if self.conf["output"].getboolean("fig"):
+                    self.impick.export_fig(fn_out + ".png")
                 self.export_proj()
 
 
@@ -901,8 +909,11 @@ class mainGUI(tk.Frame):
 
     # set tkinter menu font colors to match color name
     def set_menu_color(self, menu=None, horizon=None, colors=None, *args):
-        c = colors[horizon.get()]
-        menu.config(foreground=c, activeforeground=c, highlightcolor=c)
+        if not [x for x in (menu, colors) if x is None]:
+            h = horizon.get()
+            if h:
+                c = colors[h]
+                menu.config(foreground=c, activeforeground=c, highlightcolor=c)
 
 
     # change tabs between profile and waveform views
