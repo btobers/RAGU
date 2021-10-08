@@ -95,7 +95,7 @@ class ingest:
                         fnl = len(self.rdata.fn) + 1
                         extl = len(uid) + 4
                         horizon = fpath.split("/")[-1][fnl:-extl]
-                        sample = dat["sample"].to_numpy()
+                        sample = dat["sample"].to_numpy() - self.rdata.flags.sampzero
 
                     if horizon in self.rdata.pick.horizons.keys():
                         if utils.nan_array_equal(self.rdata.pick.horizons[horizon], sample):

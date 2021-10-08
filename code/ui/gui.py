@@ -951,10 +951,17 @@ class mainGUI(tk.Frame):
                     srf = self.rdata.pick.get_srf()
                     if srf is None:
                         srf = "srf"
+
                     # define surface horizon name to set index to zeros
                     self.rdata.pick.horizons[srf] = np.zeros(self.rdata.tnum)
                     self.srf_define(srf=srf)
-                    self.impick.set_picks(horizon=self.rdata.pick.get_srf())
+
+                    # apply sample shift to existing horizons and update picks
+                    for h in self.rdata.pick.horizons:
+                        if h != srf:
+                            self.rdata.pick.horizons[h] -= self.rdata.flags.sampzero
+                        self.impick.set_picks(horizon=h)                    
+
                     self.impick.blit()
                     procFlag = True
 
