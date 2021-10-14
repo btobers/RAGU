@@ -126,7 +126,7 @@ eps_r = 3.15
 amp = True
 # bool csv: export csv file of picks
 csv = True
-# bool shp: export shapefile of picks
+# bool gpkg: export geopackage of picks
 gpkg = True
 # bool fig: export profile image with picks
 fig = True

@@ -56,7 +56,7 @@ def read_h5(fpath, navcrs, body):
 
     rdata.set_twtt()
     # assign signal info
-    rdata.info["Signal Type"] = f["raw"]["tx0"].attrs["signal"].decode().capitalize() 
+    rdata.info["Signal Type"] = f["raw"]["tx0"].attrs["signal"].capitalize() 
     rdata.info["CF [MHz]"] = f["raw"]["tx0"].attrs["centerFrequency"][0] * 1e-6
     if rdata.info["Signal Type"] == "Chirp":
         rdata.info["Badwidth [%]"] = f["raw"]["tx0"].attrs["bandwidth"][0] * 100
