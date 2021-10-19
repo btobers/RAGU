@@ -7,7 +7,7 @@
 radar data ingest wrapper
 """
 ### imports ###
-from ingest import ingest_oibAK, ingest_pulseekko, ingest_gssi, ingest_sharad, ingest_marsis, ingest_lrs, ingest_cresis_rds, ingest_cresis_snow, ingest_rimfax
+from ingest import ingest_oibAK, ingest_uaf_kentech, ingest_pulseekko, ingest_gssi, ingest_sharad, ingest_marsis, ingest_lrs, ingest_cresis_rds, ingest_cresis_snow, ingest_rimfax
 from tools import utils
 import numpy as np
 import pandas as pd
@@ -36,7 +36,10 @@ class ingest:
         # better ways to do this than an if/else
         # but for a few file types this is easier
         if (self.ftype == "h5"):
-            self.rdata = ingest_oibAK.read_h5(self.fpath, navcrs, body)
+            try:
+                self.rdata = ingest_oibAK.read_h5(self.fpath, navcrs, body)
+            except:
+                self.rdata = ingest_uaf_kentech.read_h5(self.fpath, navcrs, body)
         elif (self.ftype == "mat"):
             try:
                 self.rdata = ingest_cresis_snow.read_mat(self.fpath, navcrs, body)

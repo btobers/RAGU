@@ -119,6 +119,50 @@ def getnav_oibAK_mat(navfile, navcrs, body):
     return df[["lon", "lat", "elev", "twtt_wind", "dist"]]
 
 
+def getnav_uaf_kentech(navfile, navcrs, body):
+    h5 = h5py.File(navfile, "r")
+
+    if "loc0" in h5["raw"].keys():
+        nav = h5["raw"]["loc0"][:]
+        df = pd.DataFrame(nav)
+        try:
+            df.rename(columns={"hgt": "elev"}, inplace=True)
+        except:
+            pass        # Interpolate non-unique values
+        hsh = nav["lat"] + nav["lon"] * 1e4
+        idx = np.arange(0, len(hsh), 1)
+        uniq, uidx = np.unique(hsh, return_index=True)
+        uidx = np.sort(uidx)
+        uidx[-1] = len(hsh) - 1  # Handle end of array
+        df["lat"] = np.interp(idx, uidx, df["lat"][uidx])
+        df["lon"] = np.interp(idx, uidx, df["lon"][uidx])
+        df["elev"] = np.interp(idx, uidx, df["elev"][uidx])
+
+    else:
+        h5.close()
+        print("No valid navigation data found in file %s" % navfile)
+        sys.exit()
+
+    h5.close()
+
+    df["x"], df["y"], df["z"] = pyproj.transform(
+        navcrs,
+        xyzsys[body],
+        df["lon"].to_numpy(),
+        df["lat"].to_numpy(),
+        df["elev"].to_numpy(),
+    )
+
+    df["dist"] = euclid_dist(
+        df["x"].to_numpy(),
+        df["y"].to_numpy(),
+        df["z"].to_numpy())
+
+    df["twtt_wind"] = 0.0
+
+    return df[["lon", "lat", "elev", "twtt_wind", "dist"]]
+
+
 def getnav_cresis_mat(navfile, navcrs, body):
     f = h5py.File(navfile, "r")
     lon = f["Longitude"][:].flatten()
@@ -304,11 +348,15 @@ def getnav_sharad(navfile, navcrs, body):
     try:
         # transform MRO lon/lat to areoid x/y to sample areoid radius along SC path 
         aerX, aerY = pyproj.transform(
-            navcrs, aer.crs, df["lon"].to_numpy(), df["lat"].to_numpy()
+            navcrs, aer.crs.to_proj4(), df["lon"].to_numpy(), df["lat"].to_numpy()
         )
 
         # get raster x/y index of SC x/y positions
         ix,iy = aer.index(aerX,aerY)
+        # there seems to be a rasterio indexing error where value may exceed axis bounds, so we'll subtract one
+        ix = np.asarray(ix) - 1
+        iy = np.asarray(iy) - 1
+
         aerZ = aer.read(1)[ix,iy]
 
         # reference sc elevation to areoid height  = scRad - (3396km + aerZ)

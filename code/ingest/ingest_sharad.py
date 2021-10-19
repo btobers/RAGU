@@ -37,12 +37,12 @@ def read(fpath, simpath, navcrs, body):
     rdata.nchan = 1
     rdata.set_dat(tmp.reshape(rdata.snum,rdata.tnum))
     rdata.set_proc(rdata.get_dat())
-    
+
     # convert binary .img clutter sim product to numpy array
     if simpath:
-        simpath = simpath + fn.replace("rgram","geom_combined")
+        simpath = simpath + fn[:-9] + "geom_combined.img"
     else:
-        simpath = root + fn.replace("rgram","geom_combined")
+        simpath = root + fn[:-9] + "geom_combined.img"
 
     if os.path.isfile(simpath):
         with open(simpath, "rb") as f:
@@ -62,7 +62,7 @@ def read(fpath, simpath, navcrs, body):
     rdata.info["prf [Hz]"] = rdata.prf
 
     # open geom nav file for rgram
-    geom_path = root + fn.replace("rgram","geom").replace("img","tab")
+    geom_path = root +  fn[:-9] + "geom.tab"
 
     # parse nav
     rdata.navdf = navparse.getnav_sharad(geom_path, navcrs, body)
