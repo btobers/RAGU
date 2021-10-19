@@ -16,13 +16,13 @@ import os, sys
 
 # method to read PDS SHARAD USRDR data
 def read(fpath, simpath, navcrs, body):
-    fn = fpath.split("/")[-1]
-    root = fpath.rstrip(fn)
-    print("----------------------------------------")
-    print("Loading: " + fn)
     rdata = garlic(fpath)
-    rdata.fn = fn.rstrip("_rgram.img")
+    rdata.fn = fpath.split("/")[-1][:-10]
     rdata.dtype = "sharad"
+    root = os.path.dirname(fpath)
+    print("----------------------------------------")
+    print("Loading: " + rdata.fn)
+    # rdata.fn = fn.rstrip("_rgram.img")
     # convert binary .img PDS RGRAM to numpy array
     # reshape array with 3600 lines
     dtype = np.dtype("float32")     
@@ -40,9 +40,9 @@ def read(fpath, simpath, navcrs, body):
 
     # convert binary .img clutter sim product to numpy array
     if simpath:
-        simpath = simpath + fn[:-9] + "geom_combined.img"
+        simpath = simpath + "/" + rdata.fn + "_geom_combined.img"
     else:
-        simpath = root + fn[:-9] + "geom_combined.img"
+        simpath = root + "/" + rdata.fn + "_geom_combined.img"
 
     if os.path.isfile(simpath):
         with open(simpath, "rb") as f:
@@ -62,7 +62,7 @@ def read(fpath, simpath, navcrs, body):
     rdata.info["prf [Hz]"] = rdata.prf
 
     # open geom nav file for rgram
-    geom_path = root +  fn[:-9] + "geom.tab"
+    geom_path = root +  "/" + rdata.fn + "_geom.tab"
 
     # parse nav
     rdata.navdf = navparse.getnav_sharad(geom_path, navcrs, body)
