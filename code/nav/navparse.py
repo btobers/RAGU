@@ -345,33 +345,40 @@ def getnav_sharad(navfile, navcrs, body):
         print("Unable to open areoid file. Is it located at : " + aerPath + " ?")
         sys.exit(1)
 
-    try:
+    # try:
         # transform MRO lon/lat to areoid x/y to sample areoid radius along SC path 
-        aerX, aerY = pyproj.transform(
-            navcrs, aer.crs.to_proj4(), df["lon"].to_numpy(), df["lat"].to_numpy()
-        )
+    aerX, aerY = pyproj.transform(
+        navcrs, aer.crs.to_proj4(), df["lon"].to_numpy(), df["lat"].to_numpy()
+    )
 
-        # get raster x/y index of SC x/y positions
-        ix,iy = aer.index(aerX,aerY)
-        # there seems to be a rasterio indexing error where value may exceed axis bounds, so we'll subtract one
-        ix = np.asarray(ix) - 1
-        iy = np.asarray(iy) - 1
+    # get raster x/y index of SC x/y positions
+    ix,iy = aer.index(aerX,aerY)
 
-        aerZ = aer.read(1)[ix,iy]
+    ix = np.asarray(ix)
+    iy = np.asarray(iy)
 
-        # reference sc elevation to areoid height  = scRad - (3396km + aerZ)
-        df["elev"] = (1000.0*df["scRad"]) - 3396000.0 - aerZ
+    # there seems to be a rasterio indexing error where value may exceed axis bounds when a track is pole-crossing
+    # subtracting one from the index value seems to resolve this
+    ix[ix > aer.width - 1] = aer.width - 1
+    ix[ix < 0] = 0
+    iy[iy > aer.height - 1] = aer.height - 1
+    iy[iy < 0] = 0
 
-        # elevation at top of radargram (sample 0) = aerZ + offset = aerZ + (1800 [samples] * 37.5e-9 [sec/sample] * 3e8 [m/sec] / 2)
-        elevSamp0 = aerZ + (1800*37.5e-9*C/2)
+    aerZ = aer.read(1)[ix,iy]
 
-        # get twtt window from sc to top of radargram = 2*(elev - evelSamp0)/c
-        # this will be added back in upon export to get absolute twtt of picks
-        df["twtt_wind"] = 2*((df["elev"]) - elevSamp0)/C
+    # reference sc elevation to areoid height  = scRad - (3396km + aerZ)
+    df["elev"] = (1000.0*df["scRad"]) - 3396000.0 - aerZ
 
-    except:
-        print("SHARAD Areiod referencing error. Are the proper planetary body and coordinate reference system set in the config file?\nbody:\t{}\ncrs:\t{}".format(body,navcrs))
-        sys.exit(1)
+    # elevation at top of radargram (sample 0) = aerZ + offset = aerZ + (1800 [samples] * 37.5e-9 [sec/sample] * 3e8 [m/sec] / 2)
+    elevSamp0 = aerZ + (1800*37.5e-9*C/2)
+
+    # get twtt window from sc to top of radargram = 2*(elev - evelSamp0)/c
+    # this will be added back in upon export to get absolute twtt of picks
+    df["twtt_wind"] = 2*((df["elev"]) - elevSamp0)/C
+
+    # except:
+    #     print("SHARAD Areiod referencing error. Are the proper planetary body and coordinate reference system set in the config file?\nbody:\t{}\ncrs:\t{}".format(body,navcrs))
+    #     sys.exit(1)
 
     return df[["lon", "lat", "elev", "twtt_wind", "dist"]]
 
