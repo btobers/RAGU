@@ -707,7 +707,7 @@ class mainGUI(tk.Frame):
                 # end any active picking
                 self.end_pick()
                 # sort horizons by mean twtt in array
-                self.rdata.pick.horizons = utils.sort_array_dict(self.rdata.pick.horizons)
+                self.rdata.pick.horizons = utils.sort_array_dict(self.rdata.pick.horizons, self.rdata.pick.get_srf())
                 # get horizon to export
                 horizon = None
                 horizons = list(self.rdata.pick.horizons)

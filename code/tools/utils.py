@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 import geopandas as gpd
 import tkinter as tk
-import sys, h5py, fnmatch
+import sys, h5py, fnmatch, copy
 from tools.constants import *
 
 # get_srf is a function for auto-detecting a radargram surface horizon
@@ -61,14 +61,39 @@ def find_nearest(a, val):
 
 
 # sort dictionary full of numpy arrays using array mean value
-def sort_array_dict(a):
+def sort_array_dict(a, srf=None):
+    b = copy.deepcopy(a)
     out = {}
-    mean_dict = {}
-    for key, arr in a.items():
-        mean_dict[key] = np.nanmean(arr)
-    keys = [k for k, v in sorted(mean_dict.items(), key=lambda item: item[1])]
+    sort_dict = {}
+    # if surface horizon, place first
+    if srf:
+        out[srf] = b[srf]
+        b.pop(srf, None)
+
+    # stack all arrays in dictionary
+    stacked = np.vstack((list(b.values())))
+    # see if an index is occupied with a value for all arrays
+    # if so, just sort all arrays based on value for that index
+    non_nan_cols_array = np.all(~np.isnan(stacked),axis=0)
+    if np.any(non_nan_cols_array):
+        idx = np.where(non_nan_cols_array)[0][0]
+        for key, arr in b.items():
+            sort_dict[key] = arr[idx]
+
+    else:
+        # sort array elements by row
+        row_sorted_arrays = np.argsort(stacked,axis=0).astype(np.float64)
+        # replace nan values
+        row_sorted_arrays[np.isnan(stacked)] = np.nan
+        # add up sorting to get sum and sort all arrays by the sum
+        total = np.nansum(row_sorted_arrays,axis=1)
+        for i, (key, arr) in enumerate(b.items()):
+            sort_dict[key] = total[i]
+
+    keys = [k for k, v in sorted(sort_dict.items(), key=lambda item: item[1])]
     for key in keys:
         out[key] = a[key]
+
     return out
 
 

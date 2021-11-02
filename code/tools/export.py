@@ -67,12 +67,10 @@ def pick_math(rdata, eps_r=3.15, amp_out=True, horizon=None, srf=None):
             samp_arr = array + rdata.flags.sampzero
             out[horizon + "_sample"] = samp_arr
             out[horizon + "_twtt"] = utils.sample2twtt(samp_arr, rdata.dt)
-            # for sharad, add in twtt_wind to get absolute twtt
-            if rdata.dtype == "sharad":
-                out[horizon + "_twtt"] += rdata.navdf["twtt_wind"]
+            # add in twtt_wind to get absolute twtt
+            out[horizon + "_twtt"] += rdata.navdf["twtt_wind"]
 
             if horizon == srf:
-                # elev[horizon] = rdata.srfElev
                 out[horizon + "_elev"] = rdata.get_srfElev()
 
                 if type(damp) is np.ndarray:
