@@ -60,7 +60,7 @@ class mainGUI(tk.Frame):
                             "figtitle": tk.BooleanVar(),
                             "figxaxis": tk.BooleanVar(),
                             "figyaxis": tk.BooleanVar(),
-                            "figclip": tk.DoubleVar(value=0.4)}
+                            "figclip": tk.DoubleVar(value=1.0)}
         self.figsettings["figxaxis"].set(True)        
         self.figsettings["figyaxis"].set(True)        
         self.figsettings["figtitle"].set(True)        
