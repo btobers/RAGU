@@ -78,7 +78,7 @@ def getnav_oibAK_h5(navfile, navcrs, body):
 
     df["twtt_wind"] = 0.0
 
-    return df[["lon", "lat", "elev", "twtt_wind", "dist"]]
+    return df[["lon", "lat", "elev", "x", "y", "z", "twtt_wind", "dist"]]
 
 
 def getnav_oibAK_mat(navfile, navcrs, body):
@@ -117,7 +117,7 @@ def getnav_oibAK_mat(navfile, navcrs, body):
 
     df["twtt_wind"] = 0.0
 
-    return df[["lon", "lat", "elev", "twtt_wind", "dist"]]
+    return df[["lon", "lat", "elev", "x", "y", "z", "twtt_wind", "dist"]]
 
 
 def getnav_uaf_kentech(navfile, navcrs, body):
@@ -161,7 +161,7 @@ def getnav_uaf_kentech(navfile, navcrs, body):
 
     df["twtt_wind"] = 0.0
 
-    return df[["lon", "lat", "elev", "twtt_wind", "dist"]]
+    return df[["lon", "lat", "elev", "x", "y", "z", "twtt_wind", "dist"]]
 
 
 def getnav_cresis_mat(navfile, navcrs, body):
@@ -188,7 +188,7 @@ def getnav_cresis_mat(navfile, navcrs, body):
 
     df["twtt_wind"] = 0.0
 
-    return df[["lon", "lat", "elev", "twtt_wind", "dist"]]
+    return df[["lon", "lat", "elev", "x", "y", "z", "twtt_wind", "dist"]]
 
 
 def getnav_gssi(navfile, tnum, navcrs, body):
@@ -249,7 +249,7 @@ def getnav_gssi(navfile, tnum, navcrs, body):
 
     df["twtt_wind"] = 0.0
 
-    return df[["lon", "lat", "elev", "twtt_wind", "dist"]]
+    return df[["lon", "lat", "elev", "x", "y", "z", "twtt_wind", "dist"]]
 
 
 def getnav_pulseekko(navfile, tnum, navcrs, body):
@@ -312,7 +312,7 @@ def getnav_pulseekko(navfile, tnum, navcrs, body):
 
     df["twtt_wind"] = 0.0
 
-    return df[["lon", "lat", "elev", "twtt_wind", "dist"]]
+    return df[["lon", "lat", "elev", "x", "y", "z", "twtt_wind", "dist"]]
 
     
 def getnav_sharad(navfile, navcrs, body):
@@ -392,7 +392,7 @@ def getnav_sharad(navfile, navcrs, body):
         print("SHARAD Areiod referencing error. Are the proper planetary body and coordinate reference system set in the config file?\nbody:\t{}\ncrs:\t{}".format(body,navcrs))
         sys.exit(1)
 
-    return df[["lon", "lat", "elev", "twtt_wind", "dist"]]
+    return df[["lon", "lat", "elev", "x", "y", "z", "twtt_wind", "dist"]]
 
 
 def getnav_lrs(navfile, navcrs, body):
@@ -404,8 +404,9 @@ def getnav_lrs(navfile, navcrs, body):
         df["z"].to_numpy())
 
     df["elev"] = df["hgt"]
+    df["twtt_wind"] = 0.0
 
-    return df[["lon", "lat", "elev", "dist"]]
+    return df[["lon", "lat", "elev", "x", "y", "z", "twtt_wind", "dist"]]
 
 
 def getnav_marsis(navfile, navcrs, body):
@@ -438,7 +439,7 @@ def getnav_marsis(navfile, navcrs, body):
 
     df["twtt_wind"] = 0.0
 
-    return df[["lon", "lat", "elev", "twtt_wind", "dist"]]
+    return df[["lon", "lat", "elev", "x", "y", "z", "twtt_wind", "dist"]]
 
 
 def getnav_rimfax(navfile, navcrs, body):
@@ -464,10 +465,10 @@ def getnav_rimfax(navfile, navcrs, body):
 
     df["twtt_wind"] = 0.0
 
-    return df[["lon", "lat", "elev", "twtt_wind", "dist"]]
+    return df[["lon", "lat", "elev", "x", "y", "z", "twtt_wind", "dist"]]
 
 
-def euclid_dist(xarray, yarray,zarray):
+def euclid_dist(xarray, yarray, zarray):
     dist = np.zeros_like(xarray)
     dist[1:] = np.cumsum(np.sqrt(np.diff(xarray) ** 2.0 + np.diff(yarray) ** 2.0 + np.diff(zarray) ** 2.0))
     return dist

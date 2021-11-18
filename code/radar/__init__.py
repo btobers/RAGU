@@ -31,7 +31,7 @@ class garlic(object):
                         "twtt",
                         "navdf"]
     # import processing tools
-    from radar.processing import set_tzero, tzero_shift, vertical_roll, tpowGain, filter, hilbertxform, undo, redo, reset
+    from radar.processing import reverse, set_tzero, tzero_shift, vertical_roll, tpowGain, filter, hilbertxform, undo, redo, reset
 
     def __init__(self, fpath):
         # basic data file attributes

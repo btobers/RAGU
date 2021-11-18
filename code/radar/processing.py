@@ -8,6 +8,7 @@ RAGU radar data processing class and tools
 """
 ### imports ###
 from tools import utils
+from nav import navparse
 import numpy as np
 import numpy.matlib as matlib
 import matplotlib.pyplot as plt
@@ -78,6 +79,25 @@ def tzero_shift(self):
 
     return
 
+
+def reverse(self):
+    # reverse left-right order of radargram
+    self.set_dat(self.get_dat()[:,::-1])
+    self.set_proc(self.get_dat())
+
+    # need to flip all relevant arrays - nav, picks, clutter
+    if self.flags.sim:
+        self.set_sim(utils.powdB2amp(self.sim)[:,::-1])
+
+    # flip navdf and recalculate distance array
+    self.navdf = self.navdf.iloc[::-1].reset_index(drop=True)
+    self.navdf.dist = navparse.euclid_dist(self.navdf.x.to_numpy(), self.navdf.y.to_numpy(), self.navdf.z.to_numpy())
+
+    # log
+    self.log("self.rdata.rgram_reverse()")
+    print("# radargram reversed, to undo simply repeat reverse operation")
+
+    return
 
 def vertical_roll(self, samples=0):
     # roll 2d proc data array vertically to fix mismatch

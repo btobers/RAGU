@@ -192,6 +192,7 @@ class mainGUI(tk.Frame):
         interpretMenu.add_cascade(label="Export", menu=exportMenu)
 
         ### processing menu items ###
+        procMenu.add_command(label="Reverse Radargram", command=lambda:self.procTools("reverse"))
         procMenu.add_command(label="Set Time Zero", command=lambda:self.procTools("tzero"))
         procMenu.add_command(label="Vertical Data Roll", command=lambda:self.procTools("vroll"))
         # procMenu.add_command(label="Dewow", command=lambda:self.procTools("dewow"))
@@ -944,7 +945,12 @@ class mainGUI(tk.Frame):
         if self.f_loadName:
             procFlag = None
             simFlag = None
-            if arg == "tzero":
+            if arg == "reverse":
+                self.rdata.reverse()
+                self.impick.reverse()
+                procFlag = True
+
+            elif arg == "tzero":
                 # set tzero should only be used for ground-based GPR data
                 self.rdata.set_tzero()
                 if self.rdata.flags.sampzero > 0:

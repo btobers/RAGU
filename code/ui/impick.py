@@ -711,6 +711,19 @@ class impick(tk.Frame):
             self.horizon_lns[horizon].set_data(x,y)
 
 
+    # reverse horizon path objects
+    def reverse(self):
+        tmp = copy.deepcopy(self.rdata.pick.horizons)
+        self.rm_horizon(rm_all=True, verify=False)
+        for h in tmp.keys():
+            self.rdata.pick.horizons[h] = np.flip(tmp[h])
+            self.set_picks(h)
+
+        self.update_pickLabels()
+        self.update_seg_opt_menu()
+        self.update_bg()
+
+
     # return horizon colors
     def get_horizon_colors(self):
         return self.ln_colors["used"]
@@ -857,11 +870,12 @@ class impick(tk.Frame):
             return
 
         if rm_all:
-            if verify and tk.messagebox.askyesno("Warning","Remove all interpretation horizons?"):
-                horizon = list(self.horizon_paths.keys())
-                verify = False
-            else:
-                return
+            horizon = list(self.horizon_paths.keys())
+            if verify:
+                if tk.messagebox.askyesno("Warning","Remove all interpretation horizons?"):
+                    verify = False
+                else:
+                    return
 
         if horizon is None:
             if self.popup.flag == 1:
