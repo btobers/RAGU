@@ -713,10 +713,11 @@ class impick(tk.Frame):
 
     # reverse horizon path objects
     def reverse(self):
+        # horizon arrays have already been flipped within proc.reverse, but we need to reset the canvas by redrawing the horizons
         tmp = copy.deepcopy(self.rdata.pick.horizons)
         self.rm_horizon(rm_all=True, verify=False)
         for h in tmp.keys():
-            self.rdata.pick.horizons[h] = np.flip(tmp[h])
+            self.rdata.pick.horizons[h] = tmp[h]
             self.set_picks(h)
 
         self.update_pickLabels()

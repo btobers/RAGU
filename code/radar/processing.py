@@ -93,6 +93,10 @@ def reverse(self):
     self.navdf = self.navdf.iloc[::-1].reset_index(drop=True)
     self.navdf.dist = navparse.euclid_dist(self.navdf.x.to_numpy(), self.navdf.y.to_numpy(), self.navdf.z.to_numpy())
 
+    # reverse picks
+    for h in self.pick.horizons.keys():
+        self.pick.horizons[h] = np.flip(self.pick.horizons[h])
+
     # log
     self.log("self.rdata.rgram_reverse()")
     print("# radargram reversed, to undo simply repeat reverse operation")
