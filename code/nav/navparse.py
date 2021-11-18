@@ -7,6 +7,7 @@
 nav library contains various fucntions for reading radar nav data and transforming crs
 """
 ### imports ###
+from raguError import raguError
 from nav.gps import GPSdat
 from tools.constants import *
 import sys,os
@@ -192,43 +193,54 @@ def getnav_cresis_mat(navfile, navcrs, body):
 
 def getnav_gssi(navfile, tnum, navcrs, body):
     if os.path.isfile(navfile):
-        with codecs.open(navfile, "r", encoding="utf-8", errors="ignore") as f_in:
-            lines = f_in.readlines()
-        # We have to be careful with this to permit other NMEA strings to have been recorded
-        # and to be sure that the indices line up
-        gssis_inds = [i for i, line in enumerate(lines) if "GSSIS" in line]
-        gga_inds = [i for i, line in enumerate(lines) if "GGA" in line]
-        # we may have some records without GGA, so check if this is the case;
-        # we keep track of the offset if so
-        gssis_inds_keep = []
-        offset_ind = 0
-        for i, j in enumerate(gssis_inds[:-1]):
-            if (gga_inds[i + offset_ind] > j and gga_inds[i + offset_ind] < gssis_inds[i + 1]):
-                gssis_inds_keep.append(j)
-            else:
-                offset_ind -= 1
-        if gga_inds[-1] > gssis_inds[-1]:
-            gssis_inds_keep.append(gssis_inds[-1])
+        try:
+            with codecs.open(navfile, "r", encoding="utf-8", errors="ignore") as f_in:
+                lines = f_in.readlines()
+            # We have to be careful with this to permit other NMEA strings to have been recorded
+            # and to be sure that the indices line up
 
-        scans = np.array(list(map(lambda x: int(x.split(",")[1]),
-                                [line for i, line in enumerate(lines) if i in gssis_inds_keep])))
-        gps = GPSdat([line for i, line in enumerate(lines) if i in gga_inds], scans, tnum)
-        df = pd.DataFrame({"lon": gps.lon, "lat": gps.lat, "elev": gps.elev,
-                                    "x": np.nan, "y": np.nan, "z": np.nan,
-                                    "dist": np.nan})
+            gssis_inds = [i for i, line in enumerate(lines) if "GSSIS" in line]
+            gga_inds = [i for i, line in enumerate(lines) if "GGA" in line]
 
-        df["x"], df["y"], df["z"] = pyproj.transform(
-            navcrs,
-            xyzsys[body],
-            df["lon"].to_numpy(),
-            df["lat"].to_numpy(),
-            df["elev"].to_numpy(),
-        )
+            # we may have some records without GGA, so check if this is the case;
+            # we keep track of the offset if so
+            gssis_inds_keep = []
+            offset_ind = 0
+            for i, j in enumerate(gssis_inds[:-1]):
+                if (gga_inds[i + offset_ind] > j and gga_inds[i + offset_ind] < gssis_inds[i + 1]):
+                    gssis_inds_keep.append(j)
+                else:
+                    offset_ind -= 1
+            if gga_inds[-1] > gssis_inds[-1]:
+                gssis_inds_keep.append(gssis_inds[-1])
 
-        df["dist"] = euclid_dist(
-            df["x"].to_numpy(),
-            df["y"].to_numpy(),
-            df["z"].to_numpy())
+            scans = np.array(list(map(lambda x: int(x.split(",")[1]),
+                                    [line for i, line in enumerate(lines) if i in gssis_inds_keep])))
+            
+            gps = GPSdat([line for i, line in enumerate(lines) if i in gga_inds], scans, tnum)
+            df = pd.DataFrame({"lon": gps.lon, "lat": gps.lat, "elev": gps.elev,
+                                        "x": np.nan, "y": np.nan, "z": np.nan,
+                                        "dist": np.nan})
+
+            df["x"], df["y"], df["z"] = pyproj.transform(
+                navcrs,
+                xyzsys[body],
+                df["lon"].to_numpy(),
+                df["lat"].to_numpy(),
+                df["elev"].to_numpy(),
+            )
+
+            df["dist"] = euclid_dist(
+                df["x"].to_numpy(),
+                df["y"].to_numpy(),
+                df["z"].to_numpy())
+    
+        except Exception as err:
+
+            nd = np.repeat(np.nan, tnum)
+            df = pd.DataFrame({"lon": nd, "lat": nd, "elev": nd,
+                                        "x": nd, "y": nd, "z": nd,
+                                        "dist": nd})
     else:
         nd = np.repeat(np.nan, tnum)
         df = pd.DataFrame({"lon": nd, "lat": nd, "elev": nd,
