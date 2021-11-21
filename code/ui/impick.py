@@ -334,6 +334,8 @@ class impick(tk.Frame):
         self.s_cmax.valmax = self.maxdB_data + (self.data_crange/2)
         self.s_cmax.valinit = self.maxdB_data
         self.update_slider()
+        print(self.s_cmin.valinit)
+        print(self.s_cmax.valinit)
 
 
     # update clim slider bar
@@ -355,13 +357,13 @@ class impick(tk.Frame):
                 self.data_cmax = self.s_cmax.val
                 self.im_dat.set_clim([self.data_cmin, self.data_cmax])
                 # update norm
-                self.im_dat.set_norm(mpl.colors.LogNorm(self.data_cmin, self.data_cmax))
+                # self.im_dat.set_norm(mpl.colors.LogNorm(self.data_cmin, self.data_cmax))
             else:
                 self.sim_cmin = self.s_cmin.val
                 self.sim_cmax = self.s_cmax.val
                 self.im_sim.set_clim([self.sim_cmin, self.sim_cmax])
                 # update norm
-                self.im_sim.set_norm(mpl.colors.LogNorm(self.sim_cmin, self.sim_cmax))
+                # self.im_sim.set_norm(mpl.colors.LogNorm(self.sim_cmin, self.sim_cmax))
         except Exception as err:
             print("cmap_update error: " + str(err))
 
@@ -1509,7 +1511,6 @@ class impick(tk.Frame):
     # get eps_r setting from gui settings
     def set_eps_r(self, eps_r):
         self.eps_r = eps_r
-
 
 
     # export_fig is a method to receive the pick save location from gui export the radar figure

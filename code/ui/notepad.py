@@ -13,7 +13,7 @@ import os, sys
 class notepad(tk.Frame):
 
     # default window width and height 
-    __thisWidth = 500
+    __thisWidth = 600
     __thisHeight = 300      
     __file = None
 
@@ -46,7 +46,7 @@ class notepad(tk.Frame):
         self.__thisFileMenu = tk.Menu(self.__thisMenuBar, tearoff=0) 
         self.__thisEditMenu = tk.Menu(self.__thisMenuBar, tearoff=0) 
         self.__thisHelpMenu = tk.Menu(self.__thisMenuBar, tearoff=0) 
-        self.__thisTextArea = tk.Text(self.__root) 
+        self.__thisTextArea = tk.Text(self.__root, font=("Times New Roman", 14)) 
         self.__thisScrollBar = tk.Scrollbar(self.__thisTextArea)
 
         # Center the window 
@@ -241,6 +241,11 @@ class notepad(tk.Frame):
                 self.__thisTextArea.insert(tk.END, fn + ",")
                 self.__thisTextArea.see("insert")
 
+            # highlight current line
+            start = self.__thisTextArea.index("insert linestart")
+            end = self.__thisTextArea.index("insert lineend")
+            self.__highlighter(start, end)
+
 
     # __search_text
     def __search_text(self, lookup):
@@ -248,6 +253,16 @@ class notepad(tk.Frame):
             if lookup in line:
                 self.__thisTextArea.mark_set("insert", str(num+1) + "." + str(len(line)))
                 self.__thisTextArea.see("insert")
+
+
+    def __highlighter(self, start, end):
+        if all(v is not None for v in [start, end]):  
+            # remove previous tag
+            idx_prev = self.__thisTextArea.tag_ranges("highlight")
+            if len(idx_prev) > 0:
+                self.__thisTextArea.tag_remove("highlight", idx_prev[0], idx_prev[1])
+            self.__textHighlight = self.__thisTextArea.tag_add("highlight", start, end)
+            self.__thisTextArea.tag_config("highlight", background="yellow")
 
 
     # __get_text returns the text entry string
