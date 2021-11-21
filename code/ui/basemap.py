@@ -219,13 +219,13 @@ class basemap(tk.Frame):
         r = max(x_range[1]-x_range[0],y_range[1]-y_range[0])
         xl = np.median(x_range) - r
         xr = np.median(x_range) + r
-        yt = np.median(y_range) - r
-        yb = np.median(y_range) + r
+        yb = np.median(y_range) - r
+        yt = np.median(y_range) + r
         # if track falls within bm, zoom in
         xaxis = self.map_fig_ax.get_xlim()
         yaxis = self.map_fig_ax.get_ylim()      
-        if (xl > xaxis[0]) & (xr < xaxis[1]) & (yb > yaxis[0]) & (yt < yaxis[1]):
-            self.map_fig_ax.axis([xl,xr,yb,yt])
+        # if (xl > xaxis[0]) & (xr < xaxis[1]) & (yb > yaxis[0]) & (yt < yaxis[1]):
+        self.map_fig_ax.axis([xl,xr,yb,yt])
 
         if not self.legend:
             self.legend = self.map_fig_ax.legend()
