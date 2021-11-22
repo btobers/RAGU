@@ -227,6 +227,8 @@ class notepad(tk.Frame):
             text = self.__get_text()
             if fn in text:
                 self.__search_text(fn)
+                start = self.__thisTextArea.index("insert linestart")
+
             else:
                 if len(text) > 1:
                     lline = text.rsplit("\n")[-2]
@@ -240,10 +242,10 @@ class notepad(tk.Frame):
 
                 self.__thisTextArea.insert(tk.END, fn + ",")
                 self.__thisTextArea.see("insert")
+                start = self.__thisTextArea.index("insert linestart")
 
             # highlight current line
-            start = self.__thisTextArea.index("insert linestart")
-            end = self.__thisTextArea.index("insert lineend")
+            end = self.__thisTextArea.index(start.split(".")[0] + "." + str(len(fn)))
             self.__highlighter(start, end)
 
 
