@@ -334,8 +334,6 @@ class impick(tk.Frame):
         self.s_cmax.valmax = self.maxdB_data + (self.data_crange/2)
         self.s_cmax.valinit = self.maxdB_data
         self.update_slider()
-        print(self.s_cmin.valinit)
-        print(self.s_cmax.valinit)
 
 
     # update clim slider bar
