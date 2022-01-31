@@ -15,7 +15,7 @@ class notepad(tk.Frame):
     # default window width and height 
     __thisWidth = 600
     __thisHeight = 300      
-    __file = None
+    __file = ""
 
     def __init__(self, parent, init_dir, **kwargs):
 
@@ -32,7 +32,7 @@ class notepad(tk.Frame):
         except KeyError: 
             pass
     
-    def __setup(self, path=None):
+    def __setup(self, path=""):
         # create tkinter toplevel window to display note
         self.__root = tk.Toplevel(self.__parent)
         self.__root.config(bg="#d9d9d9")
@@ -175,48 +175,37 @@ class notepad(tk.Frame):
         self.__file = None
         self.__thisTextArea.delete(1.0,tk.END) 
 
-    def __saveFile(self, event=None, overwrite=False): 
-  
-        if self.__file == None: 
-            # Save as new file 
-            self.__file = tk.filedialog.asksaveasfilename(initialfile='Untitled.csv',
+    def __saveFile(self, event=None): 
+        # if not file path exists, or path does exist but overwrite not allowed, have user enter new path
+        if not self.__file:
+            # get file name
+            f = tk.filedialog.asksaveasfilename(initialfile='Untitled.csv',
                                                         initialdir=self.__init_dir,
-                                                        defaultextension=".csv", 
+                                                        defaultextension=".csv",
                                                         filetypes=[("Comma-separated value","*.csv"),
-                                                        ("All Files","*.*")]) 
-  
-            if self.__file == "": 
-                self.__file = None
-            else: 
-                # Try to save the file 
-                file = open(self.__file,"w") 
-                file.write(self.__thisTextArea.get(1.0,tk.END).strip()) 
-                file.close() 
-                  
-                # Change the window title 
-                self.__root.title(os.path.basename(self.__file) + " - RAGU Notepad") 
-                print("Notepad saved successfully:\t{}".format(self.__file))
-                  
-              
+                                                        ("All Files","*.*")])
+
+            if f:
+                self.__file = f
+                flag = 1
+        
+        # if file does exist
+        elif self.__file:
+            flag = 0
+
         else:
-            if overwrite==False and not tk.messagebox.askyesno("Warning", "Overwrite {}?".format(self.__file), icon = "warning"):
-                # Save as new file 
-                self.__file = tk.filedialog.asksaveasfilename(initialfile='Untitled.csv',
-                                                            initialdir=self.__init_dir,
-                                                            defaultextension=".csv",
-                                                            filetypes=[("Comma-separated value","*.csv"),
-                                                            ("All Files","*.*")])
+            return
 
-                if self.__file == "": 
-                    self.__file = None
-                    return
+        # save
+        file = open(self.__file,"w")
+        file.write(self.__thisTextArea.get(1.0,tk.END).strip()) 
+        file.close() 
 
-            file = open(self.__file,"w") 
-            file.write(self.__thisTextArea.get(1.0,tk.END).strip()) 
-            file.close() 
-
-            # Change the window title 
-            self.__root.title(os.path.basename(self.__file) + " - RAGU Notepad") 
+        # Change the window title 
+        self.__root.title(os.path.basename(self.__file) + " - RAGU Notepad") 
+        if flag:
+            print("Notepad saved successfully:\t{}".format(self.__file))
+                  
 
     def __showAbout(self): 
         tk.messagebox.showinfo("RAGU Notepad","Notepad designed to hold session notes. Radar data file names will be added to new notepad line in a comma-separated value format. Type file notes following file name.") 

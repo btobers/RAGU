@@ -73,38 +73,20 @@ def pick_math(rdata, eps_r=3.15, amp_out=True, horizon=None, srf=None):
             if horizon == srf:
                 out[horizon + "_elev"] = rdata.get_srfElev()
 
-                if type(damp) is np.ndarray:
-                    # export horizon amplitude values
-                    amp = np.repeat(np.nan, rdata.tnum)
-                    idx = ~np.isnan(samp_arr)
-                    # add any applied shift to index to pull proper sample amplitude from data array
-                    amp[idx] = damp[samp_arr[idx].astype(np.int), idx]
-                    out[srf + "_amp"] = amp
-                continue
-
-            # calculate cumulative layer thickness from srf
-            h = (((out[horizon + "_twtt"] - out[srf + "_twtt"]) * v) / 2)
-
-            # calculate layer bed elevation
-            out[horizon + "_elev"] = out[srf + "_elev"] - h
-
             if type(damp) is np.ndarray:
-                    # export horizon amplitude values
-                    amp = np.repeat(np.nan, rdata.tnum)
-                    idx = ~np.isnan(samp_arr)
-                    # add any applied shift to index to pull proper sample amplitude from data array
-                    amp[idx] = damp[samp_arr[idx].astype(np.int), idx]
-                    out[horizon + "_amp"] = amp
+                # export horizon amplitude values
+                amp = np.repeat(np.nan, rdata.tnum)
+                idx = ~np.isnan(samp_arr)
+                # add any applied shift to index to pull proper sample amplitude from data array
+                amp[idx] = damp[samp_arr[idx].astype(np.int), idx]
+                out[horizon + "_amp"] = amp
 
-            # if not 0th layer, reference bed elevation of upper layer for thickness
-            if i == 1:
-                thick = h
-            elif i > 1:
-                # calculate layer thickness
-                thick = out[horizons[i - 1] + "_elev"] - out[horizon + "_elev"]
-            else:
-                continue
-            out[horizons[i - 1] + "_" + horizon + "_thick"] = thick
+            if i > 0:
+                # get thickness between current layer and preceding layer
+                h = utils.twtt2depth(out[horizon + "_twtt"] - out[horizons[i - 1] + "_twtt"], eps_r)
+                # calculate layer bed elevation as elevation of preceding layer minus layer thickness
+                out[horizon + "_elev"] = out[horizons[i - 1] + "_elev"] - h
+                out[horizons[i - 1] + "_" + horizon + "_thick"] = h
 
         return out
 

@@ -484,7 +484,9 @@ class mainGUI(tk.Frame):
                     if self.tab == "Waveform":
                         self.nb.select(self.nb.tabs()[0])
                     self.f_loadName = f_loadName
-                    self.proj.set_datPath(self.f_loadName)
+                    # update and save project file
+                    self.proj.update_paths(self.f_loadName, self.map_loadName, self.notepad._notepad__get_file())
+                    self.proj.save()
                     # ingest the data
                     self.igst = ingest(self.f_loadName)
                     self.rdata = self.igst.read(self.conf["path"]["simPath"], self.conf["nav"]["crs"], self.conf["nav"]["body"])
@@ -516,7 +518,7 @@ class mainGUI(tk.Frame):
                 if self.rdata and self.notepad._notepad__get_state() == 1:
                     self.notepad._notepad__write_track(fn=self.rdata.fn)
                     if self.notepad._notepad__get_file():
-                        self.notepad._notepad__saveFile(overwrite=True)
+                        self.notepad._notepad__saveFile()
 
             # recall choose_dfile if wrong file type is selected 
             except Exception as err:
@@ -678,17 +680,20 @@ class mainGUI(tk.Frame):
             else:
                 tmp = tk.filedialog.asksaveasfilename(initialdir = self.datPath,title = "save project file",filetypes = [("ragu project", ".ragu"),
                                                                                                                             ("all files",".*")])
+            flag = 1
         
         if tmp:
             fn, ext = os.path.splitext(tmp)
 
             try:
                 self.proj.set_projPath(fn + ".ragu")
-                self.proj.set_notePath(self.notepad._notepad__get_file())
+                self.proj.update_paths(self.f_loadName, self.map_loadName, self.notepad._notepad__get_file())
                 self.proj.save()
+                if flag:
+                    print("Project file saved successfully:\t{}".format(fn + ".ragu"))
 
             except Exception as err:
-                print("Load project error: {}".format(err))
+                print("Save project error: {}".format(err))
 
         return
 
@@ -779,7 +784,9 @@ class mainGUI(tk.Frame):
 
                 if self.conf["output"].getboolean("fig"):
                     self.impick.export_fig(fn_out + ".png")
-                self.export_proj()
+                # export project if projpath exists
+                if self.proj.get_projPath():
+                    self.export_proj()
 
 
     # export_dat is a method to save processed radar data
@@ -830,7 +837,7 @@ class mainGUI(tk.Frame):
 
 
     # init_notepad is a method to initialize the ragu notepad widget
-    def init_notepad(self, path=None):
+    def init_notepad(self, path=""):
         if self.notepad._notepad__get_state() == 0:
             self.notepad._notepad__setup(path=path)
             if path:
@@ -1465,6 +1472,14 @@ class project():
     def get_notePath(self):
         return self.notePath
 
+    def update_paths(self, datPath="", mapPath="", notePath=""):
+        if datPath:
+            self.datPath = datPath
+        if mapPath:
+            self.mapPath = mapPath
+        if notePath:
+            self.notePath = notePath
+    
     def save(self):
         if self.projPath:
             file = open(self.projPath,"w") 
