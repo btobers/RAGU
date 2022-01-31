@@ -61,7 +61,7 @@ def pick_math(rdata, eps_r=3.15, amp_out=True, horizon=None, srf=None):
         return out
 
     ### export merged horizons ### - reference surface elevation if present
-    if srf:
+    if horizon is None:
         # iterate through interpretation horizons
         for i, (horizon, array) in enumerate(sample.items()):
             samp_arr = array + rdata.flags.sampzero
@@ -84,37 +84,10 @@ def pick_math(rdata, eps_r=3.15, amp_out=True, horizon=None, srf=None):
             if i > 0:
                 # get thickness between current layer and preceding layer
                 h = utils.twtt2depth(out[horizon + "_twtt"] - out[horizons[i - 1] + "_twtt"], eps_r)
-                # calculate layer bed elevation as elevation of preceding layer minus layer thickness
-                out[horizon + "_elev"] = out[horizons[i - 1] + "_elev"] - h
+                # calculate layer bed elevation as elevation of preceding layer minus layer thickness - this only works if a surface with reference elevation is defined
+                if srf:
+                    out[horizon + "_elev"] = out[horizons[i - 1] + "_elev"] - h
                 out[horizons[i - 1] + "_" + horizon + "_thick"] = h
-
-        return out
-
-    # if no surface horizon specified, don't reference surface elevation
-    else:
-        # iterate through interpretation horizons
-        for i, (horizon, array) in enumerate(sample.items()):
-            samp_arr = array + rdata.flags.sampzero
-            out[horizon + "_sample"] = samp_arr
-            out[horizon + "_twtt"] = utils.sample2twtt(samp_arr, rdata.dt)
-            # for sharad, add in twtt_wind to get absolute twtt
-            if rdata.dtype == "sharad":
-                out[horizon + "_twtt"] += rdata.navdf["twtt_wind"]
-
-            if type(damp) is np.ndarray:
-                    # export horizon amplitude values
-                    amp = np.repeat(np.nan, rdata.tnum)
-                    idx = ~np.isnan(samp_arr)
-                    # add any applied shift to index to pull proper sample amplitude from data array
-                    amp[idx] = damp[samp_arr[idx].astype(np.int), idx]
-                    out[horizon + "_amp"] = amp
-
-            # calculate thickness between subsequent horizons
-            if i >= 1:
-                # calculate layer thickness
-                out[horizons[i - 1] + "_" + horizon + "_thick"] = (((out[horizon + "_twtt"] - out[horizons[i - 1] + "_twtt"]) * v) / 2)
-            else:
-                continue
 
         return out
 
