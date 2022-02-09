@@ -8,6 +8,7 @@ pick export functions for RAGU
 """
 ### imports ###
 from tools import utils
+from raguError import raguError
 import numpy as np
 import pandas as pd
 import geopandas as gpd
@@ -19,8 +20,7 @@ import matplotlib.pyplot as plt
 
 # pick_math is a function to perform all the necessary mathematics on a set of picks and save data as a pandas dataframe
 # if overlapping pick segments exist, save as separate layers
-def pick_math(rdata, eps_r=3.15, amp_out=True, horizon=None, srf=None):
-    v = C/(np.sqrt(eps_r))                              # wave veloity
+def pick_math(rdata, i_eps_r=3.15, amp_out=True, horizon=None, srf=None):
     trace = np.arange(rdata.tnum)                       # array to hold trace number
     sample = rdata.pick.horizons.copy()
     # get list of horizon names
@@ -83,6 +83,15 @@ def pick_math(rdata, eps_r=3.15, amp_out=True, horizon=None, srf=None):
 
             if i > 0:
                 # get thickness between current layer and preceding layer
+                # first confirm users preferred dielectric permittivity for layer
+                eps_r = None
+                while (eps_r is None) or (eps_r < 1):
+                    eps_r = tk.simpledialog.askfloat("Dielectric Permittivity","Select a relative dielectric permittivity\nfor the unit between horizon <{}> and horizon <{}>".format(horizons[i - 1], horizons[i]), initialvalue=i_eps_r) 
+                    if eps_r is None:
+                        return None
+                    elif eps_r < 1:
+                        print("raguWarning: A relative dielectric permittivity >=1 must be specified in order to export picks")
+
                 h = utils.twtt2depth(out[horizon + "_twtt"] - out[horizons[i - 1] + "_twtt"], eps_r)
                 # calculate layer bed elevation as elevation of preceding layer minus layer thickness - this only works if a surface with reference elevation is defined
                 if srf:
@@ -96,9 +105,11 @@ def pick_math(rdata, eps_r=3.15, amp_out=True, horizon=None, srf=None):
 def csv(fpath, df):
     # fpath is the path for where the exported csv pick file should be saved [str]
     # df pick output dataframe
-    df.to_csv(fpath, index=False)
+    if isinstance(df,pd.DataFrame):
 
-    print("csv picks exported successfully:\t" + fpath)
+        df.to_csv(fpath, index=False)
+
+        print("csv picks exported successfully:\t" + fpath)
 
 
 # gpkg is a funciton for saving picks to a geopackage/shapefile
@@ -106,19 +117,20 @@ def gpkg(fpath, df, crs):
     # fpath is the path for where the exported csv pick file should be saved [str]
     # df pick output dataframe
     # crs is the coordinate reference system for the shapefile output
-    df_copy = df.copy()
-    if df_copy["lon"].isnull().all() or df_copy["lat"].isnull().all():
-        print("no geopackage was exported due to missing gps data")
-        return
-    # convert lon, lat to shapely points
-    geometry = [Point(xy) for xy in zip(df_copy["lon"], df_copy["lat"])]
-    df_copy.drop(["lon", "lat"], axis=1)
+    if isinstance(df,pd.DataFrame):
+        df_copy = df.copy()
+        if df_copy["lon"].isnull().all() or df_copy["lat"].isnull().all():
+            print("no geopackage was exported due to missing gps data")
+            return
+        # convert lon, lat to shapely points
+        geometry = [Point(xy) for xy in zip(df_copy["lon"], df_copy["lat"])]
+        df_copy.drop(["lon", "lat"], axis=1)
 
-    # create geopandas df and export
-    gdf = gpd.GeoDataFrame(df, crs=crs, geometry=geometry)
-    gdf.to_file(fpath, driver="GPKG")
+        # create geopandas df and export
+        gdf = gpd.GeoDataFrame(df, crs=crs, geometry=geometry)
+        gdf.to_file(fpath, driver="GPKG")
 
-    print("geopackage exported successfully:\t" + fpath)
+        print("geopackage exported successfully:\t" + fpath)
 
 
 # h5 is a function for saving twtt_bed pick to h5 data file
