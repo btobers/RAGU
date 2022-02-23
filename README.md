@@ -144,6 +144,8 @@ $ python3 main.py
 ```
 
 ## Notes
+Several auxiliary tools which RAGU users may find useful can be found at [radar_tools](https://github.com/btobers/radar_tools)
+
 ### Future Development
 Additional dataset ingesters:
 - Segy
