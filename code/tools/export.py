@@ -84,7 +84,7 @@ def pick_math(rdata, i_eps_r=3.15, amp_out=True, horizon=None, srf=None):
             if i > 0:
                 # get thickness between current layer and preceding layer
                 # first confirm users preferred dielectric permittivity for layer
-                eps_r = None
+                eps_r = i_eps_r
                 while (eps_r is None) or (eps_r < 1):
                     eps_r = tk.simpledialog.askfloat("Dielectric Permittivity","Select a relative dielectric permittivity\nfor the unit between horizon <{}> and horizon <{}>".format(horizons[i - 1], horizons[i]), initialvalue=i_eps_r) 
                     if eps_r is None:

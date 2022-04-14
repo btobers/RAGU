@@ -508,6 +508,15 @@ class mainGUI(tk.Frame):
                     self.wvpick.set_data(self.rdata)
                     self.rinfolbl.config(text = '\t\t'.join('{}: {}'.format(k, d) for k, d in self.rdata.info.items()))
 
+                    # load existing OIB pick file
+                    try:
+                        horizons = self.igst.import_pick(self.conf["path"]["outPath"] + "../../merged_pk_bst/" + self.rdata.fn + "_pk_bst.csv", self.conf["param"]["uid"])
+                        for horizon in horizons:
+                            self.impick.set_picks(horizon=horizon)
+                        self.impick.blit()
+                    except Exception as err:
+                        pass
+
                 # pass basemap to impick for plotting pick location
                 if self.map_loadName and self.basemap.get_state() == 1:
                     self.basemap.set_track(self.rdata.fn)
@@ -680,7 +689,6 @@ class mainGUI(tk.Frame):
             else:
                 tmp = tk.filedialog.asksaveasfilename(initialdir = self.datPath,title = "save project file",filetypes = [("ragu project", ".ragu"),
                                                                                                                             ("all files",".*")])
-            flag = 1
         
         if tmp:
             fn, ext = os.path.splitext(tmp)
@@ -689,8 +697,7 @@ class mainGUI(tk.Frame):
                 self.proj.set_projPath(fn + ".ragu")
                 self.proj.update_paths(self.f_loadName, self.map_loadName, self.notepad._notepad__get_file())
                 self.proj.save()
-                if flag:
-                    print("Project file saved successfully:\t{}".format(fn + ".ragu"))
+                print("Project file saved successfully:\t{}".format(fn + ".ragu"))
 
             except Exception as err:
                 print("Save project error: {}".format(err))

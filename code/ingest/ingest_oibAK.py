@@ -84,15 +84,15 @@ def read_h5(fpath, navcrs, body):
     rdata.pick.srf = "srf"
 
     # read in bed picks
-    if "twtt_bed" in f["drv"]["pick"].keys():
-        twtt_bed = f["drv"]["pick"]["twtt_bed"][:]
-        # replace -1 and -9 null values with np.nan
-        twtt_bed[twtt_bed == -1] = np.nan
-        twtt_bed[twtt_bed == -9] = np.nan
-        arr = utils.twtt2sample(twtt_bed, rdata.dt)
-    else:
-        arr = np.repeat(np.nan, rdata.tnum)
-    rdata.pick.horizons["bed"] = arr
+    # if "twtt_bed" in f["drv"]["pick"].keys():
+    #     twtt_bed = f["drv"]["pick"]["twtt_bed"][:]
+    #     # replace -1 and -9 null values with np.nan
+    #     twtt_bed[twtt_bed == -1] = np.nan
+    #     twtt_bed[twtt_bed == -9] = np.nan
+    #     arr = utils.twtt2sample(twtt_bed, rdata.dt)
+    # else:
+    #     arr = np.repeat(np.nan, rdata.tnum)
+    # rdata.pick.horizons["bed"] = arr
     
 
     f.close()                                                   # close the file
