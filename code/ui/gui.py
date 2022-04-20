@@ -528,6 +528,7 @@ class mainGUI(tk.Frame):
                 self.basemap.set_nav(self.rdata.fn, self.rdata.navdf)
                 self.basemap.plot_tracks()
                 self.impick.get_basemap(self.basemap)
+    
 
             if self.rdata and self.notepad._notepad__get_state() == 1:
                 self.notepad._notepad__write_track(fn=self.rdata.fn)
