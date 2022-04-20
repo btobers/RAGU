@@ -11,7 +11,7 @@ from ingest import ingest_oibAK, ingest_uaf_kentech, ingest_pulseekko, ingest_gs
 from tools import utils
 import numpy as np
 import pandas as pd
-import fnmatch
+import fnmatch,os
 
 class ingest:
     # ingest is a class which builds a dictionary holding data and metadata from the file
@@ -36,10 +36,10 @@ class ingest:
         # better ways to do this than an if/else
         # but for a few file types this is easier
         if (self.ftype == "h5"):
-            try:
-                self.rdata = ingest_oibAK.read_h5(self.fpath, navcrs, body)
-            except:
-                self.rdata = ingest_uaf_kentech.read_h5(self.fpath, navcrs, body)
+            # try:
+            self.rdata = ingest_oibAK.read_h5(self.fpath, navcrs, body)
+            # except:
+            #     self.rdata = ingest_uaf_kentech.read_h5(self.fpath, navcrs, body)
         elif (self.ftype == "mat"):
             try:
                 self.rdata = ingest_cresis_snow.read_mat(self.fpath, navcrs, body)

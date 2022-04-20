@@ -68,31 +68,38 @@ def read_h5(fpath, navcrs, body):
     rdata.navdf = navparse.getnav_oibAK_h5(fpath, navcrs, body)
     # pull lidar surface elevation and initilize horizon
     if "srf0" in f["ext"].keys():
-        rdata.set_srfElev(dat = f["ext"]["srf0"][:])  
+        elev = f["ext"]["srf0"][:]
+        # replace null values
+        elev[elev==-9999] = np.nan
+        rdata.set_srfElev(dat = elev)
         if "twtt_surf" in f["drv"]["pick"].keys():
             twtt_srf = f["drv"]["pick"]["twtt_surf"][:]
             # replace -1 and -9 null values with np.nan
             twtt_srf[twtt_srf == -1] = np.nan
             twtt_srf[twtt_srf == -9] = np.nan
-            arr = utils.twtt2sample(twtt_srf, rdata.dt)
+            samps = utils.twtt2sample(twtt_srf, rdata.dt)
         else:
-            arr = utils.twtt2sample(utils.depth2twtt(rdata.navdf["elev"] - rdata.srfElev, eps_r=1), rdata.dt)
+             samps = utils.twtt2sample(utils.depth2twtt(rdata.navdf["elev"] - rdata.srfElev, eps_r=1), rdata.dt)
+
+        if not (np.isnan(samps).all()):
+            rdata.pick.horizons["srf"] = samps
+            rdata.pick.srf = "srf"
+
     else:
-        arr = np.repeat(np.nan, rdata.tnum)
-        rdata.set_srfElev(dat = arr)
-    rdata.pick.horizons["srf"] = arr
-    rdata.pick.srf = "srf"
+        elev = np.repeat(np.nan, rdata.tnum)
+        rdata.set_srfElev(dat = elev)
+
 
     # read in bed picks
-    if "twtt_bed" in f["drv"]["pick"].keys():
-        twtt_bed = f["drv"]["pick"]["twtt_bed"][:]
-        # replace -1 and -9 null values with np.nan
-        twtt_bed[twtt_bed == -1] = np.nan
-        twtt_bed[twtt_bed == -9] = np.nan
-        arr = utils.twtt2sample(twtt_bed, rdata.dt)
-    else:
-        arr = np.repeat(np.nan, rdata.tnum)
-    rdata.pick.horizons["bed"] = arr
+    # if "twtt_bed" in f["drv"]["pick"].keys():
+    #     twtt_bed = f["drv"]["pick"]["twtt_bed"][:]
+    #     # replace -1 and -9 null values with np.nan
+    #     twtt_bed[twtt_bed == -1] = np.nan
+    #     twtt_bed[twtt_bed == -9] = np.nan
+    #     arr = utils.twtt2sample(twtt_bed, rdata.dt)
+    # else:
+    #     arr = np.repeat(np.nan, rdata.tnum)
+    # rdata.pick.horizons["bed"] = arr
     
 
     f.close()                                                   # close the file

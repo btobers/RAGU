@@ -421,7 +421,7 @@ class mainGUI(tk.Frame):
 
 
     # open project
-    def open_proj(self):
+    def open_proj(self, proj_loadName=None):
         # save_check
         if (self.save_check() == False) and (tk.messagebox.askyesno("Warning", "Discard unsaved picks?", icon = "warning") == False):
             return
@@ -430,25 +430,26 @@ class mainGUI(tk.Frame):
         # if (self.rdata) and (self.rdata.out is None) and (self.rdata.fpath.endswith(".h5")) and (self.rdata.dtype=="oibak"):
         #     export.h5(self.rdata.fpath, pd.DataFrame({"bed_twtt":np.repeat(np.nan, self.rdata.tnum)}), self.rdata.dtype)
 
-        # select input file
-        if self.os == "darwin":
-            tmp = tk.filedialog.askopenfilename(initialdir = self.datPath + "/..",title = "select project file")
-        else:
-            tmp = tk.filedialog.askopenfilename(initialdir = self.datPath + "/..",title = "select project file",filetypes = [("ragu project", ".ragu"),
+        if proj_loadName is None:
+            # select input file
+            if self.os == "darwin":
+                proj_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath, title = "select project file")
+            else:
+                proj_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath ,title = "select project file",filetypes = [("ragu project", ".ragu"),
                                                                                                                             ("all files",".*")])
         
-        if tmp:
-            try:
-                self.proj.set_projPath(tmp)
-                self.proj.load()
-                if self.proj.get_datPath():
-                    self.open_dfile(self.proj.get_datPath())
-                if self.proj.get_mapPath():
-                    self.init_bm(self.proj.get_mapPath())
-                if self.proj.get_notePath():
-                    self.init_notepad(self.proj.get_notePath())
-            except Exception as err:
-                print("Load project error: {}".format(err))
+        if proj_loadName:
+            # try:
+            self.proj.set_projPath(proj_loadName)
+            self.proj.load()
+            if self.proj.get_datPath():
+                self.open_dfile(self.proj.get_datPath())
+            if self.proj.get_mapPath():
+                self.init_bm(self.proj.get_mapPath())
+            if self.proj.get_notePath():
+                self.init_notepad(self.proj.get_notePath())
+            # except Exception as err:
+            #     print("Load project error: {}".format(err))
 
 
     # choose_dfile is a gui method which has the user select and input data file - then passed to impick.load()
@@ -472,58 +473,71 @@ class mainGUI(tk.Frame):
                                                                                                                             ("pulseekko", ".DT1"),
                                                                                                                             ("gssi",".DZT")])
 
-        self.open_dfile(temp_loadName)
+        if temp_loadName.endswith(".ragu"):
+            self.open_proj(proj_loadName=temp_loadName)
+        
+        else:
+            self.open_dfile(temp_loadName)
 
 
     # open_dat loads the data file and passes to other modules
     def open_dfile(self, f_loadName=None):
             # if input selected, clear impick canvas, ingest data and pass to impick
-            try:
-                if f_loadName:
-                    # switch to profile tab
-                    if self.tab == "Waveform":
-                        self.nb.select(self.nb.tabs()[0])
-                    self.f_loadName = f_loadName
-                    # update and save project file
-                    self.proj.update_paths(self.f_loadName, self.map_loadName, self.notepad._notepad__get_file())
-                    self.proj.save()
-                    # ingest the data
-                    self.igst = ingest(self.f_loadName)
-                    self.rdata = self.igst.read(self.conf["path"]["simPath"], self.conf["nav"]["crs"], self.conf["nav"]["body"])
-                    self.impick.clear_canvas()  
-                    self.impick.set_vars()
-                    self.impick.load(self.rdata)
-                    # set existing horizons
-                    for horizon in self.rdata.pick.horizons.keys():
+            # try:
+            if f_loadName:
+                # switch to profile tab
+                if self.tab == "Waveform":
+                    self.nb.select(self.nb.tabs()[0])
+                self.f_loadName = f_loadName
+                # update and save project file
+                self.proj.update_paths(self.f_loadName, self.map_loadName, self.notepad._notepad__get_file())
+                self.proj.save()
+                # ingest the data
+                self.igst = ingest(self.f_loadName)
+                self.rdata = self.igst.read(self.conf["path"]["simPath"], self.conf["nav"]["crs"], self.conf["nav"]["body"])
+                self.impick.clear_canvas()  
+                self.impick.set_vars()
+                self.impick.load(self.rdata)
+                # set existing horizons
+                for horizon in self.rdata.pick.horizons.keys():
+                    self.impick.set_picks(horizon=horizon)
+                self.impick.set_pickState(state=False)
+                self.impick.update_hor_opt_menu()
+                self.impick.update_seg_opt_menu
+                self.impick.set_axes()
+                self.impick.drawData()
+                self.impick.update_pickLabels()
+                self.impick.update_bg()
+                self.wvpick.set_vars()
+                self.wvpick.clear()
+                self.wvpick.set_data(self.rdata)
+                self.rinfolbl.config(text = '\t\t'.join('{}: {}'.format(k, d) for k, d in self.rdata.info.items()))
+
+                # load existing OIB pick file
+                try:
+                    horizons = self.igst.import_pick(self.conf["path"]["outPath"] + "../../merged_pk_bst/" + self.rdata.fn + "_pk_bst.csv", self.conf["param"]["uid"])
+                    for horizon in horizons:
                         self.impick.set_picks(horizon=horizon)
-                    self.impick.set_pickState(state=False)
-                    self.impick.update_hor_opt_menu()
-                    self.impick.update_seg_opt_menu
-                    self.impick.set_axes()
-                    self.impick.drawData()
-                    self.impick.update_pickLabels()
-                    self.impick.update_bg()
-                    self.wvpick.set_vars()
-                    self.wvpick.clear()
-                    self.wvpick.set_data(self.rdata)
-                    self.rinfolbl.config(text = '\t\t'.join('{}: {}'.format(k, d) for k, d in self.rdata.info.items()))
+                    self.impick.blit()
+                except Exception as err:
+                    pass
 
-                # pass basemap to impick for plotting pick location
-                if self.map_loadName and self.basemap.get_state() == 1:
-                    self.basemap.set_track(self.rdata.fn)
-                    self.basemap.set_nav(self.rdata.fn, self.rdata.navdf)
-                    self.basemap.plot_tracks()
-                    self.impick.get_basemap(self.basemap)
+            # pass basemap to impick for plotting pick location
+            if self.map_loadName and self.basemap.get_state() == 1:
+                self.basemap.set_track(self.rdata.fn)
+                self.basemap.set_nav(self.rdata.fn, self.rdata.navdf)
+                self.basemap.plot_tracks()
+                self.impick.get_basemap(self.basemap)
 
-                if self.rdata and self.notepad._notepad__get_state() == 1:
-                    self.notepad._notepad__write_track(fn=self.rdata.fn)
-                    if self.notepad._notepad__get_file():
-                        self.notepad._notepad__saveFile()
+            if self.rdata and self.notepad._notepad__get_state() == 1:
+                self.notepad._notepad__write_track(fn=self.rdata.fn)
+                if self.notepad._notepad__get_file():
+                    self.notepad._notepad__saveFile()
 
             # recall choose_dfile if wrong file type is selected 
-            except Exception as err:
-                print(err)
-                self.choose_dfile() 
+            # except Exception as err:
+            #     print(err)
+            #     self.choose_dfile() 
 
 
     # switch_dfile is a method to get the filename of the last/next data file in the directory to open
@@ -680,7 +694,6 @@ class mainGUI(tk.Frame):
             else:
                 tmp = tk.filedialog.asksaveasfilename(initialdir = self.datPath,title = "save project file",filetypes = [("ragu project", ".ragu"),
                                                                                                                             ("all files",".*")])
-            flag = 1
         
         if tmp:
             fn, ext = os.path.splitext(tmp)
@@ -689,8 +702,7 @@ class mainGUI(tk.Frame):
                 self.proj.set_projPath(fn + ".ragu")
                 self.proj.update_paths(self.f_loadName, self.map_loadName, self.notepad._notepad__get_file())
                 self.proj.save()
-                if flag:
-                    print("Project file saved successfully:\t{}".format(fn + ".ragu"))
+                print("Project file saved successfully:\t{}".format(fn + ".ragu"))
 
             except Exception as err:
                 print("Save project error: {}".format(err))
