@@ -29,7 +29,8 @@ class garlic(object):
                         "snum",
                         "tnum",
                         "twtt",
-                        "navdf"]
+                        "navdf",
+                        "truncs"]
     # import processing tools
     from radar.processing import reverse, set_tzero, tzero_shift, vertical_roll, tpowGain, filter, hilbertxform, undo, redo, reset
 
@@ -53,6 +54,8 @@ class garlic(object):
         self.prf = None
         #: int, number of data channels
         self.nchan = None
+        #: int, number of samples above row zero in data array that have been truncated across all traces
+        self.truncs = 0
         #: dict, signal info
         self.info = {}
         #: np.ndarray(snum x tnum), raw ingested radar data
@@ -69,9 +72,9 @@ class garlic(object):
         self.flags = flags()
 
         # per-trace attributes
-        #: navdf consisting of [lon, lat, hgt, x, y, z, dist]
+        #: navigation dataframe consisting of [lon, lat, hgt, x, y, z, dist], where each field is of type and size np.ndarray(tnum,)
         self.navdf = None
-
+    
         # sample-wise attributes
         #: np.ndarray(snum,) The two way travel time to each sample, in us
         self.twtt = None
@@ -120,10 +123,17 @@ class garlic(object):
 
 
     # set twtt array
-    def set_twtt(self):
-        if not [x for x in (self.snum, self.tnum) if x is None]:
-            self.twtt = np.arange(self.snum) * self.dt
+    def set_twtt(self, arr = None):
+        if arr is not None:
+            self.twtt = arr
+        else:
+            if not [x for x in (self.snum, self.tnum) if x is None]:
+                self.twtt = np.arange(self.snum) * self.dt
         return
+
+    # get twtt array
+    def get_twtt(self):
+        return self.twtt
 
 
     # set ground height

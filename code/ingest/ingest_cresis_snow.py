@@ -30,22 +30,31 @@ def read_mat(fpath, navcrs, body):
     print("----------------------------------------")
     print("Loading: " + rdata.fn)
 
-    rdata.set_dat(np.array(f["Data"][:]).T)
+    rdata.set_dat(np.array(f["Data"][:].T))
     rdata.set_proc(np.abs(rdata.get_dat()))
-
     rdata.snum = rdata.dat.shape[0]                                                 # samples per trace in rgram
     rdata.tnum = rdata.dat.shape[1]                                                 # number of traces in rgram 
-    rdata.dt = np.mean(np.diff(f["Time"]))                                          # sampling interval, sec
+    rdata.set_twtt(arr = f["Time"][:].flatten())                                    # set two way travel time
+    rdata.dt = np.diff(rdata.get_twtt())[0]                                         # sampling interval, sec
     rdata.prf = f["param_records"]["radar"]["prf"][0][0]                            # pulse repitition frequency
     rdata.nchan = 1
-    rdata.set_twtt()
+
+    # store truncated samples
+    try:
+        rdata.truncs = f["Truncate_Bins"][:].flatten()[0]
+    except:
+        rdata.truncs = 0
 
     # parse nav
     rdata.navdf = navparse.getnav_cresis_mat(fpath, navcrs, body)
 
     # pull surface two-way travel time and initilize horizon
     rdata.pick.srf = "srf"
-    rdata.pick.horizons["srf"] = utils.twtt2sample(f["Surface"][:].flatten(), rdata.dt)
+    # get two-way travel times to lidar surface from CReSIS snow radar data
+    twtt_surf = f["Surface"][:].flatten()
+    rdata.pick.horizons["srf"] = utils.twtt2sample(twtt_surf, rdata.dt)
+    # account for truncated samples above row zero in radargram
+    rdata.pick.horizons["srf"] -= rdata.truncs
     rdata.set_srfElev() 
 
     # store pulse rep

@@ -47,11 +47,15 @@ def pick_math(rdata, i_eps_r=3.15, amp_out=True, horizon=None, srf=None):
     if horizon and horizon in horizons:
         # apply sample time zero shift back in
         samp_arr = sample[horizon] + rdata.flags.sampzero
-        out["sample"] = samp_arr
-        out["twtt"] = utils.sample2twtt(samp_arr, rdata.dt)
-        # for sharad, add in twtt_wind to get absolute twtt
-        if rdata.dtype == "sharad":
-            out["twtt"] += rdata.navdf["twtt_wind"]
+        # add back in truncated samples
+        out["sample"] = samp_arr + rdata.truncs
+        # get corresponding twtt
+        twtt_arr = np.repeat(np.nan, rdata.tnum)
+        idx = ~np.isnan(samp_arr)
+        twtt_arr[idx] = rdata.get_twtt()[samp_arr[idx].astype(np.int)]
+        out["twtt"] = twtt_arr
+        # add in twtt_wind to get absolute twtt
+        out["twtt"] += rdata.navdf["twtt_wind"]
 
         if type(damp) is np.ndarray:
             amp = np.repeat(np.nan, rdata.tnum)
@@ -65,10 +69,16 @@ def pick_math(rdata, i_eps_r=3.15, amp_out=True, horizon=None, srf=None):
         # iterate through interpretation horizons
         for i, (horizon, array) in enumerate(sample.items()):
             samp_arr = array + rdata.flags.sampzero
-            out[horizon + "_sample"] = samp_arr
-            out[horizon + "_twtt"] = utils.sample2twtt(samp_arr, rdata.dt)
+            # add back in truncated samples
+            out[horizon + "_sample"] = samp_arr + rdata.truncs
+            # get corresponding twtt
+            twtt_arr = np.repeat(np.nan, rdata.tnum)
+            idx = ~np.isnan(samp_arr)
+            twtt_arr[idx] = rdata.get_twtt()[samp_arr[idx].astype(np.int)]
+            out[horizon + "_twtt"] = twtt_arr
             # add in twtt_wind to get absolute twtt
             out[horizon + "_twtt"] += rdata.navdf["twtt_wind"]
+
 
             if horizon == srf:
                 out[horizon + "_elev"] = rdata.get_srfElev()

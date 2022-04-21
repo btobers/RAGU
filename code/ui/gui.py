@@ -421,7 +421,7 @@ class mainGUI(tk.Frame):
 
 
     # open project
-    def open_proj(self):
+    def open_proj(self, proj_loadName=None):
         # save_check
         if (self.save_check() == False) and (tk.messagebox.askyesno("Warning", "Discard unsaved picks?", icon = "warning") == False):
             return
@@ -430,16 +430,17 @@ class mainGUI(tk.Frame):
         # if (self.rdata) and (self.rdata.out is None) and (self.rdata.fpath.endswith(".h5")) and (self.rdata.dtype=="oibak"):
         #     export.h5(self.rdata.fpath, pd.DataFrame({"bed_twtt":np.repeat(np.nan, self.rdata.tnum)}), self.rdata.dtype)
 
-        # select input file
-        if self.os == "darwin":
-            tmp = tk.filedialog.askopenfilename(initialdir = self.datPath + "/..",title = "select project file")
-        else:
-            tmp = tk.filedialog.askopenfilename(initialdir = self.datPath + "/..",title = "select project file",filetypes = [("ragu project", ".ragu"),
+        if proj_loadName is None:
+            # select input file
+            if self.os == "darwin":
+                proj_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath, title = "select project file")
+            else:
+                proj_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath ,title = "select project file",filetypes = [("ragu project", ".ragu"),
                                                                                                                             ("all files",".*")])
         
-        if tmp:
+        if proj_loadName:
             try:
-                self.proj.set_projPath(tmp)
+                self.proj.set_projPath(proj_loadName)
                 self.proj.load()
                 if self.proj.get_datPath():
                     self.open_dfile(self.proj.get_datPath())
@@ -472,7 +473,11 @@ class mainGUI(tk.Frame):
                                                                                                                             ("pulseekko", ".DT1"),
                                                                                                                             ("gssi",".DZT")])
 
-        self.open_dfile(temp_loadName)
+        if temp_loadName.endswith(".ragu"):
+            self.open_proj(proj_loadName=temp_loadName)
+        
+        else:
+            self.open_dfile(temp_loadName)
 
 
     # open_dat loads the data file and passes to other modules
@@ -680,7 +685,6 @@ class mainGUI(tk.Frame):
             else:
                 tmp = tk.filedialog.asksaveasfilename(initialdir = self.datPath,title = "save project file",filetypes = [("ragu project", ".ragu"),
                                                                                                                             ("all files",".*")])
-            flag = 1
         
         if tmp:
             fn, ext = os.path.splitext(tmp)
@@ -689,8 +693,7 @@ class mainGUI(tk.Frame):
                 self.proj.set_projPath(fn + ".ragu")
                 self.proj.update_paths(self.f_loadName, self.map_loadName, self.notepad._notepad__get_file())
                 self.proj.save()
-                if flag:
-                    print("Project file saved successfully:\t{}".format(fn + ".ragu"))
+                print("Project file saved successfully:\t{}".format(fn + ".ragu"))
 
             except Exception as err:
                 print("Save project error: {}".format(err))
