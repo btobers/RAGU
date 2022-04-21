@@ -41,7 +41,7 @@ def read_mat(fpath, navcrs, body):
 
     # store truncated samples
     try:
-        rdata.truncs = f["Truncate_Bins"][:].flatten()[0]
+        rdata.truncs = f["Truncate_Bins"][:].flatten()[0].astype(int)
     except:
         rdata.truncs = 0
 

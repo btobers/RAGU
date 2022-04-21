@@ -47,12 +47,11 @@ def pick_math(rdata, i_eps_r=3.15, amp_out=True, horizon=None, srf=None):
     if horizon and horizon in horizons:
         # apply sample time zero shift back in
         samp_arr = sample[horizon] + rdata.flags.sampzero
-        # add back in truncated samples
-        out["sample"] = samp_arr + rdata.truncs
-        # get corresponding twtt
+        out["sample"] = samp_arr
+        # get corresponding twtt - account for data truncation
         twtt_arr = np.repeat(np.nan, rdata.tnum)
         idx = ~np.isnan(samp_arr)
-        twtt_arr[idx] = rdata.get_twtt()[samp_arr[idx].astype(np.int)]
+        twtt_arr[idx] = rdata.get_twtt()[samp_arr[idx].astype(np.int) +  rdata.truncs]
         out["twtt"] = twtt_arr
         # add in twtt_wind to get absolute twtt
         out["twtt"] += rdata.navdf["twtt_wind"]
@@ -69,12 +68,11 @@ def pick_math(rdata, i_eps_r=3.15, amp_out=True, horizon=None, srf=None):
         # iterate through interpretation horizons
         for i, (horizon, array) in enumerate(sample.items()):
             samp_arr = array + rdata.flags.sampzero
-            # add back in truncated samples
-            out[horizon + "_sample"] = samp_arr + rdata.truncs
-            # get corresponding twtt
+            out[horizon + "_sample"] = samp_arr
+            # get corresponding twtt - account for data truncation
             twtt_arr = np.repeat(np.nan, rdata.tnum)
             idx = ~np.isnan(samp_arr)
-            twtt_arr[idx] = rdata.get_twtt()[samp_arr[idx].astype(np.int)]
+            twtt_arr[idx] = rdata.get_twtt()[(samp_arr[idx].astype(np.int)) + rdata.truncs]
             out[horizon + "_twtt"] = twtt_arr
             # add in twtt_wind to get absolute twtt
             out[horizon + "_twtt"] += rdata.navdf["twtt_wind"]
