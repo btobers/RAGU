@@ -439,6 +439,7 @@ class mainGUI(tk.Frame):
                                                                                                                             ("all files",".*")])
         
         if proj_loadName:
+<<<<<<< HEAD
             # try:
             self.proj.set_projPath(proj_loadName)
             self.proj.load()
@@ -450,6 +451,19 @@ class mainGUI(tk.Frame):
                 self.init_notepad(self.proj.get_notePath())
             # except Exception as err:
             #     print("Load project error: {}".format(err))
+=======
+            try:
+                self.proj.set_projPath(proj_loadName)
+                self.proj.load()
+                if self.proj.get_datPath():
+                    self.open_dfile(self.proj.get_datPath())
+                if self.proj.get_mapPath():
+                    self.init_bm(self.proj.get_mapPath())
+                if self.proj.get_notePath():
+                    self.init_notepad(self.proj.get_notePath())
+            except Exception as err:
+                print("Load project error: {}".format(err))
+>>>>>>> origin/master
 
 
     # choose_dfile is a gui method which has the user select and input data file - then passed to impick.load()
