@@ -81,6 +81,59 @@ def getnav_oibAK_h5(navfile, navcrs, body):
     return df[["lon", "lat", "elev", "x", "y", "z", "twtt_wind", "dist"]]
 
 
+def getnav_groundhog(navfile, navcrs, body):
+    h5 = h5py.File(navfile, "r")
+    # use average of RX and TX gps positioning
+    k = h5["raw"].keys()
+    if "txFix0" in k:
+        nav_rx = pd.DataFrame(h5["raw"]["rxFix0"][:])
+        nav_tx = pd.DataFrame(h5["raw"]["txFix0"][:])
+        df = pd.DataFrame()
+        df["lon"] = np.mean(np.vstack((nav_rx["lon"], nav_tx["lon"])), axis=0)
+        df["lat"] = np.mean(np.vstack((nav_rx["lat"], nav_tx["lat"])), axis=0)
+        df["hgt"] = np.mean(np.vstack((nav_rx["hgt"], nav_tx["hgt"])), axis=0)
+
+    elif "rxFix0" in k:
+        df = pd.DataFrame(h5["raw"]["rxFix0"][:])        
+    else:
+        df = pd.DataFrame(h5["raw/gps0"][:])
+    # df = pd.DataFrame(h5["gps0"][:])
+    
+    try:
+        df.rename(columns={"hgt": "elev"}, inplace=True)
+    except:
+        pass
+
+    # Interpolate non-unique nav values
+    # hsh = df["lat"] + df["lon"] * 1e4
+    # idx = np.arange(0, len(hsh), 1)
+    # uniq, uidx = np.unique(hsh, return_index=True)
+    # uidx = np.sort(uidx)
+    # uidx[-1] = len(hsh) - 1  # Handle end of array
+    # df["lat"] = np.interp(idx, uidx, df["lat"][uidx])
+    # df["lon"] = np.interp(idx, uidx, df["lon"][uidx])
+    # df["elev"] = np.interp(idx, uidx, df["elev"][uidx])
+
+    h5.close()
+
+    df["x"], df["y"], df["z"] = pyproj.transform(
+        navcrs,
+        xyzsys[body],
+        df["lon"].to_numpy(),
+        df["lat"].to_numpy(),
+        df["elev"].to_numpy(),
+    )
+
+    df["dist"] = euclid_dist(
+        df["x"].to_numpy(),
+        df["y"].to_numpy(),
+        df["z"].to_numpy())
+
+    df["twtt_wind"] = 0.0
+
+    return df[["lon", "lat", "elev", "x", "y", "z", "twtt_wind", "dist"]]
+
+
 def getnav_oibAK_mat(navfile, navcrs, body):
     try:
         f = h5py.File(navfile, "r")
