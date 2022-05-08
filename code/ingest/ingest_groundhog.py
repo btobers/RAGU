@@ -27,18 +27,12 @@ def read_h5(fpath, navcrs, body):
     print("Loading: " + rdata.fn)
     f = h5py.File(rdata.fpath, "r")                      
 
-    # h5 radar data group structure        
+    # groundhog h5 radar data group structure        
     # |-raw
     # |  |-rx0
-    # |  |-tx0    
-    # |  |-loc0
-    # |-ext
-    # |  |-nav0
-    # |  |-srf0
-    # |-drv
-    # |  |-proc0
-    # |  |-clutter0
-    # |  |-pick
+    # |  |-gps0
+    # |  |-rxFix0    
+    # |  |-txFix0
 
     # pull necessary raw group data
     rdata.fs = f["raw/rx0"].attrs["fs"]                                      # sampling frequency

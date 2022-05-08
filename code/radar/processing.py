@@ -160,7 +160,10 @@ def filter(self, btype="lowpass", lowcut=None, highcut=None, order=5, direction=
     elif direction == 1:
         fs=self.prf
     b, a = butter(btype=btype, lowcut=lowcut, highcut=highcut, fs=fs, order=order)
-    out = signal.filtfilt(b, a, np.abs(amp), axis=direction)
+    # avoid scipy filter nan issues by windowing out any time zero shift
+    out = np.zeros_like(amp)
+    out[:-self.flags.sampzero,:] = signal.filtfilt(b, a, np.abs(amp[:-self.flags.sampzero:,:]), axis=direction)
+    out[-self.flags.sampzero:,:] = np.nan
     # use amplitude of lp filtered data to reset as pc array
     self.set_proc(out)
     # log
