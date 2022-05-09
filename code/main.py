@@ -11,17 +11,24 @@ last updated: 08JUL2020
 environment requirements in ragu.yml
 """
 ### imports ###
-import os,sys
+import os,sys,argparse
 from ui import gui
 import tkinter as tk
 from tkinter import font
 
 def main():
-    # allow for optional data directory input
-    if len(sys.argv) > 1:
-        datPath = sys.argv[1]
-    else:
-        datPath = None
+
+    # set up CLI
+    parser = argparse.ArgumentParser(
+    description="Radar Analysis Graphical Utility (RAGU)"
+    )
+    parser.add_argument("path", help="Data file path", nargs="+")
+    args = parser.parse_args()
+
+    # check if path exists
+    if not os.path.isdir(args.path[0]):
+        print(f"Path not found: {args.path[0]}")
+        args.path[0] = None
 
     # change dir to RAGU code directory 
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -41,7 +48,7 @@ def main():
         pass
 
     # call the RAGU mainGUI class
-    gui.mainGUI(root, datPath = datPath)
+    gui.mainGUI(root, datPath = args.path[0])
     root.lift()    
     root.mainloop()
 

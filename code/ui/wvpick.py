@@ -229,7 +229,7 @@ class wvpick(tk.Frame):
             # set horVar
             self.horVar.set(self.horizons[-1])
         else:
-            self.trace[""] = 0
+            self.trace[''] = 0
 
 
     # plot_wv is a method to draw the waveform on the datacanvas
@@ -310,12 +310,12 @@ class wvpick(tk.Frame):
 
         else:
             if newTrace >= 0:
-                self.trace[0] -= step
+                self.trace[''] -= step
             elif newTrace < 0:
-                if self.trace[0] == 0:
+                if self.trace[''] == 0:
                     return
                 else:
-                    self.trace[0] = 0
+                    self.trace[''] = 0
             
         self.plot_wv()
 
@@ -341,12 +341,12 @@ class wvpick(tk.Frame):
         
         else:
             if newTrace <= self.rdata.tnum:
-                self.trace[0] += step
+                self.trace[''] += step
             elif newTrace > self.rdata.tnum:
-                if self.trace[0] == self.rdata.tnum - 1:
+                if self.trace[''] == self.rdata.tnum - 1:
                     return
                 else:
-                    self.trace[0] = self.rdata.tnum - 1
+                    self.trace[''] = self.rdata.tnum - 1
 
         self.plot_wv()
 
