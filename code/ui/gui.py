@@ -13,6 +13,7 @@ environment requirements in nose_env.yml
 mainGUI class is a tkinter frame which runs the RAGU master GUI
 """
 ### imports ###
+from raguError import raguError
 from ui import impick, wvpick, basemap, notepad
 from tools import utils, export
 from ingest import ingest
@@ -196,12 +197,12 @@ class mainGUI(tk.Frame):
         procMenu.add_command(label="Set Time Zero", command=lambda:self.procTools("tzero"))
         procMenu.add_command(label="Vertical Data Roll", command=lambda:self.procTools("vroll"))
         # procMenu.add_command(label="Dewow", command=lambda:self.procTools("dewow"))
-        # procMenu.add_command(label="Remove Mean Trace", command=lambda:self.procTools("remMnTr"))
 
         # processing submenu items
         gainMenu = tk.Menu(procMenu,tearoff=0)
 
-        # filtering menu items
+        # filtering related items
+        procMenu.add_command(label="Background Removal", command=lambda:self.procTools("remSlidingMean"))
         procMenu.add_command(label="Filter", command=lambda:self.procTools("filter"))
         procMenu.add_command(label="Hilbert Xform", command=lambda:self.procTools("hilbert"))
 
@@ -993,11 +994,6 @@ class mainGUI(tk.Frame):
                 # proc = processing.dewow(self.rdata.dat, window=10)
                 # procFlag = True
 
-            elif arg == "remMnTr":
-                print("mean trace removal currently in development")
-                # nraces = tk.simpledialog.askfloat("input","moving average window size (# traces/" +  str(int(self.rdata.tnum)) + ")?")
-                # proc = processing.remMeanTrace(self.rdata.dat, ntraces=ntraces)
-                # procFlag = True
 
             elif arg == "hilbert":
                 print("hilbert transform currently in development")
@@ -1105,6 +1101,15 @@ class mainGUI(tk.Frame):
                 power = tk.simpledialog.askfloat("Input","Power for tpow gain?")
                 self.rdata.tpowGain(power=power)
                 procFlag = True
+
+            elif arg == "remSlidingMean":
+                window = tk.simpledialog.askinteger("Input","Window size for background removal (Number of Samples)?")
+                if window <= self.rdata.tnum:
+                    self.rdata.removeSlidingMeanFFT(window=window)
+                    procFlag = True
+                else:
+                    raise raguError("Window size must not exceed the number of traces.")
+
 
             elif arg == "agc":
                 print("automatic gain control currently in development")

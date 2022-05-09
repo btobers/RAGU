@@ -118,6 +118,48 @@ def vertical_roll(self, samples=0):
     return
 
 
+def removeSlidingMeanFFT(self, window):
+    # background noise removal using sliding mean in frequency space
+    amp = self.proc.get_curr_amp()
+    self.proc.set_prev_amp(amp)
+    self.proc.set_prev_dB(self.proc.get_curr_dB())
+
+    # window in interval to avg over for mean removal
+    mean = np.zeros(amp.shape)
+    a = np.zeros(amp.shape[1])
+    a[0 : window // 2] = 1
+    a[amp.shape[1] - window // 2 : amp.shape[1]] = 1
+    A = np.fft.fft(a)
+
+    # Main circular convolution
+    for i in range(amp.shape[0]):
+        T = np.fft.fft(amp[i, :])
+        mean[i, :] = np.real(np.fft.ifft(np.multiply(T, A)) / window)
+
+    # Handle edges
+    mt = np.zeros(amp.shape[0])
+    for i in range(0, window):
+        mt = np.add(mt, np.divide(amp[:, i], window))
+
+    for i in range(0, window // 2):
+        mean[:, i] = mt
+
+    mt = np.zeros(amp.shape[0])
+    for i in range(amp.shape[1] - window, amp.shape[1]):
+        mt = np.add(mt, np.divide(amp[:, i], window))
+
+    for i in range(amp.shape[1] - window // 2, amp.shape[1]):
+        mean[:, i] = mt
+
+    out = np.subtract(amp, mean)
+    self.set_proc(out)
+    # log
+    self.log("self.rdata.removeSlidingMeanFFT(window={})".format(window))
+    print("# Background removal completed wtih a window size of {} traces".format(window))
+
+    return 
+
+
 def butter(btype="lowpass", lowcut=None, highcut=None, fs=None, order=5):
     nyq = 0.5 * fs
     cutoff = []
@@ -268,51 +310,6 @@ def dewow(data,window):
         avgsmp = np.matrix.mean(data[totsamps-halfwid:totsamps+1,:],0)
         newdata[totsamps-halfwid:totsamps+1,:] = data[totsamps-halfwid:totsamps+1,:]-avgsmp
         
-    return newdata
-
-
-def remMeanTrace(data,ntraces):
-    """
-    Subtracts from each trace the average trace over
-    a moving average window.
-
-    Can be used to remove horizontal arrivals, 
-    such as the airwave.
-
-    INPUT:
-    data       data matrix whose columns contain the traces 
-    ntraces    window width; over how many traces 
-            to take the moving average.
-
-    OUTPUT:
-    newdata    data matrix after subtracting average traces
-    """
-
-    data=np.asmatrix(data)
-    tottraces = data.shape[1]
-    # For ridiculous ntraces values, just remove the entire average
-    if ntraces >= tottraces:
-        newdata=data-np.matrix.mean(data,1) 
-    else: 
-        newdata = np.asmatrix(np.zeros(data.shape))    
-        halfwid = int(np.ceil(ntraces/2.0))
-        
-        # First few traces, that all have the same average
-        avgtr=np.matrix.mean(data[:,0:halfwid+1],1)
-        newdata[:,0:halfwid+1] = data[:,0:halfwid+1]-avgtr
-        
-        # For each trace in the middle
-
-        for tr in range(halfwid,tottraces-halfwid+1):   
-            winstart = int(tr - halfwid)
-            winend = int(tr + halfwid)
-            avgtr=np.matrix.mean(data[:,winstart:winend+1],1)                
-            newdata[:,tr] = data[:,tr] - avgtr
-
-        # Last few traces again have the same average    
-        avgtr=np.matrix.mean(data[:,tottraces-halfwid:tottraces+1],1)
-        newdata[:,tottraces-halfwid:tottraces+1] = data[:,tottraces-halfwid:tottraces+1]-avgtr
-    print("rolling mean trace removed: window size: \t" + str(ntraces) + " traces")
     return newdata
 
 
