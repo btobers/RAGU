@@ -41,7 +41,7 @@ def read_h5(fpath, navcrs, body):
     rdata.nchan = 1
 
     # pull radar proc and sim arrayss
-    rdata.set_dat(f["raw/rx0"][:])                                            # pulse compressed array
+    rdata.set_dat(f["restack/rx0"][:])                                            # pulse compressed array
     rdata.set_proc(np.abs(rdata.get_dat()))
     rdata.snum, rdata.tnum = rdata.get_dat().shape
 
