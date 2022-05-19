@@ -159,10 +159,10 @@ class notepad(tk.Frame):
 
             file.close() 
 
-            self.__header()
+            # self.__header()
 
     def __header(self):
-        header = "track,bed (y/n/?),note"
+        header = "track,bed (y/n/?),confidence (h/m/l),note"
         if self.__get_text().splitlines()[0] != header:
             self.__thisTextArea.insert(tk.END, header + "\n")
             self.__thisTextArea.see("insert")

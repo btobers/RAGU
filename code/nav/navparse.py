@@ -84,20 +84,18 @@ def getnav_oibAK_h5(navfile, navcrs, body):
 def getnav_groundhog(navfile, navcrs, body):
     h5 = h5py.File(navfile, "r")
     # use average of RX and TX gps positioning
-    k = h5["raw"].keys()
-    if "txFix0" in k:
-        nav_rx = pd.DataFrame(h5["raw"]["rxFix0"][:])
-        nav_tx = pd.DataFrame(h5["raw"]["txFix0"][:])
+    k = h5["restack"].keys()
+    if ("txFix0" in k) and ("rxFix0" in k):
+        nav_rx = pd.DataFrame(h5["restack"]["rxFix0"][:])
+        nav_tx = pd.DataFrame(h5["restack"]["txFix0"][:])
         df = pd.DataFrame()
         df["lon"] = np.mean(np.vstack((nav_rx["lon"], nav_tx["lon"])), axis=0)
         df["lat"] = np.mean(np.vstack((nav_rx["lat"], nav_tx["lat"])), axis=0)
         df["hgt"] = np.mean(np.vstack((nav_rx["hgt"], nav_tx["hgt"])), axis=0)
-
     elif "rxFix0" in k:
-        df = pd.DataFrame(h5["raw"]["rxFix0"][:])        
+        df = pd.DataFrame(h5["restack"]["rxFix0"][:])        
     else:
         df = pd.DataFrame(h5["raw/gps0"][:])
-    # df = pd.DataFrame(h5["gps0"][:])
     
     try:
         df.rename(columns={"hgt": "elev"}, inplace=True)
