@@ -195,6 +195,7 @@ class mainGUI(tk.Frame):
         ### processing menu items ###
         procMenu.add_command(label="Reverse Radargram", command=lambda:self.procTools("reverse"))
         procMenu.add_command(label="Set Time Zero", command=lambda:self.procTools("tzero"))
+        procMenu.add_command(label="Flatten", command=lambda:self.procTools("flatten"))
         procMenu.add_command(label="Vertical Data Roll", command=lambda:self.procTools("vroll"))
         # procMenu.add_command(label="Dewow", command=lambda:self.procTools("dewow"))
 
@@ -980,6 +981,12 @@ class mainGUI(tk.Frame):
                         self.impick.set_picks(horizon=h)                    
 
                     self.impick.blit()
+                    procFlag = True
+
+            elif arg == "flatten":
+                # if a surface is defined, flatten
+                if self.rdata.pick.get_srf():
+                    self.rdata.flatten()
                     procFlag = True
 
             elif arg == "vroll":

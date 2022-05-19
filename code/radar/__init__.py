@@ -32,7 +32,7 @@ class garlic(object):
                         "navdf",
                         "truncs"]
     # import processing tools
-    from radar.processing import reverse, set_tzero, tzero_shift, vertical_roll, tpowGain, filter, hilbertxform, removeSlidingMeanFFT, undo, redo, reset
+    from radar.processing import reverse, set_tzero, tzero_shift, flatten, vertical_roll, tpowGain, filter, hilbertxform, removeSlidingMeanFFT, undo, redo, reset
 
     def __init__(self, fpath):
         # basic data file attributes

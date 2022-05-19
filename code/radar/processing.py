@@ -103,6 +103,28 @@ def reverse(self):
 
     return
 
+def flatten(self):
+    # flatten radargram by rolling each trace so that the surface is at sample zero
+    amp = self.proc.get_curr_amp()
+    self.proc.set_prev_amp(amp)
+    self.proc.set_prev_dB(self.proc.get_curr_dB())
+    # initialize output array
+    out = np.zeros_like(amp.T)
+    # get surf samples in integer form for rolling
+    shifts = self.pick.horizons[self.pick.get_srf()].astype(np.int)
+    # loop through all traces and roll according to surface sample
+    for i, col in enumerate(amp.T):
+        out[i] = np.roll(col, shift = -shifts[i])
+
+    self.set_proc(out.T)
+
+    # log
+    self.log("self.rdata.flatten()")
+    print("# data array flattened ")
+
+    return
+
+
 def vertical_roll(self, samples=0):
     # roll 2d proc data array vertically to fix mismatch
     amp = self.proc.get_curr_amp()
