@@ -22,13 +22,15 @@ def main():
     parser = argparse.ArgumentParser(
     description="Radar Analysis Graphical Utility (RAGU)"
     )
-    parser.add_argument("path", help="Data file path", nargs="+")
-    args = parser.parse_args()
+    parser.add_argument("path", help="Data file path", nargs='?')
+    path = parser.parse_args().path
 
     # check if path exists
-    if not os.path.isdir(args.path[0]):
-        print(f"Path not found: {args.path[0]}")
-        args.path[0] = None
+    if path:
+        if not os.path.isdir(path[0]):
+            print(f"Path not found: {path[0]}")
+            print(f"Defaulting to data path specified in the RAGU configuration file.")
+            path = None
 
     # change dir to RAGU code directory 
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -48,7 +50,7 @@ def main():
         pass
 
     # call the RAGU mainGUI class
-    gui.mainGUI(root, datPath = args.path[0])
+    gui.mainGUI(root, datPath = path)
     root.lift()    
     root.mainloop()
 
