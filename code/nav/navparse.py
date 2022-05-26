@@ -493,6 +493,34 @@ def getnav_marsis(navfile, navcrs, body):
     return df[["lon", "lat", "elev", "x", "y", "z", "twtt_wind", "dist"]]
 
 
+def getnav_marsis_ipc(navfile, navcrs, body):
+
+    geomCols = [
+        "lat",
+        "lon",
+        "elev"
+    ]
+    df = pd.read_csv(navfile, names=geomCols, skiprows=1)
+
+    df["x"], df["y"], df["z"] = pyproj.transform(
+        navcrs,
+        xyzsys[body],
+        df["lon"].to_numpy(),
+        df["lat"].to_numpy(),
+        df["elev"].to_numpy(),
+    )
+
+    df["dist"] = euclid_dist(
+        df["x"].to_numpy(),
+        df["y"].to_numpy(),
+        df["z"].to_numpy())
+
+
+    df["twtt_wind"] = 0.0
+
+    return df[["lon", "lat", "elev", "x", "y", "z", "twtt_wind", "dist"]]
+
+
 def getnav_rimfax(navfile, navcrs, body):
 
     df = pd.read_csv(navfile, header=0, skiprows=range(1,6))

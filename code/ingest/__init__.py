@@ -7,7 +7,7 @@
 radar data ingest wrapper
 """
 ### imports ###
-from ingest import ingest_oibAK, ingest_groundhog, ingest_uaf_kentech, ingest_pulseekko, ingest_gssi, ingest_sharad, ingest_marsis, ingest_lrs, ingest_cresis_rds, ingest_cresis_snow, ingest_rimfax
+from ingest import ingest_oibAK, ingest_groundhog, ingest_uaf_kentech, ingest_pulseekko, ingest_gssi, ingest_sharad, ingest_marsis, ingest_marsis_ipc, ingest_lrs, ingest_cresis_rds, ingest_cresis_snow, ingest_rimfax
 from tools import utils
 import numpy as np
 import pandas as pd
@@ -54,7 +54,10 @@ class ingest:
         elif (self.ftype == "lbl"):
             self.rdata = ingest_lrs.read(self.fpath, simpath, navcrs, body)
         elif (self.ftype == "img"):
-            self.rdata = ingest_sharad.read(self.fpath, simpath, navcrs, body)
+            # try:
+            #     self.rdata = ingest_sharad.read(self.fpath, simpath, navcrs, body)
+            # except:
+            self.rdata = ingest_marsis_ipc.read(self.fpath, simpath, navcrs, body)
         elif (self.ftype == "dat"):
             self.rdata = ingest_marsis.read(self.fpath, simpath, navcrs, body)
         elif (self.ftype == "csv"):
