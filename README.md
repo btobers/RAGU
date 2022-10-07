@@ -1,16 +1,11 @@
-# RAGU
-## Radar Analysis Graphical Utility
+<img src="recs/ragu_logo.png" height="200">
+
+# Radar Analysis Graphical Utility
 ### Authors: Brandon Tober and Michael Christoffersen
 [![DOI](https://zenodo.org/badge/193940796.svg)](https://zenodo.org/badge/latestdoi/193940796)
 
-<p align="center">
-  <!-- <img src="recs/NOSEpick.png" height="200"><br> -->
-  <!-- RAGU logo artist: Eric Petersen<br><br> -->
-  <img src="recs/NOSEpick_demo.gif" height="500">
-</p>
-
-## Description
-RAGU is an open source user-interface package developed to interpret radar sounding data, written in Python 3.
+## What is RAGU?
+RAGU is a user-interface radar interpretation software written in Python 3 and released under the GNU General Public License v3. RAGU was originally developed to ingest and interpret NASA Operation IceBridge airborne radar sounding data, but has been expanded for use with other sounder and ground penetrating radar datasets. While RAGU is primarily an interpretation software, minimal radar processing tools are included with the software.
 
 ### Dataset Capabilities:
 RAGU was originally developed to work with NASA's Operation IceBridge Alaska radar sounding data. The dataset capabilities have since been expanded to include the following:
@@ -23,7 +18,7 @@ RAGU was originally developed to work with NASA's Operation IceBridge Alaska rad
 - GSSI
 - pulseEKKO
 
-### File Info
+### Package overview
 - *ragu.yml* contains a list of RAGU dependencies
 - *config.ini* contains user-specified configuration file paths and information necessary to run the RAGU app
 - *main.py* is run to start the RAGU app
