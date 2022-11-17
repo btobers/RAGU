@@ -10,7 +10,7 @@ rdata flags to hold the key information for a radar profile
 class flags(object):
     def __init__(self):
         # basic data file attributes
-        #: sampzero, zero sample data setting following time zero adjustment
+        #: sampzero, zero sample data setting following time zero adjustment, or radar data flattening
         self.sampzero = 0
         #: sim, bool clutter simulation present
         self.sim = False

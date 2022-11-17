@@ -17,7 +17,7 @@ from raguError import raguError
 from ui import impick, wvpick, basemap, notepad
 from tools import utils, export
 from ingest import ingest
-import os, sys, scipy, glob, configparser, datetime
+import os, sys, scipy, glob, configparser, datetime, copy
 import numpy as np
 import pandas as pd
 import matplotlib as mpl
@@ -981,15 +981,32 @@ class mainGUI(tk.Frame):
                     for h in self.rdata.pick.horizons:
                         if h != srf:
                             self.rdata.pick.horizons[h] -= self.rdata.flags.sampzero
-                        self.impick.set_picks(horizon=h)                    
+                    
+                    # clear horizons from canvas and redraw shifted horizons
+                    tmp = copy.deepcopy(self.rdata.pick.horizons)
+                    self.impick.rm_horizon(rm_all=True, verify=False)
+                    for h in tmp.keys():
+                        self.rdata.pick.horizons[h] = tmp[h]
+                        self.impick.set_picks(h)
 
                     self.impick.blit()
                     procFlag = True
 
             elif arg == "flatten":
-                # if a surface is defined, flatten
-                if self.rdata.pick.get_srf():
+                # if a surface is defined and data isn't already time-zero shifted, flatten
+
+                if (self.rdata.pick.get_srf()) and (self.rdata.flags.sampzero == 0):
                     self.rdata.flatten()
+
+                    # apply sample shift to existing horizons and update picks
+                    # first copy horizons and remove them from impick cancas
+                    tmp = copy.deepcopy(self.rdata.pick.horizons)
+                    self.impick.rm_horizon(rm_all=True, verify=False)
+                    for h in tmp:
+                        self.rdata.pick.horizons[h] = tmp[h] - self.rdata.flags.sampzero
+                        self.impick.set_picks(horizon=h)
+
+                    self.impick.blit()
                     procFlag = True
 
             elif arg == "vroll":

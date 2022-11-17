@@ -111,10 +111,10 @@ def flatten(self):
     # initialize output array
     out = np.zeros_like(amp.T)
     # get surf samples in integer form for rolling
-    shifts = self.pick.horizons[self.pick.get_srf()].astype(np.int)
+    self.flags.sampzero = self.pick.horizons[self.pick.get_srf()].astype(np.int)
     # loop through all traces and roll according to surface sample
     for i, col in enumerate(amp.T):
-        out[i] = np.roll(col, shift = -shifts[i])
+        out[i] = np.roll(col, shift = -self.flags.sampzero[i])
 
     self.set_proc(out.T)
 
