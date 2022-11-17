@@ -460,12 +460,12 @@ class impick(tk.Frame):
 
 
     # method to vertically clip rgam for export
-    def verticalClip(self, val=.3):
-        self.ax.set_ylim(self.rdata.snum*val, 0)
+    def verticalClip(self, top=0.0, bottom = 0.5):
+        self.ax.set_ylim(self.rdata.snum*bottom, self.rdata.snum*top)
         ylim2 = self.secaxy0.get_ylim()
         ylim3 = self.secaxy1.get_ylim()
-        self.secaxy0.set_ylim(ylim2[0]*val,)
-        self.secaxy1.set_ylim(ylim3[0]*val,)
+        self.secaxy0.set_ylim(ylim2[0]*bottom,ylim2[0]*top)
+        self.secaxy1.set_ylim(ylim3[0]*bottom,ylim3[0]*top)
         self.dataCanvas.draw()
 
     # method to zoom in
@@ -799,7 +799,7 @@ class impick(tk.Frame):
         self.init_segment(horizon=horizon)
         # initialize line object for new horizon
         x,y = utils.merge_paths(self.horizon_paths[horizon])
-        self.horizon_lns[horizon], = self.ax.plot(x,y,c=self.ln_colors["hex"][self.ln_colors["str"].index(self.color.get())])            
+        self.horizon_lns[horizon], = self.ax.plot(x,y,lw=0.5,c=self.ln_colors["hex"][self.ln_colors["str"].index(self.color.get())])            
         # update horizon and segment options
         self.update_hor_opt_menu()  
         # set horVar to new horizon
@@ -1515,7 +1515,7 @@ class impick(tk.Frame):
     def export_fig(self, f_saveName):
         # zoom out to full rgram extent to save pick image
         self.fullExtent()
-        self.verticalClip(self.figsettings["figclip"].get())
+        self.verticalClip(self.figsettings["figclip"][0].get(), self.figsettings["figclip"][1].get())
         w0 ,h0 = self.fig.get_size_inches()    # get pre-save figure size
         w, h = self.figsettings["figsize"].get().split(",")
         self.fig.set_size_inches((float(w),float(h)))    # set figsize to wide aspect ratio

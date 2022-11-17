@@ -61,7 +61,7 @@ class mainGUI(tk.Frame):
                             "figtitle": tk.BooleanVar(),
                             "figxaxis": tk.BooleanVar(),
                             "figyaxis": tk.BooleanVar(),
-                            "figclip": tk.DoubleVar(value=1.0)}
+                            "figclip": (tk.DoubleVar(value=0.0),tk.DoubleVar(value=1.0))}
         self.figsettings["figxaxis"].set(True)        
         self.figsettings["figyaxis"].set(True)        
         self.figsettings["figtitle"].set(True)        
@@ -435,9 +435,9 @@ class mainGUI(tk.Frame):
         if proj_loadName is None:
             # select input file
             if self.os == "darwin":
-                proj_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath, title = "select project file")
+                proj_loadName = tk.filedialog.askopenfilename(initialdir = self.conf["path"]["outPath"] + '/../', title = "select project file")
             else:
-                proj_loadName = tk.filedialog.askopenfilename(initialdir = self.datPath ,title = "select project file",filetypes = [("ragu project", ".ragu"),
+                proj_loadName = tk.filedialog.askopenfilename(initialdir = self.conf["path"]["outPath"] + '/../',title = "select project file",filetypes = [("ragu project", ".ragu"),
                                                                                                                             ("all files",".*")])
         
         if proj_loadName:
@@ -613,10 +613,13 @@ class mainGUI(tk.Frame):
 
     
     # import_pick is a method to load and plot picks saved to a csv file
-    def import_pick(self):
+    def import_pick(self, path=None):
         if self.f_loadName:
-            pk_file = ""
-            pk_file = tk.filedialog.askopenfilename(initialdir = self.conf["path"]["outPath"], title = "load picks", filetypes = (("comma separated value", "*.csv"),))
+            if path and os.path.isfile(path):
+                pk_file = path
+            else:
+                pk_file = ""
+                pk_file = tk.filedialog.askopenfilename(initialdir = self.conf["path"]["outPath"], title = "load picks", filetypes = (("comma separated value", "*.csv"),))
             if pk_file:
                 horizons = self.igst.import_pick(pk_file, self.conf["param"]["uid"])
                 for horizon in horizons:
@@ -683,9 +686,9 @@ class mainGUI(tk.Frame):
         tmp = self.proj.get_projPath()
         if not tmp:
             if self.os == "darwin":
-                tmp = tk.filedialog.asksaveasfilename(initialdir = self.datPath,title = "save project file")
+                tmp = tk.filedialog.asksaveasfilename(initialdir = self.conf["path"]["outPath"], title = "save project file")
             else:
-                tmp = tk.filedialog.asksaveasfilename(initialdir = self.datPath,title = "save project file",filetypes = [("ragu project", ".ragu"),
+                tmp = tk.filedialog.asksaveasfilename(initialdir = self.conf["path"]["outPath"], title = "save project file",filetypes = [("ragu project", ".ragu"),
                                                                                                                             ("all files",".*")])
         
         if tmp:
@@ -1233,10 +1236,24 @@ class mainGUI(tk.Frame):
 
         row = tk.Frame(settingsWindow)
         row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-        lab = tk.Label(row, width=25, text="Export fig. vertical clip factor:", anchor='w')
+        lab = tk.Label(row, width=25, text="Export figure vertical clip:", anchor='w')
         lab.pack(side=tk.LEFT)
-        entry = tk.Entry(row,textvariable=self.figsettings["figclip"])
+
+        row = tk.Frame(settingsWindow)
+        row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+        lab = tk.Label(row, width=25, text="\tTop:", anchor='w')
+        lab.pack(side=tk.LEFT)
+        entry = tk.Entry(row,textvariable=self.figsettings["figclip"][0])
         entry.pack(side=tk.RIGHT, expand=tk.YES, fill=tk.X)
+        button_tip(self.parent, entry, "Top of figure vertical extent (Figure coordinates)")
+
+        row = tk.Frame(settingsWindow)
+        row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+        lab = tk.Label(row, width=25, text="\tBottom:", anchor='w')
+        lab.pack(side=tk.LEFT)
+        entry = tk.Entry(row,textvariable=self.figsettings["figclip"][1])
+        entry.pack(side=tk.RIGHT, expand=tk.YES, fill=tk.X)
+        button_tip(self.parent, entry, "Bottom of figure vertical extent (Figure coordinates)")
 
         row = tk.Frame(settingsWindow)
         row.pack(side=tk.TOP, anchor="c")
@@ -1273,13 +1290,23 @@ class mainGUI(tk.Frame):
             self.figsettings["fontsize"].get()
         except:
             self.figsettings["fontsize"].set(12)
+
+        # make sure figure extents are between 0 and 1
         try:
-            self.figsettings["figclip"].get()
-            val = self.figsettings["figclip"].get()
-            if (val < 0) or (val > 1):
-                self.figsettings["figclip"].set(1.0)
+            self.figsettings["figclip"][0].get()
+            self.figsettings["figclip"][1].get()
+            
+            top = self.figsettings["figclip"][0].get()
+            bottom = self.figsettings["figclip"][1].get()
+            if top < 0:
+                self.figsettings["figclip"][0].set(0)
+            if bottom > 1:
+                self.figsettings["figclip"][1].set(1)
+            if top > bottom:
+                self.figsettings["figclip"][0].set(0)
         except:
-            self.figsettings["figclip"].set(1.0)
+            self.figsettings["figclip"][0].set(0)
+            self.figsettings["figclip"][1].set(1)
 
         # update figure settings
         self.impick.update_figsettings(self.figsettings)
