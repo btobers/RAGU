@@ -15,14 +15,27 @@ import sys, h5py, fnmatch, copy
 from tools.constants import *
 
 # get_srf is a function for auto-detecting a radargram surface horizon
-def get_srf(dat_array):
-    # if surf idx array is all nans, take max power to define surface 
-    max_idx = np.nanargmax(dat_array[10:,:], axis = 0) + 10
-    # remove outliers
-    not_outlier = remove_outliers(max_idx)
-    # interpolate, ignoring outliers
-    x = np.arange(dat_array.shape[1])
-    return np.interp(x, x[not_outlier], max_idx[not_outlier])
+def get_srf(dat_array, sig_type=None):
+    if sig_type == "Chirp":
+        # take max power to define surface 
+        max_idx = np.nanargmax(dat_array[10:,:], axis = 0) + 10
+        # remove outliers
+        not_outlier = remove_outliers(max_idx)
+        # interpolate, ignoring outliers
+        x = np.arange(dat_array.shape[1])
+        return np.interp(x, x[not_outlier], max_idx[not_outlier])
+    elif sig_type == "Impulse":
+        C = np.zeros_like(dat_array)	# create empty criteria array to localize surface echo for each trace
+        gradient = np.gradient(dat_array, axis = 0) # find gradient of each trace in RGRAM
+
+        # criteria for surface echo - indicator is Pt * dPt-1/dt, 
+        # where P is the signal energy applied on each grame sample (t)
+        # indicator weights energy of a sample by the derivative preceding it
+
+        # vectorized criteria calculation
+        C[1:,:] = dat_array[1:,:]*gradient[:-1,:]
+        C_max = np.argmax(C, axis = 0)	# find indices of max critera seletor for each column
+        return C_max
 
 # remove_outliers is a function to remove outliers from an array
 # returns bool array

@@ -674,7 +674,7 @@ class mainGUI(tk.Frame):
         elif not tk.messagebox.askyesno("Warning","Surface horizon already exists. Overwrite with auto-pick surface?"):
             return
 
-        self.rdata.pick.horizons[srf] = utils.get_srf(np.abs(self.rdata.dat))
+        self.rdata.pick.horizons[srf] = utils.get_srf(np.abs(self.rdata.dat), self.rdata.info["Signal Type"])
         self.srf_define(srf=srf)
         self.impick.set_picks(horizon=srf)
         self.impick.blit()
@@ -769,6 +769,8 @@ class mainGUI(tk.Frame):
     
                 # export single or merged horizons
                 if flag is None or flag=="merged":
+                    # ensure surface horizon is defined
+                    self.srf_define()
                     # set output dataframe
                     self.rdata.set_out(export.pick_math(self.rdata, self.eps_r.get(), self.conf["output"]["amp"], horizon=horizon, srf=self.rdata.pick.get_srf()))
                     if self.conf["output"].getboolean("csv"):
