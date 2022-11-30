@@ -17,6 +17,8 @@ import os, sys
 # method to read PDS SHARAD USRDR data
 def read(fpath, simpath, navcrs, body):
     rdata = garlic(fpath)
+    if fpath.endswith("sim.img") or fpath.endswith("geom_combined.img"):
+        return rdata
     rdata.fn = fpath.split("/")[-1][:-10]
     rdata.dtype = "sharad"
     root = os.path.dirname(fpath)
@@ -40,18 +42,30 @@ def read(fpath, simpath, navcrs, body):
     rdata.set_proc(rdata.get_dat())
 
     # convert binary .img clutter sim product to numpy array
+    # account for PDS v4 sim format and legacy geom_combined format
     if simpath:
-        simpath = simpath + "/" + rdata.fn + "_geom_combined.img"
+        simpath = simpath + "/" + rdata.fn + "_sim.img"
+        if not os.path.isfile(simpath):
+            simpath = simpath + "/" + rdata.fn + "_geom_combined.img"
+
     else:
-        simpath = root + "/" + rdata.fn + "_geom_combined.img"
+        simpath = root + "/" + rdata.fn + "_sim.img"
+        if not os.path.isfile(simpath):
+            simpath = root + "/" + rdata.fn + "_geom_combined.img"
 
     if os.path.isfile(simpath):
         with open(simpath, "rb") as f:
-            sim = np.fromfile(f, dtype)   
-        sim = sim.reshape(rdata.snum,rdata.tnum)
+            sim = np.fromfile(f, dtype)
+        # reshape - will be different depending on sim version
+        if simpath.endswith('sim.img'):
+            # just take combined sim if PDS v4 sim
+            sim = sim[2 * len(sim) // 3 :].reshape(rdata.snum,rdata.tnum)
+        else:
+            sim = sim.reshape(rdata.snum, rdata.tnum)
+    
         rdata.set_sim(sim)
     else:
-        print("Clutter simulation not found:\t{}\nSpecify alternate path in configuration file.".format(simpath))
+        print("Clutter simulation not found in:\t{}\nSpecify alternate path in configuration file.".format(simpath.rstrip(simpath.split('/')[-1])))
 
     rdata.set_twtt()
 

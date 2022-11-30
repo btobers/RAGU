@@ -483,7 +483,7 @@ class mainGUI(tk.Frame):
 
 
     # open_dat loads the data file and passes to other modules
-    def open_dfile(self, f_loadName=None):
+    def open_dfile(self, f_loadName=None, switch=False, direction="Right"):
             # if input selected, clear impick canvas, ingest data and pass to impick
             try:
                 if f_loadName:
@@ -529,8 +529,12 @@ class mainGUI(tk.Frame):
 
             # recall choose_dfile if wrong file type is selected 
             except Exception as err:
-                print(err)
-                self.choose_dfile() 
+                # if switch, just advance to next file
+                if switch:
+                    self.switch_dfile(direction)
+                else:
+                    print(err)
+                    self.choose_dfile() 
 
 
     # switch_dfile is a method to get the filename of the last/next data file in the directory to open
@@ -556,7 +560,7 @@ class mainGUI(tk.Frame):
 
                 # check if more files exist in directory following current file
                 if file_index <= (len(file_list) - 1):
-                    self.open_dfile(file_list[file_index])
+                    self.open_dfile(file_list[file_index], True, direction)
 
                 else:
                     print("Note: " + self.f_loadName.split("/")[-1] + " is the last file in " + file_path + "/*." + self.f_loadName.split(".")[-1])
@@ -567,7 +571,7 @@ class mainGUI(tk.Frame):
 
                 # check if more files exist in directory following current file
                 if file_index >= 0:
-                    self.open_dfile(file_list[file_index])
+                    self.open_dfile(file_list[file_index], True, direction)
 
                 else:
                     print("Note: " + self.f_loadName.split("/")[-1] + " is the first file in " + file_path + "/*." + self.f_loadName.split(".")[-1])
