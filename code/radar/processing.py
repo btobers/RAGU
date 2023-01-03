@@ -53,8 +53,11 @@ class proc(object):
 
 def set_tzero(self):
     # get mean trace and find max sample and update sampzero flag
-    meanTrace = np.nanmean(np.abs(self.dat), axis=1)
-    self.flags.sampzero = np.nanargmax(meanTrace)
+    if self.info["Signal Type"] == "Chirp":
+        meanTrace = np.nanmean(np.abs(self.dat), axis=1)
+        self.flags.sampzero = np.nanargmax(meanTrace)
+    elif self.info["Signal Type"] == "Impulse":
+        self.flags.sampzero = np.nanmean(utils.get_srf(np.abs(self.dat), "Impulse")).astype(int)
 
     if self.flags.sampzero > 0:
         self.tzero_shift()
@@ -218,6 +221,8 @@ def filter(self, btype="lowpass", lowcut=None, highcut=None, order=5, direction=
     # apply low pass filter to data array
     amp = self.proc.get_curr_amp()
     self.proc.set_prev_amp(amp)
+    # use abs value of amp
+    amp = np.abs(amp)
     self.proc.set_prev_dB(self.proc.get_curr_dB())
     if direction == 0:
         fs=1/self.dt
@@ -226,8 +231,13 @@ def filter(self, btype="lowpass", lowcut=None, highcut=None, order=5, direction=
     b, a = butter(btype=btype, lowcut=lowcut, highcut=highcut, fs=fs, order=order)
     # avoid scipy filter nan issues by windowing out any time zero shift
     out = np.zeros_like(amp)
-    out[:-self.flags.sampzero,:] = signal.filtfilt(b, a, np.abs(amp[:-self.flags.sampzero:,:]), axis=direction)
-    out[-self.flags.sampzero:,:] = np.nan
+    # get indices of any nans and temporarily replace
+    idx = np.where(np.isnan(amp))
+    amp[idx] = -9999
+    out = signal.filtfilt(b, a, amp, axis=direction)
+    out[idx] = np.nan
+    # out[:-self.flags.sampzero,:] = signal.filtfilt(b, a, np.abs(amp[:-self.flags.sampzero:,:]), axis=direction)
+    # out[-self.flags.sampzero:,:] = np.nan
     # use amplitude of lp filtered data to reset as pc array
     self.set_proc(out)
     # log

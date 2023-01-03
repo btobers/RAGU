@@ -181,7 +181,7 @@ def compare_horizon_paths(dicta=None, dictb=None):
 
 
 # srfpick2elev function
-def srfpick2elev(samp, twtt_wind, elev, dt, tnum):
+def srfpick2elev(samp, twtt_wind, elev, dt, tnum, asep):
     """
     calculate surface elevation from updated surface pick, subtracting distance form navdf["elev"] to surface
     #: np.ndarray(tnum,) samp, surface index per trace [samle #]
@@ -189,27 +189,28 @@ def srfpick2elev(samp, twtt_wind, elev, dt, tnum):
     #: np.ndarray(tnum,) elev, radar elevation per trace [m.a.s.l.]
     #: float dt, spacing between samples in travel time [seconds]
     #: int tnum, the number of traces in the file
+    #: float asep, antenna separation in meters
     """
     # check shapes
     if samp.shape == twtt_wind.shape == elev.shape == (tnum,):
         twtt = sample2twtt(samp, dt) + twtt_wind
-        dist = twtt2depth(twtt, eps_r=1)
+        dist = twtt2depth(twtt, asep, eps_r=1)
         srfElev = elev - dist
 
         return srfElev
 
 
 # twtt2depth function
-def twtt2depth(a, eps_r=3.15):
+def twtt2depth(twtt, asep, eps_r=3.15):
     v = C/np.sqrt(eps_r)
-    depth = a*v/(2)            # convert input twtt to distance in km
+    depth = np.sqrt((v / 2 * (twtt + (asep / C)))**2 - (asep / 2)**2)       # convert travel time to depth, accounting for any antenna separation - if asetp==0 then simplifies to depth = twtt*v/2 (EQ 1 from Armstrong et al., 2022)
     return depth
 
 
 # depth2twtt function
-def depth2twtt(a, eps_r=3.15):
+def depth2twtt(depth, asep, eps_r=3.15):
     v = C/np.sqrt(eps_r)
-    twtt = a*2/v                # convert input depth to meters, then return twtt
+    twtt = 2 / v * (np.sqrt((depth**2) + (asep / 2)**2)) - (asep / C)       # if asetp==0 then simplifies to twtt = depth*2/v ( rearangment of EQ 1 from Armstrong et al., 2022)
     return twtt
 
 

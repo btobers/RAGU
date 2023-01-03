@@ -76,7 +76,7 @@ def read_h5(fpath, navcrs, body):
             twtt_srf[twtt_srf == -9] = np.nan
             arr = utils.twtt2sample(twtt_srf, rdata.dt)
         else:
-            arr = utils.twtt2sample(utils.depth2twtt(rdata.navdf["elev"] - rdata.srfElev, eps_r=1), rdata.dt)
+            arr = utils.twtt2sample(utils.depth2twtt(rdata.navdf["elev"] - rdata.srfElev, rdata.asep, eps_r=1), rdata.dt)
     else:
         arr = np.repeat(np.nan, rdata.tnum)
         rdata.set_srfElev(dat = arr)
@@ -98,14 +98,6 @@ def read_h5(fpath, navcrs, body):
     f.close()                                                   # close the file
 
     rdata.check_attrs()
-
-    # # temporary fix to roll array for impulse data to line up with surface - find offset by windowing around lidar surface
-    # if (rdata.info["signal type"] == "impulse") and (not np.isnan(rdata.pick.existing_twttSurf).all()):
-    #     lidarsrf = utils.twtt2sample(rdata.pick.existing_twttSurf, rdata.dt)
-    #     pksrf = utils.pkampwind(rdata.dat, lidarsrf, 60)
-    #     avoffset = np.nanmean(lidarsrf - pksrf)
-    #     rdata.dat = np.roll(rdata.dat, int(round(avoffset)), axis=0)
-    #     rdata.set_proc(np.abs(rdata.dat))
 
     return rdata
 
@@ -157,7 +149,7 @@ def read_mat(fpath, navcrs, body):
         rdata.pick.srf = "srf"
 
         # get surface elevation
-        arr = rdata.navdf["elev"] - utils.twtt2depth(twtt_srf, eps_r=1)
+        arr = rdata.navdf["elev"] - utils.twtt2depth(twtt_srf, rdata.asep, eps_r=1)
         rdata.set_srfElev(dat = arr)
 
     rdata.check_attrs()

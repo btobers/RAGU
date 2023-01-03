@@ -56,6 +56,8 @@ class garlic(object):
         self.nchan = None
         #: int, number of samples above row zero in data array that have been truncated across all traces
         self.truncs = 0
+        #: float, antenna separation (meters)
+        self.asep = 0
         #: dict, signal info
         self.info = {}
         #: np.ndarray(snum x tnum), raw ingested radar data
@@ -146,7 +148,8 @@ class garlic(object):
                                             self.navdf["twtt_wind"].to_numpy(),
                                             self.navdf["elev"].to_numpy(), 
                                             self.dt,
-                                            self.tnum)
+                                            self.tnum,
+                                            self.asep)
         return
 
 

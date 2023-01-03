@@ -521,7 +521,7 @@ class mainGUI(tk.Frame):
                     self.basemap.set_nav(self.rdata.fn, self.rdata.navdf)
                     self.basemap.plot_tracks()
                     self.impick.get_basemap(self.basemap)
-
+        
                 if self.rdata and self.notepad._notepad__get_state() == 1:
                     self.notepad._notepad__write_track(fn=self.rdata.fn)
                     if self.notepad._notepad__get_file():
@@ -619,8 +619,11 @@ class mainGUI(tk.Frame):
     # import_pick is a method to load and plot picks saved to a csv file
     def import_pick(self, path=None):
         if self.f_loadName:
-            if path and os.path.isfile(path):
-                pk_file = path
+            if path:
+                if os.path.isfile(path):
+                    pk_file = path
+                else:
+                    pk_file = ""
             else:
                 pk_file = ""
                 pk_file = tk.filedialog.askopenfilename(initialdir = self.conf["path"]["outPath"], title = "load picks", filetypes = (("comma separated value", "*.csv"),))

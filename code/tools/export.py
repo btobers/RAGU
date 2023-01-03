@@ -100,7 +100,7 @@ def pick_math(rdata, i_eps_r=3.15, amp_out=True, horizon=None, srf=None):
                     elif eps_r < 1:
                         print("raguWarning: A relative dielectric permittivity >=1 must be specified in order to export picks")
 
-                h = utils.twtt2depth(out[horizon + "_twtt"] - out[horizons[i - 1] + "_twtt"], eps_r)
+                h = utils.twtt2depth(out[horizon + "_twtt"] - out[horizons[i - 1] + "_twtt"], rdata.asep, eps_r)
                 # calculate layer bed elevation as elevation of preceding layer minus layer thickness - this only works if a surface with reference elevation is defined
                 if srf:
                     out[horizon + "_elev"] = out[horizons[i - 1] + "_elev"] - h
