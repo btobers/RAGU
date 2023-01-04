@@ -56,7 +56,7 @@ class garlic(object):
         self.nchan = None
         #: int, number of samples above row zero in data array that have been truncated across all traces
         self.truncs = 0
-        #: float, antenna separation (meters)
+        #: float, antenna separation (meters) - if rx and tx gps exist then this will be converted to an array with per trace separation distance upon data ingest
         self.asep = 0
         #: dict, signal info
         self.info = {}

@@ -433,7 +433,7 @@ class impick(tk.Frame):
             self.secaxy0.set_ylim(self.rdata.snum * self.rdata.dt * 1e6, 0)
 
         self.secaxy1.set_ylabel("Depth [m] ($\epsilon_{}$ = {})".format("r",self.eps_r))
-        self.secaxy1.set_ylim(utils.twtt2depth(self.rdata.snum * self.rdata.dt, self.rdata.asep, self.eps_r), 0)
+        self.secaxy1.set_ylim(utils.twtt2depth(self.rdata.snum * self.rdata.dt, np.nanmean(self.rdata.asep), self.eps_r), 0)
 
         # update along-track distance
         if not np.all(np.isnan(self.rdata.navdf["dist"])) or  np.all((self.rdata.navdf["dist"] == 0)):
@@ -529,7 +529,7 @@ class impick(tk.Frame):
         if ylimb1[0] > self.rdata.snum:
             ylimb1[0] = self.rdata.snum
             ylimb2[0] = self.rdata.snum*self.rdata.dt
-            ylimb3[0] = utils.twtt2depth(self.rdata.snum*self.rdata.dt, self.rdata.asep, self.eps_r)
+            ylimb3[0] = utils.twtt2depth(self.rdata.snum*self.rdata.dt, np.nanmean(self.rdata.asep), self.eps_r)
         if ylimb1[1] < 0:
             ylimb1[1] = 0
             ylimb2[1] = 0
@@ -603,7 +603,7 @@ class impick(tk.Frame):
             if (ylim1[0] + step1) > self.rdata.snum:
                 step1 = self.rdata.snum - ylim1[0]
                 step2 = (self.rdata.snum*self.rdata.dt) - ylim2[0]
-                step3 = utils.twtt2depth(self.rdata.snum*self.rdata.dt, self.rdata.asep, self.eps_r) - ylim3[0]
+                step3 = utils.twtt2depth(self.rdata.snum*self.rdata.dt, np.nanmean(self.rdata.asep), self.eps_r) - ylim3[0]
             self.ax.set_ylim(ylim1[0] + step1, ylim1[1] + step1)
             self.secaxy0.set_ylim(ylim1[0] + step2, ylim2[1] + step2)
             self.secaxy1.set_ylim(ylim3[0] + step3, ylim3[1] + step3)

@@ -39,7 +39,6 @@ def read_h5(fpath, navcrs, body):
     rdata.dt = 1/rdata.fs                                                       # sampling interval, sec
     rdata.prf = 1e3/f["raw"]["rx0"].attrs["stack"]                              # pulse repition frequency, Hz
     rdata.nchan = 1
-    rdata.asep = 100                                                            # antenna separation 
 
     # pull radar proc and sim arrayss
     rdata.set_dat(f["restack/rx0"][:])                                            # pulse compressed array
@@ -48,14 +47,24 @@ def read_h5(fpath, navcrs, body):
 
     rdata.set_twtt()
 
+    # parse nav
+    rdata.navdf = navparse.getnav_groundhog(fpath, navcrs, body)
+    # if rx and tx each have gps, we'll store antenna sep per trace
+    if "asep" in rdata.navdf:
+        rdata.asep = rdata.navdf["asep"].to_numpy()
+    else:
+        rdata.asep = 100
+
+    # groudnhog rx triggers on arrival of airwave and records 32 samples at top of each trace before trigger - so surface is sample 33
+    rdata.pick.horizons["srf"] = np.repeat(33, rdata.tnum).astype(int)
+    rdata.pick.srf = "srf"
+    rdata.set_srfElev()
+
     rdata.info["Signal Type"] = "Impulse" 
     rdata.info["Sampling Frequency [MHz]"] = rdata.fs * 1e-6
     rdata.info["PRF [kHz]"] = rdata.prf * 1e-3
     rdata.info["Stack"] = f["raw"]["rx0"].attrs["stack"]
-    rdata.info["Antenna Separation [m]"] = rdata.asep
-
-    # parse nav
-    rdata.navdf = navparse.getnav_groundhog(fpath, navcrs, body)
+    rdata.info["Antenna Separation [m]"] = round(np.nanmean(rdata.asep),2)
 
     f.close()                                                   # close the file
 

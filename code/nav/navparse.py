@@ -84,14 +84,36 @@ def getnav_oibAK_h5(navfile, navcrs, body):
 def getnav_groundhog(navfile, navcrs, body):
     h5 = h5py.File(navfile, "r")
     # use average of RX and TX gps positioning
+    # we'll also record the separation distance between rx and tx per trace
     k = h5["restack"].keys()
     if ("txFix0" in k) and ("rxFix0" in k):
         nav_rx = pd.DataFrame(h5["restack"]["rxFix0"][:])
         nav_tx = pd.DataFrame(h5["restack"]["txFix0"][:])
         df = pd.DataFrame()
+        # stroe average lat lon hgt
         df["lon"] = np.mean(np.vstack((nav_rx["lon"], nav_tx["lon"])), axis=0)
         df["lat"] = np.mean(np.vstack((nav_rx["lat"], nav_tx["lat"])), axis=0)
         df["hgt"] = np.mean(np.vstack((nav_rx["hgt"], nav_tx["hgt"])), axis=0)
+
+        # project rx and tx lat lon hgt and get euclidean distance
+        rx_df = pd.DataFrame()
+        rx_df["x"], rx_df["y"], rx_df["z"] = pyproj.transform(
+            navcrs,
+            xyzsys[body],
+            nav_rx["lon"].to_numpy(),
+            nav_rx["lat"].to_numpy(),
+            nav_rx["hgt"].to_numpy(),
+        )
+        tx_df = pd.DataFrame()
+        tx_df["x"], tx_df["y"], tx_df["z"] = pyproj.transform(
+            navcrs,
+            xyzsys[body],
+            nav_tx["lon"].to_numpy(),
+            nav_tx["lat"].to_numpy(),
+            nav_tx["hgt"].to_numpy(),
+        )
+        df["asep"] = np.sqrt((rx_df['x']-tx_df['x'])**2 + (rx_df['y']-tx_df['y'])**2 + (rx_df['z']-tx_df['z'])**2)
+
     elif "rxFix0" in k:
         df = pd.DataFrame(h5["restack"]["rxFix0"][:])        
     else:
@@ -129,7 +151,7 @@ def getnav_groundhog(navfile, navcrs, body):
 
     df["twtt_wind"] = 0.0
 
-    return df[["lon", "lat", "elev", "x", "y", "z", "twtt_wind", "dist"]]
+    return df[["lon", "lat", "elev", "x", "y", "z", "twtt_wind", "asep", "dist"]]
 
 
 def getnav_oibAK_mat(navfile, navcrs, body):
