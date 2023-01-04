@@ -529,7 +529,7 @@ class mainGUI(tk.Frame):
 
                 # see if user would like  to load previous pick file
                 tmpf = self.conf["path"]["outPath"] + self.rdata.fn + "_pk_" + self.conf["param"]["uid"] + ".csv"
-                if (os.path.isfile(tmpf)) and (tk.messagebox.askyesno("Load Picks", "Load pick file {}?".format(tmpf), icon = "question") == True):
+                if (os.path.isfile(tmpf)) and (tk.messagebox.askyesno("Load Picks", "Load pick file: {}?".format(tmpf), icon = "question") == True):
                     self.import_pick(tmpf)
 
 
