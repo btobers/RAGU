@@ -527,6 +527,12 @@ class mainGUI(tk.Frame):
                     if self.notepad._notepad__get_file():
                         self.notepad._notepad__saveFile()
 
+                # see if user would like  to load previous pick file
+                tmpf = self.conf["path"]["outPath"] + self.rdata.fn + "_pk_" + self.conf["param"]["uid"] + ".csv"
+                if (os.path.isfile(tmpf)) and (tk.messagebox.askyesno("Load Picks", "Load pick file {}?".format(tmpf), icon = "question") == True):
+                    self.import_pick(tmpf)
+
+
             # recall choose_dfile if wrong file type is selected 
             except Exception as err:
                 # if switch, just advance to next file
