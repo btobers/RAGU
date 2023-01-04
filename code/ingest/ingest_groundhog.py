@@ -35,10 +35,11 @@ def read_h5(fpath, navcrs, body):
     # |  |-txFix0
 
     # pull necessary raw group data
-    rdata.fs = f["raw/rx0"].attrs["fs"]                                      # sampling frequency
+    rdata.fs = f["raw/rx0"].attrs["fs"]                                         # sampling frequency
     rdata.dt = 1/rdata.fs                                                       # sampling interval, sec
-    rdata.prf = 1e3/f["raw"]["rx0"].attrs["stack"]            # pulse repition frequency, Hz
+    rdata.prf = 1e3/f["raw"]["rx0"].attrs["stack"]                              # pulse repition frequency, Hz
     rdata.nchan = 1
+    rdata.asep = 100                                                            # antenna separation 
 
     # pull radar proc and sim arrayss
     rdata.set_dat(f["restack/rx0"][:])                                            # pulse compressed array
@@ -51,6 +52,7 @@ def read_h5(fpath, navcrs, body):
     rdata.info["Sampling Frequency [MHz]"] = rdata.fs * 1e-6
     rdata.info["PRF [kHz]"] = rdata.prf * 1e-3
     rdata.info["Stack"] = f["raw"]["rx0"].attrs["stack"]
+    rdata.info["Antenna Separation [m]"] = rdata.asep
 
     # parse nav
     rdata.navdf = navparse.getnav_groundhog(fpath, navcrs, body)
@@ -59,7 +61,13 @@ def read_h5(fpath, navcrs, body):
 
     rdata.check_attrs()
 
-    rdata.filter(btype='lowpass', lowcut=None, highcut=4e6, order=5, direction=0)
-    rdata.filter(btype='lowpass', lowcut=None, highcut=.4, order=5, direction=1)
+    try:
+        rdata.filter(btype='lowpass', lowcut=None, highcut=4e6, order=5, direction=0)
+    except:
+        pass
+    try:
+        rdata.filter(btype='lowpass', lowcut=None, highcut=.4, order=5, direction=1)
+    except:
+        pass
 
     return rdata
