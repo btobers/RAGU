@@ -89,8 +89,28 @@ def getnav_groundhog(navfile, navcrs, body):
     if ("txFix0" in k) and ("rxFix0" in k):
         nav_rx = pd.DataFrame(h5["restack"]["rxFix0"][:])
         nav_tx = pd.DataFrame(h5["restack"]["txFix0"][:])
+
+        # Interpolate non-unique nav values in tx and rx datasets
+        hsh = nav_rx["lat"] + nav_rx["lon"] * 1e4
+        idx = np.arange(0, len(hsh), 1)
+        uniq, uidx = np.unique(hsh, return_index=True)
+        uidx = np.sort(uidx)
+        uidx[-1] = len(hsh) - 1  # Handle end of array
+        nav_rx["lat"] = np.interp(idx, uidx, nav_rx["lat"][uidx])
+        nav_rx["lon"] = np.interp(idx, uidx, nav_rx["lon"][uidx])
+        nav_rx["hgt"] = np.interp(idx, uidx, nav_rx["hgt"][uidx])
+
+        hsh = nav_tx["lat"] + nav_tx["lon"] * 1e4
+        idx = np.arange(0, len(hsh), 1)
+        uniq, uidx = np.unique(hsh, return_index=True)
+        uidx = np.sort(uidx)
+        uidx[-1] = len(hsh) - 1  # Handle end of array
+        nav_tx["lat"] = np.interp(idx, uidx, nav_tx["lat"][uidx])
+        nav_tx["lon"] = np.interp(idx, uidx, nav_tx["lon"][uidx])
+        nav_tx["hgt"] = np.interp(idx, uidx, nav_tx["hgt"][uidx])
+
         df = pd.DataFrame()
-        # stroe average lat lon hgt
+        # store average lat lon hgt
         df["lon"] = np.mean(np.vstack((nav_rx["lon"], nav_tx["lon"])), axis=0)
         df["lat"] = np.mean(np.vstack((nav_rx["lat"], nav_tx["lat"])), axis=0)
         df["hgt"] = np.mean(np.vstack((nav_rx["hgt"], nav_tx["hgt"])), axis=0)
@@ -123,16 +143,6 @@ def getnav_groundhog(navfile, navcrs, body):
         df.rename(columns={"hgt": "elev"}, inplace=True)
     except:
         pass
-
-    # Interpolate non-unique nav values
-    # hsh = df["lat"] + df["lon"] * 1e4
-    # idx = np.arange(0, len(hsh), 1)
-    # uniq, uidx = np.unique(hsh, return_index=True)
-    # uidx = np.sort(uidx)
-    # uidx[-1] = len(hsh) - 1  # Handle end of array
-    # df["lat"] = np.interp(idx, uidx, df["lat"][uidx])
-    # df["lon"] = np.interp(idx, uidx, df["lon"][uidx])
-    # df["elev"] = np.interp(idx, uidx, df["elev"][uidx])
 
     h5.close()
 

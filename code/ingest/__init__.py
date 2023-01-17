@@ -97,14 +97,17 @@ class ingest:
                     horizon = horizon.split("_")
                     if len(horizon) > 1:
                         horizon = horizon[0]
-                        sample = dat[horizon + "_sample"].to_numpy()
-
+                        sample = dat[horizon + "_sample"].to_numpy() 
+                    
                     else:
                         # get horizon name from pick file name
                         fnl = len(self.rdata.fn) + 1
                         extl = len(uid) + 4
                         horizon = fpath.split("/")[-1][fnl:-extl]
                         sample = dat["sample"].to_numpy() - self.rdata.flags.sampzero
+                    
+                        # account for any already applied tzero
+                    sample -= self.rdata.flags.sampzero
 
                     if horizon in self.rdata.pick.horizons.keys():
                         if utils.nan_array_equal(self.rdata.pick.horizons[horizon], sample):

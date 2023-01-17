@@ -49,16 +49,23 @@ def read_h5(fpath, navcrs, body):
 
     # parse nav
     rdata.navdf = navparse.getnav_groundhog(fpath, navcrs, body)
+
     # if rx and tx each have gps, we'll store antenna sep per trace
     if "asep" in rdata.navdf:
         rdata.asep = rdata.navdf["asep"].to_numpy()
     else:
         rdata.asep = 100
 
-    # groudnhog rx triggers on arrival of airwave and records 32 samples at top of each trace before trigger - so surface is sample 33
-    rdata.pick.horizons["srf"] = np.repeat(33, rdata.tnum).astype(int)
-    rdata.pick.srf = "srf"
-    rdata.set_srfElev()
+    # groudnhog rx triggers on arrival of airwave and records 32 samples at top of each trace before trigger - so sample zero is sample 33
+    rdata.flags.sampzero = 33
+    rdata.tzero_shift()
+
+    # define surface horizon name to set index to zeros
+    rdata.pick.horizons["srf"] = np.zeros(rdata.tnum)
+    rdata.pick.set_srf("srf")
+
+    # for ground-based GPR, srf_elev is the same as GPS recorded elev
+    rdata.set_srfElev(dat = rdata.navdf["elev"].to_numpy())
 
     rdata.info["Signal Type"] = "Impulse" 
     rdata.info["Sampling Frequency [MHz]"] = rdata.fs * 1e-6

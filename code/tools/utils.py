@@ -189,12 +189,17 @@ def srfpick2elev(samp, twtt_wind, elev, dt, tnum, asep):
     #: np.ndarray(tnum,) elev, radar elevation per trace [m.a.s.l.]
     #: float dt, spacing between samples in travel time [seconds]
     #: int tnum, the number of traces in the file
-    #: float asep, antenna separation in meters
+    #: np.ndarray(tnum) or single floating point number asep, antenna separation in meters
     """
     # check shapes
     if samp.shape == twtt_wind.shape == elev.shape == (tnum,):
         twtt = sample2twtt(samp, dt) + twtt_wind
-        dist = twtt2depth(twtt, asep, eps_r=1)
+
+        # if a time-zero shift was applied, dist should equal zero for ground based radar systs
+        if (twtt==0.).all():
+            dist = 0
+        else:
+            dist = twtt2depth(twtt, asep, eps_r=1)
         srfElev = elev - dist
 
         return srfElev
