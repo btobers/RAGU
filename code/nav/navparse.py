@@ -27,6 +27,7 @@ import matplotlib.pyplot as plt
 xyzsys = {
 "mars": "+proj=geocent +a=3396190 +b=3376200 +no_defs",
 "earth": "+proj=geocent +a=6378140 +b=6356750 +no_defs",
+"moon": "+proj=geocent +a=1737400 +b=1737400 +no_defs",
 }
 
 def getnav_oibAK_h5(navfile, navcrs, body):
@@ -478,17 +479,59 @@ def getnav_sharad(navfile, navcrs, body):
     return df[["lon", "lat", "elev", "x", "y", "z", "twtt_wind", "dist"]]
 
 
-def getnav_lrs(navfile, navcrs, body):
-    df = pd.read_csv(navfile, index_col=False)
+def getnav_lrs(navfile, navcrs, body, tnum):
 
-    df["dist"] = euclid_dist(
-        df["x"].to_numpy(),
-        df["y"].to_numpy(),
-        df["z"].to_numpy())
+    if navfile.endswith('.csv'):
+        df = pd.read_csv(navfile, index_col=False)
 
-    df["elev"] = df["hgt"]
-    df["twtt_wind"] = 0.0
+        df["dist"] = euclid_dist(
+            df["x"].to_numpy(),
+            df["y"].to_numpy(),
+            df["z"].to_numpy())
 
+        df["elev"] = df["hgt"]
+
+        df.rename(columns={"delay": "twtt_wind"}, inplace=True)
+
+    elif navfile.endswith('.img'):
+        # based on label file
+        twtt_wind = []
+        lon = []
+        lat = []
+        elev = []
+        with open(navfile, "rb") as f:
+            # loop through traces
+            for _i in range(tnum):
+                f.seek((_i*55)+23)
+                twtt_wind.append(f.read(4))     # time delay is 4 bytes starting at 23
+                f.read(2)
+                lat.append(f.read(4))           # lat is 4 bytes starting at 29
+                lon.append(f.read(4))           # lon is 4 bytes starting at 33
+                elev.append(f.read(4))          # elev is 4 bytes starting at 37
+
+        twtt_wind = np.frombuffer(np.asarray(twtt_wind), np.float32)
+        lat = np.frombuffer(np.asarray(lat), np.float32)
+        lon = np.frombuffer(np.asarray(lon), np.float32)
+        elev = np.frombuffer(np.asarray(elev), np.float32)
+
+        df = pd.DataFrame({'lon':lon,'lat':lat,'elev':elev,'twtt_wind':twtt_wind})
+
+        df["x"], df["y"], df["z"] = pyproj.transform(
+            navcrs,
+            xyzsys[body],
+            df["lon"].to_numpy(),
+            df["lat"].to_numpy(),
+            df["elev"].to_numpy(),
+        )
+
+        df["dist"] = euclid_dist(
+            df["x"].to_numpy(),
+            df["y"].to_numpy(),
+            df["z"].to_numpy())
+    
+    # convert time delay from microseconds to seconds
+    df["twtt_wind"] *= 1e-6
+    
     return df[["lon", "lat", "elev", "x", "y", "z", "twtt_wind", "dist"]]
 
 

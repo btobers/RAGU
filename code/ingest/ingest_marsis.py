@@ -24,8 +24,6 @@ def read(fpath, simpath, navcrs, body):
     rdata = garlic(fpath)
     rdata.fn = orbit + "_" + fn.replace(".","_")[:-4]
     rdata.dtype = "marsis"
-    print("----------------------------------------")
-    print("Loading: " + rdata.fn)
 
     # convert binary RGRAM to numpy array
     # # reshape array

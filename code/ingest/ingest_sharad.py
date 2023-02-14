@@ -23,8 +23,6 @@ def read(fpath, simpath, navcrs, body):
     rdata.dtype = "sharad"
     root = os.path.dirname(fpath)
 
-    print("----------------------------------------")
-    print("Loading: " + rdata.fn)
     # rdata.fn = fn.rstrip("_rgram.img")
     # convert binary .img PDS RGRAM to numpy array
     # reshape array with 3600 lines

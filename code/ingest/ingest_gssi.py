@@ -18,8 +18,6 @@ from tools.constants import *
 # method to read gssi dzt data
 def read(fpath, navcrs, body):
     fn = fpath.split("/")[-1]
-    print("----------------------------------------")
-    print("Loading: " + fn)
     rdata = garlic(fpath)
     rdata.fn = fn[:-4]
     rdata.dtype = "gssi"

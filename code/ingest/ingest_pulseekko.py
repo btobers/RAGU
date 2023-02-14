@@ -133,8 +133,6 @@ def read_dt1(fpath, navcrs, body):
     rdata = garlic(fpath)
     rdata.fn = fpath.split("/")[-1][:-4]
     rdata.dtype = "pekko"
-    print("----------------------------------------")
-    print("Loading: " + rdata.fn)
     infile_gps = fpath[:-4] + ".GPS"
     if not os.path.isfile(infile_gps):
         infile_gps = fpath[:-4] + ".GP2"

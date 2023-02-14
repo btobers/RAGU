@@ -21,9 +21,6 @@ def read(fpath, navcrs, body):
     rdata.fn = fpath.split("/")[-1][:-4]
     rdata.dtype = "rimfax"
 
-    print("----------------------------------------")
-    print("Loading: " + rdata.fn)
-
     # only read necessary data from file
     f = pd.read_csv(rdata.fpath, header=0, skiprows=range(1,6))
     f = f.loc[f["record_type"]==0]

@@ -22,8 +22,6 @@ def read_h5(fpath, navcrs, body):
     rdata.dtype = "uaf_kentech"
 
     # read in .h5 file
-    print("----------------------------------------")
-    print("Loading: " + rdata.fn)
     f = h5py.File(rdata.fpath, "r")                      
 
     # h5 radar data group structure        

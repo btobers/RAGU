@@ -51,13 +51,14 @@ class ingest:
                     self.rdata = ingest_cresis_rds.read_mat(self.fpath, navcrs, body)
                 except:
                     self.rdata = ingest_oibAK.read_mat(self.fpath, navcrs, body)
-        elif (self.ftype == "lbl"):
-            self.rdata = ingest_lrs.read(self.fpath, simpath, navcrs, body)
         elif (self.ftype == "img"):
             try:
                 self.rdata = ingest_sharad.read(self.fpath, simpath, navcrs, body)
             except:
-                self.rdata = ingest_marsis_ipc.read(self.fpath, simpath, navcrs, body)
+                try:
+                    self.rdata = ingest_lrs.read(self.fpath, simpath, navcrs, body)
+                except:
+                    self.rdata = ingest_marsis_ipc.read(self.fpath, simpath, navcrs, body)
         elif (self.ftype == "dat"):
             self.rdata = ingest_marsis.read(self.fpath, simpath, navcrs, body)
         elif (self.ftype == "csv"):
@@ -73,6 +74,9 @@ class ingest:
         else:
             print("File reader for format {} not built yet".format(self.ftype))
             exit(1)
+
+        print("----------------------------------------")
+        print("Loaded: " + self.rdata.fn)
 
         # add ingest commands to log
         self.rdata.log('self.igst = ingest("{}")'.format(self.fpath))

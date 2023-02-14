@@ -27,9 +27,6 @@ def read_mat(fpath, navcrs, body):
         raise ValueError("Not snow radar data")
         return
 
-    print("----------------------------------------")
-    print("Loading: " + rdata.fn)
-
     rdata.set_dat(np.array(f["Data"][:].T))
     rdata.set_proc(np.abs(rdata.get_dat()))
     rdata.snum = rdata.dat.shape[0]                                                 # samples per trace in rgram

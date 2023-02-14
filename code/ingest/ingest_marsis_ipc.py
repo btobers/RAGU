@@ -22,8 +22,6 @@ def read(fpath, simpath, navcrs, body):
     rdata.fn = fpath.split("/")[-1][:-4]
     rdata.dtype = "marsis_ipc"
     root = os.path.dirname(fpath)
-    print("----------------------------------------")
-    print("Loading: " + rdata.fn)
 
     # convert binary RGRAM to numpy array
     # # reshape array, knowing that each trace has 512 samples

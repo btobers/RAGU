@@ -15,29 +15,23 @@ import os, sys
 
 # method to read KAGUYA (SELENE) LRS SAR data
 def read(fpath, simpath, navcrs, body):
-    fn = fpath.split("/")[-1]
-    root = fpath.rstrip(fn)
-    print("----------------------------------------")
-    print("Loading: " + fn)
+    rdata = garlic(fpath)
+    rdata.fn = fpath.split("/")[-1][:-4]
+    rdata.dtype = "lrs"
+    root = os.path.dirname(fpath)
 
-    # Get # of traces
-    fd = open(fpath,'r')
-    lbl = fd.read().split('\n')
-    fd.close()
-
-    rdata = garlic(fpath.replace(".lbl", ".img"))
     # get number of traces (file records in lbl file) and samples per trace
+    with open(fpath.replace(".img", ".lbl"),'r') as f:
+        lbl = f.read().split('\n')
     rdata.tnum = int(lbl[19].split('=')[1])
     rdata.snum = 1000
 
-    rdata.fn = fn.rstrip(".lbl")
-    rdata.dtype = "lrs"
     # convert binary .img RGRAM to numpy array - data begins after 55 bytes of header info
     with open(rdata.fpath, "rb") as f:
         f.seek(rdata.tnum*55)
         tmp = f.read(rdata.tnum*rdata.snum)
         dat = np.frombuffer(tmp, np.uint8)
-    l = len(rdata.dat)
+    l = len(dat)
 
     rdata.dt = 305.17578125e-09
     rdata.prf = 20
@@ -47,9 +41,9 @@ def read(fpath, simpath, navcrs, body):
     
     # convert binary .img clutter sim product to numpy array
     if simpath:
-        simpath = simpath + "/" + fn.replace(".lbl","_geom_combined.img")
+        simpath = simpath + "/" + rdata.fn + "_geom_combined.img"
     else:
-        simpath = root + "/" + fn.replace(".lbl","_geom_combined.img")
+        simpath = root + "/" + rdata.fn + "_geom_combined.img"
 
     if os.path.isfile(simpath):
         with open(simpath, "rb") as f:
@@ -67,11 +61,14 @@ def read(fpath, simpath, navcrs, body):
     rdata.info["Pulse Length [\u03BCs]"] = 200
     rdata.info["PRF [Hz]"] = rdata.prf
 
-    # open geom nav file for rgram
+    # open geom nav file for rgram - Michael Christoffersen post-processed geom files using SPICE trajectory. 
+    # if this is not available, use binary stored nav.
     geom_path = fpath.replace(".lbl","_geom.csv")
+    if not os.path.isfile(geom_path):
+        geom_path = rdata.fpath
 
     # parse nav - use spice derived nav, not header data due to header data issues
-    rdata.navdf = navparse.getnav_lrs(geom_path, navcrs, body)
+    rdata.navdf = navparse.getnav_lrs(geom_path, navcrs, body, rdata.tnum)
 
     rdata.set_srfElev(dat = np.repeat(np.nan, rdata.tnum))
 
