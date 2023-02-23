@@ -58,7 +58,10 @@ class ingest:
                 try:
                     self.rdata = ingest_lrs.read(self.fpath, simpath, navcrs, body)
                 except:
-                    self.rdata = ingest_marsis_ipc.read(self.fpath, simpath, navcrs, body)
+                    try:
+                        self.rdata = ingest_marsis.read(self.fpath, simpath, navcrs, body)
+                    except:
+                        self.rdata = ingest_marsis_ipc.read(self.fpath, simpath, navcrs, body)
         elif (self.ftype == "dat"):
             self.rdata = ingest_marsis.read(self.fpath, simpath, navcrs, body)
         elif (self.ftype == "csv"):

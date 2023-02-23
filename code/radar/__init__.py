@@ -209,11 +209,11 @@ class garlic(object):
                 raise raguError("{:s} is None.".format(attr))
  
         # check data array shape
-        if (self.dat.shape != (self.snum, self.tnum)):
+        if (self.dat.shape[:2] != (self.snum, self.tnum)):
             try:
-                self.snum, self.tnum = self.get_dat().shape
+                self.snum, self.tnum = self.get_dat().shape[:2]
             except:
-                raise raguError("Data shape is inconsistent with the number of traces and the number of samples.\nData Array Shape: {}\nSamples: {}\nTraces: {}".format(self.dat.shape,self.snum,self.tnum))
+                raise raguError("Data shape is inconsistent with the number of traces and the number of samples.\nData Array Shape: {}\nSamples: {}\nTraces: {}\nChannels: {}".format(self.dat.shape,self.snum,self.tnum,self.nchan))
 
         # check navdf
         for k in ["lon","lat","elev","dist"]:

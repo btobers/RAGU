@@ -485,62 +485,62 @@ class mainGUI(tk.Frame):
     # open_dat loads the data file and passes to other modules
     def open_dfile(self, f_loadName=None, switch=False, direction="Right"):
             # if input selected, clear impick canvas, ingest data and pass to impick
-            try:
-                if f_loadName:
-                    # switch to profile tab
-                    if self.tab == "Waveform":
-                        self.nb.select(self.nb.tabs()[0])
-                    self.f_loadName = f_loadName
-                    # update and save project file
-                    self.proj.update_paths(self.f_loadName, self.map_loadName, self.notepad._notepad__get_file())
-                    self.proj.save()
-                    # ingest the data
-                    self.igst = ingest(self.f_loadName)
-                    self.rdata = self.igst.read(self.conf["path"]["simPath"], self.conf["nav"]["crs"], self.conf["nav"]["body"])
-                    self.impick.clear_canvas()  
-                    self.impick.set_vars()
-                    self.impick.load(self.rdata)
-                    # set existing horizons
-                    for horizon in self.rdata.pick.horizons.keys():
-                        self.impick.set_picks(horizon=horizon)
-                    self.impick.set_pickState(state=False)
-                    self.impick.update_hor_opt_menu()
-                    self.impick.update_seg_opt_menu
-                    self.impick.set_axes()
-                    self.impick.drawData()
-                    self.impick.update_pickLabels()
-                    self.impick.update_bg()
-                    self.wvpick.set_vars()
-                    self.wvpick.clear()
-                    self.wvpick.set_data(self.rdata)
-                    self.rinfolbl.config(text = '\t\t'.join('{}: {}'.format(k, d) for k, d in self.rdata.info.items()))
+            # try:
+            if f_loadName:
+                # switch to profile tab
+                if self.tab == "Waveform":
+                    self.nb.select(self.nb.tabs()[0])
+                self.f_loadName = f_loadName
+                # update and save project file
+                self.proj.update_paths(self.f_loadName, self.map_loadName, self.notepad._notepad__get_file())
+                self.proj.save()
+                # ingest the data
+                self.igst = ingest(self.f_loadName)
+                self.rdata = self.igst.read(self.conf["path"]["simPath"], self.conf["nav"]["crs"], self.conf["nav"]["body"])
+                self.impick.clear_canvas()  
+                self.impick.set_vars()
+                self.impick.load(self.rdata)
+                # set existing horizons
+                for horizon in self.rdata.pick.horizons.keys():
+                    self.impick.set_picks(horizon=horizon)
+                self.impick.set_pickState(state=False)
+                self.impick.update_hor_opt_menu()
+                self.impick.update_seg_opt_menu
+                self.impick.set_axes()
+                self.impick.drawData()
+                self.impick.update_pickLabels()
+                self.impick.update_bg()
+                self.wvpick.set_vars()
+                self.wvpick.clear()
+                self.wvpick.set_data(self.rdata)
+                self.rinfolbl.config(text = '\t\t'.join('{}: {}'.format(k, d) for k, d in self.rdata.info.items()))
 
-                # pass basemap to impick for plotting pick location
-                if self.map_loadName and self.basemap.get_state() == 1:
-                    self.basemap.set_track(self.rdata.fn)
-                    self.basemap.set_nav(self.rdata.fn, self.rdata.navdf)
-                    self.basemap.plot_tracks()
-                    self.impick.get_basemap(self.basemap)
-        
-                if self.rdata and self.notepad._notepad__get_state() == 1:
-                    self.notepad._notepad__write_track(fn=self.rdata.fn)
-                    if self.notepad._notepad__get_file():
-                        self.notepad._notepad__saveFile()
+            # pass basemap to impick for plotting pick location
+            if self.map_loadName and self.basemap.get_state() == 1:
+                self.basemap.set_track(self.rdata.fn)
+                self.basemap.set_nav(self.rdata.fn, self.rdata.navdf)
+                self.basemap.plot_tracks()
+                self.impick.get_basemap(self.basemap)
+    
+            if self.rdata and self.notepad._notepad__get_state() == 1:
+                self.notepad._notepad__write_track(fn=self.rdata.fn)
+                if self.notepad._notepad__get_file():
+                    self.notepad._notepad__saveFile()
 
-                # see if user would like  to load previous pick file
-                tmpf = self.conf["path"]["outPath"] + self.rdata.fn + "_pk_" + self.conf["param"]["uid"] + ".csv"
-                if (os.path.isfile(tmpf)) and (tk.messagebox.askyesno("Load Picks", "Load pick file: {}?".format(tmpf), icon = "question") == True):
-                    self.import_pick(tmpf)
+            # see if user would like  to load previous pick file
+            tmpf = self.conf["path"]["outPath"] + self.rdata.fn + "_pk_" + self.conf["param"]["uid"] + ".csv"
+            if (os.path.isfile(tmpf)) and (tk.messagebox.askyesno("Load Picks", "Load pick file: {}?".format(tmpf), icon = "question") == True):
+                self.import_pick(tmpf)
 
 
-            # recall choose_dfile if wrong file type is selected 
-            except Exception as err:
-                # if switch, just advance to next file
-                if switch:
-                    self.switch_dfile(direction)
-                else:
-                    print(err)
-                    self.choose_dfile() 
+            # # recall choose_dfile if wrong file type is selected 
+            # except Exception as err:
+            #     # if switch, just advance to next file
+            #     if switch:
+            #         self.switch_dfile(direction)
+            #     else:
+            #         print(err)
+            #         self.choose_dfile() 
 
 
     # switch_dfile is a method to get the filename of the last/next data file in the directory to open

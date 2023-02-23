@@ -18,11 +18,12 @@ import matplotlib.pyplot as plt
 
 # method to read JPL multilook MARSIS data
 def read(fpath, simpath, navcrs, body):
-    orbit = fpath.split("/")[-2]
     fn = fpath.split("/")[-1]
     root = fpath.rstrip(fn)
+    orbit = fn.split('_')
+    orbit = orbit[0] + '_' + orbit[1]
     rdata = garlic(fpath)
-    rdata.fn = orbit + "_" + fn.replace(".","_")[:-4]
+    rdata.fn = fn[:-4]
     rdata.dtype = "marsis"
 
     # convert binary RGRAM to numpy array
@@ -35,7 +36,7 @@ def read(fpath, simpath, navcrs, body):
     rdata.snum = 2048
     # get number of traces, dividing file length by number of samples per trace, by 8 data arrays
     rdata.tnum = int(l/rdata.snum/8)
-    # dt per pixel from reprocessed oversampled data
+    # dt per pixel from reprocessed oversampled data - data is oversampled by factor of 2
     rdata.dt = 1/(2*(1.4e6))
     rdata.prf = 127
     rdata.nchan = 2
@@ -56,16 +57,15 @@ def read(fpath, simpath, navcrs, body):
 
     # convert png clutter sim product to numpy array
     if simpath:
-        simpath = simpath + "/" + orbit + "_clutterSim_multilook_analysis.png"
+        simpath = simpath + "/" + orbit + "_clutter.img"
     else:
-        simpath = root + "/" + orbit + "_clutterSim_multilook_analysis.png"
+        simpath = root + "/" + orbit + "_clutter.img"
 
     if os.path.isfile(simpath):
-        image = Image.open(simpath)
-        # convert image to numpy array
-        sim = np.asarray(image)
-        sim = sim[int(rdata.snum/2):-int(rdata.snum/2),:]
-        rdata.set_sim(sim)
+        with open(simpath,"rb") as f:
+            dat = np.fromfile(f, np.uint8)
+            sim = dat.reshape(rdata.snum, rdata.tnum)
+            rdata.set_sim(sim)
     else:
         print("Clutter simulation not found:\t{}\nSpecify alternate path in configuration file.".format(simpath))
 
@@ -75,7 +75,7 @@ def read(fpath, simpath, navcrs, body):
     rdata.info["signal type"] = "chirp"
 
     # open geom nav file for rgram
-    geom_path = glob.glob(root + "*tab")[0]
+    geom_path = root + orbit + "_geom.tab"
  
     # parse nav
     rdata.navdf = navparse.getnav_marsis(geom_path, navcrs, body)
