@@ -168,7 +168,6 @@ class basemap(tk.Frame):
             return
 
         # transform navcrs to basemap crs
-        print(self.navcrs,self.bmcrs)
         x, y = pyproj.transform(
             self.navcrs,
             self.bmcrs,

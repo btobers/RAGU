@@ -563,6 +563,7 @@ def getnav_marsis(navfile, navcrs, body):
         df["y"].to_numpy(),
         df["z"].to_numpy())
 
+    # TODO: figure out what window before recording is for each trace
     df["twtt_wind"] = 0.0
 
     return df[["lon", "lat", "elev", "x", "y", "z", "twtt_wind", "dist"]]
