@@ -37,7 +37,8 @@ def read(fpath, simpath, navcrs, body):
     # get number of traces, dividing file length by number of samples per trace, by 8 data arrays
     rdata.tnum = int(l/rdata.snum/8)
     # dt per pixel from reprocessed oversampled data - data is oversampled by factor of 2
-    rdata.dt = 1/(2*(1.4e6))
+    rdata.fs = 2*(1.4e6)
+    rdata.dt = 1/rdata.fs
     rdata.prf = 127
     rdata.nchan = 2
 
@@ -72,7 +73,9 @@ def read(fpath, simpath, navcrs, body):
     rdata.set_twtt()
 
     # assign signal info
-    rdata.info["signal type"] = "chirp"
+    rdata.info["Signal Type"] = "Chirp"
+    rdata.info["Sampling Frequency [MHz]"] = rdata.fs*1e-6
+    rdata.info["PRF [Hz]"] = rdata.prf
 
     # open geom nav file for rgram
     geom_path = root + orbit + "_geom.tab"
