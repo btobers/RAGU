@@ -11,7 +11,7 @@ RAGU is a user-interface radar interpretation software written in Python 3 and r
 RAGU was originally developed to work with NASA's Operation IceBridge Alaska radar sounding data. The dataset capabilities have since been expanded to include the following:
 
 - NASA OIB-AK
-- CReSIS (Radar Depth Sounds & Snow Radar)
+- CReSIS (Radar Depth Sounder & Snow Radar)
 - SHARAD (USRDR, USGEOM, US clutter sims)
 - MARSIS (JPL multilook products)
 - KAGUYA (SELENE) Lunar Radar Sounder (LRS)
@@ -41,10 +41,6 @@ RAGU was originally developed to work with NASA's Operation IceBridge Alaska rad
 2. **Geopackage (.gpkg)**
 
     For **CSV** and **Geopackage** files, see the [format file](https://github.com/btobers/RAGU/blob/master/docs/RAGU_pk_format.pdf) in for per trace export attribute information.
- 
-3. **HDF5 (.h5)**
-
-    For **HDF5** data, a dataset containing the two-way travel time to the interpreted subsurface return may be exported to the /drv/pick/ data group.
 
 #### Figure:
 A figure each may also be exported for the uninterpreted radar profile, the accompanying clutter simulation, and the interpreted radar profile. Example over Malaspina Glacier, AK:  
