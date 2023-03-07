@@ -33,7 +33,7 @@ RAGU was originally developed to work with NASA's Operation IceBridge Alaska rad
 - *nav/navparse.py* is used to parse radar gps data into the appropriate format and perform any necessary coordinate transformations
 - *nav/gps.py*  is used to read and parse raw gps nmea strings into the appropriate format
 - *tools/utils.py* contains a set of utility functions utilized by the app
-- *tools/constants.py* contains uglobal constants
+- *tools/constants.py* contains global constants
 
 ### Outputs
 #### Pick files:
