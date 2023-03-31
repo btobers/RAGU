@@ -2,7 +2,7 @@
 
 # Radar Analysis Graphical Utility
 ### Authors: Brandon Tober and Michael Christoffersen
-[![DOI](https://zenodo.org/badge/193940796.svg)](https://zenodo.org/badge/latestdoi/193940796)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3968981.svg)](https://doi.org/10.5281/zenodo.3968981)
 
 ## What is RAGU?
 RAGU is a user-interface radar interpretation software written in Python 3 and released under the GNU General Public License v3. RAGU was originally developed to ingest and interpret NASA Operation IceBridge airborne radar sounding data, but has been expanded for use with other sounder and ground penetrating radar datasets. While RAGU is primarily an interpretation software, minimal radar processing tools are included with the software.
@@ -11,12 +11,14 @@ RAGU is a user-interface radar interpretation software written in Python 3 and r
 RAGU was originally developed to work with NASA's Operation IceBridge Alaska radar sounding data. The dataset capabilities have since been expanded to include the following:
 
 - NASA OIB-AK
-- CReSIS (Radar Depth Sounds & Snow Radar)
+- CReSIS (Radar Depth Sounder & Snow Radar)
 - SHARAD (USRDR, USGEOM, US clutter sims)
 - MARSIS (JPL multilook products)
 - KAGUYA (SELENE) Lunar Radar Sounder (LRS)
 - GSSI
 - pulseEKKO
+
+Have another radar dataset you'd like to be able to use RAGU to interpret? Please feel free to send the necessary python code to read in the data and we can incorporate an ingester. Or, feel free to collaborate and create an ingester for reading your data type with RAGU.
 
 ### Package overview
 - *ragu.yml* contains a list of RAGU dependencies
@@ -33,7 +35,7 @@ RAGU was originally developed to work with NASA's Operation IceBridge Alaska rad
 - *nav/navparse.py* is used to parse radar gps data into the appropriate format and perform any necessary coordinate transformations
 - *nav/gps.py*  is used to read and parse raw gps nmea strings into the appropriate format
 - *tools/utils.py* contains a set of utility functions utilized by the app
-- *tools/constants.py* contains uglobal constants
+- *tools/constants.py* contains global constants
 
 ### Outputs
 #### Pick files:
@@ -41,10 +43,6 @@ RAGU was originally developed to work with NASA's Operation IceBridge Alaska rad
 2. **Geopackage (.gpkg)**
 
     For **CSV** and **Geopackage** files, see the [format file](https://github.com/btobers/RAGU/blob/master/docs/RAGU_pk_format.pdf) in for per trace export attribute information.
- 
-3. **HDF5 (.h5)**
-
-    For **HDF5** data, a dataset containing the two-way travel time to the interpreted subsurface return may be exported to the /drv/pick/ data group.
 
 #### Figure:
 A figure each may also be exported for the uninterpreted radar profile, the accompanying clutter simulation, and the interpreted radar profile. Example over Malaspina Glacier, AK:  
