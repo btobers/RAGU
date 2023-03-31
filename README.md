@@ -18,7 +18,7 @@ RAGU was originally developed to work with NASA's Operation IceBridge Alaska rad
 - GSSI
 - pulseEKKO
 
-Have another radar dataset you'd like to be able to use RAGU to interpret? Please feel free to send the necessary python code to read in the data and we can incorporate an ingester. Or, feel free to collaborate and create an ingester for reading your data type with RAGU.
+Have another radar dataset you'd like to be able to use RAGU to interpret? Please feel free to send the necessary python code to read in the data and we can incorporate an ingester. Or, feel free to collaborate and create an ingester for reading your data type with RAGU. Follow the ingester template: - *ingest/ingest_template.py*
 
 ### Package overview
 - *ragu.yml* contains a list of RAGU dependencies
