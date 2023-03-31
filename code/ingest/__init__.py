@@ -116,9 +116,9 @@ class ingest:
                         # account for any already applied tzero
                     sample -= self.rdata.flags.sampzero
 
-                    # # skip surface
-                    # if horizon == 'srf':
-                    #     continue
+                    # skip surface
+                    if horizon == 'srf':
+                        continue
                     
                     if horizon in self.rdata.pick.horizons.keys():
                         if utils.nan_array_equal(self.rdata.pick.horizons[horizon], sample):

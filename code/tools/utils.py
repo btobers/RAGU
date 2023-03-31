@@ -272,10 +272,10 @@ def print_pickInfo(data, trace, sample, eps_r=3.15):
 
         # create table header
         header = "{:<12s} {:<12s} {:<12s} {:<12s} {:<12s} {:<12s} {:<12s} {:<12s}".format\
-            ("trace", "sample", "radar elev", data.pick.srf + "elev", data.pick.srf + " TWTT", "pick TWTT", "pick elev", "thick")
+            ("trace", "sample", "radar elev", data.pick.srf + " elev", "agl" + data.pick.srf + " TWTT", "pick TWTT", "pick elev", "thick")
         markers = "-" * len(header)
         header = [markers, header, markers]
-        dat = ["{:<12d} {:<12d} {:<12.4f} {:<12.4f} {:<12.4e} {:<12.4e} {:<12.4f} {:<12.4f}".format(trace, sample, elev, srfElev, srfTwtt, subsrfTwtt, subsrfElev, thick)]
+        dat = ["{:<12d} {:<12d} {:<12.4f} {:<12.4f} {:<12.4f} {:<12.4e} {:<12.4e} {:<12.4f} {:<12.4f}".format(trace, sample, elev, srfElev, elev-srfElev, srfTwtt, subsrfTwtt, subsrfElev, thick)]
         print("\n".join(header + dat)+"\n")
 
     else:
