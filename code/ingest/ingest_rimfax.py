@@ -15,7 +15,19 @@ import pandas as pd
 import numpy as np
 import sys
 import matplotlib.pyplot as plt
-# method to ingest RIMFAX radar data
+# method to ingest RIMFAX radar data from the PDS
+
+###
+#  data files should first be split up into separate files for each mode of active sounding - use the following commented code to do this:
+## mode=[26,78,214]
+## name=['shallow','surface','deep']
+## for fn in glob.glob('*.csv'):
+##     f = pd.read_csv(fn, header=0)
+##     for m,n in zip(mode,name):
+##         f = f.loc[(f["record_type"]==0) & (f["config_id"]==m)]
+##         f.to_csv(fn[:-4]+'_'+n+'.csv')
+####
+
 def read(fpath, navcrs, body):
     rdata = garlic(fpath)
     rdata.fn = fpath.split("/")[-1][:-4]
