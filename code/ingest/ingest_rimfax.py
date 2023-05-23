@@ -21,11 +21,11 @@ import matplotlib.pyplot as plt
 #  data files should first be split up into separate files for each mode of active sounding - use the following commented code to do this:
 ## mode=[26,78,214]
 ## name=['shallow','surface','deep']
-## for fn in glob.glob('*.csv'):
+## for fn in glob.glob('rimfax*.csv'):
 ##     f = pd.read_csv(fn, header=0)
 ##     for m,n in zip(mode,name):
-##         f = f.loc[(f["record_type"]==0) & (f["config_id"]==m)]
-##         f.to_csv(fn[:-4]+'_'+n+'.csv')
+##         f_ = f.loc[(f["record_type"]==0) & (f["config_id"]==m)]
+##         f_.to_csv(fn[:-4]+'_'+n+'.csv')
 ####
 
 def read(fpath, navcrs, body):
