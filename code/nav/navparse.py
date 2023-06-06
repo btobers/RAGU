@@ -598,10 +598,14 @@ def getnav_marsis_ipc(navfile, navcrs, body):
 
 
 def getnav_rimfax(navfile, navcrs, body):
-
-    df = pd.read_csv(navfile, header=0, skiprows=range(1,6))
+    
+    df = pd.read_csv(navfile, header=0)
     df = df.loc[df["record_type"]==0]
-
+    idx = df.columns.get_loc("s0001")
+    dat = np.array(df.iloc[:,idx:])
+    # find traces with all null samples
+    filt = ~np.isnan(dat).all(axis=1)                                                   
+    df = df.iloc[filt,:idx]
     df.rename(columns={"ant_lat": "lat", "ant_lon": "lon", "ant_elev": "elev"}, inplace=True)
 
     df["x"], df["y"], df["z"] = pyproj.transform(
