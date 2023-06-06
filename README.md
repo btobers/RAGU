@@ -15,6 +15,7 @@ RAGU was originally developed to work with NASA's Operation IceBridge Alaska rad
 - SHARAD (USRDR, USGEOM, US clutter sims)
 - MARSIS (JPL multilook products)
 - KAGUYA (SELENE) Lunar Radar Sounder (LRS)
+- RIMFAX
 - GSSI
 - pulseEKKO
 
