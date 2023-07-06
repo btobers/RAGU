@@ -1,0 +1,14 @@
+# $conda env create -f ragu.yml
+
+name: ragu
+dependencies:
+  - python=3
+  - tk
+  - matplotlib
+  - numpy
+  - scipy
+  - pandas
+  - geopandas
+  - pyproj
+  - rasterio
+  - h5py

@@ -1,0 +1,36 @@
+[build-system]
+requires = [
+    "setuptools>=61.0.0",
+    "wheel"
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ragu"
+version = "2.5.0"
+description = "radar analysis graphical utility"
+readme = "README.md"
+requires-python = ">=3.6"
+license = {file = "LICENSE.txt"}
+authors = [
+    {name = "Brandon S. Tober"},
+    {email = "tobers.brandon@gmail.com"}
+]
+dependencies = [
+    "pandas",
+    "numpy",
+    "scipy",
+    "matplotlib",
+    "rasterio",
+    "pyproj",
+    "tk",
+    "h5py",
+    "geopandas"
+]
+
+[project.urls]
+documentation = "https://github.com/btobers/ragu/wiki"
+repository = "https://github.com/btobers/ragu"
+
+[project.scripts]
+ragu = "ragu.bin.ragu:main"
