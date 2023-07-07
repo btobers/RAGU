@@ -10,10 +10,10 @@ much of the header data which is not necessary for RAGU use has been removed
 ### imports ###
 from ragu.radar import garlic
 from ragu.nav import navparse
+from ragu.tools.constants import *
 import struct
 import os,sys
 import numpy as np
-from tools.constants import *
 
 # method to read gssi dzt data
 def read(fpath, navcrs, body):
