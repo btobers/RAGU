@@ -22,9 +22,8 @@ RAGU was originally developed to work with NASA's Operation IceBridge Alaska rad
 Have another radar dataset you'd like to be able to use RAGU to interpret? Please feel free to send the necessary python code to read in the data and we can incorporate an ingester. Or, feel free to collaborate and create an ingester for reading your data type with RAGU. Follow the ingester template: - *ingest/ingest_template.py*
 
 ### Package overview
-- *ragu.yml* contains a list of RAGU dependencies
-- *config.ini* contains user-specified configuration file paths and information necessary to run the RAGU app
-- *main.py* is run to start the RAGU app
+- *config.py* script used to create the RAGU configuration file
+- *bin/main.py* is run to start the RAGU app
 - *ui/gui.py* handles the graphical user-interface and sets up the app
 - *ui/impick.py* handles profile-view, radargram image picking
 - *ui/wvpick.py* handles waveform-view picking optimization
