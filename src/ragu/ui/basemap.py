@@ -7,8 +7,8 @@
 basemap class is a tkinter frame which handles the RAGU basemap
 """
 ### imports ###
-from nav import navparse
-from tools import utils
+from ragu.nav import navparse
+from ragu.tools import utils
 import numpy as np
 import tkinter as tk
 import rasterio as rio

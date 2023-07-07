@@ -7,8 +7,8 @@
 impick class is a tkinter frame which handles the RAGU profile view and radar data picking
 """
 ### imports ###
-from tools import utils, export
-from ui import basemap
+from ragu.tools import utils, export
+from ragu.ui import basemap
 import numpy as np
 import tkinter as tk
 import sys,os,time,fnmatch,copy,PIL

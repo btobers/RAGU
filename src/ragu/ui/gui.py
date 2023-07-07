@@ -13,10 +13,10 @@ environment requirements in nose_env.yml
 mainGUI class is a tkinter frame which runs the RAGU master GUI
 """
 ### imports ###
-from raguError import raguError
-from ui import impick, wvpick, basemap, notepad
-from tools import utils, export
-from ingest import ingest
+from ragu.raguError import raguError
+from ragu.ui import impick, wvpick, basemap, notepad
+from ragu.tools import utils, export
+from ragu.ingest import ingest
 import os, sys, scipy, glob, configparser, datetime, copy
 import numpy as np
 import pandas as pd

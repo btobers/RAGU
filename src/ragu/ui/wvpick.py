@@ -7,7 +7,7 @@
 wvpick class is a tkinter frame which handles the RAGU waveform view and radar pick optimization
 """
 ### imports ###
-from tools import utils
+from ragu.tools import utils
 import numpy as np
 from scipy.interpolate import CubicSpline
 from scipy.signal import find_peaks
