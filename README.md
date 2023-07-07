@@ -1,4 +1,4 @@
-<img src="recs/ragu_logo.png" height="200">
+<img src="src/recs/ragu_logo.png" height="200">
 
 # Radar Analysis Graphical Utility
 ### Authors: Brandon Tober and Michael Christoffersen
@@ -48,7 +48,7 @@ Have another radar dataset you'd like to be able to use RAGU to interpret? Pleas
 #### Figure:
 A figure each may also be exported for the uninterpreted radar profile, the accompanying clutter simulation, and the interpreted radar profile. Example over Malaspina Glacier, AK:  
 <p align="center">
-  <img src="recs/20190928-235534_compiled.jpg" height="500"><br>
+  <img src="src/recs/20190928-235534_compiled.jpg" height="500"><br>
 </p>
 
 #### Processing Script:
