@@ -87,7 +87,7 @@ Supported Operating Systems:
 ### Setup
 1. Install ragu via pypa
 ```
-pip install ragu
+$ pip install ragu
 ```
 **Nonte: One may first wish to create an anaconda environment from which to install ragu**.
 
@@ -95,7 +95,7 @@ Prior to running ragu, a user may set appropriate data paths, data coordinate re
 
 2. Call ragu from the command line to initialize the GUI:
 ```
-python3 ragu
+$ ragu
 ```
 
 ## Notes

@@ -174,7 +174,7 @@ def read_dt1(fpath, navcrs, body):
     rdata.info.pop("Total_time_window")
 
     # convert signed int amplitude to floating point for displaying
-    rdata.set_proc(rdata.get_dat().astype(np.float))
+    rdata.set_proc(rdata.get_dat().astype(float))
 
     rdata.set_twtt()
 

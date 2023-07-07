@@ -167,7 +167,7 @@ class garlic(object):
     # convert amplitude array to dB log scale
     def dBscale(self, dat):
         # convert to power
-        pow = np.power(dat.astype(np.float), 2)
+        pow = np.power(dat.astype(float), 2)
         # mask zero-power values
         pow[pow == 0] = np.nan
         # dB it
