@@ -7,9 +7,9 @@
 ingest_uaf_kentech is a module developed to ingest Martin Truffer's Kentech radar sounding data. 
 """
 ### imports ###
-from radar import garlic
-from nav import navparse
-from tools import utils
+from ragu.radar import garlic
+from ragu.nav import navparse
+from ragu.tools import utils
 import h5py, fnmatch
 import numpy as np
 import scipy as sp

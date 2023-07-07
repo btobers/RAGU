@@ -10,9 +10,9 @@ NOTE: ingest/__init__.py must also be modified after creating a new ingester for
 ALSO: nav/navparse.py will need an additional method for reading your navigation data
 """
 ### necessary imports, different data types may require additional ###
-from radar import garlic
-from nav import navparse
-from tools import utils
+from ragu.radar import garlic
+from ragu.nav import navparse
+from ragu.tools import utils
 import h5py, fnmatch
 import numpy as np
 import scipy as sp

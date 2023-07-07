@@ -11,8 +11,9 @@ last updated: 08JUL2020
 environment requirements in ragu.yml
 """
 ### imports ###
+from ragu import config
+from ragu.ui import gui
 import os,sys,argparse
-from ui import gui
 import tkinter as tk
 from tkinter import font
 
@@ -52,16 +53,16 @@ def main():
 
     # get configuration file
     basedir = os.path.join(os.path.expanduser('~'),'RAGU')
+    if not os.path.isdir(basedir):
+        os.mkdir(basedir)
+    if not os.path.isfile(basedir+'/config.ini'):
+        config.create_config(basedir+'/config.ini')
     confpath = basedir + '/config.ini'
-    if os.path.isfile(confpath):
-        # call the RAGU mainGUI class
-        gui.mainGUI(root, confpath, datPath = path)
-        root.lift()    
-        root.mainloop()
 
-    else:
-        print('RAGU configuration file not found at:\t',basedir)
-        sys.exit(1)
+    # call the RAGU mainGUI class
+    gui.mainGUI(root, confpath, datPath = path)
+    root.lift()    
+    root.mainloop()
 
 if __name__ == "__main__":
     main()

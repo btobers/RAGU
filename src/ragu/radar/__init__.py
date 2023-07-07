@@ -4,11 +4,11 @@
 #
 # distributed under terms of the GNU GPL3.0 license
 ### imports ###
-from tools import utils
-from radar.flags import flags
-from radar.pick import pick
-from radar.processing import proc
-from raguError import raguError
+from ragu.tools import utils
+from ragu.radar.flags import flags
+from ragu.radar.pick import pick
+from ragu.radar.processing import proc
+from ragu.raguError import raguError
 import numpy as np
 import scipy.signal as signal
 

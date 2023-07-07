@@ -7,12 +7,12 @@
 utility functions for RAGU
 """
 ### imports ###
+from ragu.tools.constants import *
 import numpy as np
 import pandas as pd
 import geopandas as gpd
 import tkinter as tk
 import sys, h5py, fnmatch, copy
-from tools.constants import *
 
 # get_srf is a function for auto-detecting a radargram surface horizon
 def get_srf(dat_array, sig_type=None):

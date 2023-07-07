@@ -1,0 +1,42 @@
+[project]
+name = "ragu"
+version = "0.1.0"
+description = "Radar Analysis Graphical Utility (RAGU)"
+readme = "README.md"
+requires-python = ">=3.6"
+license = {file = "LICENSE.txt"}
+authors = [
+    {name = "Brandon S. Tober"},
+    {email = "tobers.brandon@gmail.com"}
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+]
+dependencies = [
+    "pandas",
+    "numpy",
+    "scipy",
+    "matplotlib",
+    "rasterio",
+    "pyproj",
+    "tk",
+    "h5py",
+    "geopandas"
+]
+
+[project.urls]
+documentation = "https://github.com/btobers/ragu/wiki"
+repository = "https://github.com/btobers/ragu"
+
+# The following would provide a command line executable called `sample`
+# which executes the function `main` from this package when invoked.
+[project.scripts]
+ragu = "ragu.bin.ragu:main"
+
+
+[tool.setuptools]
+package-data = ["mega90n000eb.tif", "mega90n000eb.lbl", "*.png", "*.jpg", "*.pdf]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"

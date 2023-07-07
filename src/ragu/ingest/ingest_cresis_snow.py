@@ -7,9 +7,9 @@
 ingest_cresis_rds is a module developed to ingest CReSIS snow accumulation radar data. 
 """
 ### imports ###
-from radar import garlic
-from nav import navparse
-from tools import utils
+from ragu.radar import garlic
+from ragu.nav import navparse
+from ragu.tools import utils
 import h5py, fnmatch
 import numpy as np
 import sys

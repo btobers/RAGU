@@ -7,9 +7,9 @@
 ingest_rimfax is a module developed to ingest NASA's Perseverance Radar Imager for Mars' subsurface experiment (RIMFAX) data.
 """
 ### imports ###
-from radar import garlic
-from nav import navparse
-from tools import utils
+from ragu.radar import garlic
+from ragu.nav import navparse
+from ragu.tools import utils
 import h5py, fnmatch
 import pandas as pd
 import numpy as np

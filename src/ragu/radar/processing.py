@@ -7,8 +7,8 @@
 RAGU radar data processing class and tools
 """
 ### imports ###
-from tools import utils
-from nav import navparse
+from ragu.tools import utils
+from ragu.nav import navparse
 import numpy as np
 import numpy.matlib as matlib
 import matplotlib.pyplot as plt

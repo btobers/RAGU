@@ -8,9 +8,9 @@ ingest_marsis_ipc is a module developed to ingest MARSIS radar sounding data pro
 data format is binary 32-bit floating point pulse compressed data
 """
 ### imports ###
-from radar import garlic
-from nav import navparse
-from tools import utils
+from ragu.radar import garlic
+from ragu.nav import navparse
+from ragu.tools import utils
 from PIL import Image
 import numpy as np
 import os, sys, glob

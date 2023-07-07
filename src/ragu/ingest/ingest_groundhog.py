@@ -8,9 +8,9 @@ ingest_oibAK is a module developed to ingest NASA OIB-AK radar sounding data.
 primary data format is hdf5, however some older data is still being converted over from .mat format
 """
 ### imports ###
-from radar import garlic
-from nav import navparse
-from tools import utils
+from ragu.radar import garlic
+from ragu.nav import navparse
+from ragu.tools import utils
 import h5py, fnmatch
 import numpy as np
 import scipy as sp

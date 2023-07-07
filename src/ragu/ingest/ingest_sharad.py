@@ -8,9 +8,9 @@ ingest_sharad is a module developed to ingest NASA MRO-SHARAD FPB radar sounding
 data format is binary 32-bit floating point pulse compressed amplitude data acquired from the PDS
 """
 ### imports ###
-from radar import garlic
-from nav import navparse
-from tools import utils
+from ragu.radar import garlic
+from ragu.nav import navparse
+from ragu.tools import utils
 import numpy as np
 import os, sys
 

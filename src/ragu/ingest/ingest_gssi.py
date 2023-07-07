@@ -8,8 +8,8 @@ this module contains functions parsed from https://github.com/iannesbitt/readgss
 much of the header data which is not necessary for RAGU use has been removed
 """
 ### imports ###
-from radar import garlic
-from nav import navparse
+from ragu.radar import garlic
+from ragu.nav import navparse
 import struct
 import os,sys
 import numpy as np

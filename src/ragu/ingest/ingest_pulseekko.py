@@ -8,8 +8,8 @@ ingest_pulseekko is a module developed to ingest Sensors & Software pulseEKKO GP
 adapted from ImpDAR/lib/load/load_pulse_ekko.py
 """
 ### imports ###
-from radar import garlic
-from nav import navparse
+from ragu.radar import garlic
+from ragu.nav import navparse
 import os,sys,struct,datetime,re
 import numpy as np
 

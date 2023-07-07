@@ -7,9 +7,9 @@
 nav library contains various fucntions for reading radar nav data and transforming crs
 """
 ### imports ###
-from raguError import raguError
-from nav.gps import GPSdat
-from tools.constants import *
+from ragu.raguError import raguError
+from ragu.nav.gps import GPSdat
+from ragu.tools.constants import *
 import sys,os
 import pandas as pd
 import rasterio as rio

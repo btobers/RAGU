@@ -7,9 +7,9 @@
 ingest_lrs is a module developed to ingest JAXA KAGUYA (SELENE) Lunar Radar Sounder (LRS) data.
 """
 ### imports ###
-from radar import garlic
-from nav import navparse
-from tools import utils
+from ragu.radar import garlic
+from ragu.nav import navparse
+from ragu.tools import utils
 import numpy as np
 import os, sys
 

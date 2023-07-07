@@ -7,15 +7,15 @@
 pick export functions for RAGU
 """
 ### imports ###
-from tools import utils
-from raguError import raguError
+from ragu.tools import utils
+from ragu.raguError import raguError
+from ragu.tools.constants import *
 import numpy as np
 import pandas as pd
 import geopandas as gpd
 from shapely.geometry import Point
 import tkinter as tk
 import os, sys, h5py, fnmatch
-from tools.constants import *
 import matplotlib.pyplot as plt
 
 # pick_math is a function to perform all the necessary mathematics on a set of picks and save data as a pandas dataframe
