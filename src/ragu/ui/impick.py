@@ -19,10 +19,10 @@ from matplotlib.widgets import Cursor
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from cycler import cycler
 from scipy.interpolate import CubicSpline
-try:
-    plt.rcParams["font.family"] = "Times New Roman"
-except:
-    pass
+# try:
+#     plt.rcParams["font.family"] = "Times New Roman"
+# except:
+#     pass
 
 class impick(tk.Frame):
     # initialize impick frame with variables passed from mainGUI

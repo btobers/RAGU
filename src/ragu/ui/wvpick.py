@@ -17,10 +17,10 @@ import matplotlib as mpl
 mpl.use("TkAgg")
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-try:
-    plt.rcParams["font.family"] = "Times New Roman"
-except:
-    pass
+# try:
+#     plt.rcParams["font.family"] = "Times New Roman"
+# except:
+#     pass
 
 class wvpick(tk.Frame):
     # wvpick is a class to optimize the picking of horizons from radar data

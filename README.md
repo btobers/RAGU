@@ -85,56 +85,18 @@ Supported Operating Systems:
 - rasterio
 - h5py
 
-To create a conda environment with the required dependencies, run the following command:
-```
-$ conda env create -f /code/ragu.yml
-```
 ### Setup
-1. Prior to running RAGU, set appropriate data paths, data coordinate reference system, and output preferences in *config.ini*. **Path variables may be left blank, but must remain uncommented**.
+1. Install ragu via pypa
 ```
-### config.ini ###
-[param]
-# str uid: user id 
-uid = uid
-
-[path]
-# str datPath: data directory path
-datPath =
-# str simPath: clutter simulation directory path
-simPath =
-# str mapPath: basemap directory path
-mapPath =
-# str outPath: output directory path
-outPath =
-
-[nav]
-# str body: planetary body from which radar data was acquired
-body = mars
-# str navcrs: crs string
-crs = +proj=longlat +a=3396190 +b=3376200 +no_defs
-
-[output]
-# float eps_r: relative permittivity (dielectric constant), required for plotting in depth and calculating layer thickness
-eps_r = 3.15
-# bool amp: export pick amplitudes
-amp = True
-# bool csv: export csv file of picks
-csv = True
-# bool gpkg: export geopackage of picks
-gpkg = True
-# bool fig: export profile image with picks
-fig = True
+pip install ragu
 ```
+**Nonte: One may first wish to create an anaconda environment from which to install ragu**.
 
-2a. Activate RAGU anaconda environment - 'ragu' by default:
-```
-$ conda activate ragu
-(ragu)$ python main.py
-```
+Prior to running ragu, a user may set appropriate data paths, data coordinate reference system, and output preferences in *~/RAGU/config.ini*. **Path variables may be left blank, but must remain uncommented**.
 
-2b. If the default Python environment is not set as Python 3, specify:
+2. Call ragu from the command line to initialize the GUI:
 ```
-$ python3 main.py
+python3 ragu
 ```
 
 ## Notes
@@ -149,28 +111,7 @@ Processing:
 - filtering
 - migration
 
-
 Tools:
 - depth conversion
 - dielectric extraction
 - pick amplitude tracking
-
-
-### Desktop Shortcut
-If desired, pyshorcuts can be used to create a desktop shortcut:
-
-If not already installed, install pyshortcuts:
-```
-$ pip install pyshortcuts
-```
-
-Use pyshortcuts to setup desktop shortcut (make sure RAGU conda environment is activated - 'ragu' by default):
-```
-$ conda activate ragu
-(ragu)$ pyshortcut -n RAGU -i ~/RAGU/recs/RAGU.ico ~/RAGU/code/main.py
-```
-
-On Ubuntu, add the following line to your .desktop file (located in ~/.local/share/applications) to handle duplicate instances:
-```
-StartupWMClass=Tk
-```
