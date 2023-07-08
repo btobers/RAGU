@@ -87,7 +87,8 @@ Supported Operating Systems:
 ### Setup
 **Nonte: Prior to installation, one may first wish to create an anaconda environment from which to install ragu**.
 
-1. Install ragu via pypa
+1. Install ragu via [PyPi](https://pypi.org/project/ragu/)
+
 ```
 $ pip install ragu
 ```
