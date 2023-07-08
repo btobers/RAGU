@@ -1300,7 +1300,7 @@ class impick(tk.Frame):
             idx = utils.nonan_idx_array(self.rdata.pick.horizons[horizon])
             clumps = utils.clump_array(idx)
             for _i, clump in enumerate(clumps):
-                clump_arr = np.asarray(clump).astype(np.int)
+                clump_arr = np.asarray(clump).astype(int)
                 self.horizon_paths[horizon][_i].x[clump_arr] = clump_arr
                 self.horizon_paths[horizon][_i].y[clump_arr] = self.rdata.pick.horizons[horizon][clump_arr]
                 self.init_segment(horizon=horizon)

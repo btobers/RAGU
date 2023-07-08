@@ -51,7 +51,7 @@ def pick_math(rdata, i_eps_r=3.15, amp_out=True, horizon=None, srf=None):
         # get corresponding twtt - account for data truncation
         twtt_arr = np.repeat(np.nan, rdata.tnum)
         idx = ~np.isnan(samp_arr)
-        twtt_arr[idx] = rdata.get_twtt()[samp_arr[idx].astype(np.int) +  rdata.truncs]
+        twtt_arr[idx] = rdata.get_twtt()[samp_arr[idx].astype(int) +  rdata.truncs]
         out["twtt"] = twtt_arr
         # add in twtt_wind to get absolute twtt
         out["twtt"] += rdata.navdf["twtt_wind"]
@@ -72,7 +72,7 @@ def pick_math(rdata, i_eps_r=3.15, amp_out=True, horizon=None, srf=None):
             # get corresponding twtt - account for data truncation
             twtt_arr = np.repeat(np.nan, rdata.tnum)
             idx = ~np.isnan(samp_arr)
-            twtt_arr[idx] = rdata.get_twtt()[(samp_arr[idx].astype(np.int)) + rdata.truncs]
+            twtt_arr[idx] = rdata.get_twtt()[(samp_arr[idx].astype(int)) + rdata.truncs]
             out[horizon + "_twtt"] = twtt_arr
             # add in twtt_wind to get absolute twtt
             out[horizon + "_twtt"] += rdata.navdf["twtt_wind"]
@@ -86,7 +86,7 @@ def pick_math(rdata, i_eps_r=3.15, amp_out=True, horizon=None, srf=None):
                 amp = np.repeat(np.nan, rdata.tnum)
                 idx = ~np.isnan(samp_arr)
                 # add any applied shift to index to pull proper sample amplitude from data array
-                amp[idx] = damp[samp_arr[idx].astype(np.int), idx]
+                amp[idx] = damp[samp_arr[idx].astype(int), idx]
                 out[horizon + "_amp"] = amp
 
             if i > 0:
