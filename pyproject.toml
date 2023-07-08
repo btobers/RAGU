@@ -33,20 +33,13 @@ repository = "https://github.com/btobers/ragu"
 [project.scripts]
 ragu = "ragu.bin.ragu:main"
 
-[tool.setuptools]
-include-package-data = true
-
 [tool.setuptools.packages.find]
 namespaces = true
 where = ["src"]
 
-
-# [tool.setuptools]
-# packages = ["src"]
-# include-package-data = true
-# package-data = ["mega90n000eb.tif", "mega90n000eb.lbl", "*.png", "*.jpg", "*.pdf"]
-# [tool.setuptools.package-data]
-# mypkg = ["*.txt", "*.rst"]
+[tool.setuptools.package-data]
+"ragu.recs" = ["*.png", "*.jpg"]
+"ragu.dat" = ["*/*.tif"]
 
 [build-system]
 requires = ["setuptools"]

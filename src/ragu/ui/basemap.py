@@ -31,7 +31,7 @@ class basemap(tk.Frame):
         self.to_gui = to_gui
         # create tkinter toplevel window to display basemap
         self.basemap_window = tk.Toplevel(self.parent)
-        img = tk.PhotoImage(file=os.path.join(os.path.dirname(__file__), "../../recs", "basemap_icon.png"))
+        img = tk.PhotoImage(file=os.path.join(os.path.dirname(__file__), "/../recs", "basemap_icon.png"))
         self.basemap_window.tk.call("wm", "iconphoto", self.basemap_window._w, img)
         self.basemap_window.config(bg="#d9d9d9")
         self.basemap_window.title("RAGU - Map Window")
