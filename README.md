@@ -1,4 +1,4 @@
-<img src="https://raw.githubusercontent.com/greyli/flask-share/master/images/demo.png" height="200">
+<img src="https://github.com/btobers/RAGU/blob/master/src/recs/ragu_logo.png" height="200">
 
 # Radar Analysis Graphical Utility
 ### Authors: Brandon Tober and Michael Christoffersen
@@ -96,7 +96,7 @@ $ pip install ragu
 ```
 $ ragu
 ```
-**Nonte: The first time ragu is run on your machine, a configuration file will be created at *~/RAGU/config.ini*.** This configuration file can be edited to set appropriate data paths, data coordinate reference system, and output preferences. Path variables may be left blank, but must remain uncommented. An example ragu configuration file can be found [here](https://github.com/btobers/ragu/src/docs/config.ini).
+**Nonte: The first time ragu is run on your machine, a configuration file will be created at *~/RAGU/config.ini*.** This configuration file can be edited to set appropriate data paths, data coordinate reference system, and output preferences. Path variables may be left blank, but must remain uncommented. An example ragu configuration file can be found [here](https://github.com/btobers/RAGU/blob/master/src/docs/config.ini).
 
 
 ## Notes
