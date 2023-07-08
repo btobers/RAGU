@@ -1,4 +1,4 @@
-<img src="https://github.com/btobers/RAGU/raw/master/src/recs/ragu_logo.png" height="200">
+<img src="https://github.com/btobers/RAGU/raw/master/src/ragu/recs/ragu_logo.png" height="200">
 
 # Radar Analysis Graphical Utility
 ### Authors: Brandon Tober and Michael Christoffersen
@@ -42,12 +42,12 @@ Have another radar dataset you'd like to be able to use RAGU to interpret? Pleas
 1. **Comma-Separated Value (.csv)**
 2. **Geopackage (.gpkg)**
 
-    For **CSV** and **Geopackage** files, see the [format file](https://github.com/btobers/RAGU/blob/master/docs/RAGU_pk_format.pdf) in for per trace export attribute information.
+    For **CSV** and **Geopackage** files, see the [format file](https://github.com/btobers/RAGU/raw/master/src/docs/RAGU_pk_format.pdf) in for per trace export attribute information.
 
 #### Figure:
 A figure each may also be exported for the uninterpreted radar profile, the accompanying clutter simulation, and the interpreted radar profile. Example over Malaspina Glacier, AK:  
 <p align="center">
-  <img src="https://github.com/btobers/RAGU/raw/master/src/recs/20190928-235534_compiled.jpg" height="500"><br>
+  <img src="https://github.com/btobers/RAGU/raw/master/src/ragu/recs/20190928-235534_compiled.jpg" height="500"><br>
 </p>
 
 #### Processing Script:
@@ -116,6 +116,9 @@ Tools:
 - depth conversion
 - dielectric extraction
 - pick amplitude tracking
+
+General:
+pyproj.transform is deprecated going from pyproj v1 to v2. Ragu.nav.navparse needs to be updated accordingly.
 
 ### Collaboration
 

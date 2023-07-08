@@ -434,7 +434,7 @@ def getnav_sharad(navfile, navcrs, body):
 
     # SHARAD FPB sample 1800 corresponds to the areoid height - use areoid to reference elevation and get absolute twtt - aeroid height in meters after subtracting 3396000 m
     # aerPath = os.path.split(os.getcwd())[0] + "/dat/mars/mega90n000eb.tif"
-    aerPath = os.path.join(os.path.dirname(__file__), '/../dat/mars', 'mega90n000eb.tif')
+    aerPath = os.path.join(os.path.dirname(__file__), '../dat/mars', 'mega90n000eb.tif')
     try:
         aer = rio.open(aerPath, mode="r")
 
