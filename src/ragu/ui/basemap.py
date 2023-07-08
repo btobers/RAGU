@@ -100,8 +100,8 @@ class basemap(tk.Frame):
         # initialize arrays to hold track nav info
         self.x = np.array(())
         self.y = np.array(())
-        self.track_name = np.array(()).astype(dtype=np.str)
-        self.loaded_tracks = np.array(()).astype(dtype=np.str)
+        self.track_name = np.array(()).astype(str)
+        self.loaded_tracks = np.array(()).astype(str)
         self.start_x = np.array(())
         self.start_y = np.array(())
         self.end_x = np.array(())
@@ -260,8 +260,8 @@ class basemap(tk.Frame):
     # clear_basemap is a method to clear the basemap 
     def clear_nav(self):
         # clear arrays
-        self.track_name = np.array(()).astype(dtype=np.str)
-        self.loaded_tracks = np.array(()).astype(dtype=np.str)
+        self.track_name = np.array(()).astype(str)
+        self.loaded_tracks = np.array(()).astype(str)
         self.x = np.array(())
         self.y = np.array(())
         self.start_x = np.array(())
