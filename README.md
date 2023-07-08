@@ -1,4 +1,4 @@
-<img src="https://github.com/btobers/RAGU/blob/master/src/recs/ragu_logo.png" height="200">
+<img src="https://github.com/btobers/RAGU/raw/master/src/recs/ragu_logo.png" height="200">
 
 # Radar Analysis Graphical Utility
 ### Authors: Brandon Tober and Michael Christoffersen
@@ -47,7 +47,7 @@ Have another radar dataset you'd like to be able to use RAGU to interpret? Pleas
 #### Figure:
 A figure each may also be exported for the uninterpreted radar profile, the accompanying clutter simulation, and the interpreted radar profile. Example over Malaspina Glacier, AK:  
 <p align="center">
-  <img src="https://github.com/btobers/RAGU/blob/master/src/recs/20190928-235534_compiled.jpg" height="500"><br>
+  <img src="https://github.com/btobers/RAGU/raw/master/src/recs/20190928-235534_compiled.jpg" height="500"><br>
 </p>
 
 #### Processing Script:
@@ -96,7 +96,7 @@ $ pip install ragu
 ```
 $ ragu
 ```
-**Nonte: The first time ragu is run on your machine, a configuration file will be created at *~/RAGU/config.ini*.** This configuration file can be edited to set appropriate data paths, data coordinate reference system, and output preferences. Path variables may be left blank, but must remain uncommented. An example ragu configuration file can be found [here](https://github.com/btobers/RAGU/blob/master/src/docs/config.ini).
+**Nonte: The first time ragu is run on your machine, a configuration file will be created at *~/RAGU/config.ini*.** This configuration file can be edited to set appropriate data paths, data coordinate reference system, and output preferences. Path variables may be left blank, but must remain uncommented. An example ragu configuration file can be found [here](https://github.com/btobers/RAGU/raw/master/src/docs/config.ini).
 
 
 ## Notes
