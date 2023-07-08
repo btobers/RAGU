@@ -1,4 +1,4 @@
-<img src="src/recs/ragu_logo.png" height="200">
+<img src="https://raw.githubusercontent.com/greyli/flask-share/master/images/demo.png" height="200">
 
 # Radar Analysis Graphical Utility
 ### Authors: Brandon Tober and Michael Christoffersen
@@ -47,7 +47,7 @@ Have another radar dataset you'd like to be able to use RAGU to interpret? Pleas
 #### Figure:
 A figure each may also be exported for the uninterpreted radar profile, the accompanying clutter simulation, and the interpreted radar profile. Example over Malaspina Glacier, AK:  
 <p align="center">
-  <img src="src/recs/20190928-235534_compiled.jpg" height="500"><br>
+  <img src="https://github.com/btobers/RAGU/blob/master/src/recs/20190928-235534_compiled.jpg" height="500"><br>
 </p>
 
 #### Processing Script:
@@ -85,18 +85,19 @@ Supported Operating Systems:
 - h5py
 
 ### Setup
+**Nonte: Prior to installation, one may first wish to create an anaconda environment from which to install ragu**.
+
 1. Install ragu via pypa
 ```
 $ pip install ragu
 ```
-**Nonte: One may first wish to create an anaconda environment from which to install ragu**.
 
-Prior to running ragu, a user may set appropriate data paths, data coordinate reference system, and output preferences in *~/RAGU/config.ini*. **Path variables may be left blank, but must remain uncommented**.
-
-2. Call ragu from the command line to initialize the GUI:
+2. To run ragu, call ragu from the command line to initialize the GUI:
 ```
 $ ragu
 ```
+**Nonte: The first time ragu is run on your machine, a configuration file will be created at *~/RAGU/config.ini*.** This configuration file can be edited to set appropriate data paths, data coordinate reference system, and output preferences. Path variables may be left blank, but must remain uncommented. An example ragu configuration file can be found [here](https://github.com/btobers/ragu/src/docs/config.ini).
+
 
 ## Notes
 Several auxiliary tools which RAGU users may find useful can be found at [radar_tools](https://github.com/btobers/radar_tools)
@@ -114,3 +115,15 @@ Tools:
 - depth conversion
 - dielectric extraction
 - pick amplitude tracking
+
+### Collaboration
+
+Interested in contributing in the development of RAGU, or if you would like to use RAGU for interpreting a radar dataset that is not currently supported - Reach out to tobers.brandon@gmail.com
+
+
+### Publications
+
+A list of publications that cite RAGU:
+
+1. Loso, Michael G., Christopher F. Larsen, Brandon S. Tober, Michael Christoffersen, Mark Fahnestock, John W. Holt, and Martin Truffer. “Quo Vadis, Alsek? Climate-Driven Glacier Retreat May Change the Course of a Major River Outlet in Southern Alaska.” Geomorphology 384 (July 1, 2021): 107701. https://doi.org/10.1016/j.geomorph.2021.107701.
+2. Tober, B. S., J. W. Holt, M. S. Christoffersen, M. Truffer, C. F. Larsen, D. J. Brinkerhoff, and S. A. Mooneyham. “Comprehensive Radar Mapping of Malaspina Glacier (Sít’ Tlein), Alaska—The World’s Largest Piedmont Glacier—Reveals Potential for Instability.” Journal of Geophysical Research: Earth Surface 128, no. 3 (2023): e2022JF006898. https://doi.org/10.1029/2022JF006898.
