@@ -1,13 +1,13 @@
 [project]
 name = "ragu"
-version = "0.1.23"
+version = "0.1.24"
 description = "Radar Analysis Graphical Utility (RAGU)"
 readme = "README.md"
 requires-python = ">=3.6"
 license = {file = "LICENSE.txt"}
 authors = [
-    {name = "Brandon S. Tober"},
-    {email = "tobers.brandon@gmail.com"}
+     {name = "Brandon Tober", email = "tobers.brandon@gmail.com"},
+     {name = "Michael Christoffersen"},
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -28,8 +28,6 @@ dependencies = [
 documentation = "https://github.com/btobers/ragu/wiki"
 repository = "https://github.com/btobers/ragu"
 
-# The following would provide a command line executable called `sample`
-# which executes the function `main` from this package when invoked.
 [project.scripts]
 ragu = "ragu.bin.ragu:main"
 

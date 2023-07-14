@@ -32,7 +32,7 @@ import tkinter.ttk as ttk
 #     pass
 
 class mainGUI(tk.Frame):
-    def __init__(self, parent, confpath, datPath, *args, **kwargs):
+    def __init__(self, parent, configPath, datPath, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
         # read and parse config
