@@ -1,13 +1,13 @@
 [project]
 name = "ragu"
-version = "0.1.24"
+version = "0.1.25"
 description = "Radar Analysis Graphical Utility (RAGU)"
 readme = "README.md"
 requires-python = ">=3.6"
 license = {file = "LICENSE.txt"}
 authors = [
      {name = "Brandon Tober", email = "tobers.brandon@gmail.com"},
-     {name = "Michael Christoffersen"},
+     {name = "Michael Christoffersen", email = "mchristo28@gmail.com"},
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
