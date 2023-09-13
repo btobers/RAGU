@@ -37,7 +37,7 @@ class mainGUI(tk.Frame):
         self.parent = parent
         # read and parse config
         self.conf = configparser.ConfigParser()
-        self.conf.read(confpath)
+        self.conf.read(configPath)
         if datPath:
             self.datPath = datPath
         else:
