@@ -12,7 +12,8 @@ from ragu.tools import utils
 import numpy as np
 import tkinter as tk
 import rasterio as rio
-import os, pyproj, glob
+import os, glob
+from pyproj import Transformer
 import matplotlib as mpl
 mpl.use("TkAgg")
 import matplotlib.pyplot as plt
@@ -135,6 +136,7 @@ class basemap(tk.Frame):
                         resampling=rio.enums.Resampling.nearest
                     )
                     self.bmcrs = dataset.crs
+
                 # stack bands into numpy array
                 im = np.dstack((data))
                 if im.shape[-1] == 1:
@@ -168,12 +170,12 @@ class basemap(tk.Frame):
             return
 
         # transform navcrs to basemap crs
-        x, y = pyproj.transform(
-            self.navcrs,
-            self.bmcrs,
+        xformer = Transformer.from_crs(crs_from=self.navcrs, crs_to=self.bmcrs.to_wkt())
+        x, y = xformer.transform(
             navdf["lon"].to_numpy(),
             navdf["lat"].to_numpy(),
         )
+    
         # convert from m to km
         x = x*1e-3
         y = y*1e-3

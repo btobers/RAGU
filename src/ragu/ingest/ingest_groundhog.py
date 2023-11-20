@@ -54,8 +54,9 @@ def read_h5(fpath, navcrs, body):
     else:
         rdata.asep = 100
 
-    # groudnhog rx triggers on arrival of airwave and records 32 samples at top of each trace before trigger - so sample zero is sample 33
-    rdata.flags.sampzero = 33
+    # groudnhog rx triggers on arrival of airwave - get number of traces pre-trigger to vertically shift the data accordingly
+    pt = f["raw/rx0"].attrs["pre_trigger"]
+    rdata.flags.sampzero = pt+1
     rdata.tzero_shift()
 
     # define surface horizon name to set index to zeros
@@ -75,13 +76,13 @@ def read_h5(fpath, navcrs, body):
 
     rdata.check_attrs()
 
-    try:
-        rdata.filter(btype='lowpass', lowcut=None, highcut=4e6, order=5, direction=0)
-    except:
-        pass
-    try:
-        rdata.filter(btype='lowpass', lowcut=None, highcut=.4, order=5, direction=1)
-    except:
-        pass
+    # try:
+    #     rdata.filter(btype='lowpass', lowcut=None, highcut=4e6, order=5, direction=0)
+    # except:
+    #     pass
+    # try:
+    #     rdata.filter(btype='lowpass', lowcut=None, highcut=.4, order=5, direction=1)
+    # except:
+    #     pass
 
     return rdata

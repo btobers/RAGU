@@ -16,7 +16,8 @@ import rasterio as rio
 from rasterio.plot import show
 import numpy as np
 import scipy.io as scio
-import pyproj, h5py, codecs
+import h5py, codecs
+from pyproj import Transformer
 import matplotlib.pyplot as plt
 
 # various getnav functions must return a pandas dataframe consisting of the following cols -
@@ -29,6 +30,10 @@ xyzsys = {
 "earth": "+proj=geocent +a=6378140 +b=6356750 +no_defs",
 "moon": "+proj=geocent +a=1737400 +b=1737400 +no_defs",
 }
+
+def get_xformer(crs_from, crs_to):
+    return Transformer.from_crs(crs_from=crs_from, crs_to=crs_to)
+
 
 def getnav_oibAK_h5(navfile, navcrs, body):
     h5 = h5py.File(navfile, "r")
@@ -64,9 +69,9 @@ def getnav_oibAK_h5(navfile, navcrs, body):
 
     h5.close()
 
-    df["x"], df["y"], df["z"] = pyproj.transform(
-        navcrs,
-        xyzsys[body],
+    # transform to projected xords 
+    xformer = get_xformer(navcrs, xyzsys[body])
+    df["x"], df["y"], df["z"] = xformer.transform(
         df["lon"].to_numpy(),
         df["lat"].to_numpy(),
         df["elev"].to_numpy(),
@@ -84,6 +89,8 @@ def getnav_oibAK_h5(navfile, navcrs, body):
 
 def getnav_groundhog(navfile, navcrs, body):
     h5 = h5py.File(navfile, "r")
+    # get xord 
+    xformer = get_xformer(navcrs, xyzsys[body])
     # use average of RX and TX gps positioning
     # we'll also record the separation distance between rx and tx per trace
     k = h5["restack"].keys()
@@ -118,17 +125,13 @@ def getnav_groundhog(navfile, navcrs, body):
 
         # project rx and tx lat lon hgt and get euclidean distance
         rx_df = pd.DataFrame()
-        rx_df["x"], rx_df["y"], rx_df["z"] = pyproj.transform(
-            navcrs,
-            xyzsys[body],
+        rx_df["x"], rx_df["y"], rx_df["z"] = xformer.transform(
             nav_rx["lon"].to_numpy(),
             nav_rx["lat"].to_numpy(),
             nav_rx["hgt"].to_numpy(),
         )
         tx_df = pd.DataFrame()
-        tx_df["x"], tx_df["y"], tx_df["z"] = pyproj.transform(
-            navcrs,
-            xyzsys[body],
+        tx_df["x"], tx_df["y"], tx_df["z"] = xformer.transform(
             nav_tx["lon"].to_numpy(),
             nav_tx["lat"].to_numpy(),
             nav_tx["hgt"].to_numpy(),
@@ -147,9 +150,7 @@ def getnav_groundhog(navfile, navcrs, body):
 
     h5.close()
 
-    df["x"], df["y"], df["z"] = pyproj.transform(
-        navcrs,
-        xyzsys[body],
+    df["x"], df["y"], df["z"] = xformer.transform(
         df["lon"].to_numpy(),
         df["lat"].to_numpy(),
         df["elev"].to_numpy(),
@@ -186,9 +187,9 @@ def getnav_oibAK_mat(navfile, navcrs, body):
                                 "x": np.nan, "z": np.nan, "z": np.nan,
                                 "dist": np.nan})
 
-    df["x"], df["y"], df["z"] = pyproj.transform(
-        navcrs,
-        xyzsys[body],
+    # transform to projected xords 
+    xformer = get_xformer(navcrs, xyzsys[body])
+    df["x"], df["y"], df["z"] = xformer.transform(
         df["lon"].to_numpy(),
         df["lat"].to_numpy(),
         df["elev"].to_numpy(),
@@ -230,9 +231,9 @@ def getnav_uaf_kentech(navfile, navcrs, body):
 
     h5.close()
 
-    df["x"], df["y"], df["z"] = pyproj.transform(
-        navcrs,
-        xyzsys[body],
+    # transform to projected xords 
+    xformer = get_xformer(navcrs, xyzsys[body])
+    df["x"], df["y"], df["z"] = xformer.transform(
         df["lon"].to_numpy(),
         df["lat"].to_numpy(),
         df["elev"].to_numpy(),
@@ -257,9 +258,9 @@ def getnav_cresis_mat(navfile, navcrs, body):
 
     df = pd.DataFrame({"lon": lon, "lat": lat, "elev": elev})
 
-    df["x"], df["y"], df["z"] = pyproj.transform(
-        navcrs,
-        xyzsys[body],
+    # transform to projected xords 
+    xformer = get_xformer(navcrs, xyzsys[body])
+    df["x"], df["y"], df["z"] = xformer.transform(
         df["lon"].to_numpy(),
         df["lat"].to_numpy(),
         df["elev"].to_numpy(),
@@ -306,9 +307,9 @@ def getnav_gssi(navfile, tnum, navcrs, body):
                                         "x": np.nan, "y": np.nan, "z": np.nan,
                                         "dist": np.nan})
 
-            df["x"], df["y"], df["z"] = pyproj.transform(
-                navcrs,
-                xyzsys[body],
+            # transform to projected xords 
+            xformer = get_xformer(navcrs, xyzsys[body])
+            df["x"], df["y"], df["z"] = xformer.transform(
                 df["lon"].to_numpy(),
                 df["lat"].to_numpy(),
                 df["elev"].to_numpy(),
@@ -368,9 +369,9 @@ def getnav_pulseekko(navfile, tnum, navcrs, body):
                                         "x": np.nan, "y": np.nan, "z": np.nan,
                                         "dist": np.nan})
 
-            df["x"], df["y"], df["z"] = pyproj.transform(
-                navcrs,
-                xyzsys[body],
+            # transform to projected xords 
+            xformer = get_xformer(navcrs, xyzsys[body])
+            df["x"], df["y"], df["z"] = xformer.transform(
                 df["lon"].to_numpy(),
                 df["lat"].to_numpy(),
                 df["elev"].to_numpy(),
@@ -444,8 +445,10 @@ def getnav_sharad(navfile, navcrs, body):
 
     try:
         # transform MRO lon/lat to areoid x/y to sample areoid radius along SC path 
-        aerX, aerY = pyproj.transform(
-            navcrs, aer.crs.to_proj4(), df["lon"].to_numpy(), df["lat"].to_numpy()
+        xformer = get_xformer(navcrs, aer.crs.to_proj4())
+        aerX, aerY = xformer.transform(
+            df["lon"].to_numpy(),
+            df["lat"].to_numpy()
         )
 
         # get raster x/y index of SC x/y positions
@@ -517,9 +520,9 @@ def getnav_lrs(navfile, navcrs, body, tnum):
 
         df = pd.DataFrame({'lon':lon,'lat':lat,'elev':elev,'twtt_wind':twtt_wind})
 
-        df["x"], df["y"], df["z"] = pyproj.transform(
-            navcrs,
-            xyzsys[body],
+        # transform to projected xords 
+        xformer = get_xformer(navcrs, xyzsys[body])
+        df["x"], df["y"], df["z"] = xformer.transform(
             df["lon"].to_numpy(),
             df["lat"].to_numpy(),
             df["elev"].to_numpy(),
@@ -579,9 +582,9 @@ def getnav_marsis_ipc(navfile, navcrs, body):
     ]
     df = pd.read_csv(navfile, names=geomCols, skiprows=1)
 
-    df["x"], df["y"], df["z"] = pyproj.transform(
-        navcrs,
-        xyzsys[body],
+    # transform to projected xords 
+    xformer = get_xformer(navcrs, xyzsys[body])
+    df["x"], df["y"], df["z"] = xformer.transform(
         df["lon"].to_numpy(),
         df["lat"].to_numpy(),
         df["elev"].to_numpy(),
@@ -609,9 +612,9 @@ def getnav_rimfax(navfile, navcrs, body):
     df = df.iloc[filt,:idx]
     df.rename(columns={"ant_lat": "lat", "ant_lon": "lon", "ant_elev": "elev"}, inplace=True)
 
-    df["x"], df["y"], df["z"] = pyproj.transform(
-        navcrs,
-        xyzsys[body],
+    # transform to projected xords 
+    xformer = get_xformer(navcrs, xyzsys[body])
+    df["x"], df["y"], df["z"] = xformer.transform(
         df["lon"].to_numpy(),
         df["lat"].to_numpy(),
         df["elev"].to_numpy(),
