@@ -93,10 +93,15 @@ def getnav_groundhog(navfile, navcrs, body):
     xformer = get_xformer(navcrs, xyzsys[body])
     # use average of RX and TX gps positioning
     # we'll also record the separation distance between rx and tx per trace
-    k = h5["restack"].keys()
+    if 'restack' in h5.keys():
+        grp = 'restack'
+    else:
+        grp = 'raw'
+
+    k = h5[grp].keys()
     if ("txFix0" in k) and ("rxFix0" in k):
-        nav_rx = pd.DataFrame(h5["restack"]["rxFix0"][:])
-        nav_tx = pd.DataFrame(h5["restack"]["txFix0"][:])
+        nav_rx = pd.DataFrame(h5[grp]["rxFix0"][:])
+        nav_tx = pd.DataFrame(h5[grp]["txFix0"][:])
 
         # Interpolate non-unique nav values in tx and rx datasets
         hsh = nav_rx["lat"] + nav_rx["lon"] * 1e4
@@ -139,9 +144,10 @@ def getnav_groundhog(navfile, navcrs, body):
         df["asep"] = np.sqrt((rx_df['x']-tx_df['x'])**2 + (rx_df['y']-tx_df['y'])**2 + (rx_df['z']-tx_df['z'])**2)
 
     elif "rxFix0" in k:
-        df = pd.DataFrame(h5["restack"]["rxFix0"][:])        
+        df = pd.DataFrame(h5[grp]["rxFix0"][:])        
     else:
-        df = pd.DataFrame(h5["raw/gps0"][:])
+        df = pd.DataFrame(h5[grp]["gps0"][:])
+        df["asep"] = 50
     
     try:
         df.rename(columns={"hgt": "elev"}, inplace=True)

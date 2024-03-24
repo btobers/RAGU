@@ -16,7 +16,7 @@ import numpy as np
 import scipy as sp
 import sys
 
-# method to ingest OIB-AK radar hdf5 data format
+# method to ingest groundhog hdf5 data format
 def read_h5(fpath, navcrs, body):
     rdata = garlic(fpath)
     rdata.fn = fpath.split("/")[-1][:-3]
@@ -33,13 +33,13 @@ def read_h5(fpath, navcrs, body):
     # |  |-txFix0
 
     # pull necessary raw group data
-    rdata.fs = f["raw/rx0"].attrs["fs"]                                         # sampling frequency
-    rdata.dt = 1/rdata.fs                                                       # sampling interval, sec
-    rdata.prf = 1e3/f["raw"]["rx0"].attrs["stack"]                              # pulse repition frequency, Hz
+    rdata.fs = f["raw"].attrs["fs"]                                         # sampling frequency
+    rdata.dt = 1/rdata.fs                                                   # sampling interval, sec
+    rdata.prf = f["raw"].attrs["prf"]                                       # pulse repition frequency, Hz
     rdata.nchan = 1
 
     # pull radar proc and sim arrayss
-    rdata.set_dat(f["restack/rx0"][:])                                            # pulse compressed array
+    rdata.set_dat(f["raw/rx0"][:].astype(float))                                          # pulse compressed array
     rdata.set_proc(np.abs(rdata.get_dat()))
     rdata.snum, rdata.tnum = rdata.get_dat().shape
 
@@ -55,7 +55,7 @@ def read_h5(fpath, navcrs, body):
         rdata.asep = 100
 
     # groudnhog rx triggers on arrival of airwave - get number of traces pre-trigger to vertically shift the data accordingly
-    pt = f["raw/rx0"].attrs["pre_trigger"]
+    pt = f["raw"].attrs["pre_trig"]
     rdata.flags.sampzero = pt+1
     rdata.tzero_shift()
 
@@ -63,14 +63,14 @@ def read_h5(fpath, navcrs, body):
     rdata.pick.horizons["srf"] = np.zeros(rdata.tnum)
     rdata.pick.set_srf("srf")
 
-    # for ground-based GPR, srf_elev is the same as GPS recorded elev
+    # srf_elev is the same as GPS recorded elev
     rdata.set_srfElev(dat = rdata.navdf["elev"].to_numpy())
 
     rdata.info["Signal Type"] = "Impulse" 
     rdata.info["Sampling Frequency [MHz]"] = rdata.fs * 1e-6
     rdata.info["PRF [kHz]"] = rdata.prf * 1e-3
-    rdata.info["Stack"] = f["raw"]["rx0"].attrs["stack"]
-    rdata.info["Antenna Separation [m]"] = round(np.nanmean(rdata.asep),2)
+    rdata.info["Stack"] = f["raw"].attrs["stack"]
+    rdata.info["Antenna Separation [m]"] = round(np.nanmean(rdata.asep))
 
     f.close()                                                   # close the file
 
