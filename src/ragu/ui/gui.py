@@ -196,6 +196,7 @@ class mainGUI(tk.Frame):
         procMenu.add_command(label="Reverse Radargram", command=lambda:self.procTools("reverse"))
         procMenu.add_command(label="Set Time Zero", command=lambda:self.procTools("tzero"))
         procMenu.add_command(label="Flatten", command=lambda:self.procTools("flatten"))
+        procMenu.add_command(label="Restack", command=lambda:self.procTools("restack"))
         procMenu.add_command(label="Vertical Data Roll", command=lambda:self.procTools("vroll"))
         # procMenu.add_command(label="Dewow", command=lambda:self.procTools("dewow"))
 
@@ -1029,13 +1030,16 @@ class mainGUI(tk.Frame):
                 self.rdata.vertical_roll(samples)
                 procFlag = True
 
+            elif arg == "restack":
+                dist = tk.simpledialog.askinteger("input","restacking distance (m)")
+                self.rdata.restack(dist)
+                procFlag = True
 
             elif arg == "dewow":
                 print("dewow currently in development")
                 # window = tk.simpledialog.askfloat("input","dewow window size (# samples/" +  str(int(self.rdata.snum)) + ")?")
                 # proc = processing.dewow(self.rdata.dat, window=10)
                 # procFlag = True
-
 
             elif arg == "hilbert":
                 print("hilbert transform currently in development")

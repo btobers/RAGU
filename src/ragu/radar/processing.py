@@ -9,7 +9,9 @@ RAGU radar data processing class and tools
 ### imports ###
 from ragu.tools import utils
 from ragu.nav import navparse
+import pyproj
 import numpy as np
+import pandas as pd
 import numpy.matlib as matlib
 import matplotlib.pyplot as plt
 import scipy.interpolate as interp
@@ -244,6 +246,59 @@ def filter(self, btype="lowpass", lowcut=None, highcut=None, order=5, direction=
     self.log("self.rdata.filter(btype='{}', lowcut={}, highcut={}, order={}, direction={})".format(btype, lowcut, highcut, order, direction))
     print("# filter applied: btype='{}', lowcut={}, highcut={}, order={}, direction={}".format(btype, lowcut, highcut, order, direction))
 
+    return
+
+
+def restack(self, intrvl=None):
+    # restack radar data to specified along-track distance
+    amp = self.proc.get_curr_amp()
+    self.proc.set_prev_amp(amp)
+
+    totdist = self.navdf.dist.iloc[-1]  # Total distance
+    ntrace = int(totdist//intrvl)
+
+    rstack = np.zeros((self.snum, ntrace))
+    lat = np.zeros(ntrace)
+    lon = np.zeros(ntrace)
+    hgt = np.zeros(ntrace)
+
+    for i in range(ntrace):
+        stack_slice = np.logical_and(self.navdf.dist > i*intrvl, self.navdf.dist < (i+1)*intrvl)
+        nstack = np.sum(stack_slice)
+        if(nstack == 0):
+            rstack[:, i] = rstack[:, i-1]
+            lat[i] = lat[i-1]
+            lon[i] = lon[i-1]
+            hgt[i] = hgt[i-1]
+            continue
+
+        rstack[:, i] = np.sum(amp[:, stack_slice], axis=1)/nstack
+        lat[i] = np.mean(self.navdf["lat"][stack_slice])
+        lon[i] = np.mean(self.navdf["lon"][stack_slice])
+        hgt[i] = np.mean(self.navdf["elev"][stack_slice])
+
+    # store twtt_wind from navdf before cleaning up
+    twtt_wind_ = self.navdf["twtt_wind"]
+    # store updated nav data
+    self.navdf = pd.DataFrame()
+    self.navdf["lon"] = lon
+    self.navdf["lat"] = lat
+    self.navdf["elev"] = hgt
+
+    xform = pyproj.Transformer.from_crs(self.geocrs, self.xyzcrs)
+    self.navdf["x"], self.navdf["y"], self.navdf["z"] = xform.transform(self.navdf["lon"], self.navdf["lat"], self.navdf["elev"])
+    self.navdf["dist"] = navparse.euclid_dist(self.navdf["x"], self.navdf["y"], self.navdf["z"])
+    if (twtt_wind_ == 0.0).all():
+        self.navdf["twtt_wind"] = 0.0
+    else:
+        self.navdf["twtt_wind"] = np.nan
+
+    self.snum, self.tnum = rstack.shape
+    self.set_proc(rstack)
+    # log
+    self.log("self.rdata.restack(intrvl={})".format(intrvl))
+    print("# data restacked at an interval of {} m".format(intrvl))
+    
     return
 
 

@@ -63,6 +63,8 @@ def read_h5(fpath, navcrs, body):
     rdata.info["PRF [kHz]"] = rdata.prf * 1e-3
 
     # parse nav
+    rdata.geocrs = navcrs
+    rdata.xyzcrs = navparse.xyzsys[body]
     rdata.navdf = navparse.getnav_oibAK_h5(fpath, navcrs, body)
     # pull lidar surface elevation and initilize horizon
     if "srf0" in f["ext"].keys():

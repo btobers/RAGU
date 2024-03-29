@@ -32,7 +32,7 @@ class garlic(object):
                         "navdf",
                         "truncs"]
     # import processing tools
-    from ragu.radar.processing import reverse, set_tzero, tzero_shift, flatten, vertical_roll, tpowGain, filter, hilbertxform, removeSlidingMeanFFT, undo, redo, reset
+    from ragu.radar.processing import reverse, set_tzero, tzero_shift, flatten, vertical_roll, tpowGain, filter, hilbertxform, removeSlidingMeanFFT, restack, undo, redo, reset
 
     def __init__(self, fpath):
         # basic data file attributes
@@ -72,6 +72,10 @@ class garlic(object):
         self.sPyramid = None
         #: radar flags object
         self.flags = flags()
+        # geographic crs string
+        self.geocrs = None
+        # xyz crs string
+        self.xyzcrs = None
 
         # per-trace attributes
         #: navigation dataframe consisting of [lon, lat, hgt, x, y, z, dist], where each field is of type and size np.ndarray(tnum,)

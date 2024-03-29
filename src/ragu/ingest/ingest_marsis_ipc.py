@@ -68,6 +68,8 @@ def read(fpath, simpath, navcrs, body):
     geom_path = root +  "/" + rdata.fn[:-2] + "nav.csv"
 
     # parse nav
+    rdata.geocrs = navcrs
+    rdata.xyzcrs = navparse.xyzsys[body]
     rdata.navdf = navparse.getnav_marsis_ipc(geom_path, navcrs, body)
 
     rdata.set_srfElev(dat = np.repeat(np.nan, rdata.tnum))

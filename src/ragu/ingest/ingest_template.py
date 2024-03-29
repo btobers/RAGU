@@ -42,6 +42,8 @@ def read_dat(fpath, navcrs, body):
     data = None             # 2D radar data array of shape ((rdata.snum x rdata.tnu,)) - pulse compressed if chirped data- this should be amplitude units, float
 
     # parse nav - you may need to create a navparse method for reading your nav data (replace "getnav" with the name of your nav parser method)
+    rdata.geocrs = navcrs
+    rdata.xyzcrs = navparse.xyzsys[body]
     rdata.navdf = navparse.getnav(fpath, navcrs, body)
     ############################################################################
 

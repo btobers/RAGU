@@ -46,6 +46,8 @@ def read_h5(fpath, navcrs, body):
     rdata.set_twtt()
 
     # parse nav
+    rdata.geocrs = navcrs
+    rdata.xyzcrs = navparse.xyzsys[body]
     rdata.navdf = navparse.getnav_groundhog(fpath, navcrs, body)
 
     # if rx and tx each have gps, we'll store antenna sep per trace

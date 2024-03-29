@@ -179,6 +179,8 @@ def read_dt1(fpath, navcrs, body):
     rdata.set_twtt()
 
     # create nav object to hold lon, lat, elev
+    rdata.geocrs = navcrs
+    rdata.xyzcrs = navparse.xyzsys[body]
     rdata.navdf = navparse.getnav_pulseekko(infile_gps, rdata.tnum, navcrs, body)
 
     # for ground-based GPR, elev_gnd is the same as GPS recorded elev

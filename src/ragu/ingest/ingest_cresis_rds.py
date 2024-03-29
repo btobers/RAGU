@@ -43,6 +43,8 @@ def read_mat(fpath, navcrs, body):
         rdata.truncs = 0
 
     # parse nav
+    rdata.geocrs = navcrs
+    rdata.xyzcrs = navparse.xyzsys[body]
     rdata.navdf = navparse.getnav_cresis_mat(fpath, navcrs, body)
 
     # pull surface two-way travel time and initilize horizon

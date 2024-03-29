@@ -54,6 +54,8 @@ def read(fpath, navcrs, body):
     rdata.set_twtt()
 
     # parse nav
+    rdata.geocrs = navcrs
+    rdata.xyzcrs = navparse.xyzsys[body]
     rdata.navdf = navparse.getnav_rimfax(fpath, navcrs, body)
     rdata.set_srfElev(dat = np.repeat(np.nan, rdata.tnum))
 

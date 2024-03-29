@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 # ["lon", "lat", "elev", "x", "y", "z", "twtt_wind", "dist"], where xyz are planetocentric radar platform location,
 # dist is along track distance in meters, and twtt_wind is the twtt between radar platform and sample 0
 
-# geocentric crd dict
+# geocentric crs dict
 xyzsys = {
 "mars": "+proj=geocent +a=3396190 +b=3376200 +no_defs",
 "earth": "+proj=geocent +a=6378140 +b=6356750 +no_defs",

@@ -81,6 +81,8 @@ def read(fpath, navcrs, body):
     infile_gps = fpath.replace(".DZT",".DZG")
 
     # create nav object to hold lon, lat, hgt
+    rdata.geocrs = navcrs
+    rdata.xyzcrs = navparse.xyzsys[body]
     rdata.navdf = navparse.getnav_gssi(infile_gps, rdata.tnum, navcrs, body)
 
     # for ground-based GPR, elev_gnd is the same as GPS recorded elev

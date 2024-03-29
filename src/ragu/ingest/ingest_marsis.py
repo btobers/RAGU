@@ -81,6 +81,8 @@ def read(fpath, simpath, navcrs, body):
     geom_path = root + orbit + "_geom.tab"
  
     # parse nav
+    rdata.geocrs = navcrs
+    rdata.xyzcrs = navparse.xyzsys[body]
     rdata.navdf = navparse.getnav_marsis(geom_path, navcrs, body)
 
     rdata.set_srfElev(dat = np.repeat(np.nan, rdata.tnum))
