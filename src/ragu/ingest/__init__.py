@@ -82,8 +82,8 @@ class ingest:
         print("Loaded: " + self.rdata.fn)
 
         # add ingest commands to log
-        self.rdata.log('self.igst = ingest("{}")'.format(self.fpath))
-        self.rdata.log('self.rdata = igst.read("{}","{}","{}")'.format(simpath,navcrs,body))
+        self.rdata.log('igst = ingest.ingest("{}")'.format(self.fpath))
+        self.rdata.log('rdata = igst.read("{}","{}","{}")'.format(simpath,navcrs,body))
 
         return self.rdata
 

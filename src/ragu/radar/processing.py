@@ -66,7 +66,7 @@ def set_tzero(self):
         # log
         out = '# Time zero shifted to:\n# sample:\t {}\n# time:\t\t {} nanoseconds'\
         .format(self.flags.sampzero,(self.flags.sampzero * self.dt * 1e9))
-        self.log("self.rdata.set_tzero()" + "\n" + out)
+        self.log("rdata.set_tzero()" + "\n" + out)
         print(out)
 
     return
@@ -103,7 +103,7 @@ def reverse(self):
         self.pick.horizons[h] = np.flip(self.pick.horizons[h])
 
     # log
-    self.log("self.rdata.rgram_reverse()")
+    self.log("rdata.rgram_reverse()")
     print("# radargram reversed, to undo simply repeat reverse operation")
 
     return
@@ -124,7 +124,7 @@ def flatten(self):
     self.set_proc(out.T)
 
     # log
-    self.log("self.rdata.flatten()")
+    self.log("rdata.flatten()")
     print("# data array flattened ")
 
     return
@@ -139,7 +139,7 @@ def vertical_roll(self, samples=0):
     self.set_proc(out)
 
     # log
-    self.log("self.rdata.vertical_roll(samples={})".format(samples))
+    self.log("rdata.vertical_roll(samples={})".format(samples))
     print("# data array rolled by {} samples".format(samples))
 
     return
@@ -181,7 +181,7 @@ def removeSlidingMeanFFT(self, window):
     out = np.subtract(amp, mean)
     self.set_proc(out)
     # log
-    self.log("self.rdata.removeSlidingMeanFFT(window={})".format(window))
+    self.log("rdata.removeSlidingMeanFFT(window={})".format(window))
     print("# Background removal completed wtih a window size of {} traces".format(window))
 
     return 
@@ -213,7 +213,7 @@ def hilbertxform(self):
     amplitude_envelope = np.abs(analytic_signal)
     self.set_proc(amplitude_envelope)
     # log
-    self.log("self.rdata.hilbertxform()")
+    self.log("rdata.hilbertxform()")
     print("# hilbert transform applied applied")
 
     return 
@@ -243,7 +243,7 @@ def filter(self, btype="lowpass", lowcut=None, highcut=None, order=5, direction=
     # use amplitude of lp filtered data to reset as pc array
     self.set_proc(out)
     # log
-    self.log("self.rdata.filter(btype='{}', lowcut={}, highcut={}, order={}, direction={})".format(btype, lowcut, highcut, order, direction))
+    self.log("rdata.filter(btype='{}', lowcut={}, highcut={}, order={}, direction={})".format(btype, lowcut, highcut, order, direction))
     print("# filter applied: btype='{}', lowcut={}, highcut={}, order={}, direction={}".format(btype, lowcut, highcut, order, direction))
 
     return
@@ -311,7 +311,7 @@ def restack(self, intrvl=None,thold=None):
     self.snum, self.tnum = rstack.shape
     self.set_proc(rstack)
     # log
-    self.log("self.rdata.restack(intrvl={},thold={})".format(intrvl,thold))
+    self.log("rdata.restack(intrvl={},thold={})".format(intrvl,thold))
     print("# data restacked at an interval of {} m, with a minimum distance threshold of {} m".format(intrvl,thold))
     
     return
@@ -327,7 +327,7 @@ def tpowGain(self, power):
     out = np.multiply(amp,factmat)
     self.set_proc(out)
     # log
-    self.log("self.rdata.tpowGain(power={})".format(power))
+    self.log("rdata.tpowGain(power={})".format(power))
     print("# time^{} gain applied".format(power))
 
     return

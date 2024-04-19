@@ -205,8 +205,7 @@ def dat(fpath, dat):
 # log is a method to export the processing log as a python script
 def log(fpath, log):
     with open(fpath,"w") as ofile:
-        cdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        ofile.write("### RAGU processing log ###\nimport sys\n# change dir to RAGU code directory\nsys.path.append('{}')\nfrom ingest import ingest\n\n".format(cdir))
+        ofile.write("### RAGU processing log ###\nfrom ragu import ingest\n\n")
         for _i in log:
-            ofile.write(_i.replace("self.","") + "\n")
+            ofile.write(_i + "\n")
         ofile.close()
