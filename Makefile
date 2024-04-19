@@ -1,8 +1,10 @@
 pypi: clean build upload
 
 build:
-	python3 -m build
+	$python setup.py sdist bdist_wheel
 upload:
-	python3 -m twine upload dist/*
+	$python -m twine upload dist/*
 clean:
-	rm -r dist/
+	$rm -r dist/
+	$rm -rf scr/ragu.egg-info/
+	$ rm -rf build/

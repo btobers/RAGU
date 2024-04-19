@@ -249,12 +249,28 @@ def filter(self, btype="lowpass", lowcut=None, highcut=None, order=5, direction=
     return
 
 
-def restack(self, intrvl=None):
+def restack(self, intrvl=None,thold=None):
+    # get coordinate transformation
+    xform = pyproj.Transformer.from_crs(self.geocrs, self.xyzcrs)
+
     # restack radar data to specified along-track distance
     amp = self.proc.get_curr_amp()
     self.proc.set_prev_amp(amp)
+    navdf = self.navdf.copy()
+    # first account for any static traces where there may be gps drift
+    if thold > 0:
+        consecutive_dist = np.zeros_like(self.navdf.x)
+        consecutive_dist[1:] = np.sqrt(np.diff(self.navdf.x.to_numpy()) ** 2.0 + np.diff(self.navdf.y.to_numpy()) ** 2.0 + np.diff(self.navdf.z.to_numpy()) ** 2.0)
+        drift_mask = consecutive_dist >= thold
 
-    totdist = self.navdf.dist.iloc[-1]  # Total distance
+        # drop data from these traces
+        namp = amp[:,drift_mask]
+        navdf = navdf[drift_mask]
+        navdf["dist"] = navparse.euclid_dist(navdf["x"], navdf["y"], navdf["z"])
+        self.snum, self.tnum = namp.shape
+        amp = namp
+
+    totdist = navdf.dist.iloc[-1]  # Total distance
     ntrace = int(totdist//intrvl)
 
     rstack = np.zeros((self.snum, ntrace))
@@ -263,7 +279,7 @@ def restack(self, intrvl=None):
     hgt = np.zeros(ntrace)
 
     for i in range(ntrace):
-        stack_slice = np.logical_and(self.navdf.dist > i*intrvl, self.navdf.dist < (i+1)*intrvl)
+        stack_slice = np.logical_and(navdf.dist > i*intrvl, navdf.dist < (i+1)*intrvl)
         nstack = np.sum(stack_slice)
         if(nstack == 0):
             rstack[:, i] = rstack[:, i-1]
@@ -273,19 +289,18 @@ def restack(self, intrvl=None):
             continue
 
         rstack[:, i] = np.sum(amp[:, stack_slice], axis=1)/nstack
-        lat[i] = np.mean(self.navdf["lat"][stack_slice])
-        lon[i] = np.mean(self.navdf["lon"][stack_slice])
-        hgt[i] = np.mean(self.navdf["elev"][stack_slice])
+        lat[i] = np.mean(navdf["lat"][stack_slice])
+        lon[i] = np.mean(navdf["lon"][stack_slice])
+        hgt[i] = np.mean(navdf["elev"][stack_slice])
 
     # store twtt_wind from navdf before cleaning up
-    twtt_wind_ = self.navdf["twtt_wind"]
+    twtt_wind_ = navdf["twtt_wind"]
     # store updated nav data
     self.navdf = pd.DataFrame()
     self.navdf["lon"] = lon
     self.navdf["lat"] = lat
     self.navdf["elev"] = hgt
 
-    xform = pyproj.Transformer.from_crs(self.geocrs, self.xyzcrs)
     self.navdf["x"], self.navdf["y"], self.navdf["z"] = xform.transform(self.navdf["lon"], self.navdf["lat"], self.navdf["elev"])
     self.navdf["dist"] = navparse.euclid_dist(self.navdf["x"], self.navdf["y"], self.navdf["z"])
     if (twtt_wind_ == 0.0).all():
@@ -296,11 +311,10 @@ def restack(self, intrvl=None):
     self.snum, self.tnum = rstack.shape
     self.set_proc(rstack)
     # log
-    self.log("self.rdata.restack(intrvl={})".format(intrvl))
-    print("# data restacked at an interval of {} m".format(intrvl))
+    self.log("self.rdata.restack(intrvl={},thold={})".format(intrvl,thold))
+    print("# data restacked at an interval of {} m, with a minimum distance threshold of {} m".format(intrvl,thold))
     
     return
-
 
 def tpowGain(self, power):
     # t-power gain to each trace with the given exponent.

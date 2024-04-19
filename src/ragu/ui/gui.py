@@ -1031,8 +1031,9 @@ class mainGUI(tk.Frame):
                 procFlag = True
 
             elif arg == "restack":
-                dist = tk.simpledialog.askinteger("input","restacking distance (m)")
-                self.rdata.restack(dist)
+                thold = tk.simpledialog.askfloat("input","GPS drift threshold between consecutive traces (m)", initialvalue=0.5)
+                dist = tk.simpledialog.askfloat("input","restacking distance (m)", initialvalue=0)
+                self.rdata.restack(dist, thold)
                 procFlag = True
 
             elif arg == "dewow":
