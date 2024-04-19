@@ -11,6 +11,7 @@ RAGU is a user-interface radar interpretation software written in Python 3 and r
 RAGU was originally developed to work with NASA's Operation IceBridge Alaska radar sounding data. The dataset capabilities have since been expanded to include the following:
 
 - NASA OIB-AK
+- Groundhog (UArizona/UAF)
 - CReSIS (Radar Depth Sounder & Snow Radar)
 - SHARAD (USRDR, USGEOM, US clutter sims)
 - MARSIS (JPL multilook products)
@@ -54,12 +55,9 @@ A figure each may also be exported for the uninterpreted radar profile, the acco
 A file log/processing script may also be exported to keep track of and easily repeat any data processing steps. Example processing script:
 ```
 ### RAGU processing log ###
-import sys
-# change dir to RAGU code directory
-sys.path.append('/home/user/code/RAGU/code')
-from ingest import ingest
+from ragu import ingest
 
-igst = ingest("/home/user/data/ARES/20140524-200130.h5")
+igst = ingest.ingest("/home/user/data/ARES/20140524-200130.h5")
 rdata = igst.read("","+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs","earth")
 rdata.lowpass(order=5, cf=1250000.0)
 rdata.tpowGain(power=1.2)
