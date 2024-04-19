@@ -83,7 +83,7 @@ Supported Operating Systems:
 - h5py
 
 ### Setup
-**Nonte: Prior to installation, one may first wish to create an anaconda environment from which to install ragu**.
+**Note: Prior to installation, one may first wish to create an anaconda environment from which to install ragu**.
 
 1. Install ragu via [PyPi](https://pypi.org/project/ragu/)
 
@@ -97,6 +97,18 @@ $ ragu
 ```
 **Nonte: The first time ragu is run on your machine, a configuration file will be created at *~/RAGU/config.ini*.** This configuration file can be edited to set appropriate data paths, data coordinate reference system, and output preferences. Path variables may be left blank, but must remain uncommented. An example ragu configuration file can be found [here](https://github.com/btobers/RAGU/raw/master/src/docs/config.ini).
 
+#### Development
+If you are interested in helping to develop RAGU, we recommend forking [RAGU's github repository](https://github.com/btobers/RAGU) and then [cloning the github repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) onto your local machine.
+
+Note, if RAGU was already installed via PyPI, first uninstall:
+```
+pip uninstall ragu
+````
+
+You can then use pip to install your locally cloned fork of RAGU in 'editable' mode to easily facilitate development like so:
+```
+pip install -e /path/to/your/RAGU/clone
+```
 
 ## Notes
 Several auxiliary tools which RAGU users may find useful can be found at [radar_tools](https://github.com/btobers/radar_tools)
@@ -117,11 +129,6 @@ Tools:
 
 General:
 pyproj.transform is deprecated going from pyproj v1 to v2. Ragu.nav.navparse needs to be updated accordingly.
-
-### Collaboration
-
-Interested in contributing in the development of RAGU, or if you would like to use RAGU for interpreting a radar dataset that is not currently supported - Reach out to tobers.brandon@gmail.com
-
 
 ### Publications
 
