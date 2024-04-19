@@ -88,12 +88,12 @@ Supported Operating Systems:
 1. Install ragu via [PyPi](https://pypi.org/project/ragu/)
 
 ```
-$ pip install ragu
+pip install ragu
 ```
 
 2. To run ragu, call ragu from the command line to initialize the GUI:
 ```
-$ ragu
+ragu
 ```
 **Nonte: The first time ragu is run on your machine, a configuration file will be created at *~/RAGU/config.ini*.** This configuration file can be edited to set appropriate data paths, data coordinate reference system, and output preferences. Path variables may be left blank, but must remain uncommented. An example ragu configuration file can be found [here](https://github.com/btobers/RAGU/raw/master/src/docs/config.ini).
 
