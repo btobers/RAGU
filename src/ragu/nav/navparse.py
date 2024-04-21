@@ -144,7 +144,10 @@ def getnav_groundhog(navfile, navcrs, body):
         df["asep"] = np.sqrt((rx_df['x']-tx_df['x'])**2 + (rx_df['y']-tx_df['y'])**2 + (rx_df['z']-tx_df['z'])**2)
 
     elif "rxFix0" in k:
-        df = pd.DataFrame(h5[grp]["rxFix0"][:])        
+        df = pd.DataFrame(h5[grp]["rxFix0"][:])
+    elif "ppp0" in k:
+        df = pd.DataFrame(h5[grp]["ppp0"][:])
+        df["asep"] = 50
     else:
         df = pd.DataFrame(h5[grp]["gps0"][:])
         df["asep"] = 50
