@@ -33,13 +33,20 @@ def read_h5(fpath, navcrs, body):
     # |  |-txFix0
 
     # pull necessary raw group data
-    rdata.fs = f["raw"].attrs["fs"]                                         # sampling frequency
-    rdata.dt = 1/rdata.fs                                                   # sampling interval, sec
-    rdata.prf = f["raw"].attrs["prf"]                                       # pulse repition frequency, Hz
+    rdata.fs = f["raw/rx0"].attrs["fs"]                        # sampling frequency
+    rdata.dt = 1/rdata.fs
+    try:                                                       # sampling interval, sec
+        rdata.prf = f["raw/rx0"].attrs["prf"]                      # pulse repition frequency, Hz
+    except KeyError:
+        rdata.prf = 0
     rdata.nchan = 1
 
     # pull radar proc and sim arrayss
-    rdata.set_dat(f["raw/rx0"][:].astype(float))                                          # pulse compressed array
+    if("restack" in f.keys()):
+        rdata.set_dat(f["restack/rx0"][:].astype(float))
+    else:
+        rdata.set_dat(f["raw/rx0"][:].astype(float))           # pulse compressed array
+
     rdata.set_proc(np.abs(rdata.get_dat()))
     rdata.snum, rdata.tnum = rdata.get_dat().shape
 
@@ -57,7 +64,11 @@ def read_h5(fpath, navcrs, body):
         rdata.asep = 100
 
     # groudnhog rx triggers on arrival of airwave - get number of traces pre-trigger to vertically shift the data accordingly
-    pt = f["raw"].attrs["pre_trig"]
+    try:
+        pt = f["raw/rx0"].attrs["pre_trig"]
+    except KeyError:
+        pt = f["raw/rx0"].attrs["pre_trigger"]
+
     rdata.flags.sampzero = pt+1
     rdata.tzero_shift()
 
@@ -71,7 +82,7 @@ def read_h5(fpath, navcrs, body):
     rdata.info["Signal Type"] = "Impulse" 
     rdata.info["Sampling Frequency [MHz]"] = rdata.fs * 1e-6
     rdata.info["PRF [kHz]"] = rdata.prf * 1e-3
-    rdata.info["Stack"] = f["raw"].attrs["stack"]
+    rdata.info["Stack"] = f["raw/rx0"].attrs["stack"]
     rdata.info["Antenna Separation [m]"] = round(np.nanmean(rdata.asep))
 
     f.close()                                                   # close the file
