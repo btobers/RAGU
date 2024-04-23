@@ -312,8 +312,9 @@ class impick(tk.Frame):
     # set radar and sim array bounds for setting image color limits - just doing this once based off original arrays, not pyramids
     def set_crange(self):
         # get clim bounds - take 10th percentile for min, ignore nd values
-        self.mindB_data = np.floor(np.nanpercentile(self.rdata.proc.get_curr_dB(),10))
-        self.maxdB_data = np.nanmax(self.rdata.proc.get_curr_dB())
+        self.mindB_data = np.floor(np.nanpercentile(self.rdata.proc.get_curr_dB(),1))
+        self.maxdB_data = np.ceil(np.nanpercentile(self.rdata.proc.get_curr_dB(),99))
+        # self.maxdB_data = np.nanmax(self.rdata.proc.get_curr_dB())
 
         if self.rdata.flags.sim:
             self.mindB_sim = np.floor(np.nanpercentile(self.rdata.sim,10))

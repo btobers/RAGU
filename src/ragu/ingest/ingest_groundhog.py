@@ -25,18 +25,11 @@ def read_h5(fpath, navcrs, body):
     # read in .h5 file
     f = h5py.File(rdata.fpath, "r")                      
 
-    # groundhog h5 radar data group structure        
-    # |-raw
-    # |  |-rx0
-    # |  |-gps0
-    # |  |-rxFix0    
-    # |  |-txFix0
-
     # pull necessary raw group data
-    rdata.fs = f["raw/rx0"].attrs["fs"]                        # sampling frequency
+    rdata.fs = f["raw/rx0"].attrs["fs"]                             # sampling frequency
     rdata.dt = 1/rdata.fs
-    try:                                                       # sampling interval, sec
-        rdata.prf = f["raw/rx0"].attrs["prf"]                      # pulse repition frequency, Hz
+    try:                                                            # sampling interval, sec
+        rdata.prf = f["raw/rx0"].attrs["prf"]                       # pulse repition frequency, Hz
     except KeyError:
         rdata.prf = 0
     rdata.nchan = 1
@@ -45,9 +38,11 @@ def read_h5(fpath, navcrs, body):
     if("restack" in f.keys()):
         rdata.set_dat(f["restack/rx0"][:].astype(float))
     else:
-        rdata.set_dat(f["raw/rx0"][:].astype(float))           # pulse compressed array
+        rdata.set_dat(f["raw/rx0"][:].astype(float))
 
-    rdata.set_proc(np.abs(rdata.get_dat()))
+    # want to plot positive and negative amplitude values - don't dB 
+    rdata.dbit = False
+    rdata.set_proc(rdata.get_dat())
     rdata.snum, rdata.tnum = rdata.get_dat().shape
 
     rdata.set_twtt()
@@ -61,7 +56,7 @@ def read_h5(fpath, navcrs, body):
     if "asep" in rdata.navdf:
         rdata.asep = rdata.navdf["asep"].to_numpy()
     else:
-        rdata.asep = 100
+        rdata.asep = 50
 
     # groudnhog rx triggers on arrival of airwave - get number of traces pre-trigger to vertically shift the data accordingly
     try:
@@ -90,7 +85,7 @@ def read_h5(fpath, navcrs, body):
     rdata.check_attrs()
 
     # try:
-    #     rdata.filter(btype='lowpass', lowcut=None, highcut=4e6, order=5, direction=0)
+    #     rdata.filter(btype='lowpass', lowcut=None, highcut=3e6, order=5, direction=0)
     # except:
     #     pass
     # try:

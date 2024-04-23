@@ -76,6 +76,8 @@ class garlic(object):
         self.geocrs = None
         # xyz crs string
         self.xyzcrs = None
+        # bool: store data as power in decibels
+        self.dbit = True
 
         # per-trace attributes
         #: navigation dataframe consisting of [lon, lat, hgt, x, y, z, dist], where each field is of type and size np.ndarray(tnum,)
@@ -170,13 +172,16 @@ class garlic(object):
 
     # convert amplitude array to dB log scale
     def dBscale(self, dat):
-        # convert to power
-        pow = np.power(dat.astype(float), 2)
-        # mask zero-power values
-        pow[pow == 0] = np.nan
-        # dB it
-        dB = 10*np.log10(pow)
-        return dB
+        if self.dbit:
+            # convert to power
+            pow = np.power(dat.astype(float), 2)
+            # mask zero-power values
+            pow[pow == 0] = np.nan
+            # dB it
+            out = 10*np.log10(pow)
+        else:
+            out = dat
+        return out
 
 
     def genPyramids(self, dat):
