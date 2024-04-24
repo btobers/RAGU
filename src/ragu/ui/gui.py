@@ -501,6 +501,7 @@ class mainGUI(tk.Frame):
                     self.rdata = self.igst.read(self.conf["path"]["simPath"], self.conf["nav"]["crs"], self.conf["nav"]["body"])
                     try:
                         self.rdata.asep =  float(self.conf["output"]["asep"])
+                        self.rdata.info["Antenna Separation [m]"] = self.rdata.asep
                     except:
                         pass
                     self.impick.clear_canvas()  
