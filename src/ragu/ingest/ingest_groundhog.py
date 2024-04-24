@@ -55,8 +55,6 @@ def read_h5(fpath, navcrs, body):
     # if rx and tx each have gps, we'll store antenna sep per trace
     if "asep" in rdata.navdf:
         rdata.asep = rdata.navdf["asep"].to_numpy()
-    else:
-        rdata.asep = 50
 
     # groudnhog rx triggers on arrival of airwave - get number of traces pre-trigger to vertically shift the data accordingly
     try:

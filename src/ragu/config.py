@@ -27,6 +27,8 @@ def create_config(fpath):
     config.set('nav', 'crs', 'proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs')
 
     config.add_section('output')
+    config.set('output', '# float asep: antenna separation in meters (optional)')
+    config.set('output', 'asep', '')
     config.set('output', '# float eps_r: relative permittivity (dielectric constant), required for plotting in depth and calculating layer thickness')
     config.set('output', 'eps_r', '3.15')
     config.set('output','# bool amp: export pick amplitudes')

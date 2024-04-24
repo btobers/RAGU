@@ -487,6 +487,7 @@ class mainGUI(tk.Frame):
     def open_dfile(self, f_loadName=None, switch=False, direction="Right"):
             # if input selected, clear impick canvas, ingest data and pass to impick
             try:
+            # for fuck in ['bananas']:
                 if f_loadName:
                     # switch to profile tab
                     if self.tab == "Waveform":
@@ -498,6 +499,10 @@ class mainGUI(tk.Frame):
                     # ingest the data
                     self.igst = ingest(self.f_loadName)
                     self.rdata = self.igst.read(self.conf["path"]["simPath"], self.conf["nav"]["crs"], self.conf["nav"]["body"])
+                    try:
+                        self.rdata.asep =  float(self.conf["output"]["asep"])
+                    except:
+                        pass
                     self.impick.clear_canvas()  
                     self.impick.set_vars()
                     self.impick.load(self.rdata)
