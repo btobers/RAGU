@@ -20,7 +20,6 @@ import sys
 def read_h5(fpath, navcrs, body):
     rdata = garlic(fpath)
     rdata.fn = fpath.split("/")[-1][:-3]
-    rdata.dtype = "groundhog"
 
     # read in .h5 file
     f = h5py.File(rdata.fpath, "r")                      
@@ -40,8 +39,15 @@ def read_h5(fpath, navcrs, body):
     else:
         rdata.set_dat(f["raw/rx0"][:].astype(float))
 
-    # want to plot positive and negative amplitude values - don't dB 
-    rdata.dbit = False
+    # get system info
+    try:
+        if "Blue Systems" in f.attrs["system"]:
+            rdata.dtype = "bsi"
+            rdata.dbit = True
+    except KeyError:
+        rdata.dtype = "groundhog"
+        rdata.dbit = False
+
     rdata.set_proc(rdata.get_dat())
     rdata.snum, rdata.tnum = rdata.get_dat().shape
 

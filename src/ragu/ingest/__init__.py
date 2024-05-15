@@ -40,9 +40,9 @@ class ingest:
                 self.rdata = ingest_oibAK.read_h5(self.fpath, navcrs, body)
             except:
                 try:
-                    self.rdata = ingest_uaf_kentech.read_h5(self.fpath, navcrs, body)
-                except:
                     self.rdata = ingest_groundhog.read_h5(self.fpath, navcrs, body)
+                except:
+                    self.rdata = ingest_uaf_kentech.read_h5(self.fpath, navcrs, body)
         elif (self.ftype == "mat"):
             try:
                 self.rdata = ingest_cresis_snow.read_mat(self.fpath, navcrs, body)
