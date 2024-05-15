@@ -152,6 +152,13 @@ def getnav_groundhog(navfile, navcrs, body):
         df = pd.DataFrame(h5[grp]["gps0"][:])
         df["asep"] = 50
     
+    # if BSI ice radar, assume no antenna separation
+    try:
+        if "Blue Systems" in h5.attrs["system"]:
+            df["asep"] = 0
+    except:
+        pass
+    
     try:
         df.rename(columns={"hgt": "elev"}, inplace=True)
     except:
