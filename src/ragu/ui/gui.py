@@ -57,7 +57,7 @@ class mainGUI(tk.Frame):
         # dictionary to hold figure settings
         self.figsettings = {"cmap": tk.StringVar(value="Greys_r"),
                             "figsize": tk.StringVar(value="6.5,1.5"), 
-                            "fontsize": tk.DoubleVar(value="12"),
+                            "fontsize": tk.DoubleVar(value="10"),
                             "figtitle": tk.BooleanVar(),
                             "figxaxis": tk.BooleanVar(),
                             "figyaxis": tk.BooleanVar(),
@@ -248,7 +248,7 @@ class mainGUI(tk.Frame):
         self.nb.bind("<<NotebookTabChanged>>", self.tab_change)
 
         # initialize impick
-        self.impick = impick.impick(self.imTab, button_tip, self.popup)
+        self.impick = impick.impick(self.imTab, button_tip, self.popup, self.figsettings["fontsize"].get())
         self.impick.set_vars()
         self.impick.update_figsettings(self.figsettings)
         self.impick.set_eps_r(self.eps_r.get())
@@ -1332,7 +1332,7 @@ class mainGUI(tk.Frame):
         try:
             self.figsettings["fontsize"].get()
         except:
-            self.figsettings["fontsize"].set(12)
+            self.figsettings["fontsize"].set(10)
 
         # make sure figure extents are between 0 and 1
         try:

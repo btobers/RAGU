@@ -26,8 +26,8 @@ from scipy.interpolate import CubicSpline
 
 class impick(tk.Frame):
     # initialize impick frame with variables passed from mainGUI
-    def __init__(self, parent, button_tip, popup, *args, **kwargs):
-        tk.Frame.__init__(self, parent, *args, **kwargs)
+    def __init__(self, parent, button_tip, popup, fs):
+        tk.Frame.__init__(self, parent)
         self.parent = parent
         self.button_tip = button_tip
         self.popup = popup
@@ -38,11 +38,11 @@ class impick(tk.Frame):
         self.horVar = tk.StringVar()
         self.segVar = tk.IntVar()
         self.color = tk.StringVar()
-        self.setup()
+        self.setup(fs)
 
 
     # setup impick
-    def setup(self):
+    def setup(self, fs):
         # set up frames
         infoFrame0 = tk.Frame(self.parent)
         infoFrame0.pack(side="top",fill="both")        
@@ -151,12 +151,12 @@ class impick(tk.Frame):
         self.button_tip(self.parent, self.stopbutton, "Stop picking")
 
         # create matplotlib figure data canvas
-        plt.rcParams.update({'font.size': 12})
+        plt.rcParams.update({'font.size': fs, 'axes.titlesize': fs})
         self.fig = mpl.figure.Figure()
         self.fig.patch.set_facecolor("#d9d9d9")
         self.dataCanvas = FigureCanvasTkAgg(self.fig, self.parent)
         self.ax = self.fig.add_subplot(1,1,1)
-        self.fig.tight_layout(rect=[.02,.05,.97,1])
+        self.fig.tight_layout(rect=[.05,.05,.97,1])
 
         # initiate a twin axis that shows twtt
         self.secaxy0 = self.ax.twinx()
@@ -186,9 +186,10 @@ class impick(tk.Frame):
         self.reset_ax = self.fig.add_axes([0.95625, 0.10, 0.03, 0.035])
      
         # create colormap sliders and reset button - initialize for data image
-        self.s_cmin = mpl.widgets.Slider(self.ax_cmin, "Min", 0, 1, orientation="vertical")
-        self.s_cmax = mpl.widgets.Slider(self.ax_cmax, "Max", 0, 1, orientation="vertical")
+        self.s_cmin = mpl.widgets.Slider(self.ax_cmin, "Min", 0, 1, orientation="vertical", handle_style={"size":fs})
+        self.s_cmax = mpl.widgets.Slider(self.ax_cmax, "Max", 0, 1, orientation="vertical", handle_style={"size":fs})
         self.cmap_reset_button = mpl.widgets.Button(self.reset_ax, "Reset", color="white")
+        self.cmap_reset_button.label.set_fontsize(fs)
         self.cmap_reset_button.on_clicked(self.cmap_reset)
 
         # add toolbar to plot
@@ -433,7 +434,7 @@ class impick(tk.Frame):
             self.secaxy0.set_ylabel("TWTT [\u03BCs]")
             self.secaxy0.set_ylim(self.rdata.snum * self.rdata.dt * 1e6, 0)
 
-        self.secaxy1.set_ylabel("Depth [m] ($\epsilon_{}$ = {})".format("r",self.eps_r))
+        self.secaxy1.set_ylabel("Depth [m] (" + r"$\epsilon_{r}$" + f"= {self.eps_r})")
         self.secaxy1.set_ylim(utils.twtt2depth(self.rdata.snum * self.rdata.dt, np.nanmean(self.rdata.asep), self.eps_r), 0)
 
         # update along-track distance
@@ -1481,13 +1482,19 @@ class impick(tk.Frame):
     def update_figsettings(self, figsettings=None):
         if figsettings:
             self.figsettings = figsettings
-
-        plt.rcParams.update({'font.size': self.figsettings["fontsize"].get()})
-
-        for item in ([self.ax.title, self.ax.xaxis.label, self.ax.yaxis.label, self.secaxx.xaxis.label, self.secaxy0.yaxis.label, self.secaxy1.yaxis.label] +
+        # update all label sizes
+        fs = self.figsettings["fontsize"].get()
+        plt.rcParams.update({'font.size': fs})
+        for item in ([self.ax.xaxis.label, self.ax.yaxis.label, self.secaxx.xaxis.label, self.secaxy0.yaxis.label, self.secaxy1.yaxis.label] +
                     self.ax.get_xticklabels() + self.ax.get_yticklabels() + self.secaxx.get_xticklabels() + self.secaxy0.get_yticklabels() + self.secaxy1.get_yticklabels() + self.ann_list):
-            item.set_fontsize(self.figsettings["fontsize"].get())
-
+            item.set_fontsize(fs)
+        self.ax.title.set_size(fs)
+        self.s_cmin.label.set_fontsize(fs)
+        self.s_cmax.label.set_fontsize(fs)
+        self.s_cmin.valtext.set_fontsize(fs)
+        self.s_cmax.valtext.set_fontsize(fs)
+        self.cmap_reset_button.label.set_fontsize(fs)
+        # update title visibility
         self.ax.title.set_visible(self.figsettings["figtitle"].get())
         # update x-axes
         val = self.figsettings["figxaxis"].get()

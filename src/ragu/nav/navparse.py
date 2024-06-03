@@ -31,8 +31,29 @@ xyzsys = {
 "moon": "+proj=geocent +a=1737400 +b=1737400 +no_defs",
 }
 
+
 def get_xformer(crs_from, crs_to):
     return Transformer.from_crs(crs_from=crs_from, crs_to=crs_to)
+
+
+def interp_xords(df, keys=["lon","lat","elev"]):
+    # interpolate nans
+    for key in keys:
+        if key not in list(df.keys()):
+            continue
+        nan_indices = np.isnan(df[key].values)
+        non_nan_indices = ~nan_indices
+        non_nan_values = df[key].values[non_nan_indices]
+        indices = np.arange(len(df[key]))
+        # Interpolate NaN values
+        df[key].values[nan_indices] = np.interp(indices[nan_indices], indices[non_nan_indices], non_nan_values)
+    return df
+
+
+def euclid_dist(xarray, yarray, zarray):
+    dist = np.zeros_like(xarray)
+    dist[1:] = np.cumsum(np.sqrt(np.diff(xarray) ** 2.0 + np.diff(yarray) ** 2.0 + np.diff(zarray) ** 2.0))
+    return dist
 
 
 def getnav_oibAK_h5(navfile, navcrs, body):
@@ -166,6 +187,10 @@ def getnav_groundhog(navfile, navcrs, body):
 
     h5.close()
 
+    # interpolate
+    df = interp_xords(df)
+
+    # project coords
     df["x"], df["y"], df["z"] = xformer.transform(
         df["lon"].to_numpy(),
         df["lat"].to_numpy(),
@@ -645,9 +670,3 @@ def getnav_rimfax(navfile, navcrs, body):
     df["twtt_wind"] = 0.0
 
     return df[["lon", "lat", "elev", "x", "y", "z", "twtt_wind", "dist"]]
-
-
-def euclid_dist(xarray, yarray, zarray):
-    dist = np.zeros_like(xarray)
-    dist[1:] = np.cumsum(np.sqrt(np.diff(xarray) ** 2.0 + np.diff(yarray) ** 2.0 + np.diff(zarray) ** 2.0))
-    return dist
