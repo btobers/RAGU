@@ -81,7 +81,7 @@ def read_h5(fpath, navcrs, body):
         arr = np.repeat(np.nan, rdata.tnum)
         rdata.set_srfElev(dat = arr)
     rdata.pick.horizons["srf"] = arr
-    rdata.pick.srf = "srf"
+    rdata.pick.set_srf("srf")
 
     # # read in bed picks
     # if "twtt_bed" in f["drv"]["pick"].keys():

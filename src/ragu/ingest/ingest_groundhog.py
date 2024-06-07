@@ -45,7 +45,7 @@ def read_h5(fpath, navcrs, body):
             rdata.dtype = "bsi"
             rdata.dbit = True
     except KeyError:
-        rdata.dtype = "groundhog"
+        rdata.dtype = "ghog"
         rdata.dbit = False
 
     rdata.set_proc(rdata.get_dat())
@@ -71,12 +71,18 @@ def read_h5(fpath, navcrs, body):
     rdata.flags.sampzero = pt+1
     rdata.tzero_shift()
 
-    # define surface horizon name to set index to zeros
-    rdata.pick.horizons["srf"] = np.zeros(rdata.tnum)
-    rdata.pick.set_srf("srf")
+    # initialize surface arrays - if groundhog, surface is at zero after shifting by pretrigger amount. If BSI airIPR initialize nan array for surface pick horizon and elevation array
+    if rdata.dtype == "ghog":
+        # define surface horizon name to set index to zeros
+        arr = np.zeros(rdata.tnum)
+        # srf_elev is the same as GPS recorded elev
+        rdata.set_srfElev(dat = rdata.navdf["elev"].to_numpy())
+    elif rdata.dtype == "bsi":
+        arr = np.repeat(np.nan, rdata.tnum)
+        rdata.set_srfElev(dat = arr)
 
-    # srf_elev is the same as GPS recorded elev
-    rdata.set_srfElev(dat = rdata.navdf["elev"].to_numpy())
+    rdata.pick.horizons["srf"] = arr
+    rdata.pick.set_srf("srf")
 
     rdata.info["Signal Type"] = "Impulse" 
     rdata.info["Sampling Frequency [MHz]"] = rdata.fs * 1e-6
