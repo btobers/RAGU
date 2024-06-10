@@ -32,6 +32,8 @@ class basemap(tk.Frame):
         self.to_gui = to_gui
         # create tkinter toplevel window to display basemap
         self.basemap_window = tk.Toplevel(self.parent)
+        self.ontop_bool = tk.BooleanVar(value=1)
+        self.basemap_window.wm_attributes("-topmost", "true")
         img = tk.PhotoImage(file=os.path.join(os.path.dirname(__file__), "../recs", "basemap_icon.png"))
         self.basemap_window.tk.call("wm", "iconphoto", self.basemap_window._w, img)
         self.basemap_window.config(bg="#d9d9d9")
@@ -52,6 +54,7 @@ class basemap(tk.Frame):
         # generate menubar
         menubar = tk.Menu(self.basemap_window)
         fileMenu = tk.Menu(menubar, tearoff=0)
+        windowMenu = tk.Menu(menubar, tearoff=0)
 
         # settings submenu
         loadMenu = tk.Menu(fileMenu,tearoff=0)
@@ -62,8 +65,14 @@ class basemap(tk.Frame):
         fileMenu.add_command(label="clear tracks", command=self.clear_nav)
         fileMenu.add_command(label="preferences", command=self.settings)
         fileMenu.add_command(label="exit       [ctrl+q]", command=self.basemap_close)
-        # add items to menubar
+
+        # windowMenu.add(label="Stay on top", menu = windowMenu, command=self.ontop)
+        windowMenu.add_checkbutton(label="Stay on top", onvalue=1, offvalue=0, variable=self.ontop_bool, command=self.ontop)
+
+        # # add items to menubar
         menubar.add_cascade(label="file", menu=fileMenu)
+        menubar.add_cascade(label="window", menu=windowMenu)
+        
         # add the menubar to the window
         self.basemap_window.config(menu=menubar)
 
@@ -95,6 +104,11 @@ class basemap(tk.Frame):
         self.basemap_state = 1
         self.draw_cid = self.map_fig.canvas.mpl_connect("draw_event", self.update_bg)
         self.pick_cid = self.map_fig.canvas.mpl_connect("pick_event", self.on_pick)
+
+
+    def ontop(self):
+        # toggle whether or not window is on top of all other windows
+        self.basemap_window.wm_attributes("-topmost", str(self.ontop_bool.get()).lower())
 
 
     def set_vars(self):
