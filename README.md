@@ -132,8 +132,6 @@ Tools:
 - dielectric extraction
 - pick amplitude tracking
 
-General:
-pyproj.transform is deprecated going from pyproj v1 to v2. Ragu.nav.navparse needs to be updated accordingly.
 
 ### Publications
 
