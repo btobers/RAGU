@@ -150,7 +150,7 @@ class garlic(object):
         if dat is not None:
             self.srfElev = dat
         else:
-            self.srfElev = utils.srfpick2elev(self.pick.horizons[self.pick.get_srf()],
+            self.srfElev = utils.srfpick2elev(self.pick.horizons[self.pick.get_srf()] + self.flags.sampzero,
                                             self.navdf["twtt_wind"].to_numpy(),
                                             self.navdf["elev"].to_numpy(), 
                                             self.dt,

@@ -31,7 +31,7 @@ class ingest:
         self.ftype = ftype
 
 
-    def read(self, simpath, navcrs, body):
+    def read(self, simpath=None, navcrs='+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs', body='earth'):
         # wrapper method for reading in a file
         # better ways to do this than an if/else
         # but for a few file types this is easier

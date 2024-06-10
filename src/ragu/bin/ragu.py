@@ -33,21 +33,27 @@ def main():
         formatter_class=argparse.RawTextHelpFormatter
     )
 
-    parser.add_argument("datPath", help="Data directory file path", nargs="?", default=None)
-    parser.add_argument("configPath", help="Configuration file path", nargs="?", default=configPath)
-    datPath = parser.parse_args().datPath
-    tmp = parser.parse_args().configPath
-
+    parser.add_argument("-datPath", help="Data directory file path", nargs="?", default='')
+    parser.add_argument("-datFile", help="Data file path to open load", nargs="?", default='')
+    parser.add_argument("-configPath", help="Configuration file path", nargs="?", default=configPath)
+    args = parser.parse_args()
+    datPath = args.datPath
+    datFile = args.datFile
+    tmp = args.configPath
     # check if path exists
     if datPath:
-        if not os.path.isdir(datPath[0]):
-            print(f"Data directory not found : {datPath[0]}")
+        if not os.path.isdir(datPath):
+            print(f"Data directory not found : {datPath}")
             print(f"Defaulting to data file path specified in the RAGU configuration file.")
             datPath = None
     if os.path.isfile(tmp) and tmp.endswith(".ini"):
         configPath=tmp
     else:
         print(f"Configuration file not found at: {tmp}\nFull file path must be entered.\nDefaulting to: {configPath}")
+
+    # check if dataFile exists
+    if datFile and not os.path.isfile(datFile):
+        print(f"Data file does not exist: {datFile}")
 
     # change dir to RAGU code directory 
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -68,7 +74,7 @@ def main():
         pass
 
     # call the RAGU mainGUI class
-    gui.mainGUI(root, configPath=configPath, datPath=datPath)
+    gui.mainGUI(root, configPath=configPath, datPath=datPath, datFile=datFile)
     root.lift()    
     root.mainloop()
 

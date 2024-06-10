@@ -59,7 +59,7 @@ def pick_math(rdata, i_eps_r=3.15, amp_out=True, horizon=None, srf=None):
         if type(damp) is np.ndarray:
             amp = np.repeat(np.nan, rdata.tnum)
             idx = ~np.isnan(samp_arr)
-            amp[idx] = damp[samp_arr[idx].astype(np.int), idx]
+            amp[idx] = damp[samp_arr[idx].astype(int), idx]
             out["amp"] = amp
         return out
 

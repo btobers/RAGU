@@ -32,14 +32,14 @@ import tkinter.ttk as ttk
 #     pass
 
 class mainGUI(tk.Frame):
-    def __init__(self, parent, configPath, datPath, *args, **kwargs):
-        tk.Frame.__init__(self, parent, *args, **kwargs)
+    def __init__(self, parent, *args, **kwargs):
+        tk.Frame.__init__(self, parent)
         self.parent = parent
         # read and parse config
         self.conf = configparser.ConfigParser()
-        self.conf.read(configPath)
-        if datPath:
-            self.datPath = datPath
+        self.conf.read(kwargs['configPath'])
+        if kwargs['datPath']:
+            self.datPath = kwargs['datPath']
         else:
             self.datPath = self.conf["path"]["datPath"]
         # initialize variables
@@ -70,6 +70,9 @@ class mainGUI(tk.Frame):
         self.os = sys.platform
         # setup tkinter frame
         self.setup()
+        # if passed, load datafile
+        if kwargs['datFile']:
+            self.open_dfile(kwargs['datFile'])
 
 
     # setup is a method which generates the app menubar and buttons and initializes some vars
@@ -956,8 +959,10 @@ class mainGUI(tk.Frame):
     # change tabs between profile and waveform views
     def tab_change(self, event):
         selection = event.widget.select()
-        self.tab = event.widget.tab(selection, "text")
-        if self.rdata:
+        tmp = event.widget.tab(selection, "text")
+        # don't do anything unless different tab selected
+        if (tmp != self.tab) and (self.rdata):
+            self.tab = tmp
             # determine which tab is active
             if (self.tab == "Waveform"):
                 self.end_pick()
