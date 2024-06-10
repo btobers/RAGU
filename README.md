@@ -99,8 +99,8 @@ ragu
 
 **Note, ragu accepts several optional command line arguments**:
 - -configPath : ragu configuration file path, (default is *~/RAGU/config.ini*)
-- -datFile : Data file path to load when ragu is initialized (default is None)
-- -datPath : Path to set as directory from which to load radar datafiles (default from *~/RAGU/config.ini*)
+- -datFile : data file path to load when ragu is initialized (default is None)
+- -datPath : path to set as directory from which to load radar datafiles (default from *~/RAGU/config.ini*)
 
 #### Development
 If you are interested in helping to develop RAGU, we recommend forking [RAGU's github repository](https://github.com/btobers/RAGU) and then [cloning the github repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) onto your local machine.
