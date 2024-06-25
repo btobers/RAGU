@@ -259,16 +259,20 @@ def restack(self, intrvl=None,thold=None):
     navdf = self.navdf.copy()
     # first account for any static traces where there may be gps drift
     if thold > 0:
-        consecutive_dist = np.zeros_like(self.navdf.x)
-        consecutive_dist[1:] = np.sqrt(np.diff(self.navdf.x.to_numpy()) ** 2.0 + np.diff(self.navdf.y.to_numpy()) ** 2.0 + np.diff(self.navdf.z.to_numpy()) ** 2.0)
+        consecutive_dist = np.zeros_like(navdf.x)
+        consecutive_dist[1:] = np.sqrt(np.diff(navdf.x.to_numpy()) ** 2.0 + np.diff(navdf.y.to_numpy()) ** 2.0 + np.diff(navdf.z.to_numpy()) ** 2.0)
         drift_mask = consecutive_dist >= thold
 
         # drop data from these traces
         namp = amp[:,drift_mask]
         navdf = navdf[drift_mask]
+        navdf = navdf.reset_index(drop=True)
+        # recalculcate distance after accounting for gps drift
         navdf["dist"] = navparse.euclid_dist(navdf["x"], navdf["y"], navdf["z"])
         self.snum, self.tnum = namp.shape
         amp = namp
+        # get surface elev
+        navdf['srfelev'] = self.srfElev[drift_mask]
 
     totdist = navdf.dist.iloc[-1]  # Total distance
     ntrace = int(totdist//intrvl)
@@ -277,6 +281,7 @@ def restack(self, intrvl=None,thold=None):
     lat = np.zeros(ntrace)
     lon = np.zeros(ntrace)
     hgt = np.zeros(ntrace)
+    srf = np.repeat(np.nan,ntrace)
 
     for i in range(ntrace):
         stack_slice = np.logical_and(navdf.dist > i*intrvl, navdf.dist < (i+1)*intrvl)
@@ -286,12 +291,14 @@ def restack(self, intrvl=None,thold=None):
             lat[i] = lat[i-1]
             lon[i] = lon[i-1]
             hgt[i] = hgt[i-1]
+            srf[i] = srf[i-1]
             continue
 
         rstack[:, i] = np.sum(amp[:, stack_slice], axis=1)/nstack
         lat[i] = np.mean(navdf["lat"][stack_slice])
         lon[i] = np.mean(navdf["lon"][stack_slice])
         hgt[i] = np.mean(navdf["elev"][stack_slice])
+        srf[i] = np.mean(navdf["srfelev"][stack_slice])
 
     # store twtt_wind from navdf before cleaning up
     twtt_wind_ = navdf["twtt_wind"]
@@ -300,6 +307,7 @@ def restack(self, intrvl=None,thold=None):
     self.navdf["lon"] = lon
     self.navdf["lat"] = lat
     self.navdf["elev"] = hgt
+    self.set_srfElev(dat = srf)
 
     self.navdf["x"], self.navdf["y"], self.navdf["z"] = xform.transform(self.navdf["lon"], self.navdf["lat"], self.navdf["elev"])
     self.navdf["dist"] = navparse.euclid_dist(self.navdf["x"], self.navdf["y"], self.navdf["z"])

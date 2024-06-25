@@ -31,6 +31,7 @@ def read_h5(fpath, navcrs, body):
         rdata.prf = f["raw/rx0"].attrs["prf"]                       # pulse repition frequency, Hz
     except KeyError:
         rdata.prf = 0
+
     rdata.nchan = 1
 
     # pull radar proc and sim arrayss
@@ -71,6 +72,17 @@ def read_h5(fpath, navcrs, body):
     rdata.flags.sampzero = pt+1
     rdata.tzero_shift()
 
+    # pull some info
+    rdata.info["Signal Type"] = "Impulse" 
+    rdata.info["Sampling Frequency [MHz]"] = rdata.fs * 1e-6
+    rdata.info["PRF [kHz]"] = rdata.prf * 1e-3
+    rdata.info["Stack"] = f["raw/rx0"].attrs["stack"]
+    rdata.info["Antenna Separation [m]"] = round(np.nanmean(rdata.asep))
+
+    rdata.check_attrs()                                         # check basic rdata attributes
+    f.close()                                                   # close file
+
+
     # initialize surface arrays - if groundhog, surface is at zero after shifting by pretrigger amount. If BSI airIPR initialize nan array for surface pick horizon and elevation array
     if rdata.dtype == "ghog":
         # define surface horizon name to set index to zeros
@@ -80,27 +92,16 @@ def read_h5(fpath, navcrs, body):
     elif rdata.dtype == "bsi":
         arr = np.repeat(np.nan, rdata.tnum)
         rdata.set_srfElev(dat = arr)
+        try:
+            rdata.filter(btype='bandpass', lowcut=2.5e6, highcut=20e6, order=5, direction=0)
+        except:
+            pass
+        try:
+            rdata.removeSlidingMeanFFT(window=250)
+        except:
+            pass
 
     rdata.pick.horizons["srf"] = arr
     rdata.pick.set_srf("srf")
-
-    rdata.info["Signal Type"] = "Impulse" 
-    rdata.info["Sampling Frequency [MHz]"] = rdata.fs * 1e-6
-    rdata.info["PRF [kHz]"] = rdata.prf * 1e-3
-    rdata.info["Stack"] = f["raw/rx0"].attrs["stack"]
-    rdata.info["Antenna Separation [m]"] = round(np.nanmean(rdata.asep))
-
-    f.close()                                                   # close the file
-
-    rdata.check_attrs()
-
-    # try:
-    #     rdata.filter(btype='lowpass', lowcut=None, highcut=3e6, order=5, direction=0)
-    # except:
-    #     pass
-    # try:
-    #     rdata.filter(btype='lowpass', lowcut=None, highcut=.4, order=5, direction=1)
-    # except:
-    #     pass
 
     return rdata

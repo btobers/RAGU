@@ -11,6 +11,7 @@ from ragu.ingest import ingest_oibAK, ingest_groundhog, ingest_uaf_kentech, inge
 from ragu.tools import utils
 import numpy as np
 import pandas as pd
+import tkinter as tk
 import fnmatch
 
 class ingest:
@@ -116,14 +117,15 @@ class ingest:
                         # account for any already applied tzero
                     sample -= self.rdata.flags.sampzero
 
-                    # skip surface
-                    if horizon == 'srf':
+                    if not tk.messagebox.askyesno("Import Horizon","Import " + str(horizon) + " horizon?"):
                         continue
-                    
+
                     if horizon in self.rdata.pick.horizons.keys():
+                        # if imported horizon same as existing, continue
                         if utils.nan_array_equal(self.rdata.pick.horizons[horizon], sample):
                             continue
-                        else:
+                        # elif imported horizon different form existing, and existing is not all nan, append '_imported' on name
+                        elif not np.isnan(self.rdata.pick.horizons[horizon]).all():
                             horizon = horizon + "_imported"
                     self.rdata.pick.horizons[horizon] = sample
                     horizons.append(horizon)
