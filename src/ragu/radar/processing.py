@@ -287,11 +287,18 @@ def restack(self, intrvl=None,thold=None):
         stack_slice = np.logical_and(navdf.dist > i*intrvl, navdf.dist < (i+1)*intrvl)
         nstack = np.sum(stack_slice)
         if(nstack == 0):
-            rstack[:, i] = rstack[:, i-1]
-            lat[i] = lat[i-1]
-            lon[i] = lon[i-1]
-            hgt[i] = hgt[i-1]
-            srf[i] = srf[i-1]
+            if i==0:
+                rstack[:, i] = amp[:, i]
+                lat[i] = navdf["lat"][i]
+                lon[i] = navdf["lon"][i]
+                hgt[i] = navdf["elev"][i]
+                srf[i] = navdf["srfelev"][i]
+            else:
+                rstack[:, i] = rstack[:, i-1]
+                lat[i] = lat[i-1]
+                lon[i] = lon[i-1]
+                hgt[i] = hgt[i-1]
+                srf[i] = srf[i-1]
             continue
 
         rstack[:, i] = np.sum(amp[:, stack_slice], axis=1)/nstack
