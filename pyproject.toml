@@ -1,6 +1,6 @@
 [project]
 name = "ragu"
-version = "0.1.42"
+version = "0.1.43"
 description = "Radar Analysis Graphical Utility (RAGU)"
 readme = "README.md"
 requires-python = ">=3.6"

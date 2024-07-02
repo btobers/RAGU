@@ -90,7 +90,7 @@ class ingest:
 
 
     # import_pick is a method of the ingester class which loads in existing picks from a text file
-    def import_pick(self, fpath, uid):
+    def import_pick(self, fpath, uid, force=False):
         if fpath.endswith("csv"):
             dat = pd.read_csv(fpath)
             if dat.shape[0] != self.rdata.tnum:
@@ -117,7 +117,7 @@ class ingest:
                         # account for any already applied tzero
                     sample -= self.rdata.flags.sampzero
 
-                    if not tk.messagebox.askyesno("Import Horizon","Import " + str(horizon) + " horizon?"):
+                    if (not force) and (not tk.messagebox.askyesno("Import Horizon","Import " + str(horizon) + " horizon?")):
                         continue
 
                     if horizon in self.rdata.pick.horizons.keys():

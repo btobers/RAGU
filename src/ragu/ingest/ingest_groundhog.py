@@ -69,8 +69,9 @@ def read_h5(fpath, navcrs, body):
     except KeyError:
         pt = f["raw/rx0"].attrs["pre_trigger"]
 
-    rdata.flags.sampzero = pt+1
-    rdata.tzero_shift()
+    rdata.flags.sampzero = pt
+    if pt>0:
+        rdata.tzero_shift()
 
     # pull some info
     rdata.info["Signal Type"] = "Impulse" 
@@ -92,14 +93,14 @@ def read_h5(fpath, navcrs, body):
     elif rdata.dtype == "bsi":
         arr = np.repeat(np.nan, rdata.tnum)
         rdata.set_srfElev(dat = arr)
-        try:
-            rdata.filter(btype='bandpass', lowcut=2.5e6, highcut=20e6, order=5, direction=0)
-        except:
-            pass
-        try:
-            rdata.removeSlidingMeanFFT(window=250)
-        except:
-            pass
+        # try:
+        #     rdata.filter(btype='bandpass', lowcut=2.5e6, highcut=20e6, order=5, direction=0)
+        # except:
+        #     pass
+        # try:
+        #     rdata.removeSlidingMeanFFT(window=250)
+        # except:
+        #     pass
 
     rdata.pick.horizons["srf"] = arr
     rdata.pick.set_srf("srf")

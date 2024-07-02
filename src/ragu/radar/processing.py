@@ -120,6 +120,7 @@ def flatten(self):
     # loop through all traces and roll according to surface sample
     for i, col in enumerate(amp.T):
         out[i] = np.roll(col, shift = -self.flags.sampzero[i])
+        # out[i][-self.flags.sampzero[i]:] = np.nan             # set prior air samples to nan?
 
     self.set_proc(out.T)
 
@@ -282,7 +283,12 @@ def restack(self, intrvl=None,thold=None):
     lon = np.zeros(ntrace)
     hgt = np.zeros(ntrace)
     srf = np.repeat(np.nan,ntrace)
+    asep = np.repeat(np.nan,ntrace)
+    twtt_wind = np.repeat(np.nan,ntrace)
 
+    if "asep" not in navdf.keys():
+        navdf["asep"] = self.asep
+        
     for i in range(ntrace):
         stack_slice = np.logical_and(navdf.dist > i*intrvl, navdf.dist < (i+1)*intrvl)
         nstack = np.sum(stack_slice)
@@ -293,12 +299,16 @@ def restack(self, intrvl=None,thold=None):
                 lon[i] = navdf["lon"][i]
                 hgt[i] = navdf["elev"][i]
                 srf[i] = navdf["srfelev"][i]
+                twtt_wind[i] = navdf["twtt_wind"][i]
+                asep[i] = navdf["asep"][i]
             else:
                 rstack[:, i] = rstack[:, i-1]
                 lat[i] = lat[i-1]
                 lon[i] = lon[i-1]
                 hgt[i] = hgt[i-1]
                 srf[i] = srf[i-1]
+                twtt_wind[i] = twtt_wind[i-1]
+                asep[i] = asep[i-1]
             continue
 
         rstack[:, i] = np.sum(amp[:, stack_slice], axis=1)/nstack
@@ -306,22 +316,22 @@ def restack(self, intrvl=None,thold=None):
         lon[i] = np.mean(navdf["lon"][stack_slice])
         hgt[i] = np.mean(navdf["elev"][stack_slice])
         srf[i] = np.mean(navdf["srfelev"][stack_slice])
+        twtt_wind[i] = np.mean(navdf["twtt_wind"][stack_slice])
+        asep[i] = np.mean(navdf["asep"][stack_slice])
 
-    # store twtt_wind from navdf before cleaning up
-    twtt_wind_ = navdf["twtt_wind"]
     # store updated nav data
     self.navdf = pd.DataFrame()
     self.navdf["lon"] = lon
     self.navdf["lat"] = lat
     self.navdf["elev"] = hgt
+    self.navdf["twtt_wind"] = twtt_wind
+    self.navdf["asep"] = asep
+    self.asep = asep
+
     self.set_srfElev(dat = srf)
 
     self.navdf["x"], self.navdf["y"], self.navdf["z"] = xform.transform(self.navdf["lon"], self.navdf["lat"], self.navdf["elev"])
     self.navdf["dist"] = navparse.euclid_dist(self.navdf["x"], self.navdf["y"], self.navdf["z"])
-    if (twtt_wind_ == 0.0).all():
-        self.navdf["twtt_wind"] = 0.0
-    else:
-        self.navdf["twtt_wind"] = np.nan
 
     self.snum, self.tnum = rstack.shape
     self.set_proc(rstack)
