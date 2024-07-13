@@ -102,6 +102,10 @@ ragu
 - -datFile : data file path to load when ragu is initialized (default is None)
 - -datPath : path to set as directory from which to load radar datafiles (default from *~/RAGU/config.ini*)
 
+To upgrade ragu via pypi:
+```
+pip install ragu --upgrade
+```
 #### Development
 If you are interested in helping to develop RAGU, we recommend forking [RAGU's github repository](https://github.com/btobers/RAGU) and then [cloning the github repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) onto your local machine.
 
