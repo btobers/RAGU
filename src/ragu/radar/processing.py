@@ -120,7 +120,7 @@ def flatten(self):
     # loop through all traces and roll according to surface sample
     for i, col in enumerate(amp.T):
         out[i] = np.roll(col, shift = -self.flags.sampzero[i])
-        # out[i][-self.flags.sampzero[i]:] = np.nan             # set prior air samples to nan?
+        out[i][-self.flags.sampzero[i]:] = np.nan             # set prior air samples to nan?
 
     self.set_proc(out.T)
 

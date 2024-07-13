@@ -114,10 +114,14 @@ def getnav_groundhog(navfile, navcrs, body):
     xformer = get_xformer(navcrs, xyzsys[body])
     # use average of RX and TX gps positioning
     # we'll also record the separation distance between rx and tx per trace
-    if 'restack' in h5.keys():
-        grp = 'restack'
-    else:
-        grp = 'raw'
+    # get appropriate data grou
+    grps = h5.keys()
+    if "proc" in grps:
+        grp = "proc"
+    elif "restack" in grps:
+        grp = "restack"
+    else: 
+        grp = "raw"
 
     k = h5[grp].keys()
     if ("txFix0" in k) and ("rxFix0" in k):

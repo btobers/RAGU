@@ -7,6 +7,8 @@ def create_config(fpath):
     config.add_section('param')
     config.set('param', '# str uid: user id')
     config.set('param', 'uid', '')
+    config.set('param', '# str cmap: Matplotlib colormap to use (default = seismic)')
+    config.set('param', 'cmap', '')
 
     config.add_section('path')
     config.set('path', '# str datPath: path to data files (optional)')

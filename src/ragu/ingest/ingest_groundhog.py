@@ -24,30 +24,41 @@ def read_h5(fpath, navcrs, body):
     # read in .h5 file
     f = h5py.File(rdata.fpath, "r")                      
 
+    # get appropriate data grou
+    grps = f.keys()
+    if "proc" in grps:
+        grp = "proc"
+    elif "restack" in grps:
+        grp = "restack"
+    else: 
+        grp = "raw"
+
+
     # pull necessary raw group data
-    rdata.fs = f["raw/rx0"].attrs["fs"]                             # sampling frequency
+    rdata.fs = f[grp]["rx0"].attrs["fs"]                             # sampling frequency
     rdata.dt = 1/rdata.fs
     try:                                                            # sampling interval, sec
-        rdata.prf = f["raw/rx0"].attrs["prf"]                       # pulse repition frequency, Hz
+        rdata.prf = f[grp]["rx0"].attrs["prf"]                       # pulse repition frequency, Hz
     except KeyError:
         rdata.prf = 0
 
     rdata.nchan = 1
 
-    # pull radar proc and sim arrayss
-    if("restack" in f.keys()):
-        rdata.set_dat(f["restack/rx0"][:].astype(float))
-    else:
-        rdata.set_dat(f["raw/rx0"][:].astype(float))
+
+    rdata.set_dat(f[grp]["rx0"][:].astype(float))
 
     # get system info
     try:
-        if "Blue Systems" in f.attrs["system"]:
+        if "Blue Systems" in f[grp]["rx0"].attrs["system"]:
             rdata.dtype = "bsi"
-            rdata.dbit = True
+            try:
+                rdata.set_sim(f["drv"]["clutter0"][:])              # simulated clutter array
+            except KeyError:
+                pass
     except KeyError:
         rdata.dtype = "ghog"
-        rdata.dbit = False
+
+    rdata.dbit = False
 
     rdata.set_proc(rdata.get_dat())
     rdata.snum, rdata.tnum = rdata.get_dat().shape
@@ -65,9 +76,9 @@ def read_h5(fpath, navcrs, body):
 
     # groudnhog rx triggers on arrival of airwave - get number of traces pre-trigger to vertically shift the data accordingly
     try:
-        pt = f["raw/rx0"].attrs["pre_trig"]
+        pt = f[grp]["rx0"].attrs["pre_trig"]
     except KeyError:
-        pt = f["raw/rx0"].attrs["pre_trigger"]
+        pt = f[grp]["rx0"].attrs["pre_trigger"]
 
     rdata.flags.sampzero = pt
     if pt>0:
@@ -77,7 +88,7 @@ def read_h5(fpath, navcrs, body):
     rdata.info["Signal Type"] = "Impulse" 
     rdata.info["Sampling Frequency [MHz]"] = rdata.fs * 1e-6
     rdata.info["PRF [kHz]"] = rdata.prf * 1e-3
-    rdata.info["Stack"] = f["raw/rx0"].attrs["stack"]
+    rdata.info["Stack"] = f[grp]["rx0"].attrs["stack"]
     rdata.info["Antenna Separation [m]"] = round(np.nanmean(rdata.asep))
 
     rdata.check_attrs()                                         # check basic rdata attributes
@@ -101,6 +112,7 @@ def read_h5(fpath, navcrs, body):
         #     rdata.removeSlidingMeanFFT(window=250)
         # except:
         #     pass
+        rdata.tpowGain(2)
 
     rdata.pick.horizons["srf"] = arr
     rdata.pick.set_srf("srf")

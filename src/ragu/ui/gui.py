@@ -55,7 +55,7 @@ class mainGUI(tk.Frame):
         self.ann_vis = tk.BooleanVar()
         self.ann_vis.set(True)
         # dictionary to hold figure settings
-        self.figsettings = {"cmap": tk.StringVar(value="Greys_r"),
+        self.figsettings = {"cmap": tk.StringVar(value=self.conf["param"]["cmap"]),
                             "figsize": tk.StringVar(value="6.5,1.5"), 
                             "fontsize": tk.DoubleVar(value="10"),
                             "figtitle": tk.BooleanVar(),
@@ -249,6 +249,9 @@ class mainGUI(tk.Frame):
 
         # bind tab change event to send pick data to wvpick if tab switched from impick
         self.nb.bind("<<NotebookTabChanged>>", self.tab_change)
+
+        # check cmap
+        self.check_cmap()
 
         # initialize impick
         self.impick = impick.impick(self.imTab, button_tip, self.popup, self.figsettings["fontsize"].get())
@@ -1309,6 +1312,13 @@ class mainGUI(tk.Frame):
         b.pack(side="left")
 
 
+    def check_cmap(self):
+        # check if cmap is recognized
+        try:
+            plt.get_cmap(self.figsettings["cmap"].get())
+        except:
+            self.figsettings["cmap"].set("seismic")
+
 
     def updateSettings(self):
         try:
@@ -1318,10 +1328,7 @@ class mainGUI(tk.Frame):
             self.eps_r.set(3.15)
 
         # check if cmap is recognized
-        try:
-            plt.get_cmap(self.figsettings["cmap"].get())
-        except:
-            self.figsettings["cmap"].set("Greys_r")
+        self.check_cmap()
 
         # make sure fig size is of correct format
         size = self.figsettings["figsize"].get().split(",")
