@@ -104,17 +104,16 @@ def read_h5(fpath, navcrs, body):
     elif rdata.dtype == "bsi":
         arr = np.repeat(np.nan, rdata.tnum)
         rdata.set_srfElev(dat = arr)
-        # try:
-        #     rdata.filter(btype='bandpass', lowcut=2.5e6, highcut=20e6, order=5, direction=0)
-        # except:
-        #     pass
-        # try:
-        #     rdata.removeSlidingMeanFFT(window=250)
-        # except:
-        #     pass
-        rdata.tpowGain(2)
 
+        # optional processing defaults
+        # rdata.filter(btype='bandpass', lowcut=2.5e6, highcut=20e6, order=5, direction=0)
+        # rdata.removeSlidingMeanFFT(window=250)
+        rdata.tpowGain(1.5)
+
+    # init surface and bed horizons
     rdata.pick.horizons["srf"] = arr
     rdata.pick.set_srf("srf")
+    arr = np.repeat(np.nan, rdata.tnum)
+    rdata.pick.horizons["bed"] = arr
 
     return rdata

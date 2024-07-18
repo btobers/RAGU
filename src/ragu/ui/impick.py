@@ -291,7 +291,7 @@ class impick(tk.Frame):
             self.simRadio.config(state="disabled")
 
         # initialize line to hold current picks
-        self.tmp_horizon_ln, = self.ax.plot(self.tmp_horizon_path.x, self.tmp_horizon_path.y, "rx")
+        self.tmp_horizon_ln, = self.ax.plot(self.tmp_horizon_path.x, self.tmp_horizon_path.y, "rx", ms=6)
         # initialize cursor crosshair lines
         self.horizontal_line = self.ax.axhline(color="r", lw=1, ls="--")
         self.vertical_line = self.ax.axvline(color="r", lw=1, ls="--")
@@ -801,7 +801,7 @@ class impick(tk.Frame):
         self.init_segment(horizon=horizon)
         # initialize line object for new horizon
         x,y = utils.merge_paths(self.horizon_paths[horizon])
-        self.horizon_lns[horizon], = self.ax.plot(x,y,lw=1,c=self.ln_colors["hex"][self.ln_colors["str"].index(self.color.get())])            
+        self.horizon_lns[horizon], = self.ax.plot(x,y,lw=2,c=self.ln_colors["hex"][self.ln_colors["str"].index(self.color.get())])            
         # update horizon and segment options
         self.update_hor_opt_menu()  
         # set horVar to new horizon
