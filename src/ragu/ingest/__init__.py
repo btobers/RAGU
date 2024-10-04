@@ -92,7 +92,7 @@ class ingest:
     # import_pick is a method of the ingester class which loads in existing picks from a text file
     def import_pick(self, fpath, uid, force=False):
         if fpath.endswith("csv"):
-            dat = pd.read_csv(fpath)
+            dat = pd.read_csv(fpath, comment='#')
             if dat.shape[0] != self.rdata.tnum:
                 raise ValueError("import_pick error:\t pick file size does not match radar data")
                 return
