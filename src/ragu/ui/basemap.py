@@ -32,8 +32,8 @@ class basemap(tk.Frame):
         self.to_gui = to_gui
         # create tkinter toplevel window to display basemap
         self.basemap_window = tk.Toplevel(self.parent)
-        self.ontop_bool = tk.BooleanVar(value=1)
-        self.basemap_window.wm_attributes("-topmost", "true")
+        self.ontop_bool = tk.BooleanVar(value=0)
+        self.basemap_window.wm_attributes("-topmost", "false")
         img = tk.PhotoImage(file=os.path.join(os.path.dirname(__file__), "../recs", "basemap_icon.png"))
         self.basemap_window.tk.call("wm", "iconphoto", self.basemap_window._w, img)
         self.basemap_window.config(bg="#d9d9d9")

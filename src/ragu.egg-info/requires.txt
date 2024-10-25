@@ -1,0 +1,9 @@
+pandas
+numpy
+scipy
+matplotlib
+rasterio
+pyproj
+tk
+h5py
+geopandas

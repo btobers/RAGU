@@ -497,10 +497,9 @@ def getnav_sharad(navfile, navcrs, body):
         )
 
         # get raster x/y index of SC x/y positions
-        ix,iy = aer.index(aerX,aerY)
-
-        ix = np.asarray(ix)
-        iy = np.asarray(iy)
+        inds = [aer.index(x,y) for (x,y) in zip(aerX,aerX)]
+        ix = np.asarray([tup[0] for tup in inds])
+        iy = np.asarray([tup[1] for tup in inds])
 
         # there seems to be a rasterio indexing error where value may exceed axis bounds when a track is pole-crossing
         # subtracting one from the index value seems to resolve this
