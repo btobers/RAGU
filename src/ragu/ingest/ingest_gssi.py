@@ -68,7 +68,7 @@ def read(fpath, navcrs, body):
     rdata.tnum = rdata.dat.shape[1]
 
     # convert gssi signed int amplitude to floating point for displaying
-    rdata.set_proc(rdata.get_dat().astype(np.float))
+    rdata.set_proc(rdata.get_dat().astype(float))
 
     rdata.set_twtt()
 

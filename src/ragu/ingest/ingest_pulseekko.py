@@ -342,7 +342,7 @@ def read_hd(fpath):
 #     rdata.dt = window / rdata.snum * 1.0e-9
 
 #     # convert signed int amplitude to floating point for displaying
-#     rdata.set_proc(rdata.dat.astype(np.float))
+#     rdata.set_proc(rdata.dat.astype(float))
 
 #     rdata.set_sim(np.ones(rdata.dat.shape))                # place holder for clutter data
 
