@@ -26,7 +26,7 @@ def create_config(fpath):
     config.set('nav', '# str navcrs: crs string')
     config.set('nav', '# wgs84 projection string for earth: +proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs')
     config.set('nav', '# longlat projection string for mars: +proj=longlat +a=3396190 +b=3376200 +no_defs')
-    config.set('nav', 'crs', 'proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs')
+    config.set('nav', 'crs', '+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs')
 
     config.add_section('output')
     config.set('output', '# float asep: antenna separation in meters (optional)')
