@@ -33,17 +33,17 @@ def read_h5(fpath, navcrs, body):
     else: 
         grp = "raw"
 
-
     # pull necessary raw group data
-    rdata.fs = f[grp]["rx0"].attrs["fs"]                             # sampling frequency
-    rdata.dt = 1/rdata.fs
-    try:                                                            # sampling interval, sec
-        rdata.prf = f[grp]["rx0"].attrs["prf"]                       # pulse repition frequency, Hz
-    except KeyError:
-        rdata.prf = 0
+    rdata.fs = f[grp]["rx0"].attrs["fs"]                            # sampling frequency
+    rdata.dt = 1/rdata.fs                                           # sampling interval, seconds
+    for g in f.keys():                                              # pulse repitition frequency
+        if 'rx0' in f[g].keys() and 'prf' in f[g]['rx0'].attrs:
+            rdata.prf = f[g]["rx0"].attrs["prf"]
+            break  # Stop looping once 'prf' is found
+    else:
+        rdata.prf = 0  # Set to 0 if 'prf' is not found in any group
 
     rdata.nchan = 1
-
 
     rdata.set_dat(f[grp]["rx0"][:].astype(float))
 
@@ -88,12 +88,11 @@ def read_h5(fpath, navcrs, body):
     rdata.info["Signal Type"] = "Impulse" 
     rdata.info["Sampling Frequency [MHz]"] = rdata.fs * 1e-6
     rdata.info["PRF [kHz]"] = rdata.prf * 1e-3
-    rdata.info["Stack"] = f[grp]["rx0"].attrs["stack"]
+    rdata.info["Stack"] = f[grp]["rx0"].attrs["stack"] if "stack" in f[grp]["rx0"].attrs else ''
     rdata.info["Antenna Separation [m]"] = round(np.nanmean(rdata.asep))
 
     rdata.check_attrs()                                         # check basic rdata attributes
     f.close()                                                   # close file
-
 
     # initialize surface arrays - if groundhog, surface is at zero after shifting by pretrigger amount. If BSI airIPR initialize nan array for surface pick horizon and elevation array
     if rdata.dtype == "ghog":
