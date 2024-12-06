@@ -127,6 +127,9 @@ Several auxiliary tools which RAGU users may find useful can be found at [radar_
 ### Publications
 
 A list of publications that cite RAGU:
+- Tober, B. S., Christoffersen, M. S., Holt, J. W., Truffer, M., & Larsen, C. F. (2024). Thickness of Ruth Glacier, Alaska, and depth of its Great Gorge from ice-penetrating radar and mass conservation. Journal of Glaciology, 1-10.
+- Shoemaker, E. S., Baker, D. M. H., Richardson, J. A., Carter, L. M., Scheidt, S. P., Whelley, P. L., & Young, K. E. (2024). Mapping ice buried by the 1875 and 1961 tephra of Askja Volcano, Northern Iceland using ground‐penetrating radar: Implications for Askja Caldera as a geophysical testbed for in situ resource utilization. Journal of Geophysical Research: Planets, 129(4), e2023JE007834.
+- Tober, B. S., Holt, J. W., Christoffersen, M. S., Truffer, M., Larsen, C. F., Brinkerhoff, D. J., & Mooneyham, S. A. (2023). Comprehensive radar mapping of Malaspina Glacier (Sít'Tlein), Alaska—The world's largest piedmont glacier—Reveals potential for instability. Journal of Geophysical Research: Earth Surface, 128(3), e2022JF006898.
+- Shoemaker, E. S., Carter, L. M., Garry, W. B., Morgan, G. A., & Plaut, J. J. (2022). New insights into subsurface stratigraphy northwest of Ascraeus Mons, Mars, using the SHARAD and MARSIS radar sounders. Journal of Geophysical Research: Planets, 127(6), e2022JE007210.
+- Loso, M. G., Larsen, C. F., Tober, B. S., Christoffersen, M., Fahnestock, M., Holt, J. W., & Truffer, M. (2021). Quo vadis, Alsek? Climate-driven glacier retreat may change the course of a major river outlet in southern Alaska. Geomorphology, 384, 107701.
 
-1. Loso, Michael G., Christopher F. Larsen, Brandon S. Tober, Michael Christoffersen, Mark Fahnestock, John W. Holt, and Martin Truffer. “Quo Vadis, Alsek? Climate-Driven Glacier Retreat May Change the Course of a Major River Outlet in Southern Alaska.” Geomorphology 384 (July 1, 2021): 107701. https://doi.org/10.1016/j.geomorph.2021.107701.
-2. Tober, B. S., J. W. Holt, M. S. Christoffersen, M. Truffer, C. F. Larsen, D. J. Brinkerhoff, and S. A. Mooneyham. “Comprehensive Radar Mapping of Malaspina Glacier (Sít’ Tlein), Alaska—The World’s Largest Piedmont Glacier—Reveals Potential for Instability.” Journal of Geophysical Research: Earth Surface 128, no. 3 (2023): e2022JF006898. https://doi.org/10.1029/2022JF006898.
