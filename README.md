@@ -121,7 +121,7 @@ pip install -e /path/to/your/RAGU/clone
 
 ## Notes
 Several auxiliary tools which RAGU users may find useful can be found at [radar_tools](https://github.com/btobers/radar_tools). This includes scripts to merge the navigation data from numerous radar datafiles (`ragu_nav_merge.py`), to merge numerous RAGU pick files (`ragu_picks_combine.py
-`), and a Jupyter Notebook to analyze radar crossover disagreement (`ragu_pick_crossover.ipynb`). Additional radar processing tools which users may find useful can be found in @mchristoffersen's [Groundhog repository](https://github.com/mchristoffersen/groundhog/).
+`), and a Jupyter Notebook to analyze radar crossover disagreement (`ragu_pick_crossover.ipynb`). Additional radar processing tools which users may find useful can be found in [@mchristoffersen's](https://github.com/mchristoffersen) [Groundhog repository](https://github.com/mchristoffersen/groundhog/).
 
 
 ### Publications
