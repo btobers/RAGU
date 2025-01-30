@@ -328,26 +328,41 @@ def getnav_gssi(navfile, tnum, navcrs, body):
                 lines = f_in.readlines()
             # We have to be careful with this to permit other NMEA strings to have been recorded
             # and to be sure that the indices line up
-
             gssis_inds = [i for i, line in enumerate(lines) if "GSSIS" in line]
             gga_inds = [i for i, line in enumerate(lines) if "GGA" in line]
 
-            # we may have some records without GGA, so check if this is the case;
-            # we keep track of the offset if so
+            if not gssis_inds or not gga_inds:
+                raise ValueError("Missing GSSIS or GGA records in the file.")
+
+            # Ensure we only use GSSIS entries that have corresponding GGA records
             gssis_inds_keep = []
+            matched_gga_inds = []
             offset_ind = 0
+
             for i, j in enumerate(gssis_inds[:-1]):
-                if (gga_inds[i + offset_ind] > j and gga_inds[i + offset_ind] < gssis_inds[i + 1]):
+                # Find the closest GGA index within the current GSSIS range
+                while offset_ind < len(gga_inds) and gga_inds[offset_ind] < j:
+                    offset_ind += 1  # Move to the next GGA index
+
+                if offset_ind < len(gga_inds) and gga_inds[offset_ind] < gssis_inds[i + 1]:
                     gssis_inds_keep.append(j)
+                    matched_gga_inds.append(gga_inds[offset_ind])
                 else:
-                    offset_ind -= 1
+                    print(f"Warning: No matching GGA for GSSIS at index {j}")
+
+            # Ensure the last GSSIS entry has a corresponding GGA entry
             if gga_inds[-1] > gssis_inds[-1]:
                 gssis_inds_keep.append(gssis_inds[-1])
+                matched_gga_inds.append(gga_inds[-1])
 
-            scans = np.array(list(map(lambda x: int(x.split(",")[1]),
-                                    [line for i, line in enumerate(lines) if i in gssis_inds_keep])))
-            
-            gps = GPSdat([line for i, line in enumerate(lines) if i in gga_inds], scans, tnum)
+            # Convert to numpy arrays for consistent indexing
+            scans = np.array([int(lines[i].split(",")[1]) for i in gssis_inds_keep])
+            gga_sentences = [lines[i] for i in matched_gga_inds]
+
+            # Now initialize the GPSdat object safely
+            gps = GPSdat(gga_sentences, scans, tnum)
+
+            # gps = GPSdat([line for i, line in enumerate(lines) if i in gga_inds], scans, tnum)
             df = pd.DataFrame({"lon": gps.lon, "lat": gps.lat, "elev": gps.elev,
                                         "x": np.nan, "y": np.nan, "z": np.nan,
                                         "dist": np.nan})

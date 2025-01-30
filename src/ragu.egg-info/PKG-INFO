@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: ragu
-Version: 0.1.55
+Version: 0.1.56
 Summary: Radar Analysis Graphical Utility (RAGU)
 Author-email: Brandon Tober <tobers.brandon@gmail.com>, Michael Christoffersen <mchristo28@gmail.com>
 License:                     GNU GENERAL PUBLIC LICENSE
@@ -684,6 +684,15 @@ Classifier: Programming Language :: Python :: 3
 Requires-Python: >=3.6
 Description-Content-Type: text/markdown
 License-File: LICENSE.txt
+Requires-Dist: pandas
+Requires-Dist: numpy
+Requires-Dist: scipy
+Requires-Dist: matplotlib
+Requires-Dist: rasterio
+Requires-Dist: pyproj
+Requires-Dist: tk
+Requires-Dist: h5py
+Requires-Dist: geopandas
 
 <img src="https://github.com/btobers/RAGU/raw/master/src/ragu/recs/ragu_logo.png" height="200">
 

@@ -133,8 +133,6 @@ class GPSdat(nmea_info):
         self.nmea_info = nmea_all_info(gga)
         self.nmea_info.scans = scans
         self.nmea_info.get_all()
-        while len(self.nmea_info.times)>len(self.nmea_info.scans):
-            self.nmea_info.times = self.nmea_info.times[:-1]
         # get time stamps where data recorded to interpolate between
         kgps_mask = np.logical_and(~np.isnan(self.nmea_info.times[1:]),
                                    np.diff(self.nmea_info.scans) != 0)
