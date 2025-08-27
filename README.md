@@ -127,7 +127,7 @@ Several auxiliary tools which RAGU users may find useful can be found at [radar_
 ### Publications
 
 A list of publications that cite RAGU:
-- Wells, A., et al. "An 85-year record of glacier change and refined projections for Kennicott and Root Glaciers, Alaska." Nature Communications 16.1 (2025): 7835.
+- Wells, A., et al. "An 85-year record of glacier change and refined projections for Kennicott and Root Glaciers, Alaska." Nature Communications 16.1 (2025): 7835. [doi:10.1038/s41467-025-62962-w](https://doi.org/10.1038/s41467-025-62962-w).
 - Tober, B. S., et al. "Thickness of Ruth Glacier, Alaska, and depth of its Great Gorge from ice-penetrating radar and mass conservation." Journal of Glaciology (2024): 1-10. [doi:10.1017/jog.2024.53](https://doi.org/10.1017/jog.2024.53).
 - Shoemaker, E. S., et al. "Mapping ice buried by the 1875 and 1961 tephra of Askja Volcano, Northern Iceland using ground‐penetrating radar: Implications for Askja Caldera as a geophysical testbed for in situ resource utilization." Journal of Geophysical Research: Planets 129.4 (2024): e2023JE007834. [doi:10.1029/2023JE007834](https://doi.org/10.1029/2023JE007834).
 - Tober, B. S., et al. "Comprehensive radar mapping of Malaspina Glacier (Sít'Tlein), Alaska—The world's largest piedmont glacier—Reveals potential for instability." Journal of Geophysical Research: Earth Surface 128.3 (2023): e2022JF006898. [doi:10.1029/2022JF006898](https://doi.org/10.1029/2022JF006898).
