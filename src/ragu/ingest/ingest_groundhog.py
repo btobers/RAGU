@@ -4,7 +4,7 @@
 #
 # distributed under terms of the GNU GPL3.0 license
 """
-ingest_oibAK is a module developed to ingest NASA OIB-AK radar sounding data. 
+ingest_oibAK is a module developed to ingest NASA OIB-AK radar sounding data.
 primary data format is hdf5, however some older data is still being converted over from .mat format
 """
 ### imports ###
@@ -16,13 +16,14 @@ import numpy as np
 import scipy as sp
 import sys
 
+
 # method to ingest groundhog hdf5 data format
 def read_h5(fpath, navcrs, body):
     rdata = garlic(fpath)
     rdata.fn = fpath.split("/")[-1][:-3]
 
     # read in .h5 file
-    f = h5py.File(rdata.fpath, "r")                      
+    f = h5py.File(rdata.fpath, "r")
 
     # get appropriate data grou
     grps = f.keys()
@@ -30,14 +31,14 @@ def read_h5(fpath, navcrs, body):
         grp = "proc"
     elif "restack" in grps:
         grp = "restack"
-    else: 
+    else:
         grp = "raw"
 
     # pull necessary raw group data
-    rdata.fs = f[grp]["rx0"].attrs["fs"]                            # sampling frequency
-    rdata.dt = 1/rdata.fs                                           # sampling interval, seconds
-    for g in f.keys():                                              # pulse repitition frequency
-        if 'rx0' in f[g].keys() and 'prf' in f[g]['rx0'].attrs:
+    rdata.fs = f[grp]["rx0"].attrs["fs"]  # sampling frequency
+    rdata.dt = 1 / rdata.fs  # sampling interval, seconds
+    for g in f.keys():  # pulse repitition frequency
+        if "rx0" in f[g].keys() and "prf" in f[g]["rx0"].attrs:
             rdata.prf = f[g]["rx0"].attrs["prf"]
             break  # Stop looping once 'prf' is found
     else:
@@ -51,12 +52,13 @@ def read_h5(fpath, navcrs, body):
     try:
         if "Blue Systems" in f[grp]["rx0"].attrs["system"]:
             rdata.dtype = "bsi"
-            try:
-                rdata.set_sim(f["drv"]["clutter0"][:])              # simulated clutter array
-            except KeyError:
-                pass
     except KeyError:
         rdata.dtype = "ghog"
+
+    try:
+        rdata.set_sim(f["drv"]["clutter0"][:])  # simulated clutter array
+    except KeyError:
+        pass
 
     rdata.dbit = False
 
@@ -81,28 +83,30 @@ def read_h5(fpath, navcrs, body):
         pt = f[grp]["rx0"].attrs["pre_trigger"]
 
     rdata.flags.sampzero = pt
-    if pt>0:
+    if pt > 0:
         rdata.tzero_shift()
 
     # pull some info
-    rdata.info["Signal Type"] = "Impulse" 
+    rdata.info["Signal Type"] = "Impulse"
     rdata.info["Sampling Frequency [MHz]"] = rdata.fs * 1e-6
     rdata.info["PRF [kHz]"] = rdata.prf * 1e-3
-    rdata.info["Stack"] = f[grp]["rx0"].attrs["stack"] if "stack" in f[grp]["rx0"].attrs else ''
+    rdata.info["Stack"] = (
+        f[grp]["rx0"].attrs["stack"] if "stack" in f[grp]["rx0"].attrs else ""
+    )
     rdata.info["Antenna Separation [m]"] = round(np.nanmean(rdata.asep))
 
-    rdata.check_attrs()                                         # check basic rdata attributes
-    f.close()                                                   # close file
+    rdata.check_attrs()  # check basic rdata attributes
+    f.close()  # close file
 
     # initialize surface arrays - if groundhog, surface is at zero after shifting by pretrigger amount. If BSI airIPR initialize nan array for surface pick horizon and elevation array
     if rdata.dtype == "ghog":
         # define surface horizon name to set index to zeros
         arr = np.zeros(rdata.tnum)
         # srf_elev is the same as GPS recorded elev
-        rdata.set_srfElev(dat = rdata.navdf["elev"].to_numpy())
+        rdata.set_srfElev(dat=rdata.navdf["elev"].to_numpy())
     elif rdata.dtype == "bsi":
         arr = np.repeat(np.nan, rdata.tnum)
-        rdata.set_srfElev(dat = arr)
+        rdata.set_srfElev(dat=arr)
 
         # optional processing defaults
         # rdata.filter(btype='bandpass', lowcut=2.5e6, highcut=20e6, order=5, direction=0)
