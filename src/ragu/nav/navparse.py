@@ -46,7 +46,7 @@ def interp_xords(df, keys=["lon","lat","elev"]):
         non_nan_values = df[key].values[non_nan_indices]
         indices = np.arange(len(df[key]))
         # Interpolate NaN values
-        df[key].values[nan_indices] = np.interp(indices[nan_indices], indices[non_nan_indices], non_nan_values)
+        df.loc[nan_indices, key] =  np.interp(indices[nan_indices], indices[non_nan_indices], non_nan_values)
     return df
 
 
