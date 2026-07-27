@@ -259,8 +259,7 @@ class impick(tk.Frame):
 
     # set image cmap
     def set_cmap(self, cmap):
-        cmap = copy.copy(mpl.cm.get_cmap(cmap))
-        self.cmap = mpl.cm.get_cmap(cmap)
+        self.cmap = copy.copy(mpl.colormaps[cmap]) 
         # set nodata value as bottom color in cmap
         nd = self.cmap(np.linspace(0,1,256))[0]
         self.cmap.set_bad(nd)
@@ -1470,8 +1469,8 @@ class impick(tk.Frame):
     def on_mouse_move(self, event):
         if self.rdata:
             x, y = event.xdata, event.ydata
-            self.horizontal_line.set_ydata(y)
-            self.vertical_line.set_xdata(x)
+            self.horizontal_line.set_ydata([y])
+            self.vertical_line.set_xdata([x])
             self.ax.figure.canvas.restore_region(self.axbg)
             self.ax.draw_artist(self.horizontal_line)
             self.ax.draw_artist(self.vertical_line)
